@@ -170,6 +170,7 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSame('duplicate_supplier_invoice_number', $body['error']);
         self::assertSame(['supplier_invoice_number'], self::violationFields($body));
+        self::assertSame('Ya registraste una factura de este proveedor con este número.', $body['violations'][0]['message'], 'In Spanish, next to the field.');
 
         $other = $this->tercero('Papelería Central');
         $this->createDraft(['tercero_id' => $other->toRfc4122()]);
