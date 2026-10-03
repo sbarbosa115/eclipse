@@ -1,1 +1,101 @@
-{}
+{
+  "title": "Facturas de venta",
+  "subtitle": "Factura a tus clientes con la numeración de tu resolución; al emitir se contabiliza sola.",
+  "new": "Nueva factura",
+  "typeLabel": "Factura electrónica de venta",
+  "typeLabelWithPrefix": "Factura electrónica de venta ({{prefix}})",
+  "statuses": {
+    "draft": "Borrador",
+    "emitted": "Emitida",
+    "partially_paid": "Pagada parcialmente",
+    "paid": "Pagada",
+    "voided": "Anulada"
+  },
+  "list": {
+    "searchPlaceholder": "Número o cliente",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos los estados",
+    "from": "Desde",
+    "to": "Hasta",
+    "empty": "Aún no has hecho facturas de venta. Crea la primera para tu cliente.",
+    "emptyAction": "Crear la primera factura",
+    "filteredEmpty": "Ninguna factura coincide con estos filtros.",
+    "draftNumber": "Borrador",
+    "columns": {
+      "number": "Número",
+      "client": "Cliente",
+      "date": "Fecha",
+      "due": "Vence",
+      "total": "Total",
+      "balance": "Saldo"
+    }
+  },
+  "actions": {
+    "open": "Abrir",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "pdf": "PDF",
+    "downloadPdf": "Descargar PDF",
+    "send": "Enviar",
+    "void": "Anular",
+    "save": "Guardar",
+    "back": "Volver a facturas",
+    "emit": "Emitir",
+    "emitAndSend": "Emitir y enviar"
+  },
+  "notices": {
+    "saved": "Borrador guardado.",
+    "emitted": "Factura {{number}} emitida y contabilizada.",
+    "emittedAndSent": "Factura {{number}} emitida; el correo con el PDF va en camino.",
+    "sent": "El correo con el PDF de la factura {{number}} va en camino.",
+    "voided": "Factura {{number}} anulada.",
+    "duplicated": "Se creó un borrador nuevo a partir de la factura."
+  },
+  "emit": {
+    "title": "¿Emitir la factura?",
+    "body": "Tomará el siguiente número de tu resolución, se contabilizará y ya no se podrá modificar: solo anular.",
+    "sendNote": "Después de emitirla, enviaremos el PDF al correo de facturación del cliente."
+  },
+  "void": {
+    "title": "Anular la factura {{number}}",
+    "body": "Se registrará un comprobante de reversión con fecha de hoy y la factura conservará su número. El saldo sale de la cartera.",
+    "reason": "Motivo de la anulación",
+    "reasonRequired": "Escribe el motivo de la anulación.",
+    "confirm": "Anular factura"
+  },
+  "editor": {
+    "newTitle": "Nueva factura de venta",
+    "draftTitle": "Factura de venta · borrador",
+    "title": "Factura de venta {{number}}",
+    "loadFailed": "No pudimos cargar esta factura.",
+    "readOnly": "Esta factura ya fue emitida: no se puede modificar, solo anular.",
+    "voidedInfo": "Anulada el {{date}}. Motivo: {{reason}}",
+    "balance": "Saldo por cobrar: {{amount}}"
+  },
+  "resolution": {
+    "missing": "Aún no has registrado tu resolución de facturación: puedes guardar borradores, pero no emitir. Regístrala en Configuración › Resolución.",
+    "inactive": "Tu resolución de facturación no está vigente ({{status}}): no podrás emitir hasta renovarla.",
+    "warning": "Tu resolución de facturación se está acabando: quedan {{numbers}} números y {{days}} días de vigencia.",
+    "statuses": {
+      "not_yet_valid": "aún no empieza",
+      "expired": "vencida",
+      "exhausted": "sin números"
+    }
+  },
+  "errors": {
+    "payments_do_not_match_total": "Las formas de pago suman {{payments}} y el total neto es {{net}}: deben coincidir para emitir.",
+    "document_not_draft": "Esta factura ya fue emitida: no se puede modificar.",
+    "document_not_emitted": "Esta factura no está emitida.",
+    "document_has_allocations": "Esta factura tiene recibos de caja aplicados: anúlalos primero.",
+    "period_locked": "La fecha está en un periodo contable cerrado (fecha de bloqueo).",
+    "tercero_inactive": "El cliente está inactivo: actívalo para facturarle.",
+    "tercero_has_no_email": "El cliente no tiene correo de facturación: agrégalo en su ficha o emite sin enviar.",
+    "resolution_missing": "No hay resolución de facturación: regístrala en Configuración › Resolución.",
+    "resolution_inactive": "La fecha de la factura está fuera de la vigencia de la resolución.",
+    "resolution_exhausted": "La resolución de facturación ya no tiene números disponibles.",
+    "sales_invoice_not_found": "Esta factura no existe.",
+    "forbidden": "Tu rol no puede hacer esto con las facturas.",
+    "validation_failed": "Revisa los campos marcados.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  }
+}

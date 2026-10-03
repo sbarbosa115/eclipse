@@ -1,13 +1,20 @@
-import {useTranslation} from '@/shared/i18n';
-import {ComingSoon, PageHeader} from '@/shared/ui';
+import {Route, Routes, useParams} from 'react-router-dom';
+import {SalesInvoiceEditor} from './SalesInvoiceEditor';
+import {SalesInvoicesList} from './SalesInvoicesList';
 
-/** Owned by item 8 sales-invoice of the accounting split, which replaces this placeholder. */
+/** Another invoice is another form: going from one to the next (duplicate) starts the editor afresh. */
+function EditorForRoute() {
+  const {id} = useParams();
+  return <SalesInvoiceEditor key={id ?? 'new'} />;
+}
+
+/** Facturas de venta: the list at /facturas-venta, a new one at /facturas-venta/nueva, one invoice at /facturas-venta/:id. */
 export function SalesInvoicesPage() {
-  const {t} = useTranslation();
   return (
-    <>
-      <PageHeader title={t('shell.nav.salesInvoices')} />
-      <ComingSoon />
-    </>
+    <Routes>
+      <Route index element={<SalesInvoicesList />} />
+      <Route path="nueva" element={<EditorForRoute />} />
+      <Route path=":id" element={<EditorForRoute />} />
+    </Routes>
   );
 }

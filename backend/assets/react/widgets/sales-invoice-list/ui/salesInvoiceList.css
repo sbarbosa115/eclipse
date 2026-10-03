@@ -1,0 +1,9 @@
+/* Item 8 (sales-invoice): the facturas de venta list. */
+.admin .sales-invoice-date input {
+  width: 9.5rem;
+}
+
+.admin .sales-invoice-list td.num {
+  text-align: right;
+  white-space: nowrap;
+}
