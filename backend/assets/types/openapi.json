@@ -227,9 +227,81 @@
                 }
             }
         },
+        "/api/v1/product-categories": {
+            "get": {
+                "summary": "Every category of the company, by name, with how many products are in it.",
+                "operationId": "get_app_catalog_ui_http_category_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CategoryOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "{name} \u2192 201. 422 on `name` when the company has a category with it.",
+                "operationId": "post_app_catalog_ui_http_category_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/product-categories/{id}": {
+            "put": {
+                "operationId": "put_app_catalog_ui_http_category_rename",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/products": {
             "get": {
-                "summary": "Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1, ?page, ?per_page \u2264 100.",
+                "summary": "Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1 (only active) or ?active=0 (only\ninactive), ?page, ?per_page \u2264 100. By name.",
                 "operationId": "get_app_catalog_ui_http_product_list",
                 "responses": {
                     "200": {
@@ -266,11 +338,129 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "summary": "The full form: {type, code, name, description?, category_id?, unit_code? (the type's default), sale_price,\nprice_includes_tax, charge_tax_id?, withholding_tax_id? (the company's defaults when missing), revenue_account_id?,\nexpense_account_id?} \u2192 201. 422 `duplicate_code` is a `code` violation.",
+                "operationId": "post_app_catalog_ui_http_product_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/units": {
+            "get": {
+                "summary": "The unidades de medida a product can use: the short DIAN list (94 unidad, KGM kilogramo, MTR metro, HUR hora,\nZZ servicio).",
+                "operationId": "get_app_catalog_ui_http_product_units",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UnitOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}": {
+            "get": {
+                "summary": "One product or service.",
+                "operationId": "get_app_catalog_ui_http_product_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Rewrites the product with the full form's fields (as in create); a missing tax or account is \"none\", not the\ncompany's default.",
+                "operationId": "put_app_catalog_ui_http_product_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes a product no document has used \u2192 204. 409 `product_in_use` otherwise: deactivate it instead.",
+                "operationId": "delete_app_catalog_ui_http_product_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
             }
         },
         "/api/v1/products/quick": {
             "post": {
-                "summary": "Quick-create from a document line (\u00a74.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,\nwithholding_tax_id?} \u2192 201.",
+                "summary": "Quick-create from a document line (\u00a74.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,\nwithholding_tax_id?} \u2192 201. The taxes missing are the company's defaults; the unit is the type's.",
                 "operationId": "post_app_catalog_ui_http_product_quickcreate",
                 "responses": {
                     "201": {
@@ -288,8 +478,63 @@
         },
         "/api/v1/products/{id}/taxes": {
             "put": {
-                "summary": "Writes \"use these taxes on this product from now on\" (\u00a74.6 line tax dialog): {charge_tax_id, withholding_tax_id}.",
+                "summary": "Writes \"use these taxes on this product from now on\" (\u00a74.6 line tax dialog): {charge_tax_id, withholding_tax_id};\na null is \"no tax\".",
                 "operationId": "put_app_catalog_ui_http_product_settaxes",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}/deactivate": {
+            "post": {
+                "summary": "Takes the product out of the pickers of new documents; the documents that used it keep it.",
+                "operationId": "post_app_catalog_ui_http_product_deactivate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}/reactivate": {
+            "post": {
+                "operationId": "post_app_catalog_ui_http_product_reactivate",
                 "parameters": [
                     {
                         "name": "id",
@@ -580,6 +825,25 @@
                 },
                 "type": "object"
             },
+            "CategoryOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "product_count"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "product_count": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "ProductOutput": {
                 "required": [
                     "id",
@@ -651,6 +915,22 @@
                     },
                     "active": {
                         "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "UnitOutput": {
+                "required": [
+                    "code",
+                    "name"
+                ],
+                "properties": {
+                    "code": {
+                        "title": "DIAN code: 94, KGM, MTR, HUR, ZZ",
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
                     }
                 },
                 "type": "object"

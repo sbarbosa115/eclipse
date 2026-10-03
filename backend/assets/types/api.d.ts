@@ -149,6 +149,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/product-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every category of the company, by name, with how many products are in it. */
+        get: operations["get_app_catalog_ui_http_category_list"];
+        put?: never;
+        /** {name} → 201. 422 on `name` when the company has a category with it. */
+        post: operations["post_app_catalog_ui_http_category_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/product-categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["put_app_catalog_ui_http_category_rename"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/products": {
         parameters: {
             query?: never;
@@ -156,11 +190,61 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1, ?page, ?per_page ≤ 100. */
+        /**
+         * Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1 (only active) or ?active=0 (only
+         *     inactive), ?page, ?per_page ≤ 100. By name.
+         */
         get: operations["get_app_catalog_ui_http_product_list"];
+        put?: never;
+        /**
+         * The full form: {type, code, name, description?, category_id?, unit_code? (the type's default), sale_price,
+         *     price_includes_tax, charge_tax_id?, withholding_tax_id? (the company's defaults when missing), revenue_account_id?,
+         *     expense_account_id?} → 201. 422 `duplicate_code` is a `code` violation.
+         */
+        post: operations["post_app_catalog_ui_http_product_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The unidades de medida a product can use: the short DIAN list (94 unidad, KGM kilogramo, MTR metro, HUR hora,
+         *     ZZ servicio).
+         */
+        get: operations["get_app_catalog_ui_http_product_units"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One product or service. */
+        get: operations["get_app_catalog_ui_http_product_show"];
+        /**
+         * Rewrites the product with the full form's fields (as in create); a missing tax or account is "none", not the
+         *     company's default.
+         */
+        put: operations["put_app_catalog_ui_http_product_update"];
+        post?: never;
+        /** Deletes a product no document has used → 204. 409 `product_in_use` otherwise: deactivate it instead. */
+        delete: operations["delete_app_catalog_ui_http_product_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -177,7 +261,7 @@ export interface paths {
         put?: never;
         /**
          * Quick-create from a document line (§4.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,
-         *     withholding_tax_id?} → 201.
+         *     withholding_tax_id?} → 201. The taxes missing are the company's defaults; the unit is the type's.
          */
         post: operations["post_app_catalog_ui_http_product_quickcreate"];
         delete?: never;
@@ -194,9 +278,45 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Writes "use these taxes on this product from now on" (§4.6 line tax dialog): {charge_tax_id, withholding_tax_id}. */
+        /**
+         * Writes "use these taxes on this product from now on" (§4.6 line tax dialog): {charge_tax_id, withholding_tax_id};
+         *     a null is "no tax".
+         */
         put: operations["put_app_catalog_ui_http_product_settaxes"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes the product out of the pickers of new documents; the documents that used it keep it. */
+        post: operations["post_app_catalog_ui_http_product_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_app_catalog_ui_http_product_reactivate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -281,6 +401,11 @@ export interface components {
             email?: string | null;
             phone?: string | null;
         };
+        CategoryOutput: {
+            id: string;
+            name: string;
+            product_count: number;
+        };
         ProductOutput: {
             id: string;
             /** producto or servicio */
@@ -302,6 +427,11 @@ export interface components {
             revenue_account_id?: string | null;
             expense_account_id?: string | null;
             active: boolean;
+        };
+        UnitOutput: {
+            /** DIAN code: 94, KGM, MTR, HUR, ZZ */
+            code: string;
+            name: string;
         };
     };
     responses: never;
@@ -487,6 +617,70 @@ export interface operations {
             };
         };
     };
+    get_app_catalog_ui_http_category_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["CategoryOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    post_app_catalog_ui_http_category_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOutput"];
+                };
+            };
+        };
+    };
+    put_app_catalog_ui_http_category_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOutput"];
+                };
+            };
+        };
+    };
     get_app_catalog_ui_http_product_list: {
         parameters: {
             query?: never;
@@ -512,6 +706,111 @@ export interface operations {
             };
         };
     };
+    post_app_catalog_ui_http_product_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
+                };
+            };
+        };
+    };
+    get_app_catalog_ui_http_product_units: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["UnitOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_catalog_ui_http_product_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
+                };
+            };
+        };
+    };
+    put_app_catalog_ui_http_product_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
+                };
+            };
+        };
+    };
+    delete_app_catalog_ui_http_product_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     post_app_catalog_ui_http_product_quickcreate: {
         parameters: {
             query?: never;
@@ -533,6 +832,50 @@ export interface operations {
         };
     };
     put_app_catalog_ui_http_product_settaxes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
+                };
+            };
+        };
+    };
+    post_app_catalog_ui_http_product_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
+                };
+            };
+        };
+    };
+    post_app_catalog_ui_http_product_reactivate: {
         parameters: {
             query?: never;
             header?: never;

@@ -2,6 +2,8 @@
 
 namespace App\Catalog\UI\Http\Output;
 
+use App\Catalog\Application\Query\ProductView;
+
 /**
  * A product or service as lists and document lines read it.
  */
@@ -29,5 +31,10 @@ final readonly class ProductOutput
         public ?string $expenseAccountId,
         public bool $active,
     ) {
+    }
+
+    public static function of(ProductView $v): self
+    {
+        return new self($v->id, $v->type, $v->code, $v->name, $v->description, $v->categoryId, $v->categoryName, $v->unitCode, $v->salePrice, $v->priceIncludesTax, $v->unitValue(), $v->chargeTaxId, $v->withholdingTaxId, $v->revenueAccountId, $v->expenseAccountId, $v->active);
     }
 }

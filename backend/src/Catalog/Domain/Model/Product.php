@@ -69,6 +69,59 @@ class Product implements CompanyOwned
         $this->id = Uuid::v7();
     }
 
+    /**
+     * Rewrites everything the full form edits (§4.3). The taxes and accounts are the ones the caller already checked.
+     */
+    public function revise(
+        ProductType $type,
+        string $code,
+        string $name,
+        ?string $description,
+        ?Uuid $categoryId,
+        string $unitCode,
+        UnitPrice $salePrice,
+        bool $priceIncludesTax,
+        ?Uuid $chargeTaxId,
+        ?Uuid $withholdingTaxId,
+        ?Uuid $revenueAccountId,
+        ?Uuid $expenseAccountId,
+    ): void {
+        $this->type = $type;
+        $this->code = $code;
+        $this->name = $name;
+        $this->unitCode = $unitCode;
+        $this->salePrice = $salePrice;
+        $this->priceIncludesTax = $priceIncludesTax;
+        $this->describe($description, $categoryId);
+        $this->useTaxes($chargeTaxId, $withholdingTaxId);
+        $this->revenueAccountId = $revenueAccountId;
+        $this->expenseAccountId = $expenseAccountId;
+    }
+
+    public function describe(?string $description, ?Uuid $categoryId): void
+    {
+        $this->description = $description;
+        $this->categoryId = $categoryId;
+    }
+
+    /** "Use these taxes on this product from now on" (§4.6): documents already written keep their copies. */
+    public function useTaxes(?Uuid $chargeTaxId, ?Uuid $withholdingTaxId): void
+    {
+        $this->chargeTaxId = $chargeTaxId;
+        $this->withholdingTaxId = $withholdingTaxId;
+    }
+
+    /** Out of the pickers of new documents; the history keeps it. */
+    public function deactivate(): void
+    {
+        $this->active = false;
+    }
+
+    public function reactivate(): void
+    {
+        $this->active = true;
+    }
+
     public function id(): Uuid
     {
         return $this->id;

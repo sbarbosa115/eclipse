@@ -123,9 +123,10 @@ deptrac:
     # A tercero's own receivable/payable account must be a postable account of the chart (Ledger).
     Party: [Shared, PartyApi, LedgerApi]
     PartyApi: [Shared, Party, LedgerApi]
-    # A product's default taxes and accounts come from the ledger's catalogs.
-    Catalog: [Shared, CatalogApi, LedgerApi]
-    CatalogApi: [Shared, Catalog, LedgerApi]
+    # A product's default taxes and accounts come from the ledger's catalogs, and a new product's default taxes from
+    # the company's settings (Companies::view()).
+    Catalog: [Shared, CatalogApi, LedgerApi, CompanyApi]
+    CatalogApi: [Shared, Catalog, LedgerApi, CompanyApi]
     # Documents are numbered (Company), copy terceros (Party), products (Catalog) and taxes, and post (Ledger).
     Sales: [Shared, SalesApi, CompanyApi, LedgerApi, PartyApi, CatalogApi]
     SalesApi: [Shared, Sales, CompanyApi, LedgerApi, PartyApi, CatalogApi]
