@@ -6,17 +6,18 @@ use App\Access\Application\Port\PasswordHasher;
 use App\Access\Domain\Model\Role;
 use App\Access\Domain\Model\User;
 use App\Access\Domain\Model\UserStatus;
-use App\Ledger\Domain\Model\Account;
 use App\Ledger\Domain\Model\AccountNature;
 use App\Sales\Domain\Model\Quotation;
 use App\Shared\Domain\Model\AuditLog;
 use App\Tests\Support\ApiTestCase;
+use App\Tests\Support\ChartAccounts;
 use App\Tests\Support\SignsUp;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
 final class TerceroApiTest extends ApiTestCase
 {
+    use ChartAccounts;
     use SignsUp;
 
     private const NIT = '800197268';
@@ -216,17 +217,16 @@ final class TerceroApiTest extends ApiTestCase
         $company = $this->companyId($this->signUp());
         $this->signOut();
         $other = $this->companyId($this->signUp('beto@b.co', '890903938', 'B'));
-        $receivable = new Account($company, '130505', 'Nacionales', AccountNature::Debit, '1305', true);
-        $payable = new Account($company, '220505', 'Proveedores nacionales', AccountNature::Credit, '2205', true);
-        $group = new Account($company, '1305', 'Clientes', AccountNature::Debit, '13', true);
-        $foreign = new Account($other, '130505', 'Nacionales de B', AccountNature::Debit, '1305', true);
-        $this->save($receivable, $payable, $group, $foreign);
+        $receivable = $this->chartAccount($company, '130505', 'Nacionales', AccountNature::Debit, '1305');
+        $payable = $this->chartAccount($company, '220505', 'Proveedores nacionales', AccountNature::Credit, '2205');
+        $group = $this->chartAccount($company, '1305', 'Clientes', AccountNature::Debit, '13');
+        $foreign = $this->chartAccount($other, '130505', 'Nacionales de B', AccountNature::Debit, '1305');
         $this->signOut();
         $this->signIn('ana@acme.co');
 
         $ok = $this->create(['receivable_account_id' => $receivable->id()->toRfc4122(), 'payable_account_id' => $payable->id()->toRfc4122()]);
         self::assertSame('130505', $ok['receivable_account']['code']);
-        self::assertSame('Proveedores nacionales', $ok['payable_account']['name']);
+        self::assertSame('220505', $ok['payable_account']['code']);
 
         foreach ([[$group, 'receivable_account_id'], [$foreign, 'receivable_account_id'], [$payable, 'receivable_account_id'], [$receivable, 'payable_account_id']] as [$account, $field]) {
             $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['identification_number' => '890903938', $field => $account->id()->toRfc4122()]));

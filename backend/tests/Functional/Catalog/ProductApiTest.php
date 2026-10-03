@@ -6,13 +6,13 @@ use App\Access\Application\Query\Users;
 use App\Access\Domain\Model\Role;
 use App\Access\Domain\Model\User;
 use App\Access\UI\Http\Security\SecurityUser;
-use App\Ledger\Domain\Model\Account;
 use App\Ledger\Domain\Model\AccountNature;
 use App\Ledger\Domain\Model\Tax;
 use App\Ledger\Domain\Model\TaxClass;
 use App\Ledger\Domain\Model\TaxKind;
 use App\Shared\Domain\Totals\TaxCalculation;
 use App\Tests\Support\ApiTestCase;
+use App\Tests\Support\ChartAccounts;
 use App\Tests\Support\SignsUp;
 use Doctrine\DBAL\Connection;
 use Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector;
@@ -24,6 +24,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class ProductApiTest extends ApiTestCase
 {
+    use ChartAccounts;
     use SignsUp;
 
     private Uuid $company;
@@ -44,9 +45,9 @@ final class ProductApiTest extends ApiTestCase
         $rete = new Tax($this->company, 'ReteFuente 4 %', TaxClass::Withholding, TaxKind::IncomeWithholding, TaxCalculation::Percentage, '4.0000', null, null);
         $old = new Tax($this->company, 'IVA viejo', TaxClass::Charge, TaxKind::Vat, TaxCalculation::Percentage, '16.0000', null, null);
         $this->setInactive($old);
-        $postable = new Account($this->company, '413595', 'Venta de otros', AccountNature::Credit, '4135', false);
-        $group = new Account($this->company, '4135', 'Comercio', AccountNature::Credit, '41', false);
-        $this->save($iva19, $iva5, $consumo, $rete, $old, $postable, $group);
+        $this->save($iva19, $iva5, $consumo, $rete, $old);
+        $postable = $this->chartAccount($this->company, '413595', 'Venta de otros', AccountNature::Credit, '4135');
+        $group = $this->chartAccount($this->company, '4135', 'Comercio', AccountNature::Credit, '41');
         $this->iva19 = $iva19->id()->toRfc4122();
         $this->iva5 = $iva5->id()->toRfc4122();
         $this->impoconsumo = $consumo->id()->toRfc4122();
@@ -232,7 +233,7 @@ final class ProductApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertSame($this->postable, $ok['revenue_account_id']);
         self::assertSame($this->postable, $ok['expense_account_id']);
-        self::assertSame('413595 · Venta de otros', $ok['revenue_account_label'], 'Forms show the account by code and name.');
+        self::assertSame('413595 · VENTA DE OTROS PRODUCTOS', $ok['revenue_account_label'], 'Forms show the account by code and name.');
 
         $body = $this->createProduct('R2', 'R2', ['revenue_account_id' => $this->groupAccount, 'expense_account_id' => Uuid::v7()->toRfc4122()]);
         self::assertResponseStatusCodeSame(422);

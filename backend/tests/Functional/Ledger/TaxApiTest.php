@@ -59,11 +59,13 @@ final class TaxApiTest extends CatalogTestCase
         self::assertArrayNotHasKey('ReteICA', $taxes);
     }
 
-    public function testSigningUpWithoutAChartLeavesTheSeedAccountsNull(): void
+    public function testTheSeededTaxesPointAtTheSeededChart(): void
     {
-        $this->signUpOwner();
+        $company = $this->signUpOwner();
 
-        self::assertNull($this->taxesByName()['IVA 19 %']['sales_account_id'], 'Until the chart exists the account is null and posting falls back to the posting rule.');
+        $iva = $this->taxesByName()['IVA 19 %'];
+        self::assertSame($this->account($company, '240805'), $iva['sales_account_id'], 'The chart is provisioned before the taxes (priority 100 before 50): IVA generado posts to 240805.');
+        self::assertSame($this->account($company, '240810'), $iva['purchase_account_id'], 'IVA descontable posts to 240810.');
     }
 
     public function testTheAccountantCreatesATaxWithItsAccountsAndValidityDates(): void
@@ -257,7 +259,7 @@ final class TaxApiTest extends CatalogTestCase
 
         self::assertResponseIsSuccessful();
         $byName = array_column($items, null, 'name');
-        self::assertSame(['240805', 'IVA generado', null], [$byName['IVA 19 %']['sales_account_code'], $byName['IVA 19 %']['sales_account_name'], $byName['IVA 19 %']['purchase_account_code']]);
+        self::assertSame(['240805', 'IVA GENERADO', null], [$byName['IVA 19 %']['sales_account_code'], $byName['IVA 19 %']['sales_account_name'], $byName['IVA 19 %']['purchase_account_code']]);
         self::assertTrue($byName['IVA 19 %']['in_use'], 'A quotation line copied it.');
         self::assertFalse($byName['IVA por servicios 19 %']['in_use']);
         self::assertContains('IVA 5 %', array_column($items, 'name'), 'Inactive taxes are listed here: this is where they are reactivated.');

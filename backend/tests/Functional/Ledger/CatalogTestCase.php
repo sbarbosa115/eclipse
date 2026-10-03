@@ -20,6 +20,7 @@ use App\Shared\Domain\Money\Rate;
 use App\Shared\Domain\Money\UnitPrice;
 use App\Shared\Domain\Totals\TaxCalculation;
 use App\Tests\Support\ApiTestCase;
+use App\Tests\Support\ChartAccounts;
 use App\Tests\Support\SignsUp;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -30,6 +31,7 @@ use Symfony\Component\Uid\Uuid;
  */
 abstract class CatalogTestCase extends ApiTestCase
 {
+    use ChartAccounts;
     use SignsUp;
 
     protected function em(): EntityManagerInterface
@@ -42,13 +44,10 @@ abstract class CatalogTestCase extends ApiTestCase
         return Uuid::fromString($this->signUp($email, $nit, $company)['company_id']);
     }
 
-    /** An account of the company's chart (the "ledger" item seeds the real one). */
+    /** An account of the company's chart: the seeded one for a PUC code, a new one otherwise. */
     protected function account(Uuid $companyId, string $code, string $name = 'Cuenta de prueba', AccountNature $nature = AccountNature::Debit): string
     {
-        $account = new Account($companyId, $code, $name, $nature, null, true);
-        $this->save($account);
-
-        return $account->id()->toRfc4122();
+        return $this->chartAccount($companyId, $code, $name, $nature)->id()->toRfc4122();
     }
 
     /** Signs the owner out and a person of another role in, in the same company. */
