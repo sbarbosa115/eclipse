@@ -2,6 +2,7 @@
 
 namespace App\Ledger\Domain\Model;
 
+use App\Ledger\Domain\Error\LockDateInFuture;
 use App\Shared\Domain\Model\CompanyOwned;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -33,6 +34,20 @@ class LedgerSettings implements CompanyOwned
     public function lockedUntil(): ?\DateTimeImmutable
     {
         return $this->lockedUntil;
+    }
+
+    /**
+     * Moves the fecha de bloqueo: forward at period close, or back to reopen a period. Never beyond today.
+     *
+     * @throws LockDateInFuture
+     */
+    public function lockUntil(\DateTimeImmutable $date, \DateTimeImmutable $today): void
+    {
+        $day = $date->setTime(0, 0);
+        if ($day->format('Y-m-d') > $today->format('Y-m-d')) {
+            throw new LockDateInFuture();
+        }
+        $this->lockedUntil = $day;
     }
 
     /** Whether a document may be emitted or voided with this date. */

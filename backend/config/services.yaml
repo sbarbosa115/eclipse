@@ -41,8 +41,10 @@ services:
   # Replaced by the "company" item.
   App\Company\Application\Numbering\SalesInvoiceNumbering: '@App\Company\Application\Numbering\UnimplementedSalesInvoiceNumbering'
 
-  # Replaced by the "ledger" item.
-  App\Ledger\Application\Posting\JournalPoster: '@App\Ledger\Application\Posting\UnimplementedJournalPoster'
+  # Documents' emit and void handlers post through it; public so the ledger's tests reach the real one.
+  App\Ledger\Application\Posting\JournalPoster:
+    alias: App\Ledger\Application\Posting\LedgerJournalPoster
+    public: true
 
 # The #[ApiResponse] → OpenAPI describer: dev and test only, like NelmioApiDocBundle itself.
 when@dev:

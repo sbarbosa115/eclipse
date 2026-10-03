@@ -2,6 +2,8 @@
 
 namespace App\Ledger\Domain\Model;
 
+use App\Ledger\Domain\Error\EntryEmpty;
+use App\Ledger\Domain\Error\EntryUnbalanced;
 use App\Shared\Domain\Model\CompanyOwned;
 use App\Shared\Domain\Money\Money;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -58,8 +60,38 @@ class JournalEntry implements CompanyOwned
         $this->lines = new ArrayCollection();
     }
 
-    public function addLine(Uuid $accountId, string $accountCode, ?Uuid $terceroId, Money $debit, Money $credit, ?string $description = null): void
+    public function debit(Uuid $accountId, string $accountCode, ?Uuid $terceroId, Money $amount, ?string $description = null): void
     {
+        $this->addLine($accountId, $accountCode, $terceroId, $amount, Money::zero(), $description);
+    }
+
+    public function credit(Uuid $accountId, string $accountCode, ?Uuid $terceroId, Money $amount, ?string $description = null): void
+    {
+        $this->addLine($accountId, $accountCode, $terceroId, Money::zero(), $amount, $description);
+    }
+
+    /**
+     * Checks the entry before it is stored: at least one movement, and as many débitos as créditos to the cent
+     * (§5 invariant 1).
+     *
+     * @throws EntryEmpty
+     * @throws EntryUnbalanced
+     */
+    public function close(): void
+    {
+        if ($this->lines->isEmpty()) {
+            throw new EntryEmpty();
+        }
+        if (!$this->isBalanced()) {
+            throw new EntryUnbalanced($this->totalDebit(), $this->totalCredit());
+        }
+    }
+
+    private function addLine(Uuid $accountId, string $accountCode, ?Uuid $terceroId, Money $debit, Money $credit, ?string $description): void
+    {
+        if ($debit->isNegative() || $credit->isNegative()) {
+            throw new \InvalidArgumentException('A movement is a positive débito or crédito.');
+        }
         $this->lines->add(new JournalLine($this, $this->companyId, $this->lines->count() + 1, $accountId, $accountCode, $terceroId, $debit, $credit, $description));
     }
 
