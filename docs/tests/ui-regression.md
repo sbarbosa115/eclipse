@@ -83,6 +83,106 @@ registered.
 **Expected:** under NIT "Escribe el NIT solo con números, sin el dígito de verificación.", under Contraseña "La
 contraseña debe tener al menos 10 caracteres."; with the taken e-mail, "Este correo ya está registrado." under it.
 
+Configuración › **Usuarios** (`/configuracion?tab=users`) is the owner's. Invitations and password resets arrive in
+Mailpit; open each link in a **private window** (or another browser), as the invitee would, so the owner's session
+stays where it is.
+
+**ACC-06 · The owner sees the Usuarios tab with themself in it**
+Smoke: `e2e/users.spec.ts`.
+As the demo owner › Configuración › **Usuarios**.
+**Expected:** one row: `Dueña Demo`, `demo@mustang.test`, the badge `Tú`, rol `Administrador`, its last sign-in as
+`DD/MM/YYYY HH:MM`; the actions are **Cambiar rol** only (nobody deactivates themselves); **Invitar usuario** and
+**Invitar a tu contador** above the table.
+
+**ACC-07 · An invited billing user accepts by e-mail and lands signed in**
+Smoke: `e2e/users.spec.ts`.
+**Invitar usuario** › correo `luis@demo.test`, Rol `Facturación` › **Enviar invitación**; in Mailpit open the
+e-mail "Comercializadora Demo S.A.S. te invita a Mustang" › **Aceptar la invitación** › Tu nombre `Luis Gómez`,
+contraseña `una clave bien larga` › **Entrar a la empresa**.
+**Expected:** "Enviamos la invitación a luis@demo.test."; the row shows `Sin nombre aún`, tinted as invited, and
+"Invitación vigente hasta el <today + 7>". The link opens "Únete a Comercializadora Demo S.A.S." with the role and
+e-mail; after accepting, the Tablero opens as Luis (`Facturación` in the sidebar, no Configuración in the menu), and
+the address bar shows `/` (the token is gone). Reloading the owner's Usuarios tab shows `Luis Gómez`, active.
+
+**ACC-08 · "Invitar a tu contador" invites an accountant**
+Smoke: `e2e/users.spec.ts`.
+**Invitar a tu contador** › correo `contadora@demo.test` › **Enviar invitación**; accept as `Eva Ruiz`.
+**Expected:** the modal is titled "Invitar a tu contador" with Rol `Contador` chosen and what the accountant may do
+under it; Eva lands on the Tablero as `Contador`, sees Configuración in the menu, and its Usuarios tab says "Solo el
+administrador de la empresa gestiona los usuarios."
+
+**ACC-09 · The invitation form explains what is wrong**
+Smoke: `e2e/users.spec.ts`.
+**Invitar usuario** › correo `demo@mustang.test` › **Enviar invitación**; then `no-es-correo`.
+**Expected:** "Este correo ya está registrado." under Correo electrónico (an e-mail registered in any company is
+refused); then "Escribe un correo válido." without calling the server. The modal stays open.
+
+**ACC-10 · Resending an invitation replaces the earlier link**
+Smoke: `e2e/users.spec.ts`.
+Invite `reenvio@demo.test`; on its row **Reenviar invitación**; open the **first** e-mail's link, then the second's.
+**Expected:** "Enviamos de nuevo la invitación a reenvio@demo.test. El enlace anterior ya no sirve."; the first
+link shows "Este enlace ya no sirve" with **Ir a ingresar**; the second one works.
+
+**ACC-11 · The owner changes a role; the last owner keeps theirs**
+Smoke: `e2e/users.spec.ts`.
+Luis's row › **Cambiar rol** › `Contador` › **Cambiar rol**; then the owner's own row › `Facturación`.
+**Expected:** "Luis Gómez ahora tiene el rol Contador." and the row says `Contador`; for the owner, the modal shows
+"La empresa debe tener al menos un administrador activo." and nothing changes.
+
+**ACC-12 · The Usuarios tab and its modals on a tablet and in both themes**
+At 1024×768 and 768×1024, Tema `Claro` and `Oscuro`: the Usuarios tab with an active, an invited and a deactivated
+user, the invite modal, Cambiar rol and the deactivation confirmation; the three public pages (`/invitacion`,
+`/recuperar-contrasena`, `/restablecer-contrasena`).
+**Expected:** nothing overflows sideways; the legend explains the invited and deactivated tints, and each tinted row
+also says its status to a screen reader (title on hover); the two invite buttons wrap under the intro rather than
+squeeze it; the public pages look like the sign-in page.
+
+**ACC-13 · A deactivated user is signed out and cannot sign in; reactivated, they can**
+Smoke: `e2e/users.spec.ts`.
+With Luis signed in on another browser, the owner › Luis's row › **Desactivar** › confirm; Luis reloads; Luis tries
+to sign in; the owner › **Reactivar**; Luis signs in.
+**Expected:** "Luis Gómez ya no puede ingresar. Su sesión se cerró."; Luis's browser shows the sign-in page, and
+signing in says "Correo o contraseña incorrectos."; after "Luis Gómez puede ingresar de nuevo." he signs in.
+
+**ACC-14 · A changed role takes effect at once**
+With Luis (`Facturación`) signed in on another browser, the owner makes him `Contador`; Luis clicks any section.
+**Expected:** Luis's session ends (sign-in page); signed in again, his sidebar says `Contador` and the menu shows
+Configuración. Nothing in Luis's open tab keeps working with the old role.
+
+**ACC-15 · A forgotten password is reset by e-mail, and every other session ends**
+Smoke: `e2e/users.spec.ts`.
+Signed in as the owner in one browser; in another, `/ingresar` › **¿Olvidaste tu contraseña?** › the owner's e-mail
+› **Enviar enlace**; open the e-mail "Restablece tu contraseña de Mustang" › Contraseña nueva `una clave nueva y
+larga` › **Guardar y entrar**; then go back to the first browser and open any section.
+**Expected:** "Si … tiene una cuenta en Mustang, te llegará un correo…"; the link opens "Elige una contraseña
+nueva"; saving lands on the Tablero, signed in; the first browser shows the sign-in page, and the old password is
+refused there.
+
+**ACC-16 · A reset link works once; an unknown e-mail gets the same answer**
+Smoke: `e2e/users.spec.ts`.
+**¿Olvidaste tu contraseña?** with `nadie@demo.test`; then reset the owner's password and open the same link again.
+**Expected:** the same message for the unknown e-mail (and no e-mail in Mailpit); the used link shows "Este enlace ya
+no sirve" with **Pedir otro enlace**, which opens the request page.
+
+**ACC-17 · The two e-mails read well**
+In Mailpit, the invitation and the password-reset e-mails, HTML and text parts.
+**Expected:** Spanish, no raw template text; the invitation names the company, who invites, the role and the expiry
+date (`DD/MM/YYYY`); the reset says the link lasts one hour and that other sessions will close; the button and the
+plain link both open this stack's address with the token after `#`. A reset link opened after an hour shows "Este
+enlace ya no sirve" (PHPUnit `PasswordResetApiTest` proves the hour with the clock).
+
+**ACC-18 · A session idle for two hours ends**
+PHPUnit `SessionExpiryTest` proves the rule with the clock. By hand: sign in, leave the tab alone for two hours, then
+click Terceros.
+**Expected:** the sign-in page; after signing in, the app works again. A tab used at least once every two hours stays
+signed in.
+
+**ACC-19 · Only the owner manages users**
+Smoke: `e2e/users.spec.ts`.
+Signed in as a billing user, `GET /api/v1/users`; as the accountant, Configuración › Usuarios.
+**Expected:** 403 for the billing user (who has no Configuración in the menu); the accountant reads "Solo el
+administrador de la empresa gestiona los usuarios." and no list.
+
 **ACC-90 · The layout on a tablet and in both themes**
 At 1024×768 and at 768×1024, and with Tema `Claro` and `Oscuro`: sign-in, sign-up, the Tablero and Configuración.
 **Expected:** nothing overflows sideways; below 1024px the menu is a drawer that opens with ☰ and closes on Escape,

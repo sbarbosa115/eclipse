@@ -39,7 +39,17 @@ class AccessToken
         $this->id = Uuid::v7();
     }
 
-    public static function hash(string $token): string
+    /**
+     * A new link for the user, valid for `$lifetime` from `$now`.
+     *
+     * @param string $token the secret the e-mail carries; only its hash is kept
+     */
+    public static function issue(Uuid $userId, TokenPurpose $purpose, #[\SensitiveParameter] string $token, \DateTimeImmutable $now, \DateInterval $lifetime): self
+    {
+        return new self($userId, $purpose, self::hash($token), $now->add($lifetime), $now);
+    }
+
+    public static function hash(#[\SensitiveParameter] string $token): string
     {
         return hash('sha256', $token);
     }
@@ -49,9 +59,15 @@ class AccessToken
         return null === $this->usedAt && $now < $this->expiresAt;
     }
 
+    /** Spent: by the person who followed it, or because a newer link replaced it. */
     public function use(\DateTimeImmutable $at): void
     {
-        $this->usedAt = $at;
+        $this->usedAt ??= $at;
+    }
+
+    public function tokenHash(): string
+    {
+        return $this->tokenHash;
     }
 
     public function id(): Uuid

@@ -2,6 +2,7 @@
 
 namespace App\Access\Domain\Model;
 
+use App\Access\Domain\Error\NotAnInvitation;
 use App\Shared\Domain\Model\CompanyOwned;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -74,6 +75,46 @@ class User implements CompanyOwned
     public function signedIn(\DateTimeImmutable $at): void
     {
         $this->lastSignInAt = $at;
+    }
+
+    /** The invitee chose their name and password from the invitation link: they may sign in from now on. */
+    public function acceptInvitation(string $name, string $passwordHash): void
+    {
+        if (UserStatus::Invited !== $this->status) {
+            throw new NotAnInvitation();
+        }
+        $this->name = trim($name);
+        $this->passwordHash = $passwordHash;
+        $this->status = UserStatus::Active;
+    }
+
+    /** A new password (from a reset link): the old one, and every session signed in with it, no longer works. */
+    public function changePassword(string $passwordHash): void
+    {
+        $this->passwordHash = $passwordHash;
+    }
+
+    /** The last active owner is never demoted: the use case checks it, it needs the other users. */
+    public function changeRole(Role $role): void
+    {
+        $this->role = $role;
+    }
+
+    /** May not sign in any more; the session they have ends on its next request (the user provider refuses them). */
+    public function deactivate(): void
+    {
+        $this->status = UserStatus::Deactivated;
+    }
+
+    /** Back as they were: active with their password, or still invited if they never accepted. */
+    public function reactivate(): void
+    {
+        $this->status = null === $this->passwordHash ? UserStatus::Invited : UserStatus::Active;
+    }
+
+    public function isActiveOwner(): bool
+    {
+        return Role::Owner === $this->role && UserStatus::Active === $this->status;
     }
 
     public function id(): Uuid

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="es">
+<body style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+  <p>Hola:</p>
+  <p><strong>{{ inviter_name }}</strong> te invita a llevar las cuentas de <strong>{{ company_name }}</strong> en Mustang, con el rol <strong>{{ role }}</strong>.</p>
+  <p>Para aceptar, escribe tu nombre y elige una contraseña:</p>
+  <p><a href="{{ link }}" style="display: inline-block; padding: 10px 18px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 6px;">Aceptar la invitación</a></p>
+  <p style="font-size: 13px; color: #6b7280;">Si el botón no funciona, copia este enlace en tu navegador:<br>{{ link }}</p>
+  <p style="font-size: 13px; color: #6b7280;">El enlace sirve una sola vez y vence el {{ expires_on }}. Si no esperabas esta invitación, ignora este correo.</p>
+  <p style="font-size: 13px; color: #6b7280;">Mustang · Contabilidad en la nube</p>
+</body>
+</html>

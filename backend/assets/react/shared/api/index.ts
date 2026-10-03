@@ -1,2 +1,10 @@
-export {API_BASE, ApiError, apiDelete, apiGet, apiPost, apiPut} from './http';
+export {
+  API_BASE,
+  ApiError,
+  SIGNED_OUT_EVENT,
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPut,
+} from './http';
 export type {Schema} from './schema';

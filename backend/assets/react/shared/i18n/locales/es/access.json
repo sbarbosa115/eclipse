@@ -1,1 +1,115 @@
-{}
+{
+  "roles": {
+    "owner": "Administrador",
+    "billing": "Facturación",
+    "accountant": "Contador"
+  },
+  "roleHints": {
+    "owner": "Todo, incluidos la empresa, los usuarios y la contabilidad.",
+    "billing": "Terceros, productos, cotizaciones, facturas, recibos y pagos.",
+    "accountant": "Plan de cuentas, impuestos, reglas contables, fecha de bloqueo y reportes; consulta los documentos sin emitirlos."
+  },
+  "status": {
+    "active": "Activo",
+    "invited": "Invitado",
+    "deactivated": "Desactivado"
+  },
+  "users": {
+    "intro": "Quién entra a tu empresa y qué puede hacer. Invita a tu equipo y a tu contador por correo.",
+    "ownerOnly": "Solo el administrador de la empresa gestiona los usuarios.",
+    "invite": "Invitar usuario",
+    "inviteAccountant": "Invitar a tu contador",
+    "you": "Tú",
+    "noName": "Sin nombre aún",
+    "never": "Nunca",
+    "invitationUntil": "Invitación vigente hasta el {{date}}",
+    "invitationExpired": "La invitación venció: reenvíala",
+    "empty": "Aún no hay usuarios.",
+    "filteredEmpty": "Ningún usuario coincide con el filtro.",
+    "columns": {
+      "name": "Nombre",
+      "email": "Correo",
+      "role": "Rol",
+      "lastSignIn": "Último ingreso"
+    },
+    "filters": {
+      "status": "Estado",
+      "all": "Todos"
+    },
+    "actions": {
+      "changeRole": "Cambiar rol",
+      "resend": "Reenviar invitación",
+      "deactivate": "Desactivar",
+      "reactivate": "Reactivar"
+    },
+    "notice": {
+      "invited": "Enviamos la invitación a {{email}}.",
+      "resent": "Enviamos de nuevo la invitación a {{email}}. El enlace anterior ya no sirve.",
+      "roleChanged": "{{name}} ahora tiene el rol {{role}}.",
+      "deactivated": "{{name}} ya no puede ingresar. Su sesión se cerró.",
+      "reactivated": "{{name}} puede ingresar de nuevo."
+    },
+    "changeRole": {
+      "title": "Cambiar el rol de {{name}}",
+      "role": "Rol",
+      "submit": "Cambiar rol",
+      "signsOut": "Su sesión abierta se cerrará y entrará de nuevo con el rol nuevo."
+    },
+    "confirmDeactivate": {
+      "title": "Desactivar a {{name}}",
+      "body": "No podrá ingresar y su sesión abierta se cerrará. Lo que hizo sigue a su nombre. Puedes reactivarlo cuando quieras."
+    },
+    "errors": {
+      "last_owner": "La empresa debe tener al menos un administrador activo.",
+      "cannot_deactivate_yourself": "No puedes desactivarte a ti mismo.",
+      "not_an_invitation": "Esta persona ya aceptó la invitación.",
+      "user_not_found": "Este usuario ya no existe.",
+      "forbidden": "Solo el administrador gestiona los usuarios."
+    }
+  },
+  "invite": {
+    "title": "Invitar usuario",
+    "titleAccountant": "Invitar a tu contador",
+    "intro": "Le enviaremos un correo con un enlace para que elija su contraseña. El enlace sirve una vez y vence en 7 días.",
+    "email": "Correo electrónico",
+    "role": "Rol",
+    "submit": "Enviar invitación"
+  },
+  "acceptInvitation": {
+    "documentTitle": "Aceptar invitación · Mustang",
+    "title": "Únete a {{company}}",
+    "intro": "Te invitaron como {{role}} con el correo {{email}}. Escribe tu nombre y elige una contraseña.",
+    "name": "Tu nombre",
+    "password": "Contraseña",
+    "passwordHint": "Mínimo 10 caracteres.",
+    "submit": "Entrar a la empresa",
+    "invalidTitle": "Este enlace ya no sirve",
+    "invalid": "La invitación venció o ya se usó. Pide a quien te invitó que te la envíe de nuevo.",
+    "goToSignIn": "Ir a ingresar"
+  },
+  "forgotPassword": {
+    "documentTitle": "Recuperar contraseña · Mustang",
+    "title": "¿Olvidaste tu contraseña?",
+    "intro": "Escribe el correo con el que ingresas y te enviaremos un enlace para elegir una nueva.",
+    "email": "Correo electrónico",
+    "submit": "Enviar enlace",
+    "sent": "Si {{email}} tiene una cuenta en Mustang, te llegará un correo con un enlace. El enlace vence en una hora.",
+    "backToSignIn": "Volver a ingresar"
+  },
+  "resetPassword": {
+    "documentTitle": "Nueva contraseña · Mustang",
+    "title": "Elige una contraseña nueva",
+    "intro": "Al guardarla, se cerrarán tus otras sesiones abiertas.",
+    "password": "Contraseña nueva",
+    "passwordHint": "Mínimo 10 caracteres.",
+    "submit": "Guardar y entrar",
+    "invalidTitle": "Este enlace ya no sirve",
+    "invalid": "El enlace venció o ya se usó. Pide uno nuevo.",
+    "requestAgain": "Pedir otro enlace"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio.",
+    "email": "Escribe un correo válido.",
+    "passwordLength": "La contraseña debe tener al menos 10 caracteres."
+  }
+}
