@@ -92,6 +92,114 @@ on the backdrop and after choosing a section.
 
 <!-- Owned by item 2 "company" (CO-01 – 19). -->
 
+Configuración › **Empresa** (`/configuracion?tab=company`) and **Resolución** (`?tab=resolution`). The owner edits; the
+accountant and billing read. CO-10 (the other roles) needs the Usuarios tab (item "access"); CO-18 and CO-19 need
+emitted sales invoices (item "sales-invoice"): they are run by hand once those are merged.
+
+**CO-01 · The profile shows what the sign-up gave, with its DV**
+Smoke: `e2e/company.spec.ts`.
+Sign up a company › Configuración › **Empresa**.
+**Expected:** Razón social and NIT as typed at sign-up, Tipo de documento `NIT`, a DV of one digit; no console errors.
+
+**CO-02 · The owner edits the profile and it is kept**
+Smoke: `e2e/company.spec.ts`.
+Change Razón social, Nombre comercial, Dirección, Ciudad, Teléfono, Correo › **Guardar cambios** › reload.
+**Expected:** "Guardamos los datos de la empresa."; after the reload every field shows what was saved.
+
+**CO-03 · The DV is computed when empty and may be typed**
+Smoke: `e2e/company.spec.ts`.
+Empty the DV › **Guardar cambios**; then type `5` › **Guardar cambios**.
+**Expected:** the first save fills the DV with the DIAN's digit; the second keeps `5`.
+
+**CO-04 · A NIT another company has is refused**
+Smoke: `e2e/company.spec.ts`.
+In company B, type company A's NIT › **Guardar cambios**.
+**Expected:** "Ya hay una empresa registrada con este NIT." under the field; nothing is saved. Saving B's own NIT again is fine.
+
+**CO-05 · A document type without a DV hides it**
+Smoke: `e2e/company.spec.ts`.
+Tipo de documento `Cédula de ciudadanía`, then `NIT`.
+**Expected:** the DV field disappears for the cédula and comes back for the NIT.
+
+**CO-06 · Régimen and responsabilidades fiscales are kept**
+Smoke: `e2e/company.spec.ts`.
+Régimen `Régimen simple de tributación`, tick O-13 and O-15 › **Guardar cambios** › reload.
+**Expected:** the same choices after the reload; O-23 stays unticked.
+
+**CO-07 · Default taxes come from the active taxes of their class**
+Smoke: `e2e/company.spec.ts`.
+Open the two Impuestos por defecto lists; choose `IVA 5 %` and `ReteFuente servicios 4 %` › **Guardar cambios** › reload. In
+Impuestos deactivate the one chosen as default and come back.
+**Expected:** Impuesto cargo offers IVA/impoconsumo only and Impuesto de retención offers retenciones only; the choices
+are kept; a deactivated default is still shown as the current choice, but a deactivated tax is not offered when none is chosen.
+
+**CO-08 · The logo is uploaded, replaced and removed**
+Smoke: `e2e/company.spec.ts`.
+**Subir logo** › a PNG; **Cambiar logo** › another; **Quitar logo**.
+**Expected:** "Guardamos el logo." and the image shows (and loads from `/api/v1/company/logo`); the replacement shows the
+new one; "Quitamos el logo." and "Todavía no has subido un logo."; no console errors.
+
+**CO-09 · The logo must be a PNG or JPEG of 2 MB at most, judged by its content**
+Smoke: `e2e/company.spec.ts`.
+Try an SVG, a PNG over 2 MB, and a text file renamed `logo.png`.
+**Expected:** "El logo debe ser una imagen PNG o JPG." for the SVG and the renamed file (the latter is refused by the
+server), "El logo pesa más de 2 MB." for the big one; no logo is saved.
+
+**CO-10 · The accountant and billing read, only the owner writes** *(by hand)*
+Sign in as an accountant, then as billing › Empresa and Resolución.
+**Expected:** every field is disabled, there is no Guardar, Subir logo or Editar, "Solo el propietario puede cambiar…" is
+shown; the resolution's warning is still visible. In the API a PUT answers 403.
+
+**CO-11 · The owner sets the resolution up and sees it in force**
+Smoke: `e2e/company.spec.ts`.
+Resolución › número `18760000001`, prefijo `SETP`, desde `1`, hasta `1000`, fechas of today ± months › **Crear resolución**.
+**Expected:** "Creamos la resolución."; the banner reads "Tu resolución está vigente. Te quedan 1000 números y … días."; the
+Consecutivo actual is `1`; it is still there after a reload.
+
+**CO-12 · The resolution form explains what is wrong**
+Smoke: `e2e/company.spec.ts`.
+**Crear resolución** empty; then hasta `10` below desde `500`; then a Fecha de fin before the start.
+**Expected:** "Este dato es obligatorio." on the empty fields; Hasta and Fecha de fin are marked invalid; nothing is saved.
+
+**CO-13 · Manual mode waits for the owner to confirm the DIAN permission**
+Smoke: `e2e/company.spec.ts`.
+Modalidad: `Manual` is disabled › **Confirmar permiso de la DIAN** › **Confirmo que la empresa tiene el permiso** › choose
+`Manual (talonario)` › **Crear resolución**.
+**Expected:** the modal explains that sales invoices are electronic by law; after confirming, Manual is selectable and
+the date of the confirmation is shown; the resolution is saved as manual. The confirmation is in the audit log.
+
+**CO-14 · The owner is warned when few numbers are left**
+Smoke: `e2e/company.spec.ts`.
+Create a resolution with desde `1`, hasta `50`.
+**Expected:** a yellow warning "Tu resolución se está agotando: te quedan 50 números y … días…" at the top of the tab.
+
+**CO-15 · The warning thresholds are editable**
+Smoke: `e2e/company.spec.ts`.
+In CO-14's company set Avisar con menos de `10` números and `5` días › **Guardar avisos**.
+**Expected:** "Guardamos los avisos."; the yellow warning gives way to the green "Tu resolución está vigente…".
+
+**CO-16 · An expired resolution is shown as blocking**
+Smoke: `e2e/company.spec.ts`.
+Create a resolution whose Fecha de fin was yesterday.
+**Expected:** a red banner "Tu resolución venció: no puedes emitir facturas de venta hasta que la actualices."; a resolution
+whose Fecha de inicio is in the future reads "todavía no está vigente: empieza el …".
+
+**CO-17 · The internal numbering is edited and never goes back**
+Smoke: `e2e/company.spec.ts`.
+Numeración interna › Recibo de caja › **Editar** › prefijo `rcb`, próximo número `250` › **Guardar**; edit again with `100`.
+**Expected:** the row reads `RCB` and `250`; the second edit shows "El próximo número no puede ser menor que 250, el actual."
+and changes nothing. The journal's own series is not listed.
+
+**CO-18 · Once invoices are numbered, desde and the prefix are locked** *(by hand, after "sales-invoice" is merged)*
+Emit a factura de venta, then open Resolución.
+**Expected:** Prefijo and Desde are disabled with the explanation; Hasta can grow but a value below the last number used
+is refused (422 on Hasta); the Consecutivo actual is the next number.
+
+**CO-19 · Emission is refused outside the resolution** *(by hand, after "sales-invoice" is merged)*
+Emit with a fecha before the resolution's start or after its end; then set hasta equal to the last number used and emit again.
+**Expected:** the first is refused with `resolution_inactive`, the second with `resolution_exhausted`; in both the
+invoice stays a draft and no number or internal consecutive was consumed.
+
 ## 3. Ledger: chart, posting rules, libro diario, balance de prueba
 
 <!-- Owned by item 3 "ledger" (LED-01 – 29). -->

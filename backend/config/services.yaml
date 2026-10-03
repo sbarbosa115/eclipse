@@ -38,8 +38,7 @@ services:
         tag: app.company_provisioner
         default_priority_method: getPriority
 
-  # Replaced by the "company" item.
-  App\Company\Application\Numbering\SalesInvoiceNumbering: '@App\Company\Application\Numbering\UnimplementedSalesInvoiceNumbering'
+  App\Company\Application\Numbering\SalesInvoiceNumbering: '@App\Company\Application\Numbering\ResolutionSalesInvoiceNumbering'
 
   # Documents' emit and void handlers post through it; public so the ledger's tests reach the real one.
   App\Ledger\Application\Posting\JournalPoster:

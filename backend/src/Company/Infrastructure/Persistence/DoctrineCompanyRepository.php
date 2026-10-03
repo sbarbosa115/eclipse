@@ -19,9 +19,15 @@ final class DoctrineCompanyRepository implements CompanyRepository
         return $this->em->find(Company::class, $id) ?? throw new CompanyNotFound();
     }
 
-    public function identificationTaken(string $identificationNumber): bool
+    public function identificationTaken(string $identificationNumber, ?Uuid $except = null): bool
     {
-        return null !== $this->em->getRepository(Company::class)->findOneBy(['identificationNumber' => $identificationNumber]);
+        foreach ($this->em->getRepository(Company::class)->findBy(['identificationNumber' => $identificationNumber]) as $company) {
+            if (!$company->id()->equals($except)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function add(Company $company): void

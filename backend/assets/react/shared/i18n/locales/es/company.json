@@ -1,1 +1,161 @@
-{}
+{
+  "intro": "Los datos de tu empresa aparecen en las facturas, cotizaciones y recibos que emites. Solo el propietario puede cambiarlos.",
+  "readOnly": "Solo el propietario puede cambiar los datos de la empresa.",
+  "sections": {
+    "identity": "Identificación",
+    "contact": "Contacto",
+    "logo": "Logo",
+    "fiscal": "Información fiscal",
+    "defaultTaxes": "Impuestos por defecto"
+  },
+  "fields": {
+    "legalName": "Razón social",
+    "tradeName": "Nombre comercial",
+    "identificationType": "Tipo de documento",
+    "identificationNumber": "Número de identificación",
+    "checkDigit": "DV",
+    "address": "Dirección",
+    "city": "Ciudad",
+    "phone": "Teléfono",
+    "email": "Correo electrónico",
+    "vatRegime": "Régimen de IVA",
+    "responsibilities": "Responsabilidades fiscales",
+    "defaultChargeTax": "Impuesto cargo",
+    "defaultWithholdingTax": "Impuesto de retención"
+  },
+  "hints": {
+    "checkDigit": "Si lo dejas vacío, se calcula.",
+    "responsibilities": "Las del RUT de la empresa.",
+    "defaultTaxes": "Se preseleccionan en los productos y líneas nuevos."
+  },
+  "identificationTypes": {
+    "nit": "NIT",
+    "cc": "Cédula de ciudadanía",
+    "ce": "Cédula de extranjería",
+    "te": "Tarjeta de extranjería",
+    "ti": "Tarjeta de identidad",
+    "rc": "Registro civil",
+    "pasaporte": "Pasaporte",
+    "die": "Documento de identificación extranjero",
+    "pep": "Permiso especial de permanencia",
+    "nit_extranjero": "NIT de otro país",
+    "nuip": "NUIP",
+    "ppt": "Permiso por protección temporal"
+  },
+  "vatRegimes": {
+    "responsable": "Responsable de IVA",
+    "no_responsable": "No responsable de IVA",
+    "simple": "Régimen simple de tributación"
+  },
+  "responsibilitiesList": {
+    "O-13": "O-13 Gran contribuyente",
+    "O-15": "O-15 Autorretenedor",
+    "O-23": "O-23 Agente de retención de IVA",
+    "O-47": "O-47 Régimen simple de tributación",
+    "R-99-PN": "R-99-PN No aplica – Otros"
+  },
+  "noTax": "Sin impuesto por defecto",
+  "logo": {
+    "none": "Todavía no has subido un logo.",
+    "alt": "Logo de la empresa",
+    "hint": "PNG o JPG, de máximo 2 MB.",
+    "choose": "Elegir archivo",
+    "upload": "Subir logo",
+    "replace": "Cambiar logo",
+    "remove": "Quitar logo"
+  },
+  "save": "Guardar cambios",
+  "notice": {
+    "saved": "Guardamos los datos de la empresa.",
+    "logoSaved": "Guardamos el logo.",
+    "logoRemoved": "Quitamos el logo."
+  },
+  "errors": {
+    "forbidden": "Solo el propietario puede cambiar los datos de la empresa.",
+    "logo_unsupported": "El logo debe ser una imagen PNG o JPG.",
+    "logo_too_large": "El logo pesa más de 2 MB.",
+    "required": "Este dato es obligatorio.",
+    "pickTax": "Elige un impuesto de la lista."
+  },
+  "resolution": {
+    "intro": "La resolución de facturación es la autorización de la DIAN para numerar tus facturas de venta. Solo puedes tener una.",
+    "readOnly": "Solo el propietario puede cambiar la resolución.",
+    "status": {
+      "missing": "Todavía no has configurado tu resolución de facturación: no podrás emitir facturas de venta.",
+      "not_yet_valid": "Tu resolución todavía no está vigente: empieza el {{date}}.",
+      "active": "Tu resolución está vigente. Te quedan {{numbers}} números y {{days}} días.",
+      "expired": "Tu resolución venció: no puedes emitir facturas de venta hasta que la actualices.",
+      "exhausted": "Se acabaron los números de tu resolución: no puedes emitir facturas de venta hasta que la actualices."
+    },
+    "warning": "Tu resolución se está agotando: te quedan {{numbers}} números y {{days}} días. Pide una nueva a la DIAN antes de que se acabe.",
+    "sections": {
+      "resolution": "Resolución de facturación",
+      "warnings": "Avisos",
+      "numbering": "Numeración interna"
+    },
+    "fields": {
+      "resolutionNumber": "Número de resolución",
+      "prefix": "Prefijo",
+      "rangeFrom": "Desde",
+      "rangeTo": "Hasta",
+      "validFrom": "Fecha de inicio",
+      "validTo": "Fecha de fin",
+      "mode": "Modalidad",
+      "nextNumber": "Consecutivo actual"
+    },
+    "modes": {
+      "electronic": "Electrónica",
+      "manual": "Manual (talonario)"
+    },
+    "hints": {
+      "locked": "Ya hay facturas numeradas con esta resolución: el prefijo y el número inicial no se pueden cambiar, y el número final no puede ser menor que el último usado.",
+      "manualLocked": "La modalidad manual solo está disponible cuando el propietario confirma que la empresa tiene el permiso de la DIAN."
+    },
+    "manual": {
+      "confirmedAt": "Permiso de facturación manual confirmado el {{date}}.",
+      "button": "Confirmar permiso de la DIAN",
+      "title": "Facturación manual",
+      "body": "Por ley las facturas de venta son electrónicas. Solo confirma si la empresa tiene la autorización de la DIAN para facturar de forma manual. Esta confirmación queda registrada.",
+      "confirm": "Confirmo que la empresa tiene el permiso"
+    },
+    "save": "Guardar resolución",
+    "create": "Crear resolución",
+    "warnings": {
+      "intro": "Te avisamos cuando queden menos de estos números o estos días.",
+      "numbers": "Avisar con menos de (números)",
+      "days": "Avisar con menos de (días)",
+      "save": "Guardar avisos"
+    },
+    "notice": {
+      "created": "Creamos la resolución.",
+      "saved": "Guardamos la resolución.",
+      "warningsSaved": "Guardamos los avisos.",
+      "manualConfirmed": "Registramos la confirmación del permiso de la DIAN."
+    },
+    "errors": {
+      "forbidden": "Solo el propietario puede cambiar la resolución.",
+      "resolution_exists": "La empresa ya tiene una resolución: edítala.",
+      "resolution_not_found": "La empresa todavía no tiene una resolución.",
+      "invalid": "Revisa los datos marcados."
+    }
+  },
+  "numbering": {
+    "intro": "El prefijo y el próximo número de los documentos que no usan la resolución. El próximo número nunca puede ser menor que el actual.",
+    "columns": {
+      "document": "Documento",
+      "prefix": "Prefijo",
+      "next": "Próximo número"
+    },
+    "kinds": {
+      "quotation": "Cotización",
+      "cash_receipt": "Recibo de caja",
+      "purchase_invoice": "Factura de compra",
+      "supplier_payment": "Recibo de pago",
+      "sales_invoice_internal": "Factura de venta (consecutivo interno)"
+    },
+    "edit": "Editar",
+    "editTitle": "Numeración: {{kind}}",
+    "saved": "Guardamos la numeración.",
+    "minimum": "El próximo número no puede ser menor que {{number}}, el actual."
+  }
+}

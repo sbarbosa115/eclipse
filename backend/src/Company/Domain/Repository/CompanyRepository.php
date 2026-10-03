@@ -10,7 +10,8 @@ interface CompanyRepository
     /** @throws \App\Company\Domain\Error\CompanyNotFound */
     public function get(Uuid $id): Company;
 
-    public function identificationTaken(string $identificationNumber): bool;
+    /** Whether another company (not $except) is registered under this identification number. */
+    public function identificationTaken(string $identificationNumber, ?Uuid $except = null): bool;
 
     public function add(Company $company): void;
 }

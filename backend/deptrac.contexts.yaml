@@ -115,8 +115,9 @@ deptrac:
     # Signing up creates the company (Company) and the session shows its name.
     Access: [Shared, AccessApi, CompanyApi]
     AccessApi: [Shared, Access, CompanyApi]
-    Company: [Shared, CompanyApi]
-    CompanyApi: [Shared, Company]
+    # The company's default taxes are chosen among the ledger's taxes (LedgerCatalog).
+    Company: [Shared, CompanyApi, LedgerApi]
+    CompanyApi: [Shared, Company, LedgerApi]
     # Journal entries are numbered by the company's series (Company numbering). The poster's adapter reads a tercero's
     # own receivable/payable account (Party's TerceroDirectory, §4.2): Infrastructure only, the Application names a port.
     Ledger: [Shared, LedgerApi, CompanyApi, PartyApi]
