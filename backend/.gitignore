@@ -32,3 +32,4 @@ yarn-error.log
 /public/build/
 /e2e/.results/
 /.env.dev.local
+/.deptrac.cache
