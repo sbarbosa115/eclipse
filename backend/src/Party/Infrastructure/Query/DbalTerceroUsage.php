@@ -37,10 +37,10 @@ final class DbalTerceroUsage implements TerceroUsage
     /** @return list<string> */
     private function tables(): array
     {
-        return $this->tables ??= array_values(array_map('strval', $this->db->fetchFirstColumn(
+        return $this->tables ??= array_map('strval', $this->db->fetchFirstColumn(
             'SELECT t.table_name FROM information_schema.columns t
              JOIN information_schema.columns c ON c.table_schema = t.table_schema AND c.table_name = t.table_name AND c.column_name = \'company_id\'
              WHERE t.table_schema = DATABASE() AND t.column_name = \'tercero_id\' AND t.table_name NOT IN (\'tercero\', \'tercero_contact\')',
-        )));
+        ));
     }
 }

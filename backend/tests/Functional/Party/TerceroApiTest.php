@@ -21,7 +21,11 @@ final class TerceroApiTest extends ApiTestCase
 
     private const NIT = '800197268';
 
-    /** @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $override
+     *
+     * @return array<string, mixed>
+     */
     private function payload(array $override = []): array
     {
         return $override + [
@@ -45,7 +49,11 @@ final class TerceroApiTest extends ApiTestCase
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $override
+     *
+     * @return array<string, mixed>
+     */
     private function create(array $override = []): array
     {
         $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload($override));
@@ -54,6 +62,7 @@ final class TerceroApiTest extends ApiTestCase
         return $body;
     }
 
+    /** @param array<mixed> $session */
     private function companyId(array $session): Uuid
     {
         return Uuid::fromString($session['company_id']);
@@ -267,7 +276,7 @@ final class TerceroApiTest extends ApiTestCase
         self::assertSame(['Distribuciones Andina S.A.S.'], array_column($this->getJson('/api/v1/terceros?q=andina')['items'], 'display_name'), 'Part of the name matches.');
         self::assertSame(['Distribuciones Andina S.A.S.'], array_column($this->getJson('/api/v1/terceros?q=800.197')['items'], 'display_name'), 'Part of the identification matches, punctuation aside.');
         self::assertSame(['Banco 100% Fiable'], array_column($this->getJson('/api/v1/terceros?q='.urlencode('100%'))['items'], 'display_name'));
-        self::assertSame([], $this->getJson('/api/v1/terceros?q='.urlencode('%'.'Eco'))['items'] ?? [], 'A percent sign is not a wildcard.');
+        self::assertSame([], $this->getJson('/api/v1/terceros?q='.urlencode('%Eco'))['items'] ?? [], 'A percent sign is not a wildcard.');
         self::assertSame(0, $this->getJson('/api/v1/terceros?q='.urlencode('A_dina'))['total'], 'An underscore is not a wildcard.');
         self::assertSame(['Banco 100% Fiable'], array_column($this->getJson('/api/v1/terceros?role=otro')['items'], 'display_name'));
         self::assertSame(['Distribuciones Andina S.A.S.', 'Ecopetrol'], array_column($this->getJson('/api/v1/terceros?role=proveedor')['items'], 'display_name'));

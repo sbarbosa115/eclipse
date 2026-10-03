@@ -32,10 +32,10 @@ final readonly class TerceroProfile
     public array $phones;
 
     /**
-     * @param list<string>                                                                    $roles
-     * @param list<FiscalResponsibility>                                                      $fiscalResponsibilities
-     * @param list<array{indicative?: ?string, number: string, extension?: ?string}>          $phones
-     * @param list<ContactDraft>                                                              $contacts
+     * @param list<string>                                                           $roles
+     * @param list<FiscalResponsibility>                                             $fiscalResponsibilities
+     * @param list<array{indicative?: ?string, number: string, extension?: ?string}> $phones
+     * @param list<ContactDraft>                                                     $contacts
      */
     public function __construct(
         public PersonType $personType,

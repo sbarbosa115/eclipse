@@ -131,7 +131,7 @@
         },
         "/api/v1/terceros": {
             "get": {
-                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1, ?page, ?per_page \u2264 100.",
+                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page \u2264 100.",
                 "operationId": "get_app_party_ui_http_tercero_list",
                 "responses": {
                     "200": {
@@ -168,11 +168,28 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "summary": "The full form: creates the tercero (datos b\u00e1sicos, facturaci\u00f3n y env\u00edo, responsabilidades, contactos, cuentas).",
+                "description": "422 `duplicate_identification` (violation on `identification_number`) when tipo + n\u00famero + sucursal exist.",
+                "operationId": "post_app_party_ui_http_tercero_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroOutput"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/terceros/quick": {
             "post": {
-                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email?, roles: [cliente|proveedor|\u2026]} \u2192 201.",
+                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|\u2026]} \u2192 201.",
                 "operationId": "post_app_party_ui_http_tercero_quickcreate",
                 "responses": {
                     "201": {
@@ -220,6 +237,190 @@
                                         }
                                     },
                                     "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/{id}": {
+            "get": {
+                "summary": "One tercero with everything on its form.",
+                "operationId": "get_app_party_ui_http_tercero_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Replaces the tercero's data (the whole form is sent). Contacts with an `id` are kept, the ones left out are\nremoved. 422 `duplicate_identification`; 422 `tercero_erased` once its personal data was erased.",
+                "operationId": "put_app_party_ui_http_tercero_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes a tercero no document references; 409 `tercero_in_use` otherwise (deactivate it instead).",
+                "operationId": "delete_app_party_ui_http_tercero_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/{id}/deactivate": {
+            "post": {
+                "summary": "Stops offering the tercero on new documents. Existing documents are untouched.",
+                "operationId": "post_app_party_ui_http_tercero_deactivate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/{id}/reactivate": {
+            "post": {
+                "operationId": "post_app_party_ui_http_tercero_reactivate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/{id}/export": {
+            "get": {
+                "summary": "Ley 1581 de 2012: the tercero's personal data as JSON (served as a download). Leaves an audit-log entry.",
+                "operationId": "get_app_party_ui_http_tercero_export",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroExportOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/{id}/erase": {
+            "post": {
+                "summary": "Ley 1581 de 2012: blanks the tercero's personal data and its contacts and deactivates it; the row stays (its\ndocuments name it), with its identification and `erased_at`. Cannot be undone.",
+                "operationId": "post_app_party_ui_http_tercero_erase",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroOutput"
                                 }
                             }
                         }
@@ -513,7 +714,8 @@
                     "identification_type",
                     "identification_number",
                     "roles",
-                    "active"
+                    "active",
+                    "branch_code"
                 ],
                 "properties": {
                     "id": {
@@ -553,6 +755,51 @@
                     },
                     "active": {
                         "type": "boolean"
+                    },
+                    "branch_code": {
+                        "type": "string"
+                    },
+                    "trade_name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PhoneOutput": {
+                "required": [
+                    "indicative",
+                    "number"
+                ],
+                "properties": {
+                    "indicative": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "extension": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AccountRefOutput": {
+                "required": [
+                    "id",
+                    "code",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -576,6 +823,165 @@
                     "phone": {
                         "type": "string",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "TerceroOutput": {
+                "required": [
+                    "id",
+                    "display_name",
+                    "person_type",
+                    "identification_type",
+                    "identification_number",
+                    "branch_code",
+                    "phones",
+                    "billing_contact_is_payer",
+                    "fiscal_responsibilities",
+                    "roles",
+                    "contacts",
+                    "active",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "person_type": {
+                        "title": "persona or empresa",
+                        "type": "string"
+                    },
+                    "identification_type": {
+                        "title": "cc, nit, ce, pasaporte, \u2026",
+                        "type": "string"
+                    },
+                    "identification_number": {
+                        "type": "string"
+                    },
+                    "check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "branch_code": {
+                        "type": "string"
+                    },
+                    "first_names": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_names": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "trade_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PhoneOutput"
+                        }
+                    },
+                    "billing_contact_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "mobile": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "postal_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "vat_regime": {
+                        "title": "responsable, no_responsable or simple",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "billing_contact_is_payer": {
+                        "type": "boolean"
+                    },
+                    "fiscal_responsibilities": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "receivable_account": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AccountRefOutput"
+                            }
+                        ]
+                    },
+                    "payable_account": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AccountRefOutput"
+                            }
+                        ]
+                    },
+                    "contacts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactOutput"
+                        }
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "erased_at": {
+                        "title": "ISO 8601 date-time when the personal data was erased on request (Ley 1581), else null",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "TerceroExportOutput": {
+                "required": [
+                    "exported_at",
+                    "tercero"
+                ],
+                "properties": {
+                    "exported_at": {
+                        "title": "ISO 8601 date-time of the export",
+                        "type": "string"
+                    },
+                    "tercero": {
+                        "$ref": "#/components/schemas/TerceroOutput"
                     }
                 },
                 "type": "object"

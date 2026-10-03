@@ -134,7 +134,6 @@ class Tercero implements CompanyOwned
         $this->contacts = new ArrayCollection();
     }
 
-
     /** What an erased tercero is called: documents keep the name they copied, the master keeps only this. */
     public const ERASED_NAME = 'Datos suprimidos';
 
