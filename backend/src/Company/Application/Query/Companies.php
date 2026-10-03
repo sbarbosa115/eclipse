@@ -36,6 +36,9 @@ final class Companies
             array_map(static fn (FiscalResponsibility $r) => $r->value, $c->fiscalResponsibilities()),
             $c->defaultChargeTaxId()?->toRfc4122(),
             $c->defaultWithholdingTaxId()?->toRfc4122(),
+            $c->resolutionWarningNumbers(),
+            $c->resolutionWarningDays(),
+            $c->manualInvoicingConfirmedAt()?->format(\DATE_ATOM),
         );
     }
 }

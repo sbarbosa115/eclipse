@@ -33,6 +33,16 @@ final class DoctrineNumberingSeriesRepository implements NumberingSeriesReposito
         return $series;
     }
 
+    public function all(Uuid $companyId): array
+    {
+        /** @var list<NumberingSeries> $rows */
+        $rows = $this->em->getRepository(NumberingSeries::class)->findBy(['companyId' => $companyId]);
+        $order = array_flip(array_map(static fn (SeriesKind $k) => $k->value, SeriesKind::cases()));
+        usort($rows, static fn (NumberingSeries $a, NumberingSeries $b) => $order[$a->kind()->value] <=> $order[$b->kind()->value]);
+
+        return $rows;
+    }
+
     public function add(NumberingSeries $series): void
     {
         $this->em->persist($series);

@@ -40,3 +40,16 @@
 'Choose a postable account of the chart.': 'Elige una cuenta del plan de cuentas que reciba movimientos.'
 'The price is lower than the tax per unit it includes.': 'El precio es menor que el impuesto por unidad que incluye.'
 'Write the price in pesos, with at most four decimals.': 'Escribe el precio en pesos, con máximo cuatro decimales.'
+
+# Company: profile, invoicing resolution, numbering
+'Choose a document type.': 'Elige el tipo de documento.'
+'Numbers go from 1 to 999999999.': 'Los números van de 1 a 999999999.'
+'The prefix has up to ten letters and digits.': 'El prefijo tiene hasta diez letras y números.'
+'Write the resolution number.': 'Escribe el número de resolución.'
+'Numbers start at 1.': 'Los números empiezan en 1.'
+'Hasta cannot be lower than desde.': 'El número final no puede ser menor que el inicial.'
+'Manual invoicing needs the owner to confirm the DIAN permission first.': 'La facturación manual necesita que el propietario confirme primero el permiso de la DIAN.'
+'Desde cannot change once invoices were numbered from this resolution.': 'El número inicial no se puede cambiar una vez que hay facturas numeradas con esta resolución.'
+'The prefix cannot change once invoices were numbered from this resolution.': 'El prefijo no se puede cambiar una vez que hay facturas numeradas con esta resolución.'
+'Hasta cannot be below the last number already used ({{ number }}).': 'El número final no puede ser menor que el último número usado ({{ number }}).'
+'The next number cannot be lower than the current one.': 'El próximo número no puede ser menor que el actual.'

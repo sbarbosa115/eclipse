@@ -26,6 +26,10 @@ final readonly class CompanyView
         public array $fiscalResponsibilities,
         public ?string $defaultChargeTaxId,
         public ?string $defaultWithholdingTaxId,
+        public int $resolutionWarningNumbers = 100,
+        public int $resolutionWarningDays = 30,
+        /** ATOM date-time of the owner's confirmation of the DIAN permission to invoice manually, or null. */
+        public ?string $manualInvoicingConfirmedAt = null,
     ) {
     }
 }

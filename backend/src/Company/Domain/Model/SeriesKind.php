@@ -26,4 +26,10 @@ enum SeriesKind: string
             self::JournalEntry => 'CD',
         };
     }
+
+    /** The journal numbers its own entries: only the document series are the owner's to move. */
+    public function isEditable(): bool
+    {
+        return self::JournalEntry !== $this;
+    }
 }

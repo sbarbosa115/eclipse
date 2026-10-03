@@ -38,6 +38,168 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/company": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's razón social, NIT, address, régimen, responsabilidades fiscales, default taxes and logo. */
+        get: operations["get_app_company_ui_http_company_show"];
+        /**
+         * Changes the profile (owner). The check digit is computed for a NIT when empty. The default taxes must be active
+         *     taxes of their class (cargo / retención); the NIT cannot be another company's.
+         */
+        put: operations["put_app_company_ui_http_company_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The logo's image (every role). 404 `logo_not_found` without one. */
+        get: operations["get_app_company_ui_http_company_logo"];
+        put?: never;
+        /**
+         * Uploads the logo (owner), multipart field `file`: PNG or JPEG judged by its content, 2 MB at most. Replaces the
+         *     previous one.
+         */
+        post: operations["post_app_company_ui_http_company_uploadlogo"];
+        /** Removes the logo (owner): 204. */
+        delete: operations["delete_app_company_ui_http_company_removelogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/numbering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The editable series with their prefix and next number (every role). */
+        get: operations["get_app_company_ui_http_numbering_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/numbering/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Changes a series' prefix and next number (owner). The next number never goes below the current one. 404 for the
+         *     journal's series or an unknown kind.
+         */
+        put: operations["put_app_company_ui_http_numbering_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/resolution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The resolution (null before it exists), its status today and whether manual invoicing was confirmed. */
+        get: operations["get_app_company_ui_http_resolution_show"];
+        /**
+         * Edits the resolution (owner). Once invoices were numbered from it, desde and the prefix cannot change and hasta
+         *     cannot go below the last number used.
+         */
+        put: operations["put_app_company_ui_http_resolution_update"];
+        /**
+         * Sets the resolution up (owner). 409 `resolution_exists` when there is one. Modalidad manual is refused until the
+         *     owner confirmed the DIAN permission.
+         */
+        post: operations["post_app_company_ui_http_resolution_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/resolution/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where the resolution stands today: missing, not_yet_valid, active, expired or exhausted; the numbers and days
+         *     left; `warning` when active but under the company's thresholds.
+         */
+        get: operations["get_app_company_ui_http_resolution_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/resolution/warnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Chooses when to be warned: fewer numbers or fewer days left than these (owner). */
+        put: operations["put_app_company_ui_http_resolution_warnings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/manual-invoicing-confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The owner confirms the company holds the DIAN permission to invoice manually; logged. Only then can a
+         *     resolution be modalidad manual.
+         */
+        post: operations["post_app_company_ui_http_resolution_confirmmanualinvoicing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/taxes": {
         parameters: {
             query?: never;
@@ -572,6 +734,66 @@ export interface components {
             company_nit: string;
             company_check_digit?: string | null;
         };
+        CompanyOutput: {
+            id: string;
+            legal_name: string;
+            trade_name?: string | null;
+            /** nit, cc, ce, pasaporte… (the DIAN's tipos de documento) */
+            identification_type: string;
+            identification_number: string;
+            check_digit?: string | null;
+            address?: string | null;
+            city?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            /** The logo's attachment id; the image itself is GET /company/logo. */
+            logo_id?: string | null;
+            /** responsable, no_responsable or simple */
+            vat_regime: string;
+            /** O-13, O-15, O-23, O-47, R-99-PN */
+            fiscal_responsibilities: string[];
+            default_charge_tax_id?: string | null;
+            default_withholding_tax_id?: string | null;
+        };
+        NumberingSeriesOutput: {
+            /** quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal */
+            kind: string;
+            prefix: string;
+            /** The number the next document takes. */
+            next_number: number;
+        };
+        ResolutionOutput: {
+            id: string;
+            resolution_number: string;
+            prefix: string;
+            range_from: number;
+            range_to: number;
+            valid_from: string;
+            valid_to: string;
+            /** electronic or manual */
+            mode: string;
+            /** The consecutivo actual: the number the next invoice takes. */
+            next_number: number;
+            /** Invoices were numbered from it: desde and the prefix are locked. */
+            has_issued_numbers: boolean;
+        };
+        ResolutionStatusOutput: {
+            /** missing, not_yet_valid, active, expired or exhausted */
+            status: string;
+            numbers_left: number;
+            /** Whole days after today until the last valid day. */
+            days_left: number;
+            /** Active but running out: under the company's thresholds of numbers or days. */
+            warning: boolean;
+            warning_numbers: number;
+            warning_days: number;
+        };
+        ResolutionSettingsOutput: {
+            resolution?: components["schemas"]["ResolutionOutput"] | null;
+            status: components["schemas"]["ResolutionStatusOutput"];
+            /** When the owner confirmed the DIAN permission to invoice manually, or null: modalidad manual is not selectable. */
+            manual_invoicing_confirmed_at?: string | null;
+        };
         TaxOutput: {
             id: string;
             name: string;
@@ -807,6 +1029,264 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_company_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOutput"];
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_company_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_company_logo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_company_ui_http_company_uploadlogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOutput"];
+                };
+            };
+        };
+    };
+    delete_app_company_ui_http_company_removelogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_company_ui_http_numbering_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["NumberingSeriesOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_numbering_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingSeriesOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_resolution_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_resolution_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    post_app_company_ui_http_resolution_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_resolution_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionStatusOutput"];
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_resolution_warnings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    post_app_company_ui_http_resolution_confirmmanualinvoicing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
                 };
             };
         };

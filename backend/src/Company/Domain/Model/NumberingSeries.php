@@ -2,6 +2,7 @@
 
 namespace App\Company\Domain\Model;
 
+use App\Company\Domain\Error\InvalidNumberingSeries;
 use App\Shared\Domain\Model\CompanyOwned;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -36,6 +37,25 @@ class NumberingSeries implements CompanyOwned
     public function take(): int
     {
         return $this->nextNumber++;
+    }
+
+    /**
+     * The owner changes the prefix and where the series goes on from. The next number never goes back: a number
+     * already handed out would be handed out again.
+     *
+     * @throws InvalidNumberingSeries
+     */
+    public function revise(string $prefix, int $nextNumber): void
+    {
+        $prefix = strtoupper($prefix);
+        if (1 !== preg_match('/^[A-Z0-9]{0,10}$/', $prefix)) {
+            throw new InvalidNumberingSeries('prefix', 'The prefix has up to ten letters and digits.');
+        }
+        if ($nextNumber < $this->nextNumber) {
+            throw new InvalidNumberingSeries('next_number', 'The next number cannot be lower than the current one.');
+        }
+        $this->prefix = $prefix;
+        $this->nextNumber = $nextNumber;
     }
 
     public function id(): Uuid

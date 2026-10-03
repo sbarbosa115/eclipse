@@ -42,6 +42,237 @@
                 }
             }
         },
+        "/api/v1/company": {
+            "get": {
+                "summary": "The company's raz\u00f3n social, NIT, address, r\u00e9gimen, responsabilidades fiscales, default taxes and logo.",
+                "operationId": "get_app_company_ui_http_company_show",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompanyOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Changes the profile (owner). The check digit is computed for a NIT when empty. The default taxes must be active\ntaxes of their class (cargo / retenci\u00f3n); the NIT cannot be another company's.",
+                "operationId": "put_app_company_ui_http_company_update",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompanyOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/company/logo": {
+            "get": {
+                "summary": "The logo's image (every role). 404 `logo_not_found` without one.",
+                "operationId": "get_app_company_ui_http_company_logo",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "summary": "Uploads the logo (owner), multipart field `file`: PNG or JPEG judged by its content, 2 MB at most. Replaces the\nprevious one.",
+                "operationId": "post_app_company_ui_http_company_uploadlogo",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompanyOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Removes the logo (owner): 204.",
+                "operationId": "delete_app_company_ui_http_company_removelogo",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/company/numbering": {
+            "get": {
+                "summary": "The editable series with their prefix and next number (every role).",
+                "operationId": "get_app_company_ui_http_numbering_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NumberingSeriesOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/company/numbering/{kind}": {
+            "put": {
+                "summary": "Changes a series' prefix and next number (owner). The next number never goes below the current one. 404 for the\njournal's series or an unknown kind.",
+                "operationId": "put_app_company_ui_http_numbering_update",
+                "parameters": [
+                    {
+                        "name": "kind",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NumberingSeriesOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/company/resolution": {
+            "get": {
+                "summary": "The resolution (null before it exists), its status today and whether manual invoicing was confirmed.",
+                "operationId": "get_app_company_ui_http_resolution_show",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolutionSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Edits the resolution (owner). Once invoices were numbered from it, desde and the prefix cannot change and hasta\ncannot go below the last number used.",
+                "operationId": "put_app_company_ui_http_resolution_update",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolutionSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Sets the resolution up (owner). 409 `resolution_exists` when there is one. Modalidad manual is refused until the\nowner confirmed the DIAN permission.",
+                "operationId": "post_app_company_ui_http_resolution_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolutionSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/company/resolution/status": {
+            "get": {
+                "summary": "Where the resolution stands today: missing, not_yet_valid, active, expired or exhausted; the numbers and days\nleft; `warning` when active but under the company's thresholds.",
+                "operationId": "get_app_company_ui_http_resolution_status",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolutionStatusOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/company/resolution/warnings": {
+            "put": {
+                "summary": "Chooses when to be warned: fewer numbers or fewer days left than these (owner).",
+                "operationId": "put_app_company_ui_http_resolution_warnings",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolutionSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/company/manual-invoicing-confirmation": {
+            "post": {
+                "summary": "The owner confirms the company holds the DIAN permission to invoice manually; logged. Only then can a\nresolution be modalidad manual.",
+                "operationId": "post_app_company_ui_http_resolution_confirmmanualinvoicing",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolutionSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/taxes": {
             "get": {
                 "summary": "The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones.",
@@ -1091,6 +1322,209 @@
                         "type": "string"
                     },
                     "company_check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CompanyOutput": {
+                "required": [
+                    "id",
+                    "legal_name",
+                    "identification_type",
+                    "identification_number",
+                    "vat_regime",
+                    "fiscal_responsibilities"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "legal_name": {
+                        "type": "string"
+                    },
+                    "trade_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "identification_type": {
+                        "title": "nit, cc, ce, pasaporte\u2026 (the DIAN's tipos de documento)",
+                        "type": "string"
+                    },
+                    "identification_number": {
+                        "type": "string"
+                    },
+                    "check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo_id": {
+                        "title": "The logo's attachment id; the image itself is GET /company/logo.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "vat_regime": {
+                        "title": "responsable, no_responsable or simple",
+                        "type": "string"
+                    },
+                    "fiscal_responsibilities": {
+                        "title": "O-13, O-15, O-23, O-47, R-99-PN",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "default_charge_tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "default_withholding_tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "NumberingSeriesOutput": {
+                "required": [
+                    "kind",
+                    "prefix",
+                    "next_number"
+                ],
+                "properties": {
+                    "kind": {
+                        "title": "quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal",
+                        "type": "string"
+                    },
+                    "prefix": {
+                        "type": "string"
+                    },
+                    "next_number": {
+                        "title": "The number the next document takes.",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ResolutionOutput": {
+                "required": [
+                    "id",
+                    "resolution_number",
+                    "prefix",
+                    "range_from",
+                    "range_to",
+                    "valid_from",
+                    "valid_to",
+                    "mode",
+                    "next_number",
+                    "has_issued_numbers"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "resolution_number": {
+                        "type": "string"
+                    },
+                    "prefix": {
+                        "type": "string"
+                    },
+                    "range_from": {
+                        "type": "integer"
+                    },
+                    "range_to": {
+                        "type": "integer"
+                    },
+                    "valid_from": {
+                        "type": "string"
+                    },
+                    "valid_to": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "title": "electronic or manual",
+                        "type": "string"
+                    },
+                    "next_number": {
+                        "title": "The consecutivo actual: the number the next invoice takes.",
+                        "type": "integer"
+                    },
+                    "has_issued_numbers": {
+                        "title": "Invoices were numbered from it: desde and the prefix are locked.",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ResolutionStatusOutput": {
+                "required": [
+                    "status",
+                    "numbers_left",
+                    "days_left",
+                    "warning",
+                    "warning_numbers",
+                    "warning_days"
+                ],
+                "properties": {
+                    "status": {
+                        "title": "missing, not_yet_valid, active, expired or exhausted",
+                        "type": "string"
+                    },
+                    "numbers_left": {
+                        "type": "integer"
+                    },
+                    "days_left": {
+                        "title": "Whole days after today until the last valid day.",
+                        "type": "integer"
+                    },
+                    "warning": {
+                        "title": "Active but running out: under the company's thresholds of numbers or days.",
+                        "type": "boolean"
+                    },
+                    "warning_numbers": {
+                        "type": "integer"
+                    },
+                    "warning_days": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ResolutionSettingsOutput": {
+                "required": [
+                    "status"
+                ],
+                "properties": {
+                    "resolution": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ResolutionOutput"
+                            }
+                        ]
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/ResolutionStatusOutput"
+                    },
+                    "manual_invoicing_confirmed_at": {
+                        "title": "When the owner confirmed the DIAN permission to invoice manually, or null: modalidad manual is not selectable.",
                         "type": "string",
                         "nullable": true
                     }

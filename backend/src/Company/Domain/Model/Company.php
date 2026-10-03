@@ -2,6 +2,7 @@
 
 namespace App\Company\Domain\Model;
 
+use App\Shared\Domain\Fiscal\CheckDigit;
 use App\Shared\Domain\Fiscal\FiscalResponsibility;
 use App\Shared\Domain\Fiscal\IdentificationType;
 use App\Shared\Domain\Fiscal\PersonType;
@@ -86,6 +87,76 @@ class Company
         private \DateTimeImmutable $createdAt,
     ) {
         $this->id = Uuid::v7();
+    }
+
+    /**
+     * The owner edits the profile (§4.1). For a NIT the number is kept as digits and the check digit is computed when
+     * it is not given (a given one is kept: it is editable); every other document type has none.
+     *
+     * @param list<FiscalResponsibility> $responsibilities
+     */
+    public function updateProfile(
+        string $legalName,
+        ?string $tradeName,
+        IdentificationType $identificationType,
+        string $identificationNumber,
+        ?string $checkDigit,
+        ?string $address,
+        ?string $city,
+        ?string $phone,
+        ?string $email,
+        VatRegime $vatRegime,
+        array $responsibilities,
+        ?Uuid $defaultChargeTaxId,
+        ?Uuid $defaultWithholdingTaxId,
+    ): void {
+        $number = $identificationType->hasCheckDigit() ? (preg_replace('/\D/', '', $identificationNumber) ?? '') : trim($identificationNumber);
+        $this->legalName = trim($legalName);
+        $this->tradeName = self::blank($tradeName);
+        $this->identificationType = $identificationType;
+        $this->identificationNumber = $number;
+        $this->checkDigit = $identificationType->hasCheckDigit() ? (self::blank($checkDigit) ?? CheckDigit::of($number)) : null;
+        $this->personType = IdentificationType::Nit === $identificationType ? PersonType::Company : PersonType::Person;
+        $this->address = self::blank($address);
+        $this->city = self::blank($city);
+        $this->phone = self::blank($phone);
+        $this->email = self::blank($email);
+        $this->vatRegime = $vatRegime;
+        $this->fiscalResponsibilities = array_values(array_unique(array_map(static fn (FiscalResponsibility $r) => $r->value, $responsibilities)));
+        $this->defaultChargeTaxId = $defaultChargeTaxId;
+        $this->defaultWithholdingTaxId = $defaultWithholdingTaxId;
+    }
+
+    /** The attachment id of the logo, or null once removed. */
+    public function useLogo(?Uuid $logoId): void
+    {
+        $this->logoId = $logoId;
+    }
+
+    /** The owner says the company holds the DIAN permission to invoice manually (§4.1); logged by the caller. */
+    public function confirmManualInvoicing(Uuid $by, \DateTimeImmutable $at): void
+    {
+        $this->manualInvoicingConfirmedBy = $by;
+        $this->manualInvoicingConfirmedAt = $at;
+    }
+
+    public function hasConfirmedManualInvoicing(): bool
+    {
+        return null !== $this->manualInvoicingConfirmedAt;
+    }
+
+    /** When to warn the owner that the resolution is running out: fewer numbers or fewer days than these. */
+    public function warnResolutionAt(int $numbers, int $days): void
+    {
+        $this->resolutionWarningNumbers = max(0, $numbers);
+        $this->resolutionWarningDays = max(0, $days);
+    }
+
+    private static function blank(?string $value): ?string
+    {
+        $value = null === $value ? null : trim($value);
+
+        return '' === $value ? null : $value;
     }
 
     public function id(): Uuid
