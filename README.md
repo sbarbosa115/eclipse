@@ -113,6 +113,16 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/terceros/{id}/contacts` | `{items: ContactOutput[]}` | 404 |
 | GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (billing and owner only) |
 | POST | `/terceros/{id}/erase` | Ley 1581: blanks the personal fields and contacts, deactivates, sets `erased_at`; keeps the row and the identification; audited | 404, 403 |
+| GET | `/accounts` | page of `AccountOutput` (the chart in code order): `?q=` digits a code prefix, words the name; `?class=1…9`; `?page`, `?per_page` ≤ 100 | 401 |
+| POST | `/accounts` | `{parent_code, code (parent + 2 digits), name, usable_on_purchases?}` → 201 `AccountOutput`; owner and accountant | 403; 409 `account_code_taken`; 422 `account_code_invalid`, `parent_account_not_found` |
+| PUT | `/accounts/{id}` | `{name, active, usable_on_purchases}` → `AccountOutput`; owner and accountant; audited | 403; 404; 409 `account_standard` (PUC names are fixed), `account_in_posting_rule` |
+| GET | `/posting-rules` | `{items: PostingRuleOutput[]}` (concept, account, `allowed_prefixes`) in the order of §5 | 401 |
+| PUT | `/posting-rules/{concept}` | `{account_id}` → `PostingRuleOutput`; owner and accountant; audited (`posting_rule.changed`) | 403; 404; 409 `account_not_postable`; 422 `account_not_allowed_for_concept` |
+| GET, PUT | `/ledger/lock-date` | `LockDateOutput {locked_until}`; PUT `{locked_until: YYYY-MM-DD}` by owner and accountant, audited | 403; 422 `lock_date_in_future` |
+| GET | `/ledger/journal` | page of `JournalEntryOutput` (with lines, account and tercero names): `?from`, `?to`, `?account` (code and children), `?tercero_id`, `?page`, `?per_page` ≤ 100; owner and accountant | 400 `invalid_date`; 403 |
+| GET | `/ledger/trial-balance` | `TrialBalanceOutput`: per account and parent, opening/débito/crédito/closing (débito − crédito), totals, `balanced`; `?from`, `?to` (default the year so far) | 400; 403 |
+| GET | `/ledger/income-statement` | `IncomeStatementOutput` (classes 4, 6, 7, 5 by group and cuenta; net income) for `?from`–`?to` | 400; 403 |
+| GET | `/ledger/balance-sheet` | `BalanceSheetOutput` (classes 1–3, current earnings, `balanced`) at `?date` | 400; 403 |
 | GET, POST | `/terceros`, `/terceros/quick`, `/terceros/{id}/contacts` | contract only: 501 until the "terceros" item | 501 |
 | GET | `/products` | `{items: ProductOutput[], total, page, per_page}` by name; `?q=` (código or name, matched literally), `?type=producto\|servicio`, `?active=1` only active / `0` only inactive, `?page`, `?per_page` ≤ 100. Every role | 401 |
 | GET | `/products/units` | `{items: {code, name}[]}`: the short DIAN list (94, KGM, MTR, HUR, ZZ) | 401 |
@@ -154,6 +164,18 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   from `Company\Application\Query\Companies` (a CompanyApi dependency in `deptrac.contexts.yaml`).
 - **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): owner and billing write, the
   accountant reads. The "access" item's voters may replace it.
+- **The PUC seed** (`Ledger/Infrastructure/Seed/puc.csv`, 2 519 accounts to subcuenta) was extracted from the Decreto's
+  PDF (`docs/references/extract-puc.py`; corrections where the PDF is incomplete are listed in its docstring). Every
+  company gets it in one batch of multi-row INSERTs inside the sign-up (≈70–170 ms), plus Mustang's accounts under
+  their official parents: the auxiliares 11050501, 11100501, 13050501, 13051001, 22050501 and the first subcuenta of
+  each free range a concept needs (220505, 236701, 236801, 240805, 240810, 249505, 417501, 620501).
+- **Posting rules point at postable accounts**, so §5's 4-digit defaults resolve to: ingreso 413595 (4135, goods),
+  descuento 417501, impoconsumo 249505, retefuente practicada 236570 (the fallback: taxes carry their own subcuenta
+  by concept), reteIVA/reteICA practicada 236701/236801, gasto por defecto 519595, compra de mercancías 620501. A rule
+  may only move within its concept's part of the PUC (`ConceptAccounts`: ingreso 41, clientes 13, proveedores 22/23…).
+- **Balances are débito − crédito** in the balance de prueba (a crédito balance is negative). The balance general
+  shows the unclosed result of classes 4–7 as *resultado del ejercicio* inside patrimonio: stage 1 has no closing
+  entries.
 
 ## Known gaps
 
@@ -163,6 +185,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
   the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
   Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
+- Ledger: no ReteICA auxiliares per municipality yet (A.10: created when the company defines its municipalities);
+  `app:ledger:demo-entries` posts sample entries for local review until the document items post real ones.
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.

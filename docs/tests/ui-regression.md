@@ -96,6 +96,77 @@ on the backdrop and after choosing a section.
 
 <!-- Owned by item 3 "ledger" (LED-01 – 29). -->
 
+**LED-01 · A new company has the PUC with its own auxiliares**
+Smoke: `e2e/ledger.spec.ts`.
+Sign up a company › **Configuración › Plan de cuentas**. The table starts at `1 ACTIVO`, in code order, each level
+indented under its parent. Search `1105` › `11050501 CAJA GENERAL` shows *Propia* and level *Auxiliar*. Search
+`iva generado` › `240805` is listed.
+
+**LED-02 · The owner adds an auxiliar for a bank account**
+Smoke: `e2e/ledger.spec.ts`.
+Plan de cuentas › search `111005` › **Agregar subcuenta bajo 111005** (+) › Código `11100502`, Nombre
+`Bancolombia ahorros` › **Guardar**. "Cuenta 11100502 creada." and the row appears. Repeat with the same code › the
+modal says "Ya existe una cuenta con ese código." and stays open.
+
+**LED-03 · A PUC account keeps its name and can be deactivated**
+Smoke: `e2e/ledger.spec.ts`.
+Plan de cuentas › search `110510` › **Editar** (lápiz). Nombre is disabled with the hint "El nombre de las cuentas del
+PUC no se cambia." › untick *Cuenta activa* › **Guardar**. The row shows *Inactiva*.
+
+**LED-04 · The owner moves revenue to a services account**
+Smoke: `e2e/ledger.spec.ts`.
+**Configuración › Reglas contables**: *Ingresos por ventas* goes to `413595 VENTA DE OTROS PRODUCTOS`. **Cambiar** ›
+the modal says "Solo cuentas que empiezan por 41." › search `415595` › pick `415595 ACTIVIDADES CONEXAS` › **Guardar**.
+"Ingresos por ventas ahora va a la cuenta 415595."
+
+**LED-05 · The owner locks the books, never beyond today**
+Smoke: `e2e/ledger.spec.ts`.
+Reglas contables › *Fecha de bloqueo contable* says the books are open. *Bloquear hasta* a date next year › **Guardar
+fecha** › "La fecha de bloqueo no puede ser posterior a hoy." Then `31/01/2026` › "Libros bloqueados hasta el
+31/01/2026."; after a reload "Bloqueado hasta el 31/01/2026.".
+
+**LED-06 · A new company opens each book, empty and balanced**
+Smoke: `e2e/ledger.spec.ts`.
+**Libros contables** opens *Libro diario* (`/contabilidad/diario`) with "Aún no hay asientos…". *Balance de prueba*: "No
+hay movimientos en este periodo." *Estado de resultados*: every total `$ 0,00`. *Balance general*: "Activo = pasivo +
+patrimonio."
+
+**LED-07 · The libro diario shows each entry with its lines**
+Before: `docker compose exec php php bin/console app:ledger:demo-entries` (posts three sample entries for the demo
+company, dated this month; until the document items land, the only way entries exist).
+Sign in as the demo owner › Libros contables › Libro diario. Three entries, by date: *FE-DEMO-1* (Dr `11050501`
+$ 1.190.000,00; Cr `413595` $ 1.000.000,00 and `240805` $ 190.000,00), *FC-DEMO-1* and *RP-DEMO-1*, each with its
+*Comprobante de prueba* label, number, débitos and créditos aligned right, a zero side left blank, and a totals line
+whose two sides are equal. Type `2408` in the search box › only FE-DEMO-1 and FC-DEMO-1 remain. Clear it › all three.
+
+**LED-08 · The balance de prueba balances and drills down to the diario**
+After LED-07. *Balance de prueba*, period this month. "Débitos y créditos cuadran." and the totals line shows the same
+amount twice. *Nivel de detalle* `Clase` › only classes 1, 2, 4, 5; `Auxiliar` › every account down to `11050501`.
+A crédito balance (`4` INGRESOS) shows negative. On `2408` click **Ver asientos de 2408** › the diario opens filtered
+by account `2408` and the same period. Set *Desde* after today › the balance says there is no movement.
+
+**LED-09 · The estado de resultados and the balance general agree**
+After LED-07. *Estado de resultados* for this month: Ingresos $ 1.000.000,00 (41 › 4135), Gastos $ 200.000,00
+(51 › 5135), Utilidad del periodo $ 800.000,00. *Balance general* at today: "Activo = pasivo + patrimonio." and
+*Resultado del ejercicio* $ 800.000,00.
+
+**LED-10 · The settings tabs read well next to their siblings**
+Configuración › Plan de cuentas and Reglas contables next to *Impuestos* and *Formas de pago*: same intro line, filter
+bar, table and actions column. Every modal (agregar, editar, cambiar cuenta) opens, takes typing and closes with Esc.
+Check at laptop and tablet widths, light and dark; no raw `ledger.` key anywhere.
+
+**LED-11 · Only the owner and the accountant keep the books**
+After section 1 invites an accountant and a billing user. As the **accountant**: Libros contables opens; the chart and
+the posting rules can be changed. As the **billing user**: Libros contables says "Los libros contables son del
+administrador y del contador."; Plan de cuentas and Reglas contables are listed with a note that only the owner and the
+accountant change them, and show no edit buttons and no *Bloquear hasta* field.
+
+**LED-12 · An emitted document posts to the ledger**
+After the sales-invoice item merges (section 8). Emit a factura de venta paid half in cash and half on credit ›
+Libro diario shows one entry *Factura de venta* with Dr caja and `13050501` (with the client's name), Cr `413595`
+and `240805`, balanced. Void it › a second entry dated the void date, with the sides swapped. Lock the books until
+today (LED-05) › emitting a document dated today is refused ("period_locked").
+
 ## 4. Taxes and payment methods
 
 <!-- Owned by item 4 "taxes-payments" (TAX-01 – 19). -->

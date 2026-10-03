@@ -2,6 +2,8 @@
 
 namespace App\Ledger\Domain\Model;
 
+use App\Ledger\Domain\Error\AccountNotAllowedForConcept;
+use App\Ledger\Domain\Error\AccountNotPostable;
 use App\Shared\Domain\Accounting\PostingConcept;
 use App\Shared\Domain\Model\CompanyOwned;
 use App\Shared\Domain\Model\References;
@@ -30,6 +32,23 @@ class PostingRule implements CompanyOwned
         private Uuid $accountId,
     ) {
         $this->id = Uuid::v7();
+    }
+
+    /**
+     * Points the concept at another account: an active, postable one within the concept's part of the PUC.
+     *
+     * @throws AccountNotPostable
+     * @throws AccountNotAllowedForConcept
+     */
+    public function pointTo(Account $account): void
+    {
+        if (!$account->isPostable()) {
+            throw new AccountNotPostable($account->code());
+        }
+        if (!ConceptAccounts::allows($this->concept, $account->code())) {
+            throw new AccountNotAllowedForConcept();
+        }
+        $this->accountId = $account->id();
     }
 
     public function id(): Uuid

@@ -38,6 +38,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/posting-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every concept with the account it posts to, in the order of §5. */
+        get: operations["get_app_ledger_ui_http_booksettings_postingrules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/posting-rules/{concept}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Points a concept at another account: {account_id}. The account must be postable (409 account_not_postable) and
+         *     within the concept's part of the PUC (422 account_not_allowed_for_concept). 404 for an unknown concept or
+         *     another company's account.
+         */
+        put: operations["put_app_ledger_ui_http_booksettings_changepostingrule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/lock-date": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The fecha de bloqueo contable: nothing is emitted or voided on or before it. */
+        get: operations["get_app_ledger_ui_http_booksettings_lockdate"];
+        /** Moves the fecha de bloqueo: {locked_until: YYYY-MM-DD}, today at the latest (422 lock_date_in_future). */
+        put: operations["put_app_ledger_ui_http_booksettings_movelockdate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/taxes": {
         parameters: {
             query?: never;
@@ -48,8 +104,7 @@ export interface paths {
         /** The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones. */
         get: operations["get_app_ledger_ui_http_catalog_taxes"];
         put?: never;
-        /** Adds a tax. Its class and kind (IVA, impoconsumo, retefuente, reteiva, reteica) are fixed from here on. */
-        post: operations["post_app_ledger_ui_http_tax_create"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -66,8 +121,7 @@ export interface paths {
         /** The company's payment methods. ?all=1 includes the inactive ones. */
         get: operations["get_app_ledger_ui_http_catalog_paymentmethods"];
         put?: never;
-        /** Adds a method: contado ("cash") needs a postable account, crédito ("credit") has none. */
-        post: operations["post_app_ledger_ui_http_paymentmethod_create"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -94,15 +148,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/settings/taxes": {
+    "/api/v1/accounts": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Every tax of the company, by class then name. */
-        get: operations["get_app_ledger_ui_http_catalogsettings_taxes"];
+        /**
+         * The chart in code order: ?q= (digits: a code prefix; words: part of the name), ?class=1…9, ?page, ?per_page ≤ 100
+         *     (default 50).
+         */
+        get: operations["get_app_ledger_ui_http_chart_list"];
+        put?: never;
+        /**
+         * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.
+         * @description 409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.
+         */
+        post: operations["post_app_ledger_ui_http_chart_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * {name, active, usable_on_purchases}. A PUC account keeps its name (409 account_standard); an account a posting
+         *     rule uses stays active (409 account_in_posting_rule); another company's id is 404.
+         */
+        put: operations["put_app_ledger_ui_http_chart_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/journal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Entries by date and number, each with all its lines: ?from, ?to, ?account (a code: that account and its
+         *     children), ?tercero_id, ?page, ?per_page ≤ 100 (default 25).
+         */
+        get: operations["get_app_ledger_ui_http_ledgerreport_journal"];
         put?: never;
         post?: never;
         delete?: never;
@@ -111,15 +212,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/settings/payment-methods": {
+    "/api/v1/ledger/trial-balance": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Every payment method of the company, by name. */
-        get: operations["get_app_ledger_ui_http_catalogsettings_paymentmethods"];
+        /** Per account and its parents: saldo anterior, débitos, créditos and nuevo saldo for ?from–?to. */
+        get: operations["get_app_ledger_ui_http_ledgerreport_trialbalance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -128,102 +229,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/payment-methods/{id}": {
+    "/api/v1/ledger/income-statement": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        /** Renames a method and moves its account. Its kind never changes. */
-        put: operations["put_app_ledger_ui_http_paymentmethod_update"];
+        /** Ingresos, costos and gastos of ?from–?to, and the period's result. */
+        get: operations["get_app_ledger_ui_http_ledgerreport_incomestatement"];
+        put?: never;
         post?: never;
-        /** Deletes a method nothing uses: 204. One a document used answers 409 `payment_method_in_use`. */
-        delete: operations["delete_app_ledger_ui_http_paymentmethod_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/payment-methods/{id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Takes the method out of the pickers; documents that used it keep it. */
-        post: operations["post_app_ledger_ui_http_paymentmethod_deactivate"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/payment-methods/{id}/activate": {
+    "/api/v1/ledger/balance-sheet": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Activo, pasivo and patrimonio at ?date (default today). */
+        get: operations["get_app_ledger_ui_http_ledgerreport_balancesheet"];
         put?: never;
-        post: operations["post_app_ledger_ui_http_paymentmethod_activate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/taxes/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Changes a tax's name, calculation, rate, accounts and validity dates. "Ninguno" cannot be changed. */
-        put: operations["put_app_ledger_ui_http_tax_update"];
         post?: never;
-        /** Deletes a tax nothing uses: 204. A tax a document, a product or the company uses answers 409 `tax_in_use`. */
-        delete: operations["delete_app_ledger_ui_http_tax_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/taxes/{id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Takes the tax out of the pickers; documents that used it keep it. */
-        post: operations["post_app_ledger_ui_http_tax_deactivate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/taxes/{id}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["post_app_ledger_ui_http_tax_activate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -239,15 +272,11 @@ export interface paths {
         };
         /**
          * Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|
-         *     empleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page ≤ 100.
+         *     empleado|otro, ?active=1, ?page, ?per_page ≤ 100.
          */
         get: operations["get_app_party_ui_http_tercero_list"];
         put?: never;
-        /**
-         * The full form: creates the tercero (datos básicos, facturación y envío, responsabilidades, contactos, cuentas).
-         * @description 422 `duplicate_identification` (violation on `identification_number`) when tipo + número + sucursal exist.
-         */
-        post: operations["post_app_party_ui_http_tercero_create"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -265,7 +294,7 @@ export interface paths {
         put?: never;
         /**
          * Quick-create from inside a document (§4.2): {person_type, identification_type, identification_number,
-         *     check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…]} → 201.
+         *     check_digit?, first_names?, last_names?, business_name?, email?, roles: [cliente|proveedor|…]} → 201.
          */
         post: operations["post_app_party_ui_http_tercero_quickcreate"];
         delete?: never;
@@ -291,132 +320,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/terceros/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** One tercero with everything on its form. */
-        get: operations["get_app_party_ui_http_tercero_show"];
-        /**
-         * Replaces the tercero's data (the whole form is sent). Contacts with an `id` are kept, the ones left out are
-         *     removed. 422 `duplicate_identification`; 422 `tercero_erased` once its personal data was erased.
-         */
-        put: operations["put_app_party_ui_http_tercero_update"];
-        post?: never;
-        /** Deletes a tercero no document references; 409 `tercero_in_use` otherwise (deactivate it instead). */
-        delete: operations["delete_app_party_ui_http_tercero_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/terceros/{id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Stops offering the tercero on new documents. Existing documents are untouched. */
-        post: operations["post_app_party_ui_http_tercero_deactivate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/terceros/{id}/reactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["post_app_party_ui_http_tercero_reactivate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/terceros/{id}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Ley 1581 de 2012: the tercero's personal data as JSON (served as a download). Leaves an audit-log entry. */
-        get: operations["get_app_party_ui_http_tercero_export"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/terceros/{id}/erase": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Ley 1581 de 2012: blanks the tercero's personal data and its contacts and deactivates it; the row stays (its
-         *     documents name it), with its identification and `erased_at`. Cannot be undone.
-         */
-        post: operations["post_app_party_ui_http_tercero_erase"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/product-categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Every category of the company, by name, with how many products are in it. */
-        get: operations["get_app_catalog_ui_http_category_list"];
-        put?: never;
-        /** {name} → 201. 422 on `name` when the company has a category with it. */
-        post: operations["post_app_catalog_ui_http_category_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/product-categories/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["put_app_catalog_ui_http_category_rename"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/products": {
         parameters: {
             query?: never;
@@ -424,61 +327,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1 (only active) or ?active=0 (only
-         *     inactive), ?page, ?per_page ≤ 100. By name.
-         */
+        /** Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1, ?page, ?per_page ≤ 100. */
         get: operations["get_app_catalog_ui_http_product_list"];
         put?: never;
-        /**
-         * The full form: {type, code, name, description?, category_id?, unit_code? (the type's default), sale_price,
-         *     price_includes_tax, charge_tax_id?, withholding_tax_id? (the company's defaults when missing), revenue_account_id?,
-         *     expense_account_id?} → 201. 422 `duplicate_code` is a `code` violation.
-         */
-        post: operations["post_app_catalog_ui_http_product_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/products/units": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The unidades de medida a product can use: the short DIAN list (94 unidad, KGM kilogramo, MTR metro, HUR hora,
-         *     ZZ servicio).
-         */
-        get: operations["get_app_catalog_ui_http_product_units"];
-        put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/products/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** One product or service. */
-        get: operations["get_app_catalog_ui_http_product_show"];
-        /**
-         * Rewrites the product with the full form's fields (as in create); a missing tax or account is "none", not the
-         *     company's default.
-         */
-        put: operations["put_app_catalog_ui_http_product_update"];
-        post?: never;
-        /** Deletes a product no document has used → 204. 409 `product_in_use` otherwise: deactivate it instead. */
-        delete: operations["delete_app_catalog_ui_http_product_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -495,7 +348,7 @@ export interface paths {
         put?: never;
         /**
          * Quick-create from a document line (§4.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,
-         *     withholding_tax_id?} → 201. The taxes missing are the company's defaults; the unit is the type's.
+         *     withholding_tax_id?} → 201.
          */
         post: operations["post_app_catalog_ui_http_product_quickcreate"];
         delete?: never;
@@ -512,45 +365,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /**
-         * Writes "use these taxes on this product from now on" (§4.6 line tax dialog): {charge_tax_id, withholding_tax_id};
-         *     a null is "no tax".
-         */
+        /** Writes "use these taxes on this product from now on" (§4.6 line tax dialog): {charge_tax_id, withholding_tax_id}. */
         put: operations["put_app_catalog_ui_http_product_settaxes"];
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/products/{id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Takes the product out of the pickers of new documents; the documents that used it keep it. */
-        post: operations["post_app_catalog_ui_http_product_deactivate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/products/{id}/reactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["post_app_catalog_ui_http_product_reactivate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -571,6 +388,18 @@ export interface components {
             company_name: string;
             company_nit: string;
             company_check_digit?: string | null;
+        };
+        PostingRuleOutput: {
+            /** ingreso, descuento_ventas, iva_generado… (PostingConcept) */
+            concept: string;
+            account_id: string;
+            account_code: string;
+            account_name: string;
+            allowed_prefixes: string[];
+        };
+        LockDateOutput: {
+            /** YYYY-MM-DD, or null while the books are open. */
+            locked_until?: string | null;
         };
         TaxOutput: {
             id: string;
@@ -615,42 +444,91 @@ export interface components {
             postable: boolean;
             usable_on_purchases: boolean;
         };
-        TaxSettingOutput: {
-            id: string;
-            name: string;
-            /** charge (impuesto cargo) or withholding (retención) */
-            tax_class: string;
-            /** none, iva, impoconsumo, retefuente, reteiva, reteica */
-            kind: string;
-            /** percentage or per_unit */
-            calculation: string;
-            /** Decimal string: a percentage ("19.0000") or a value per unit ("500.0000"). */
-            rate: string;
-            sales_account_id?: string | null;
-            sales_account_code?: string | null;
-            sales_account_name?: string | null;
-            purchase_account_id?: string | null;
-            purchase_account_code?: string | null;
-            purchase_account_name?: string | null;
-            valid_from?: string | null;
-            valid_to?: string | null;
-            active: boolean;
-            standard: boolean;
-            /** A document, a product or the company uses it: it can only be deactivated. */
-            in_use: boolean;
+        JournalLineOutput: {
+            account_id: string;
+            account_code: string;
+            account_name: string;
+            tercero_id?: string | null;
+            tercero_name?: string | null;
+            /** Decimal string; one of débito and crédito is "0.00". */
+            debit: string;
+            credit: string;
+            description?: string | null;
         };
-        PaymentMethodSettingOutput: {
+        JournalEntryOutput: {
             id: string;
+            number: number;
+            date: string;
+            /** sales_invoice, cash_receipt, purchase_invoice, supplier_payment… */
+            source_type: string;
+            source_id: string;
+            source_number: string;
+            description: string;
+            /** The entry this one reverses (a void), if any. */
+            reverses_id?: string | null;
+            total_debit: string;
+            total_credit: string;
+            lines: components["schemas"]["JournalLineOutput"][];
+        };
+        TrialBalanceRowOutput: {
+            code: string;
             name: string;
-            /** cash (contado) or credit (crédito) */
-            kind: string;
-            account_id?: string | null;
-            account_code?: string | null;
-            account_name?: string | null;
-            active: boolean;
-            standard: boolean;
-            /** A document uses it: it can only be deactivated. */
-            in_use: boolean;
+            /** class, group, account, subaccount, auxiliary */
+            level: string;
+            /** debit or credit */
+            nature: string;
+            /** Saldo anterior, débito minus crédito (a crédito balance is negative). */
+            opening: string;
+            debit: string;
+            credit: string;
+            /** Nuevo saldo, débito minus crédito. */
+            closing: string;
+        };
+        TrialBalanceOutput: {
+            from?: string | null;
+            to: string;
+            rows: components["schemas"]["TrialBalanceRowOutput"][];
+            /** Σ débitos of the period. */
+            total_debit: string;
+            total_credit: string;
+            /** Σ débitos = Σ créditos. */
+            balanced: boolean;
+        };
+        StatementLineOutput: {
+            code: string;
+            name: string;
+            /** group or account */
+            level: string;
+            amount: string;
+        };
+        StatementSectionOutput: {
+            /** The PUC class: 1 activo, 2 pasivo, 3 patrimonio, 4 ingresos, 5 gastos, 6 costos de ventas, 7 costos de producción. */
+            code: string;
+            name: string;
+            total: string;
+            lines: components["schemas"]["StatementLineOutput"][];
+        };
+        IncomeStatementOutput: {
+            from: string;
+            to: string;
+            sections: components["schemas"]["StatementSectionOutput"][];
+            revenue: string;
+            costs: string;
+            expenses: string;
+            gross_profit: string;
+            net_income: string;
+        };
+        BalanceSheetOutput: {
+            date: string;
+            sections: components["schemas"]["StatementSectionOutput"][];
+            /** The result of classes 4 to 7 not yet closed into patrimonio. */
+            current_earnings: string;
+            total_assets: string;
+            total_liabilities: string;
+            /** Class 3 plus the current earnings. */
+            total_equity: string;
+            /** Activo = pasivo + patrimonio. */
+            balanced: boolean;
         };
         TerceroSummaryOutput: {
             id: string;
@@ -665,68 +543,12 @@ export interface components {
             city?: string | null;
             roles: string[];
             active: boolean;
-            branch_code: string;
-            trade_name?: string | null;
-        };
-        PhoneOutput: {
-            indicative: string;
-            number: string;
-            extension?: string | null;
-        };
-        AccountRefOutput: {
-            id: string;
-            code: string;
-            name: string;
         };
         ContactOutput: {
             id: string;
             name: string;
             email?: string | null;
             phone?: string | null;
-        };
-        TerceroOutput: {
-            id: string;
-            display_name: string;
-            /** persona or empresa */
-            person_type: string;
-            /** cc, nit, ce, pasaporte, … */
-            identification_type: string;
-            identification_number: string;
-            check_digit?: string | null;
-            branch_code: string;
-            first_names?: string | null;
-            last_names?: string | null;
-            business_name?: string | null;
-            trade_name?: string | null;
-            city?: string | null;
-            address?: string | null;
-            phones: components["schemas"]["PhoneOutput"][];
-            billing_contact_name?: string | null;
-            email?: string | null;
-            mobile?: string | null;
-            postal_code?: string | null;
-            /** responsable, no_responsable or simple */
-            vat_regime?: string | null;
-            billing_contact_is_payer: boolean;
-            fiscal_responsibilities: string[];
-            roles: string[];
-            receivable_account?: components["schemas"]["AccountRefOutput"] | null;
-            payable_account?: components["schemas"]["AccountRefOutput"] | null;
-            contacts: components["schemas"]["ContactOutput"][];
-            active: boolean;
-            /** ISO 8601 date-time when the personal data was erased on request (Ley 1581), else null */
-            erased_at?: string | null;
-            created_at: string;
-        };
-        TerceroExportOutput: {
-            /** ISO 8601 date-time of the export */
-            exported_at: string;
-            tercero: components["schemas"]["TerceroOutput"];
-        };
-        CategoryOutput: {
-            id: string;
-            name: string;
-            product_count: number;
         };
         ProductOutput: {
             id: string;
@@ -749,18 +571,6 @@ export interface components {
             revenue_account_id?: string | null;
             expense_account_id?: string | null;
             active: boolean;
-            /**
-             * The revenue account as "413595 · Venta de otros".
-             * @default null
-             */
-            revenue_account_label: string | null;
-            /** @default null */
-            expense_account_label: string | null;
-        };
-        UnitOutput: {
-            /** DIAN code: 94, KGM, MTR, HUR, ZZ */
-            code: string;
-            name: string;
         };
     };
     responses: never;
@@ -811,6 +621,90 @@ export interface operations {
             };
         };
     };
+    get_app_ledger_ui_http_booksettings_postingrules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PostingRuleOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_booksettings_changepostingrule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                concept: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingRuleOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_booksettings_lockdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LockDateOutput"];
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_booksettings_movelockdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LockDateOutput"];
+                };
+            };
+        };
+    };
     get_app_ledger_ui_http_catalog_taxes: {
         parameters: {
             query?: never;
@@ -829,26 +723,6 @@ export interface operations {
                     "application/json": {
                         items: components["schemas"]["TaxOutput"][];
                     };
-                };
-            };
-        };
-    };
-    post_app_ledger_ui_http_tax_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TaxSettingOutput"];
                 };
             };
         };
@@ -875,26 +749,6 @@ export interface operations {
             };
         };
     };
-    post_app_ledger_ui_http_paymentmethod_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
-                };
-            };
-        };
-    };
     get_app_ledger_ui_http_catalog_searchaccounts: {
         parameters: {
             query?: never;
@@ -917,7 +771,7 @@ export interface operations {
             };
         };
     };
-    get_app_ledger_ui_http_catalogsettings_taxes: {
+    get_app_ledger_ui_http_chart_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -933,13 +787,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        items: components["schemas"]["TaxSettingOutput"][];
+                        items: components["schemas"]["AccountOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
                     };
                 };
             };
         };
     };
-    get_app_ledger_ui_http_catalogsettings_paymentmethods: {
+    post_app_ledger_ui_http_chart_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOutput"];
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_chart_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_ledgerreport_journal: {
         parameters: {
             query?: never;
             header?: never;
@@ -955,19 +854,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        items: components["schemas"]["PaymentMethodSettingOutput"][];
+                        items: components["schemas"]["JournalEntryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
                     };
                 };
             };
         };
     };
-    put_app_ledger_ui_http_paymentmethod_update: {
+    get_app_ledger_ui_http_ledgerreport_trialbalance: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -978,37 +878,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
+                    "application/json": components["schemas"]["TrialBalanceOutput"];
                 };
             };
         };
     };
-    delete_app_ledger_ui_http_paymentmethod_delete: {
+    get_app_ledger_ui_http_ledgerreport_incomestatement: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    post_app_ledger_ui_http_paymentmethod_deactivate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -1019,18 +898,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
+                    "application/json": components["schemas"]["IncomeStatementOutput"];
                 };
             };
         };
     };
-    post_app_ledger_ui_http_paymentmethod_activate: {
+    get_app_ledger_ui_http_ledgerreport_balancesheet: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -1041,92 +918,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
-                };
-            };
-        };
-    };
-    put_app_ledger_ui_http_tax_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TaxSettingOutput"];
-                };
-            };
-        };
-    };
-    delete_app_ledger_ui_http_tax_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    post_app_ledger_ui_http_tax_deactivate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TaxSettingOutput"];
-                };
-            };
-        };
-    };
-    post_app_ledger_ui_http_tax_activate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TaxSettingOutput"];
+                    "application/json": components["schemas"]["BalanceSheetOutput"];
                 };
             };
         };
@@ -1152,26 +944,6 @@ export interface operations {
                         page: number;
                         per_page: number;
                     };
-                };
-            };
-        };
-    };
-    post_app_party_ui_http_tercero_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroOutput"];
                 };
             };
         };
@@ -1220,221 +992,6 @@ export interface operations {
             };
         };
     };
-    get_app_party_ui_http_tercero_show: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroOutput"];
-                };
-            };
-        };
-    };
-    put_app_party_ui_http_tercero_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroOutput"];
-                };
-            };
-        };
-    };
-    delete_app_party_ui_http_tercero_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    post_app_party_ui_http_tercero_deactivate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroOutput"];
-                };
-            };
-        };
-    };
-    post_app_party_ui_http_tercero_reactivate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroOutput"];
-                };
-            };
-        };
-    };
-    get_app_party_ui_http_tercero_export: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroExportOutput"];
-                };
-            };
-        };
-    };
-    post_app_party_ui_http_tercero_erase: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerceroOutput"];
-                };
-            };
-        };
-    };
-    get_app_catalog_ui_http_category_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        items: components["schemas"]["CategoryOutput"][];
-                    };
-                };
-            };
-        };
-    };
-    post_app_catalog_ui_http_category_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CategoryOutput"];
-                };
-            };
-        };
-    };
-    put_app_catalog_ui_http_category_rename: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CategoryOutput"];
-                };
-            };
-        };
-    };
     get_app_catalog_ui_http_product_list: {
         parameters: {
             query?: never;
@@ -1460,111 +1017,6 @@ export interface operations {
             };
         };
     };
-    post_app_catalog_ui_http_product_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProductOutput"];
-                };
-            };
-        };
-    };
-    get_app_catalog_ui_http_product_units: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        items: components["schemas"]["UnitOutput"][];
-                    };
-                };
-            };
-        };
-    };
-    get_app_catalog_ui_http_product_show: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProductOutput"];
-                };
-            };
-        };
-    };
-    put_app_catalog_ui_http_product_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProductOutput"];
-                };
-            };
-        };
-    };
-    delete_app_catalog_ui_http_product_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     post_app_catalog_ui_http_product_quickcreate: {
         parameters: {
             query?: never;
@@ -1586,50 +1038,6 @@ export interface operations {
         };
     };
     put_app_catalog_ui_http_product_settaxes: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProductOutput"];
-                };
-            };
-        };
-    };
-    post_app_catalog_ui_http_product_deactivate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProductOutput"];
-                };
-            };
-        };
-    };
-    post_app_catalog_ui_http_product_reactivate: {
         parameters: {
             query?: never;
             header?: never;

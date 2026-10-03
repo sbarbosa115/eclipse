@@ -117,8 +117,9 @@ deptrac:
     AccessApi: [Shared, Access, CompanyApi]
     Company: [Shared, CompanyApi]
     CompanyApi: [Shared, Company]
-    # Journal entries are numbered by the company's series (Company numbering).
-    Ledger: [Shared, LedgerApi, CompanyApi]
+    # Journal entries are numbered by the company's series (Company numbering). The poster's adapter reads a tercero's
+    # own receivable/payable account (Party's TerceroDirectory, §4.2): Infrastructure only, the Application names a port.
+    Ledger: [Shared, LedgerApi, CompanyApi, PartyApi]
     LedgerApi: [Shared, Ledger, CompanyApi]
     # A tercero's own receivable/payable account must be a postable account of the chart (Ledger).
     Party: [Shared, PartyApi, LedgerApi]
