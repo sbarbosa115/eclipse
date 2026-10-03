@@ -100,6 +100,113 @@ on the backdrop and after choosing a section.
 
 <!-- Owned by item 4 "taxes-payments" (TAX-01 – 19). -->
 
+Configuración › **Impuestos** (`/configuracion?tab=taxes`) and **Formas de pago** (`?tab=paymentMethods`). The owner and
+the accountant edit; every role reads. Cases TAX-11, 12, 13 and 16 need the chart of accounts (item "ledger") or another
+item's documents, so they are run by hand once those are merged.
+
+**TAX-01 · A new company has the seeded taxes**
+Smoke: `e2e/taxes.spec.ts`.
+Sign up a new company › Configuración › **Impuestos**.
+**Expected:** IVA 19 %, IVA 5 %, IVA 0 %, IVA por servicios 19 %, Impoconsumo 8 %, Impoconsumo por valor, ReteFuente
+servicios 4 %, ReteFuente compras 2,5 %, ReteFuente honorarios 10 % and 11 %, ReteIVA 15 % and two **Ninguno** rows;
+rates read `19 %`, `2,5 %`; no ReteICA; no console errors.
+
+**TAX-02 · The class filter narrows the list**
+Smoke: `e2e/taxes.spec.ts`.
+Impuestos › Clase `Retenciones`, then `Impuestos`.
+**Expected:** only retenciones (ReteIVA 15 %…) in the first, only impuestos cargo (IVA 19 %…) in the second.
+
+**TAX-03 · The accountant creates a tax**
+Smoke: `e2e/taxes.spec.ts`.
+**Nuevo impuesto** › Nombre `IVA 16 %`, Tarifa `16`, Vigente desde `01/01/2027` › **Guardar**.
+**Expected:** "Impuesto creado."; the row shows `16 %` and `Desde 01/01/2027`.
+
+**TAX-04 · A retención by municipality takes a decimal comma**
+Smoke: `e2e/taxes.spec.ts`.
+**Nuevo impuesto** › Nombre `ReteICA Bogotá 0,966 %`, Clase `Retención`, Tipo `ReteICA`, Tarifa `0,966`.
+**Expected:** the row reads `Retención · ReteICA` and `0,966 %`.
+
+**TAX-05 · Impoconsumo may be a value per unit**
+Smoke: `e2e/taxes.spec.ts`.
+**Nuevo impuesto** › Tipo `Impoconsumo`, Cálculo `Valor por unidad`, valor `500`.
+**Expected:** the row reads `$ 500,00`. For IVA the Cálculo choice is not offered.
+
+**TAX-06 · The form explains what is wrong**
+Smoke: `e2e/taxes.spec.ts`.
+**Nuevo impuesto** › **Guardar** empty; then Vigente desde `01/02/2027` and hasta `01/01/2027`; then the name of an
+existing tax in other case (`iva 19 %`).
+**Expected:** "Este campo es obligatorio." and "Escribe un número, con hasta cuatro decimales."; "La fecha final no puede
+ser anterior a la inicial."; "Ya hay un impuesto con este nombre." under Nombre. The form stays open with its data.
+
+**TAX-07 · Editing a tax changes its rate and dates, not its kind**
+Smoke: `e2e/taxes.spec.ts`.
+IVA 5 % › **Editar** › Tarifa `6`, Vigente hasta `31/12/2030` › **Guardar**.
+**Expected:** the form shows the class and kind as text (they cannot be chosen); "Impuesto actualizado."; the row reads
+`6 %` and `Hasta 31/12/2030`.
+
+**TAX-08 · A tax is deactivated and activated again**
+Smoke: `e2e/taxes.spec.ts`.
+IVA 5 % › **Desactivar** › **Activar**.
+**Expected:** "«IVA 5 %» ya no se ofrece en los documentos."; the row stays, tinted, with the legend `Inactivo`; then
+"«IVA 5 %» se ofrece de nuevo en los documentos." and the tint goes. By hand: while inactive, IVA 5 % is not offered in
+a document's tax picker (after the document editor merges).
+
+**TAX-09 · An unused tax is deleted after a confirmation**
+Smoke: `e2e/taxes.spec.ts`.
+Create `IVA 16 %` › **Eliminar** › **Cancelar**; **Eliminar** › **Eliminar**.
+**Expected:** Cancel keeps it; confirming shows "«IVA 16 %» eliminado." and the row is gone.
+
+**TAX-10 · "Ninguno" has no actions**
+Smoke: `e2e/taxes.spec.ts`.
+**Expected:** the two Ninguno rows have no Editar, Desactivar or Eliminar.
+
+**TAX-11 · A tax posts to the accounts the accountant chooses**
+Needs the chart (item "ledger"). Impuestos › IVA 19 % › **Editar** › Cuenta en ventas: type `240805`.
+**Expected:** the box completes to `240805 · …` as the code is recognised, the list offers matches by code or name,
+only postable accounts; text that is not an account shows "Elige una cuenta de la lista." and does not save; saved, the
+table shows the code. On a new company the seeded IVA, ReteFuente and ReteIVA rows already show their codes
+(240805/240810, 135515/2365xx, 135517).
+
+**TAX-12 · A tax or payment method a document used cannot be deleted**
+After the invoice items merge: emit a factura de venta using IVA 19 % and Efectivo. Then Impuestos and Formas de pago.
+**Expected:** IVA 19 % and Efectivo have **Editar** and **Desactivar** but no **Eliminar**; deactivating them works and
+the emitted invoice still shows them unchanged. An unused one still offers **Eliminar**.
+
+**TAX-13 · A billing user only reads**
+After the "access" item merges: invite a user with role Facturación, sign in as them, open both tabs.
+**Expected:** both lists show, with no "Nuevo…" button, no Acciones column.
+
+**TAX-14 · A new company has the seeded payment methods**
+Smoke: `e2e/taxes.spec.ts`.
+Formas de pago on a new company.
+**Expected:** Efectivo, Tarjeta débito, Tarjeta crédito, Transferencia (Contado) and Crédito (cuenta del tercero); no
+console errors. By hand, with the chart: Efectivo reads `11050501 · Caja general`, the other three `11100501 · Bancos…`.
+
+**TAX-15 · A crédito method needs no account**
+Smoke: `e2e/taxes.spec.ts`.
+**Nueva forma de pago** › Nombre `Crédito a 90 días`, Tipo `Crédito`.
+**Expected:** the Cuenta field disappears and a note says it posts to the tercero's account; "Forma de pago creada.".
+
+**TAX-16 · A contado method is created on a postable account**
+Needs the chart. **Nueva forma de pago** › Nombre `Bancolombia`, Tipo `Contado`, Cuenta `11100502`.
+**Expected:** the account completes to its full label; saved, the row shows it; a group account such as `1110` is not
+offered (only subcuentas and auxiliares). Editing it can move the account and rename it, never change Contado/Crédito.
+
+**TAX-17 · A contado method asks for its account**
+Smoke: `e2e/taxes.spec.ts`.
+**Nueva forma de pago** › Nombre `Bancolombia` › **Guardar**; then Cuenta `texto que no es una cuenta`.
+**Expected:** "Elige la cuenta donde entra el dinero."; then "Elige una cuenta de la lista."; nothing is saved.
+
+**TAX-18 · A method is deactivated, activated and deleted**
+Smoke: `e2e/taxes.spec.ts`.
+Create `Crédito a 90 días` (crédito) › **Desactivar** › **Activar** › **Eliminar** › **Eliminar**.
+**Expected:** the row is tinted `Inactiva`, then normal; "«Crédito a 90 días» eliminada." and it is gone.
+
+**TAX-19 · The layout on a tablet and in both themes**
+Impuestos and Formas de pago with the form modal open, at 1024×768 and 768×1024, Tema `Claro` and `Oscuro`.
+**Expected:** nothing overflows sideways (the table scrolls inside its box); the modal's fields stack in one column on
+a narrow screen; the inactive tint and the action colours are readable in both themes.
+
 ## 5. Terceros
 
 <!-- Owned by item 5 "terceros" (TER-01 – 19). -->

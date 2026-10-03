@@ -22,18 +22,22 @@ final class CatalogApiTest extends ApiTestCase
         $this->signOut();
         $mine = Uuid::fromString($this->signUp()['company_id']);
         $this->save(
-            new Tax($mine, 'IVA 19 %', TaxClass::Charge, TaxKind::Vat, TaxCalculation::Percentage, '19.0000', null, null),
+            new Tax($mine, 'IVA de A', TaxClass::Charge, TaxKind::Vat, TaxCalculation::Percentage, '19.0000', null, null),
             new Tax($other, 'IVA de B', TaxClass::Charge, TaxKind::Vat, TaxCalculation::Percentage, '19.0000', null, null),
-            new PaymentMethod($mine, 'Crédito', PaymentKind::Credit, null),
+            new PaymentMethod($mine, 'Crédito de A', PaymentKind::Credit, null),
             new PaymentMethod($other, 'Crédito de B', PaymentKind::Credit, null),
         );
 
         $taxes = $this->getJson('/api/v1/taxes?class=charge')['items'];
         self::assertResponseIsSuccessful();
-        self::assertSame(['IVA 19 %'], array_column($taxes, 'name'), 'Another company\'s taxes never show.');
-        self::assertSame('19.0000', $taxes[0]['rate'], 'Rates travel as decimal strings.');
+        $names = array_column($taxes, 'name');
+        self::assertContains('IVA de A', $names, 'Its own taxes show next to the seeded ones.');
+        self::assertNotContains('IVA de B', $names, 'Another company\'s taxes never show.');
+        self::assertSame('19.0000', $taxes[array_search('IVA de A', $names, true)]['rate'], 'Rates travel as decimal strings.');
 
-        self::assertSame(['Crédito'], array_column($this->getJson('/api/v1/payment-methods')['items'], 'name'));
+        $methods = array_column($this->getJson('/api/v1/payment-methods')['items'], 'name');
+        self::assertContains('Crédito de A', $methods);
+        self::assertNotContains('Crédito de B', $methods);
     }
 
     public function testSignedOutIsRefused(): void

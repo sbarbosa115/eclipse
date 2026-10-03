@@ -95,6 +95,15 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive | 401 |
 | GET | `/payment-methods` | `{items: PaymentMethodOutput[]}`; `?all=1` | 401 |
 | GET | `/accounts/search` | `{items: AccountOutput[]}` postable accounts, `?q=` code prefix or name, `?purchases=1` | 401 |
+| GET | `/settings/taxes`, `/settings/payment-methods` | `{items: TaxSettingOutput[]}` / `{items: PaymentMethodSettingOutput[]}`: every row, inactive too, with the accounts' codes and names and `in_use` (a document, product or company default points at it). Every role | 401 |
+| POST | `/taxes` | `{name, tax_class, kind, calculation, rate, sales_account_id?, purchase_account_id?, valid_from?, valid_to?}` → 201 `TaxSettingOutput`. Owner and accountant | 403; 422 `validation_failed` on `name` (taken), `kind`, `calculation`, `rate` (0–100, four decimals), `valid_to` (before `valid_from`), `*_account_id` |
+| PUT | `/taxes/{id}` | `{name, calculation, rate, sales_account_id, purchase_account_id, valid_from, valid_to}` → `TaxSettingOutput`; class and kind never change | 403; 404; 422 as above, `tax_not_editable` (Ninguno) |
+| POST | `/taxes/{id}/deactivate`, `/activate` | → `TaxSettingOutput` | 403; 404; 422 `tax_not_editable` |
+| DELETE | `/taxes/{id}` | → 204; a tax no document uses | 403; 404; 409 `tax_in_use`; 422 `tax_not_editable` |
+| POST | `/payment-methods` | `{name, kind: cash\|credit, account_id?}` → 201 `PaymentMethodSettingOutput`; contado needs a postable account, crédito none. Owner and accountant | 403; 422 on `name` (taken), `kind`, `account_id` |
+| PUT | `/payment-methods/{id}` | `{name, account_id}` → `PaymentMethodSettingOutput`; the kind never changes | 403; 404; 422 |
+| POST | `/payment-methods/{id}/deactivate`, `/activate` | → `PaymentMethodSettingOutput` | 403; 404 |
+| DELETE | `/payment-methods/{id}` | → 204; a method no document uses | 403; 404; 409 `payment_method_in_use` |
 | GET, POST | `/terceros`, `/terceros/quick`, `/terceros/{id}/contacts` | contract only: 501 until the "terceros" item | 501 |
 | GET, POST, PUT | `/products`, `/products/quick`, `/products/{id}/taxes` | contract only: 501 until the "catalog" item | 501 |
 
@@ -103,6 +112,17 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **Ids are UUID v7, stored BINARY(16).** The tenancy filter compares `company_id` to `UNHEX(...)`.
 - **Documents copy what they used** (tax name, rate, accounts; tercero name) so an edit never changes an emitted
   document.
+- **Taxes and payment methods are seeded by a `CompanyProvisioner` (priority 50)** that looks accounts up with
+  `LedgerCatalog::accountIdByCode()`; a code the chart lacks leaves the account null and posting falls back to the
+  kind's posting rule (Impoconsumo 249505, ReteIVA practicada 236701 and the purchase side of Impoconsumo are null until
+  the chart has them). "Ninguno" is seeded once per class and is fixed: not editable, deactivated or deleted.
+- **A tax's class and kind, and a payment method's kind, never change** after creation (they decide how documents post
+  them); the rest is editable and every change is written to `audit_log` (`tax.created|updated|activated|deactivated|
+  deleted`, `payment_method.…`) by `Ledger\Application\Port\CatalogAudit`.
+- **"In use" is a query** (`CatalogUsage`, DBAL) over the line/payment/receipt tables, products and the company's default
+  taxes; a table that starts pointing at a tax or method must be added to `DbalCatalogUsage`.
+- **Validity dates** (`valid_from`, `valid_to`, both included, either open) are stored and shown; `Tax::isValidOn()` is
+  the rule. Nothing filters by them yet: document pickers will (see Known gaps).
 - **Line amounts add up to the document totals to the cent** (largest remainder after one rounding per total), so a
   journal entry built from lines always balances.
 
@@ -110,6 +130,9 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 
 - Stage 1 is being built in parallel items; see the split in `docs/pdr/prd-accounting.md`. Until an item merges, its
   section shows "Esta sección se está construyendo." and its endpoints answer 501.
+- Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
+  the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
+  Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.
