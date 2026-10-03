@@ -11,5 +11,8 @@ export default defineConfig({
     include: ['assets/**/*.test.{ts,tsx}'],
     setupFiles: ['assets/react/shared/test/setup.ts'],
     css: false,
+    // userEvent-driven tests take seconds when the machine is busy (several stacks building at once): a slow run is
+    // not a failing one.
+    testTimeout: 15_000,
   },
 });
