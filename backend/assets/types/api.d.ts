@@ -241,6 +241,224 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/company": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's razón social, NIT, address, régimen, responsabilidades fiscales, default taxes and logo. */
+        get: operations["get_app_company_ui_http_company_show"];
+        /**
+         * Changes the profile (owner). The check digit is computed for a NIT when empty. The default taxes must be active
+         *     taxes of their class (cargo / retención); the NIT cannot be another company's.
+         */
+        put: operations["put_app_company_ui_http_company_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The logo's image (every role). 404 `logo_not_found` without one. */
+        get: operations["get_app_company_ui_http_company_logo"];
+        put?: never;
+        /**
+         * Uploads the logo (owner), multipart field `file`: PNG or JPEG judged by its content, 2 MB at most. Replaces the
+         *     previous one.
+         */
+        post: operations["post_app_company_ui_http_company_uploadlogo"];
+        /** Removes the logo (owner): 204. */
+        delete: operations["delete_app_company_ui_http_company_removelogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/numbering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The editable series with their prefix and next number (every role). */
+        get: operations["get_app_company_ui_http_numbering_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/numbering/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Changes a series' prefix and next number (owner). The next number never goes below the current one. 404 for the
+         *     journal's series or an unknown kind.
+         */
+        put: operations["put_app_company_ui_http_numbering_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/resolution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The resolution (null before it exists), its status today and whether manual invoicing was confirmed. */
+        get: operations["get_app_company_ui_http_resolution_show"];
+        /**
+         * Edits the resolution (owner). Once invoices were numbered from it, desde and the prefix cannot change and hasta
+         *     cannot go below the last number used.
+         */
+        put: operations["put_app_company_ui_http_resolution_update"];
+        /**
+         * Sets the resolution up (owner). 409 `resolution_exists` when there is one. Modalidad manual is refused until the
+         *     owner confirmed the DIAN permission.
+         */
+        post: operations["post_app_company_ui_http_resolution_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/resolution/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where the resolution stands today: missing, not_yet_valid, active, expired or exhausted; the numbers and days
+         *     left; `warning` when active but under the company's thresholds.
+         */
+        get: operations["get_app_company_ui_http_resolution_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/resolution/warnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Chooses when to be warned: fewer numbers or fewer days left than these (owner). */
+        put: operations["put_app_company_ui_http_resolution_warnings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/company/manual-invoicing-confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The owner confirms the company holds the DIAN permission to invoice manually; logged. Only then can a
+         *     resolution be modalidad manual.
+         */
+        post: operations["post_app_company_ui_http_resolution_confirmmanualinvoicing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/posting-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every concept with the account it posts to, in the order of §5. */
+        get: operations["get_app_ledger_ui_http_booksettings_postingrules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/posting-rules/{concept}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Points a concept at another account: {account_id}. The account must be postable (409 account_not_postable) and
+         *     within the concept's part of the PUC (422 account_not_allowed_for_concept). 404 for an unknown concept or
+         *     another company's account.
+         */
+        put: operations["put_app_ledger_ui_http_booksettings_changepostingrule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/lock-date": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The fecha de bloqueo contable: nothing is emitted or voided on or before it. */
+        get: operations["get_app_ledger_ui_http_booksettings_lockdate"];
+        /** Moves the fecha de bloqueo: {locked_until: YYYY-MM-DD}, today at the latest (422 lock_date_in_future). */
+        put: operations["put_app_ledger_ui_http_booksettings_movelockdate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/taxes": {
         parameters: {
             query?: never;
@@ -323,6 +541,121 @@ export interface paths {
         };
         /** Every payment method of the company, by name. */
         get: operations["get_app_ledger_ui_http_catalogsettings_paymentmethods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The chart in code order: ?q= (digits: a code prefix; words: part of the name), ?class=1…9, ?page, ?per_page ≤ 100
+         *     (default 50).
+         */
+        get: operations["get_app_ledger_ui_http_chart_list"];
+        put?: never;
+        /**
+         * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.
+         * @description 409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.
+         */
+        post: operations["post_app_ledger_ui_http_chart_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * {name, active, usable_on_purchases}. A PUC account keeps its name (409 account_standard); an account a posting
+         *     rule uses stays active (409 account_in_posting_rule); another company's id is 404.
+         */
+        put: operations["put_app_ledger_ui_http_chart_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/journal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Entries by date and number, each with all its lines: ?from, ?to, ?account (a code: that account and its
+         *     children), ?tercero_id, ?page, ?per_page ≤ 100 (default 25).
+         */
+        get: operations["get_app_ledger_ui_http_ledgerreport_journal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Per account and its parents: saldo anterior, débitos, créditos and nuevo saldo for ?from–?to. */
+        get: operations["get_app_ledger_ui_http_ledgerreport_trialbalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/income-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ingresos, costos and gastos of ?from–?to, and the period's result. */
+        get: operations["get_app_ledger_ui_http_ledgerreport_incomestatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/balance-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Activo, pasivo and patrimonio at ?date (default today). */
+        get: operations["get_app_ledger_ui_http_ledgerreport_balancesheet"];
         put?: never;
         post?: never;
         delete?: never;
@@ -797,6 +1130,78 @@ export interface components {
             /** Until when the invitation link works; null unless invited. */
             invitation_expires_at?: string | null;
         };
+        CompanyOutput: {
+            id: string;
+            legal_name: string;
+            trade_name?: string | null;
+            /** nit, cc, ce, pasaporte… (the DIAN's tipos de documento) */
+            identification_type: string;
+            identification_number: string;
+            check_digit?: string | null;
+            address?: string | null;
+            city?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            /** The logo's attachment id; the image itself is GET /company/logo. */
+            logo_id?: string | null;
+            /** responsable, no_responsable or simple */
+            vat_regime: string;
+            /** O-13, O-15, O-23, O-47, R-99-PN */
+            fiscal_responsibilities: string[];
+            default_charge_tax_id?: string | null;
+            default_withholding_tax_id?: string | null;
+        };
+        NumberingSeriesOutput: {
+            /** quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal */
+            kind: string;
+            prefix: string;
+            /** The number the next document takes. */
+            next_number: number;
+        };
+        ResolutionOutput: {
+            id: string;
+            resolution_number: string;
+            prefix: string;
+            range_from: number;
+            range_to: number;
+            valid_from: string;
+            valid_to: string;
+            /** electronic or manual */
+            mode: string;
+            /** The consecutivo actual: the number the next invoice takes. */
+            next_number: number;
+            /** Invoices were numbered from it: desde and the prefix are locked. */
+            has_issued_numbers: boolean;
+        };
+        ResolutionStatusOutput: {
+            /** missing, not_yet_valid, active, expired or exhausted */
+            status: string;
+            numbers_left: number;
+            /** Whole days after today until the last valid day. */
+            days_left: number;
+            /** Active but running out: under the company's thresholds of numbers or days. */
+            warning: boolean;
+            warning_numbers: number;
+            warning_days: number;
+        };
+        ResolutionSettingsOutput: {
+            resolution?: components["schemas"]["ResolutionOutput"] | null;
+            status: components["schemas"]["ResolutionStatusOutput"];
+            /** When the owner confirmed the DIAN permission to invoice manually, or null: modalidad manual is not selectable. */
+            manual_invoicing_confirmed_at?: string | null;
+        };
+        PostingRuleOutput: {
+            /** ingreso, descuento_ventas, iva_generado… (PostingConcept) */
+            concept: string;
+            account_id: string;
+            account_code: string;
+            account_name: string;
+            allowed_prefixes: string[];
+        };
+        LockDateOutput: {
+            /** YYYY-MM-DD, or null while the books are open. */
+            locked_until?: string | null;
+        };
         TaxOutput: {
             id: string;
             name: string;
@@ -876,6 +1281,92 @@ export interface components {
             standard: boolean;
             /** A document uses it: it can only be deactivated. */
             in_use: boolean;
+        };
+        JournalLineOutput: {
+            account_id: string;
+            account_code: string;
+            account_name: string;
+            tercero_id?: string | null;
+            tercero_name?: string | null;
+            /** Decimal string; one of débito and crédito is "0.00". */
+            debit: string;
+            credit: string;
+            description?: string | null;
+        };
+        JournalEntryOutput: {
+            id: string;
+            number: number;
+            date: string;
+            /** sales_invoice, cash_receipt, purchase_invoice, supplier_payment… */
+            source_type: string;
+            source_id: string;
+            source_number: string;
+            description: string;
+            /** The entry this one reverses (a void), if any. */
+            reverses_id?: string | null;
+            total_debit: string;
+            total_credit: string;
+            lines: components["schemas"]["JournalLineOutput"][];
+        };
+        TrialBalanceRowOutput: {
+            code: string;
+            name: string;
+            /** class, group, account, subaccount, auxiliary */
+            level: string;
+            /** debit or credit */
+            nature: string;
+            /** Saldo anterior, débito minus crédito (a crédito balance is negative). */
+            opening: string;
+            debit: string;
+            credit: string;
+            /** Nuevo saldo, débito minus crédito. */
+            closing: string;
+        };
+        TrialBalanceOutput: {
+            from?: string | null;
+            to: string;
+            rows: components["schemas"]["TrialBalanceRowOutput"][];
+            /** Σ débitos of the period. */
+            total_debit: string;
+            total_credit: string;
+            /** Σ débitos = Σ créditos. */
+            balanced: boolean;
+        };
+        StatementLineOutput: {
+            code: string;
+            name: string;
+            /** group or account */
+            level: string;
+            amount: string;
+        };
+        StatementSectionOutput: {
+            /** The PUC class: 1 activo, 2 pasivo, 3 patrimonio, 4 ingresos, 5 gastos, 6 costos de ventas, 7 costos de producción. */
+            code: string;
+            name: string;
+            total: string;
+            lines: components["schemas"]["StatementLineOutput"][];
+        };
+        IncomeStatementOutput: {
+            from: string;
+            to: string;
+            sections: components["schemas"]["StatementSectionOutput"][];
+            revenue: string;
+            costs: string;
+            expenses: string;
+            gross_profit: string;
+            net_income: string;
+        };
+        BalanceSheetOutput: {
+            date: string;
+            sections: components["schemas"]["StatementSectionOutput"][];
+            /** The result of classes 4 to 7 not yet closed into patrimonio. */
+            current_earnings: string;
+            total_assets: string;
+            total_liabilities: string;
+            /** Class 3 plus the current earnings. */
+            total_equity: string;
+            /** Activo = pasivo + patrimonio. */
+            balanced: boolean;
         };
         TerceroSummaryOutput: {
             id: string;
@@ -1260,6 +1751,348 @@ export interface operations {
             };
         };
     };
+    get_app_company_ui_http_company_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOutput"];
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_company_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_company_logo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_company_ui_http_company_uploadlogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOutput"];
+                };
+            };
+        };
+    };
+    delete_app_company_ui_http_company_removelogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_company_ui_http_numbering_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["NumberingSeriesOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_numbering_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingSeriesOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_resolution_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_resolution_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    post_app_company_ui_http_resolution_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    get_app_company_ui_http_resolution_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionStatusOutput"];
+                };
+            };
+        };
+    };
+    put_app_company_ui_http_resolution_warnings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    post_app_company_ui_http_resolution_confirmmanualinvoicing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionSettingsOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_booksettings_postingrules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PostingRuleOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_booksettings_changepostingrule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                concept: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingRuleOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_booksettings_lockdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LockDateOutput"];
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_booksettings_movelockdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LockDateOutput"];
+                };
+            };
+        };
+    };
     get_app_ledger_ui_http_catalog_taxes: {
         parameters: {
             query?: never;
@@ -1406,6 +2239,158 @@ export interface operations {
                     "application/json": {
                         items: components["schemas"]["PaymentMethodSettingOutput"][];
                     };
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_chart_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AccountOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_ledger_ui_http_chart_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOutput"];
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_chart_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_ledgerreport_journal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["JournalEntryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_ledgerreport_trialbalance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialBalanceOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_ledgerreport_incomestatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncomeStatementOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_ledgerreport_balancesheet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceSheetOutput"];
                 };
             };
         };
