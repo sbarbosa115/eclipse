@@ -9,7 +9,6 @@ use App\Shared\Domain\Money\UnitPrice;
 use App\Shared\Domain\Totals\LineAmounts;
 use App\Shared\Domain\Totals\LineInput;
 use App\Shared\Domain\Totals\TaxCalculation;
-use App\Shared\Domain\Totals\TaxRate;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 

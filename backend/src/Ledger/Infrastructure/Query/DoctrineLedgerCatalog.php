@@ -39,7 +39,7 @@ final class DoctrineLedgerCatalog implements LedgerCatalog
             $criteria['active'] = true;
         }
 
-        return array_values(array_map(self::taxView(...), $this->em->getRepository(Tax::class)->findBy($criteria, ['taxClass' => 'ASC', 'name' => 'ASC'])));
+        return array_map(self::taxView(...), $this->em->getRepository(Tax::class)->findBy($criteria, ['taxClass' => 'ASC', 'name' => 'ASC']));
     }
 
     public function paymentMethod(Uuid $companyId, Uuid $paymentMethodId): PaymentMethodView
@@ -53,7 +53,7 @@ final class DoctrineLedgerCatalog implements LedgerCatalog
     {
         $criteria = ['companyId' => $companyId] + ($activeOnly ? ['active' => true] : []);
 
-        return array_values(array_map($this->paymentMethodView(...), $this->em->getRepository(PaymentMethod::class)->findBy($criteria, ['name' => 'ASC'])));
+        return array_map($this->paymentMethodView(...), $this->em->getRepository(PaymentMethod::class)->findBy($criteria, ['name' => 'ASC']));
     }
 
     public function account(Uuid $companyId, Uuid $accountId): AccountView

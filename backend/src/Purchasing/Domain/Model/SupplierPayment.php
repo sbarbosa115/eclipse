@@ -5,9 +5,9 @@ namespace App\Purchasing\Domain\Model;
 use App\Shared\Domain\Model\CompanyOwned;
 use App\Shared\Domain\Model\DocumentAuditColumns;
 use App\Shared\Domain\Model\ReceiptColumns;
+use App\Shared\Domain\Money\Money;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use App\Shared\Domain\Money\Money;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 

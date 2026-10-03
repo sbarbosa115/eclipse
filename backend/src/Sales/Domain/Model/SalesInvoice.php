@@ -6,11 +6,11 @@ use App\Shared\Domain\Model\CompanyOwned;
 use App\Shared\Domain\Model\DocumentAuditColumns;
 use App\Shared\Domain\Model\DocumentTotalsColumns;
 use App\Shared\Domain\Model\InvoiceStatus;
+use App\Shared\Domain\Model\References;
 use App\Shared\Domain\Money\Money;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
-use App\Shared\Domain\Model\References;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -37,7 +37,6 @@ class SalesInvoice implements CompanyOwned
     private InvoiceStatus $status = InvoiceStatus::Draft;
 
     #[ORM\Column(type: 'uuid', nullable: true)]
-
     #[References('invoicing_resolution')]
     private ?Uuid $resolutionId = null;
 
@@ -75,7 +74,6 @@ class SalesInvoice implements CompanyOwned
     private Money $paidAmount;
 
     #[ORM\Column(type: 'uuid', nullable: true)]
-
     #[References('journal_entry')]
     private ?Uuid $journalEntryId = null;
 

@@ -49,7 +49,7 @@ final class SignUpApiTest extends ApiTestCase
         self::assertSame('invalid_credentials', $wrongPassword['error']);
     }
 
-    public function testAnE_mailSignsUpOnlyOnce(): void
+    public function testAnEMailSignsUpOnlyOnce(): void
     {
         $this->signUp();
         $this->signOut();

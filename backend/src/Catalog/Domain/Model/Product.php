@@ -3,8 +3,8 @@
 namespace App\Catalog\Domain\Model;
 
 use App\Shared\Domain\Model\CompanyOwned;
-use App\Shared\Domain\Money\UnitPrice;
 use App\Shared\Domain\Model\References;
+use App\Shared\Domain\Money\UnitPrice;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -23,7 +23,6 @@ class Product implements CompanyOwned
     private Uuid $id;
 
     #[ORM\Column(type: 'uuid', nullable: true)]
-
     #[References('product_category', onDelete: 'SET NULL')]
     private ?Uuid $categoryId = null;
 

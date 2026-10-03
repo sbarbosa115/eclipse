@@ -33,7 +33,6 @@ trait ReceiptColumns
     private string $number;
 
     #[ORM\Column(type: 'uuid')]
-
     #[References('tercero')]
     private Uuid $terceroId;
 
@@ -44,7 +43,6 @@ trait ReceiptColumns
     private \DateTimeImmutable $receiptDate;
 
     #[ORM\Column(type: 'uuid')]
-
     #[References('payment_method')]
     private Uuid $paymentMethodId;
 

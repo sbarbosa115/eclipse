@@ -108,6 +108,6 @@ final readonly class DocumentTotals
             $floors[$i] = $floors[$i]->plus($cent);
         }
 
-        return array_map(static fn (BigDecimal $v) => Money::of((string) $v), $floors);
+        return array_values(array_map(static fn (BigDecimal $v) => Money::of((string) $v), $floors));
     }
 }

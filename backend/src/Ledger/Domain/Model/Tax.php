@@ -3,9 +3,9 @@
 namespace App\Ledger\Domain\Model;
 
 use App\Shared\Domain\Model\CompanyOwned;
+use App\Shared\Domain\Model\References;
 use App\Shared\Domain\Totals\TaxCalculation;
 use Doctrine\DBAL\Types\Types;
-use App\Shared\Domain\Model\References;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 

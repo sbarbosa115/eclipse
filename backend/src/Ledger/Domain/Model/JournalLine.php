@@ -3,8 +3,8 @@
 namespace App\Ledger\Domain\Model;
 
 use App\Shared\Domain\Model\CompanyOwned;
-use App\Shared\Domain\Money\Money;
 use App\Shared\Domain\Model\References;
+use App\Shared\Domain\Money\Money;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 

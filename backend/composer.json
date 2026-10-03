@@ -81,7 +81,13 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+        "deptrac": [
+            "deptrac analyse --config-file=deptrac.yaml --no-progress",
+            "deptrac analyse --config-file=deptrac.contexts.yaml --no-progress"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix"
     },
     "conflict": {
         "symfony/symfony": "*"

@@ -30,12 +30,13 @@ deptrac:
         - {type: classNameRegex, value: '#^App\\Kernel$#'}
 
     # The only outside code a domain model may name: its Doctrine mapping attributes, collections for its
-    # children, the DBAL type names, and UUIDs for its identity. Never the EntityManager or a query builder.
+    # children, the DBAL type names, UUIDs for its identity, and brick/math for decimal money (never a float).
+    # Never the EntityManager or a query builder.
     - name: DomainVendor
       collectors:
         - {
             type: classNameRegex,
-            value: '#^(Doctrine\\ORM\\Mapping\\|Doctrine\\Common\\Collections\\|Doctrine\\DBAL\\Types\\Types$|Symfony\\Component\\Uid\\)#',
+            value: '#^(Doctrine\\ORM\\Mapping\\|Doctrine\\Common\\Collections\\|Doctrine\\DBAL\\Types\\Types$|Symfony\\Component\\Uid\\|Brick\\Math\\)#',
           }
 
     # PHP-FIG interfaces (a logger): standards, not a framework, so a use case may log what it swallows.
@@ -49,7 +50,7 @@ deptrac:
       collectors:
         - {
             type: classNameRegex,
-            value: '#^(?!App\\|Doctrine\\ORM\\Mapping\\|Doctrine\\Common\\Collections\\|Doctrine\\DBAL\\Types\\Types$|Symfony\\Component\\Uid\\|Psr\\Log\\)[A-Za-z0-9_]+\\#',
+            value: '#^(?!App\\|Doctrine\\ORM\\Mapping\\|Doctrine\\Common\\Collections\\|Doctrine\\DBAL\\Types\\Types$|Symfony\\Component\\Uid\\|Brick\\Math\\|Psr\\Log\\)[A-Za-z0-9_]+\\#',
           }
 
   ruleset:
