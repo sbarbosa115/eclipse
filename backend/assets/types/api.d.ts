@@ -48,7 +48,8 @@ export interface paths {
         /** The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones. */
         get: operations["get_app_ledger_ui_http_catalog_taxes"];
         put?: never;
-        post?: never;
+        /** Adds a tax. Its class and kind (IVA, impoconsumo, retefuente, reteiva, reteica) are fixed from here on. */
+        post: operations["post_app_ledger_ui_http_tax_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -65,7 +66,8 @@ export interface paths {
         /** The company's payment methods. ?all=1 includes the inactive ones. */
         get: operations["get_app_ledger_ui_http_catalog_paymentmethods"];
         put?: never;
-        post?: never;
+        /** Adds a method: contado ("cash") needs a postable account, crédito ("credit") has none. */
+        post: operations["post_app_ledger_ui_http_paymentmethod_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -86,6 +88,108 @@ export interface paths {
         get: operations["get_app_ledger_ui_http_catalog_searchaccounts"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payment-methods/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Renames a method and moves its account. Its kind never changes. */
+        put: operations["put_app_ledger_ui_http_paymentmethod_update"];
+        post?: never;
+        /** Deletes a method nothing uses: 204. One a document used answers 409 `payment_method_in_use`. */
+        delete: operations["delete_app_ledger_ui_http_paymentmethod_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payment-methods/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes the method out of the pickers; documents that used it keep it. */
+        post: operations["post_app_ledger_ui_http_paymentmethod_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payment-methods/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_app_ledger_ui_http_paymentmethod_activate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/taxes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Changes a tax's name, calculation, rate, accounts and validity dates. "Ninguno" cannot be changed. */
+        put: operations["put_app_ledger_ui_http_tax_update"];
+        post?: never;
+        /** Deletes a tax nothing uses: 204. A tax a document, a product or the company uses answers 409 `tax_in_use`. */
+        delete: operations["delete_app_ledger_ui_http_tax_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/taxes/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes the tax out of the pickers; documents that used it keep it. */
+        post: operations["post_app_ledger_ui_http_tax_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/taxes/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_app_ledger_ui_http_tax_activate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -374,6 +478,26 @@ export interface operations {
             };
         };
     };
+    post_app_ledger_ui_http_tax_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxOutput"];
+                };
+            };
+        };
+    };
     get_app_ledger_ui_http_catalog_paymentmethods: {
         parameters: {
             query?: never;
@@ -396,6 +520,26 @@ export interface operations {
             };
         };
     };
+    post_app_ledger_ui_http_paymentmethod_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                };
+            };
+        };
+    };
     get_app_ledger_ui_http_catalog_searchaccounts: {
         parameters: {
             query?: never;
@@ -414,6 +558,176 @@ export interface operations {
                     "application/json": {
                         items: components["schemas"]["AccountOutput"][];
                     };
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_paymentmethod_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                };
+            };
+        };
+    };
+    delete_app_ledger_ui_http_paymentmethod_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_ledger_ui_http_paymentmethod_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                };
+            };
+        };
+    };
+    post_app_ledger_ui_http_paymentmethod_activate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_tax_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxOutput"];
+                };
+            };
+        };
+    };
+    delete_app_ledger_ui_http_tax_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_ledger_ui_http_tax_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxOutput"];
+                };
+            };
+        };
+    };
+    post_app_ledger_ui_http_tax_activate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxOutput"];
                 };
             };
         };
