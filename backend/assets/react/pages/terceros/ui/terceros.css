@@ -1,0 +1,48 @@
+/* The terceros form page. Scoped under .admin like the kit. */
+.admin .tercero-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.admin .tercero-form .card + .card {
+  margin-top: 16px;
+}
+
+.admin .tercero-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 100px auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.admin .tercero-row.contact-row {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1fr) auto;
+}
+
+@media (max-width: 700px) {
+  .admin .tercero-row,
+  .admin .tercero-row.contact-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.admin .tercero-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.admin .tercero-privacy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin .tercero-form .form-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0;
+  background: var(--color-bg, var(--color-surface));
+}

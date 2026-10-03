@@ -1,3 +1,4 @@
+import './tercero.css';
 import {useTranslation} from '@/shared/i18n';
 
 /** A tercero's roles as small labels: a tercero may be client, supplier, employee and other at once. */

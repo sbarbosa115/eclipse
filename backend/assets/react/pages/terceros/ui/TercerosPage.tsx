@@ -1,13 +1,14 @@
-import {useTranslation} from '@/shared/i18n';
-import {ComingSoon, PageHeader} from '@/shared/ui';
+import {Route, Routes} from 'react-router-dom';
+import {TerceroEditor} from './TerceroEditor';
+import {TercerosList} from './TercerosList';
 
-/** Owned by item 5 terceros of the accounting split, which replaces this placeholder. */
+/** Terceros: the list at /terceros, the full form at /terceros/nuevo and /terceros/:id. */
 export function TercerosPage() {
-  const {t} = useTranslation();
   return (
-    <>
-      <PageHeader title={t('shell.nav.terceros')} />
-      <ComingSoon />
-    </>
+    <Routes>
+      <Route index element={<TercerosList />} />
+      <Route path="nuevo" element={<TerceroEditor />} />
+      <Route path=":id" element={<TerceroEditor />} />
+    </Routes>
   );
 }

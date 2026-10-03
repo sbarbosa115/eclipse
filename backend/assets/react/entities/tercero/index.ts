@@ -48,3 +48,4 @@ export {
   IdentificationFields,
   type IdentityValues,
 } from './ui/IdentificationFields';
+export {RoleCheckboxes} from './ui/RoleCheckboxes';

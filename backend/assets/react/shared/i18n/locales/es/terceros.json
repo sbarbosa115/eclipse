@@ -137,7 +137,8 @@
     "defaultAccount": "Predeterminada (según las reglas de contabilización)",
     "accountsHint": "Solo si este tercero usa una cuenta distinta a la de las reglas de contabilización.",
     "save": "Guardar tercero",
-    "create": "Crear tercero"
+    "create": "Crear tercero",
+    "createdNotice": "Tercero {{name}} creado."
   },
   "privacy": {
     "intro": "Ley 1581 de 2012: el titular puede pedir una copia de sus datos personales o que se supriman.",

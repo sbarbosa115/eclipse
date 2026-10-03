@@ -4,7 +4,7 @@ import {
   emptyQuickForm,
   IdentificationFields,
   quickCreateTercero,
-  ROLES,
+  RoleCheckboxes,
   terceroErrorMessage,
   toQuickPayload,
   validateForm,
@@ -41,13 +41,6 @@ export function QuickCreateTerceroModal({
 
   const patch = (change: Partial<QuickForm>) =>
     setForm((current) => ({...current, ...change}));
-
-  const toggleRole = (role: string) =>
-    patch({
-      roles: form.roles.includes(role)
-        ? form.roles.filter((r) => r !== role)
-        : [...form.roles, role],
-    });
 
   const submit = async () => {
     const found = validateForm(form, true);
@@ -91,24 +84,13 @@ export function QuickCreateTerceroModal({
           onChange={(e) => patch({email: e.target.value})}
         />
       </Field>
-      <fieldset className="span-2 tercero-roles">
-        <legend className="admin-field-label">
-          {t('terceros.form.sections.roles')}
-        </legend>
-        {ROLES.map((role) => (
-          <label key={role} className="checkbox">
-            <input
-              type="checkbox"
-              checked={form.roles.includes(role)}
-              onChange={() => toggleRole(role)}
-            />
-            {t(`terceros.roles.${role}`)}
-          </label>
-        ))}
-        {errors['roles'] && (
-          <span className="field-error">{errors['roles']}</span>
-        )}
-      </fieldset>
+      <div className="span-2">
+        <RoleCheckboxes
+          value={form.roles}
+          onChange={(roles) => patch({roles})}
+          error={errors['roles']}
+        />
+      </div>
     </FormModal>
   );
 }
