@@ -11,7 +11,7 @@ use Symfony\Component\Messenger\Stamp\TransportNamesStamp;
 use Symfony\Component\Mime\BodyRendererInterface;
 
 /**
- * Sends an email through the `mail` queue instead of while the request waits: the worker (a cron run every minute on
+ * Sends an email through the `async` queue instead of while the request waits: the worker (a cron run every minute on
  * cPanel) delivers it, and retries it when the mail server is busy (config/packages/messenger.yaml).
  *
  * The body is rendered here, so the worker only hands finished MIME to the transport. A failure to queue is logged and
@@ -19,7 +19,7 @@ use Symfony\Component\Mime\BodyRendererInterface;
  */
 final class QueuedMailer
 {
-    public const TRANSPORT = 'mail';
+    public const TRANSPORT = 'async';
 
     public function __construct(
         private readonly MessageBusInterface $bus,
