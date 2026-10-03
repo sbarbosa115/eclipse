@@ -1,0 +1,101 @@
+{#
+    The factura de venta (§4.8), from Sales\Application\Document\SalesInvoicePdf::context(): every value arrives
+    already printed ($ 1.190.000,00, DD/MM/YYYY).
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% block watermark %}
+    {% if voided %}<div class="voided">ANULADA</div>{% elseif draft %}<div class="voided">BORRADOR</div>{% endif %}
+{% endblock %}
+
+{% block body %}
+    <style>
+        .parties { width: 100%; margin-bottom: 10px; }
+        .parties td { vertical-align: top; width: 50%; padding-right: 8px; }
+        .label { color: #616e7c; font-size: 7.5pt; text-transform: uppercase; }
+        .totals { width: 45%; margin-left: 55%; margin-top: 8px; border-collapse: collapse; }
+        .totals td { padding: 2px 4px; }
+        .totals .net td { font-weight: bold; border-top: 1px solid #1f2933; }
+        .section { margin-top: 10px; }
+        .resolution { font-size: 7.5pt; color: #616e7c; margin-bottom: 8px; }
+        .void-note { color: #b42318; font-weight: bold; margin-bottom: 8px; }
+    </style>
+
+    {% if resolution %}<div class="resolution">{{ resolution }}</div>{% endif %}
+    {% if voided %}
+        <div class="void-note">ANULADA el {{ invoice.voided_at }}. Motivo: {{ invoice.void_reason }}</div>
+    {% endif %}
+
+    <table class="parties">
+        <tr>
+            <td>
+                <div class="label">Cliente</div>
+                <strong>{{ client.name }}</strong><br>
+                {{ client.identification }}<br>
+                {% if client.address %}{{ client.address }}<br>{% endif %}
+                {% if client.email %}{{ client.email }}<br>{% endif %}
+                {% if client.contact %}Contacto: {{ client.contact }}<br>{% endif %}
+                {% if client.fiscal_responsibilities %}<span class="muted">Responsabilidades: {{ client.fiscal_responsibilities }}</span>{% endif %}
+            </td>
+            <td>
+                <div class="label">Factura</div>
+                Fecha de elaboración: {{ invoice.issue_date }}<br>
+                {% if invoice.due_date %}Fecha de vencimiento: {{ invoice.due_date }}<br>{% endif %}
+                {% if invoice.internal_number %}Consecutivo interno: {{ invoice.internal_number }}<br>{% endif %}
+                <span class="muted">Responsabilidades del emisor: {{ company.fiscalResponsibilities|join(', ') }}</span>
+            </td>
+        </tr>
+    </table>
+
+    <table class="lines">
+        <thead>
+            <tr>
+                <th>#</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Valor unitario</th>
+                <th class="num">% Desc.</th><th>Impuesto</th><th class="num">Valor total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+                <tr>
+                    <td>{{ line.position }}</td>
+                    <td>{{ line.description }}</td>
+                    <td class="num">{{ line.quantity }}</td>
+                    <td class="num">{{ line.unit_price }}</td>
+                    <td class="num">{{ line.discount }}</td>
+                    <td>{{ line.charge_tax }}</td>
+                    <td class="num">{{ line.total }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr><td>Total bruto</td><td class="num">{{ totals.gross }}</td></tr>
+        {% if totals.has_discounts %}<tr><td>Descuentos</td><td class="num">-{{ totals.discounts }}</td></tr>{% endif %}
+        <tr><td>Subtotal</td><td class="num">{{ totals.subtotal }}</td></tr>
+        {% for tax in taxes %}<tr><td>{{ tax.name }} <span class="muted">(base {{ tax.base }})</span></td><td class="num">{{ tax.amount }}</td></tr>{% endfor %}
+        {% for tax in withholdings %}<tr><td>{{ tax.name }} <span class="muted">(base {{ tax.base }})</span></td><td class="num">-{{ tax.amount }}</td></tr>{% endfor %}
+        <tr class="net"><td>Total neto</td><td class="num">{{ totals.net }}</td></tr>
+    </table>
+
+    {% if payments %}
+        <div class="section">
+            <div class="label">Formas de pago</div>
+            <table class="lines">
+                <thead><tr><th>Método</th><th>Tipo</th><th>Vencimiento</th><th class="num">Valor</th></tr></thead>
+                <tbody>
+                    {% for p in payments %}
+                        <tr><td>{{ p.method }}</td><td>{{ p.kind }}</td><td>{{ p.due_date }}</td><td class="num">{{ p.amount }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if invoice.notes %}
+        <div class="section">
+            <div class="label">Observaciones</div>
+            {{ invoice.notes|nl2br }}
+        </div>
+    {% endif %}
+{% endblock %}
