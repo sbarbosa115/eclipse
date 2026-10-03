@@ -1,1 +1,168 @@
-{}
+{
+  "title": "Terceros",
+  "subtitle": "Clientes, proveedores, empleados y demás personas o empresas con las que trabajas.",
+  "new": "Nuevo tercero",
+  "roles": {
+    "cliente": "Cliente",
+    "proveedor": "Proveedor",
+    "empleado": "Empleado",
+    "otro": "Otro"
+  },
+  "personTypes": {
+    "persona": "Persona",
+    "empresa": "Empresa"
+  },
+  "identificationTypes": {
+    "cc": "Cédula de ciudadanía",
+    "nit": "NIT",
+    "ce": "Cédula de extranjería",
+    "pasaporte": "Pasaporte",
+    "ti": "Tarjeta de identidad",
+    "rc": "Registro civil",
+    "te": "Tarjeta de extranjería",
+    "die": "Documento de identificación extranjero",
+    "pep": "Permiso especial de permanencia",
+    "ppt": "Permiso por protección temporal",
+    "nit_extranjero": "NIT de otro país",
+    "nuip": "NUIP"
+  },
+  "vatRegimes": {
+    "responsable": "Responsable de IVA",
+    "no_responsable": "No responsable de IVA",
+    "simple": "Régimen simple de tributación"
+  },
+  "fiscalResponsibilities": {
+    "O-13": "O-13 Gran contribuyente",
+    "O-15": "O-15 Autorretenedor",
+    "O-23": "O-23 Agente de retención IVA",
+    "O-47": "O-47 Régimen simple",
+    "R-99-PN": "R-99-PN No aplica – Otros"
+  },
+  "list": {
+    "columns": {
+      "name": "Nombre",
+      "identification": "Identificación",
+      "roles": "Roles",
+      "email": "Correo",
+      "city": "Ciudad"
+    },
+    "searchPlaceholder": "Nombre o identificación",
+    "roleFilter": "Rol",
+    "allRoles": "Todos los roles",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos",
+    "onlyActive": "Activos",
+    "onlyInactive": "Inactivos",
+    "inactive": "Inactivo",
+    "branch": "Sucursal {{code}}",
+    "empty": "Aún no tienes terceros. Crea el primero para usarlo en tus documentos.",
+    "emptyAction": "Crear tercero",
+    "filteredEmpty": "Ningún tercero coincide con tu búsqueda.",
+    "total": "{{total}} terceros",
+    "erased": "Datos suprimidos"
+  },
+  "actions": {
+    "edit": "Editar",
+    "view": "Ver",
+    "deactivate": "Desactivar",
+    "reactivate": "Activar",
+    "delete": "Eliminar"
+  },
+  "confirm": {
+    "deleteTitle": "Eliminar tercero",
+    "deleteBody": "¿Eliminar a {{name}}? Esta acción no se puede deshacer.",
+    "deleteConfirm": "Eliminar",
+    "deactivateTitle": "Desactivar tercero",
+    "deactivateBody": "{{name}} dejará de ofrecerse en los documentos nuevos. Sus documentos anteriores no cambian.",
+    "deactivateConfirm": "Desactivar",
+    "eraseTitle": "Suprimir datos personales",
+    "eraseBody": "Se borrarán los datos personales de {{name}} y sus contactos, y quedará inactivo. Se conserva la identificación porque sus documentos la usan. No se puede deshacer.",
+    "eraseConfirm": "Suprimir datos"
+  },
+  "form": {
+    "newTitle": "Nuevo tercero",
+    "editTitle": "Editar tercero",
+    "viewTitle": "Tercero",
+    "back": "Volver a terceros",
+    "saved": "Cambios guardados.",
+    "erasedNotice": "Los datos personales de este tercero fueron suprimidos el {{date}}. Ya no se puede editar.",
+    "loadFailed": "No pudimos cargar el tercero.",
+    "saveFailed": "No pudimos guardar el tercero. Revisa los campos marcados.",
+    "sections": {
+      "roles": "Tipo de tercero",
+      "basics": "Datos básicos",
+      "billing": "Datos para facturación y envío",
+      "fiscal": "Responsabilidad fiscal",
+      "contacts": "Contactos",
+      "accounts": "Cuentas contables",
+      "privacy": "Datos personales (Ley 1581 de 2012)"
+    },
+    "fields": {
+      "personType": "Tipo",
+      "identificationType": "Tipo de identificación",
+      "identificationNumber": "Número de identificación",
+      "checkDigit": "DV",
+      "checkDigitHint": "Calculado: {{dv}}. Escribe otro solo si es distinto.",
+      "branchCode": "Código de sucursal",
+      "firstNames": "Nombres",
+      "lastNames": "Apellidos",
+      "businessName": "Razón social",
+      "tradeName": "Nombre comercial",
+      "city": "Ciudad",
+      "address": "Dirección",
+      "phones": "Teléfonos",
+      "phoneIndicative": "Indicativo",
+      "phoneNumber": "Número",
+      "phoneExtension": "Extensión",
+      "billingContactName": "Nombre y apellido del contacto",
+      "email": "Correo electrónico",
+      "mobile": "Celular",
+      "postalCode": "Código postal",
+      "vatRegime": "Tipo de régimen IVA",
+      "billingContactIsPayer": "El contacto es el pagador",
+      "contactName": "Nombre del contacto",
+      "contactEmail": "Correo del contacto",
+      "contactPhone": "Teléfono del contacto",
+      "receivableAccount": "Cuenta por cobrar",
+      "payableAccount": "Cuenta por pagar"
+    },
+    "fiscalHint": "Verifica estas responsabilidades contra el RUT del tercero.",
+    "rolesHint": "Un tercero puede tener varios roles.",
+    "noVatRegime": "Sin definir",
+    "addPhone": "Agregar teléfono",
+    "removePhone": "Quitar teléfono {{n}}",
+    "addContact": "Agregar contacto",
+    "removeContact": "Quitar contacto {{n}}",
+    "noContacts": "Sin contactos. Agrégalos para elegirlos en los documentos.",
+    "defaultAccount": "Predeterminada (según las reglas de contabilización)",
+    "accountsHint": "Solo si este tercero usa una cuenta distinta a la de las reglas de contabilización.",
+    "save": "Guardar tercero",
+    "create": "Crear tercero"
+  },
+  "privacy": {
+    "intro": "Ley 1581 de 2012: el titular puede pedir una copia de sus datos personales o que se supriman.",
+    "export": "Exportar datos (JSON)",
+    "erase": "Suprimir datos personales",
+    "exportFailed": "No pudimos exportar los datos.",
+    "eraseFailed": "No pudimos suprimir los datos."
+  },
+  "quick": {
+    "title": "Nuevo tercero",
+    "create": "Crear tercero",
+    "intro": "Solo lo necesario para usarlo ahora. Completa el resto después desde Terceros."
+  },
+  "validation": {
+    "required": "Este campo es obligatorio.",
+    "email": "Escribe un correo válido.",
+    "checkDigit": "El DV es un solo dígito.",
+    "roles": "Elige al menos un rol."
+  },
+  "errors": {
+    "duplicate_identification": "Ya existe un tercero con esta identificación.",
+    "tercero_in_use": "Hay documentos con este tercero: no se puede eliminar, solo desactivar.",
+    "tercero_erased": "Los datos personales de este tercero fueron suprimidos.",
+    "tercero_not_found": "El tercero ya no existe.",
+    "forbidden": "Tu rol no permite esta acción.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  }
+}
