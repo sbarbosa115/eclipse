@@ -1,4 +1,5 @@
 import {render, screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {fakeApi} from '@/shared/test/fakeApi';
 import {App} from './App';
 
@@ -27,6 +28,27 @@ describe('the app', () => {
     expect(
       await screen.findByRole('heading', {name: 'Ingresa a tu empresa'}),
     ).toBeInTheDocument();
+  });
+
+  it('remembers the whole address it was sent away from, query included', async () => {
+    const api = fakeApi({
+      'GET /me': [401, {error: 'unauthorized'}],
+      'POST /auth/sign-in': [200, {...ANA, role: 'owner'}],
+    });
+    window.history.pushState({}, '', '/configuracion?tab=taxes');
+    render(<App />);
+
+    await userEvent.type(
+      await screen.findByLabelText('Correo electrónico'),
+      'ana@acme.co',
+    );
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto123');
+    await userEvent.click(screen.getByRole('button', {name: 'Ingresar'}));
+
+    expect(
+      await screen.findByRole('tab', {name: 'Impuestos', selected: true}),
+    ).toBeInTheDocument();
+    expect(api.calls.some((c) => c.path === '/auth/sign-in')).toBe(true);
   });
 
   it('shows the company and the menu its role may use', async () => {
