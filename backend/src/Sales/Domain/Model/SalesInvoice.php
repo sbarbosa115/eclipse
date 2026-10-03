@@ -252,7 +252,7 @@ class SalesInvoice implements CompanyOwned
     {
         $this->assertDraft();
         $this->lines->clear();
-        foreach (array_values($lines) as $i => $line) {
+        foreach ($lines as $i => $line) {
             $this->lines->add(new SalesInvoiceLine($this, $this->companyId, $i + 1, $line->productId, trim($line->description), $line->quantity, $line->unitPrice, $line->discount, $line->chargeTax, $line->withholdingTax));
         }
         $this->recomputeTotals($this->lines);
@@ -267,7 +267,6 @@ class SalesInvoice implements CompanyOwned
     public function replacePayments(array $payments): void
     {
         $this->assertDraft();
-        $payments = array_values($payments);
         $this->assertPaymentRows(array_map(static fn (InvoicePaymentDraft $p) => [$p->kind, $p->amount, $p->dueDate, $p->accountId], $payments));
         $this->payments->clear();
         foreach ($payments as $i => $p) {
@@ -317,13 +316,13 @@ class SalesInvoice implements CompanyOwned
         $this->prefix = $prefix;
         $this->authorisedNumber = $authorisedNumber;
         $this->internalNumber = $internalNumber;
-        $this->number = '' === $prefix ? (string) $authorisedNumber : $prefix.'-'.$authorisedNumber;
+        $this->number = $number = '' === $prefix ? (string) $authorisedNumber : $prefix.'-'.$authorisedNumber;
         $this->recordEmission($by, $at);
 
         $receivables = [];
         foreach ($this->payments() as $payment) {
             if (PaymentKind::Credit === $payment->kind()) {
-                $receivables[] = new Receivable($this->companyId, $this->id, $this->number, $this->terceroId, $this->issueDate, $payment->dueDate() ?? $this->issueDate, $payment->amount());
+                $receivables[] = new Receivable($this->companyId, $this->id, $number, $this->terceroId, $this->issueDate, $payment->dueDate() ?? $this->issueDate, $payment->amount());
             }
         }
         $this->status = $this->creditTotal()->isZero() ? InvoiceStatus::Paid : InvoiceStatus::Emitted;

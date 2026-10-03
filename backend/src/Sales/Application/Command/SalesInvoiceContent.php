@@ -133,7 +133,7 @@ final class SalesInvoiceContent
         }
 
         $drafts = [];
-        foreach (array_values($lines) as $i => $line) {
+        foreach ($lines as $i => $line) {
             $at = "lines.$i";
             if (null === $line->productId) {
                 $this->violate("$at.product_id", 'Choose a product or service.');
@@ -214,7 +214,7 @@ final class SalesInvoiceContent
         }
 
         $drafts = [];
-        foreach (array_values($payments) as $i => $payment) {
+        foreach ($payments as $i => $payment) {
             $field = "payments.$i.payment_method_id";
             try {
                 $method = $this->ledger->paymentMethod($invoice->companyId(), $payment->paymentMethodId);

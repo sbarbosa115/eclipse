@@ -5,7 +5,6 @@ namespace App\Sales\UI\Http\Output;
 use App\Sales\Domain\Model\Receivable;
 use App\Sales\Domain\Model\SalesInvoice;
 use App\Sales\Domain\Model\SalesInvoiceLine;
-use App\Sales\Domain\Model\SalesInvoicePayment;
 
 /** A factura de venta, whole: the header, the numbers, the lines, the formas de pago, the totals, its receivables and its audit. */
 final readonly class SalesInvoiceOutput

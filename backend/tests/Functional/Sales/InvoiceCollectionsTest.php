@@ -82,7 +82,7 @@ final class InvoiceCollectionsTest extends ApiTestCase
         $other = $this->startCompany('otra@acme.co', '901000001', 'Otra S.A.S.');
 
         $this->expectException(ReceivableNotFound::class);
-        $this->collect(fn (InvoiceCollections $c) => $c->apply($other, Uuid::fromString($invoice['receivables'][0]['id']), Money::of('1')));
+        $this->collect(static fn (InvoiceCollections $c) => $c->apply($other, Uuid::fromString($invoice['receivables'][0]['id']), Money::of('1')));
     }
 
     public function testAQuotationConvertsIntoADraftThatRemembersIt(): void

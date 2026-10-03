@@ -5,9 +5,8 @@ namespace App\Tests\Unit\Sales;
 use App\Ledger\Application\Posting\EntryLine;
 use App\Ledger\Application\Posting\Side;
 use App\Sales\Application\Posting\SalesInvoicePosting;
-use App\Shared\Domain\Accounting\PostingConcept as C;
-use App\Shared\Domain\Money\Money;
 use App\Shared\Domain\Model\TaxSnapshot;
+use App\Shared\Domain\Money\Money;
 use App\Shared\Domain\Totals\TaxCalculation;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -32,7 +31,7 @@ final class SalesInvoicePostingTest extends TestCase
         return array_map(static fn (EntryLine $l) => [
             $l->side->value,
             $l->amount->toString(),
-            $l->accountId?->toRfc4122() ?? $l->concept?->value ?? '?',
+            $l->accountId?->toRfc4122() ?? $l->concept->value ?? '?',
             $l->terceroId?->toRfc4122(),
         ], $lines);
     }

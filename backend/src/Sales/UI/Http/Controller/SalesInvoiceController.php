@@ -236,10 +236,10 @@ final class SalesInvoiceController extends AbstractController
             array_map(static fn (SalesInvoiceLineInput $l) => new SalesInvoiceLineData(
                 SalesInvoiceAccess::optionalUuid($l->productId), $l->description, $l->quantity, $l->unitPrice, $l->discount,
                 SalesInvoiceAccess::optionalUuid($l->chargeTaxId), SalesInvoiceAccess::optionalUuid($l->withholdingTaxId),
-            ), array_values($in->lines)),
+            ), $in->lines),
             array_map(static fn (SalesInvoicePaymentInput $p) => new SalesInvoicePaymentData(
                 Uuid::fromString($p->paymentMethodId), $p->amount, null === $p->dueDate ? null : new \DateTimeImmutable($p->dueDate),
-            ), array_values($in->payments)),
+            ), $in->payments),
         );
     }
 

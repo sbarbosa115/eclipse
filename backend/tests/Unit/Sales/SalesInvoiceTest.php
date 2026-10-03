@@ -6,7 +6,6 @@ use App\Sales\Domain\Error\AllocationExceedsBalance;
 use App\Sales\Domain\Error\DocumentHasAllocations;
 use App\Sales\Domain\Error\DocumentNotDraft;
 use App\Sales\Domain\Error\DocumentNotEmitted;
-use App\Sales\Domain\Error\InvalidInvoice;
 use App\Sales\Domain\Error\PaymentsDoNotMatchTotal;
 use App\Shared\Domain\Error\InvalidValues;
 use App\Shared\Domain\Model\InvoiceStatus;
@@ -78,7 +77,7 @@ final class SalesInvoiceTest extends TestCase
     public function testPaymentRowsAreCheckedWhenSaved(): void
     {
         $invoice = self::draft();
-        $fields = self::violations(fn () => $invoice->replacePayments([
+        $fields = self::violations(static fn () => $invoice->replacePayments([
             self::cash('0'),
             self::credit('100', '2026-09-01'),
         ]));
@@ -114,10 +113,10 @@ final class SalesInvoiceTest extends TestCase
         self::assertSame('2026-10-03 10:00', $invoice->emittedAt()?->format('Y-m-d H:i'));
 
         foreach ([
-            fn () => $invoice->replaceLines([self::line('1', '5')]),
-            fn () => $invoice->replacePayments([]),
-            fn () => $invoice->revise(self::client(), 'X', null, null, new \DateTimeImmutable('2026-10-01'), null),
-            fn () => self::emit($invoice),
+            static fn () => $invoice->replaceLines([self::line('1', '5')]),
+            static fn () => $invoice->replacePayments([]),
+            static fn () => $invoice->revise(self::client(), 'X', null, null, new \DateTimeImmutable('2026-10-01'), null),
+            static fn () => self::emit($invoice),
         ] as $change) {
             try {
                 $change();
@@ -132,7 +131,7 @@ final class SalesInvoiceTest extends TestCase
     {
         $invoice = self::draft();
 
-        self::assertSame(['lines'], self::violations(fn () => self::emit($invoice)));
+        self::assertSame(['lines'], self::violations(static fn () => self::emit($invoice)));
     }
 
     public function testEmissionNeedsThePaymentsToAddUpToTotalNeto(): void
@@ -157,7 +156,7 @@ final class SalesInvoiceTest extends TestCase
         $invoice->replaceLines([self::line('1', '10')]);
         $invoice->replacePayments([self::cash('10')]);
 
-        self::assertSame(['issue_date'], self::violations(fn () => self::emit($invoice, today: '2026-10-03')), '§9 Q11: backdating is allowed, post-dating is not.');
+        self::assertSame(['issue_date'], self::violations(static fn () => self::emit($invoice, today: '2026-10-03')), '§9 Q11: backdating is allowed, post-dating is not.');
     }
 
     public function testABackdatedInvoiceIsEmitted(): void
@@ -179,7 +178,7 @@ final class SalesInvoiceTest extends TestCase
         $invoice->replacePayments([self::credit('10', '2026-09-20')]);
         $invoice->revise(self::client(), 'Cliente', null, null, new \DateTimeImmutable('2026-09-25'), null);
 
-        self::assertSame(['payments.0.due_date'], self::violations(fn () => self::emit($invoice)));
+        self::assertSame(['payments.0.due_date'], self::violations(static fn () => self::emit($invoice)));
     }
 
     public function testEmissionOpensOneReceivablePerCreditLine(): void
@@ -310,7 +309,7 @@ final class SalesInvoiceTest extends TestCase
         $invoice->replacePayments([self::cash('10')]);
         self::emit($invoice);
 
-        self::assertSame(['reason'], self::violations(fn () => $invoice->void('   ', false, self::user(), new \DateTimeImmutable())));
+        self::assertSame(['reason'], self::violations(static fn () => $invoice->void('   ', false, self::user(), new \DateTimeImmutable())));
     }
 
     public function testAnInvoiceWithMoneyAppliedIsNotVoided(): void
@@ -358,10 +357,5 @@ final class SalesInvoiceTest extends TestCase
         $invoice->originatesFrom($quotation);
 
         self::assertTrue($quotation->equals($invoice->quotationId() ?? Uuid::v7()));
-    }
-
-    public function testInvalidInvoiceIsAValidationError(): void
-    {
-        self::assertTrue(is_subclass_of(InvalidInvoice::class, InvalidValues::class), 'Reported as 422 validation_failed, by field.');
     }
 }

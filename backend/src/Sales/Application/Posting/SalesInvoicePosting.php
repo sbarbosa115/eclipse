@@ -9,7 +9,6 @@ use App\Sales\Domain\Model\SalesInvoice;
 use App\Shared\Domain\Accounting\PostingConcept;
 use App\Shared\Domain\Model\PaymentKind;
 use App\Shared\Domain\Model\TaxSnapshot;
-use App\Shared\Domain\Money\Money;
 use Symfony\Component\Uid\Uuid;
 
 /**
