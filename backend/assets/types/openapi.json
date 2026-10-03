@@ -6,6 +6,82 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/auth/invitations/lookup": {
+            "post": {
+                "summary": "Who is invited, to which company and as what, for the invitation page.",
+                "operationId": "post_app_access_ui_http_accountrecovery_lookup",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvitationOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/invitations/accept": {
+            "post": {
+                "summary": "The invitee writes their name and a password (\u2265 10): their account is active and they are signed in.",
+                "operationId": "post_app_access_ui_http_accountrecovery_accept",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password-reset": {
+            "post": {
+                "summary": "Sends a reset link (valid one hour) to the e-mail, if it belongs to someone who can sign in. The answer is 202\nwith no body whoever asks, so it tells nobody which e-mails have an account. 429 after 5 requests from one\naddress in 10 minutes; one person gets at most 5 e-mails in 10 minutes, silently.",
+                "operationId": "post_app_access_ui_http_accountrecovery_requestreset",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password-reset/check": {
+            "post": {
+                "summary": "204 while the reset link works, so the page asks for a password only then.",
+                "operationId": "post_app_access_ui_http_accountrecovery_checkreset",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password-reset/confirm": {
+            "post": {
+                "summary": "Sets the new password (\u2265 10) and signs the person in. Every other session of theirs ends.",
+                "operationId": "post_app_access_ui_http_accountrecovery_confirmreset",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/sign-up": {
             "post": {
                 "summary": "Creates a company and its owner, and signs the owner in.",
@@ -35,6 +111,166 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "summary": "Every user of the company, invitees and deactivated ones included, by name.",
+                "operationId": "get_app_access_ui_http_user_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UserOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/invitations": {
+            "post": {
+                "summary": "Invites someone by e-mail as a billing user or an accountant: they get a link that works once, for seven days.",
+                "description": "An e-mail registered anywhere in Mustang is refused (422 on `email`).",
+                "operationId": "post_app_access_ui_http_user_invite",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/invitation": {
+            "post": {
+                "summary": "Sends the invitation again with a new link; the earlier link stops working. 409 `not_an_invitation` once they\naccepted.",
+                "operationId": "post_app_access_ui_http_user_resend",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/role": {
+            "put": {
+                "summary": "Changes a user's role (owner, billing, accountant). Their session ends on its next request, so they sign in\nagain with the new role.",
+                "operationId": "put_app_access_ui_http_user_changerole",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/deactivate": {
+            "post": {
+                "summary": "The user may not sign in any more, and their open session ends on its next request. Their name stays on what\nthey made. 409 `cannot_deactivate_yourself`, `last_owner`.",
+                "operationId": "post_app_access_ui_http_user_deactivate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/reactivate": {
+            "post": {
+                "summary": "Back as they were: active, or invited if they never accepted (then resend the invitation).",
+                "operationId": "post_app_access_ui_http_user_reactivate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
                                 }
                             }
                         }
@@ -1057,6 +1293,26 @@
     },
     "components": {
         "schemas": {
+            "InvitationOutput": {
+                "required": [
+                    "email",
+                    "company_name",
+                    "role"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "company_name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "title": "billing or accountant",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "SessionOutput": {
                 "required": [
                     "user_id",
@@ -1091,6 +1347,54 @@
                         "type": "string"
                     },
                     "company_check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserOutput": {
+                "required": [
+                    "id",
+                    "email",
+                    "name",
+                    "role",
+                    "status",
+                    "is_you",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Empty until an invitee accepts and writes it.",
+                        "type": "string"
+                    },
+                    "role": {
+                        "title": "owner, billing or accountant",
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "invited, active or deactivated",
+                        "type": "string"
+                    },
+                    "is_you": {
+                        "title": "The person looking at the list.",
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "last_sign_in_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "invitation_expires_at": {
+                        "title": "Until when the invitation link works; null unless invited.",
                         "type": "string",
                         "nullable": true
                     }

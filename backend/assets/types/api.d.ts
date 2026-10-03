@@ -4,6 +4,95 @@
  */
 
 export interface paths {
+    "/api/v1/auth/invitations/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Who is invited, to which company and as what, for the invitation page. */
+        post: operations["post_app_access_ui_http_accountrecovery_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The invitee writes their name and a password (≥ 10): their account is active and they are signed in. */
+        post: operations["post_app_access_ui_http_accountrecovery_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sends a reset link (valid one hour) to the e-mail, if it belongs to someone who can sign in. The answer is 202
+         *     with no body whoever asks, so it tells nobody which e-mails have an account. 429 after 5 requests from one
+         *     address in 10 minutes; one person gets at most 5 e-mails in 10 minutes, silently.
+         */
+        post: operations["post_app_access_ui_http_accountrecovery_requestreset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password-reset/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 204 while the reset link works, so the page asks for a password only then. */
+        post: operations["post_app_access_ui_http_accountrecovery_checkreset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password-reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sets the new password (≥ 10) and signs the person in. Every other session of theirs ends. */
+        post: operations["post_app_access_ui_http_accountrecovery_confirmreset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/sign-up": {
         parameters: {
             query?: never;
@@ -32,6 +121,120 @@ export interface paths {
         get: operations["get_app_access_ui_http_auth_me"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every user of the company, invitees and deactivated ones included, by name. */
+        get: operations["get_app_access_ui_http_user_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invites someone by e-mail as a billing user or an accountant: they get a link that works once, for seven days.
+         * @description An e-mail registered anywhere in Mustang is refused (422 on `email`).
+         */
+        post: operations["post_app_access_ui_http_user_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sends the invitation again with a new link; the earlier link stops working. 409 `not_an_invitation` once they
+         *     accepted.
+         */
+        post: operations["post_app_access_ui_http_user_resend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Changes a user's role (owner, billing, accountant). Their session ends on its next request, so they sign in
+         *     again with the new role.
+         */
+        put: operations["put_app_access_ui_http_user_changerole"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The user may not sign in any more, and their open session ends on its next request. Their name stays on what
+         *     they made. 409 `cannot_deactivate_yourself`, `last_owner`.
+         */
+        post: operations["post_app_access_ui_http_user_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Back as they were: active, or invited if they never accepted (then resend the invitation). */
+        post: operations["post_app_access_ui_http_user_reactivate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -561,6 +764,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        InvitationOutput: {
+            email: string;
+            company_name: string;
+            /** billing or accountant */
+            role: string;
+        };
         SessionOutput: {
             user_id: string;
             email: string;
@@ -571,6 +780,22 @@ export interface components {
             company_name: string;
             company_nit: string;
             company_check_digit?: string | null;
+        };
+        UserOutput: {
+            id: string;
+            email: string;
+            /** Empty until an invitee accepts and writes it. */
+            name: string;
+            /** owner, billing or accountant */
+            role: string;
+            /** invited, active or deactivated */
+            status: string;
+            /** The person looking at the list. */
+            is_you: boolean;
+            created_at: string;
+            last_sign_in_at?: string | null;
+            /** Until when the invitation link works; null unless invited. */
+            invitation_expires_at?: string | null;
         };
         TaxOutput: {
             id: string;
@@ -771,6 +996,100 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    post_app_access_ui_http_accountrecovery_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationOutput"];
+                };
+            };
+        };
+    };
+    post_app_access_ui_http_accountrecovery_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOutput"];
+                };
+            };
+        };
+    };
+    post_app_access_ui_http_accountrecovery_requestreset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_access_ui_http_accountrecovery_checkreset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_access_ui_http_accountrecovery_confirmreset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOutput"];
+                };
+            };
+        };
+    };
     post_app_access_ui_http_auth_signup: {
         parameters: {
             query?: never;
@@ -807,6 +1126,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionOutput"];
+                };
+            };
+        };
+    };
+    get_app_access_ui_http_user_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["UserOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    post_app_access_ui_http_user_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOutput"];
+                };
+            };
+        };
+    };
+    post_app_access_ui_http_user_resend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOutput"];
+                };
+            };
+        };
+    };
+    put_app_access_ui_http_user_changerole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOutput"];
+                };
+            };
+        };
+    };
+    post_app_access_ui_http_user_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOutput"];
+                };
+            };
+        };
+    };
+    post_app_access_ui_http_user_reactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOutput"];
                 };
             };
         };
