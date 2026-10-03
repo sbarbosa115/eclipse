@@ -671,7 +671,7 @@ second one; it may only extend it through props.
 | F4 | taxes-payments, catalog, terceros | Local audit writers and role checks (`CatalogAudit`, `CatalogAccess`, controller role checks) | move to `Shared` `AuditTrail` and the voter once "access" merges |
 | F5 | taxes-payments | Tax validity dates are stored but nothing filters by them | document items pick only taxes valid on the document's date |
 | F6 | item 0 | Sign-in dropped the query string of the address it came from | fixed (`2e15736`) |
-| F7 | company, ledger, document-editor | Native `<input type="date">` shows the browser's format (`mm/dd/yyyy` in an English browser; the balance de prueba showed `10/03/2026` for 3 October). §5 NFR: `DD/MM/YYYY` | a shared `DateInput` in `shared/ui` that shows and accepts DD/MM/YYYY and sends ISO; every form adopts it |
+| F7 | company, ledger, document-editor | Native `<input type="date">` shows the browser's format (`mm/dd/yyyy` in an English browser; the balance de prueba showed `10/03/2026` for 3 October). §5 NFR: `DD/MM/YYYY` | `DateInput` added to `@/shared/ui` (item 0); new forms use it, existing ones (company, ledger, document-editor, taxes) adopt it in the polish pass |
 | F8 | document-editor | At 1366 px the line grid scrolls sideways inside the table and hides Impuesto retención and Valor total | document-editor layout: description narrower or wrapping, numeric columns compact |
 | F9 | company | One resolution per company and desde/prefijo locked after use: a renewal with a new range or prefix cannot be entered (only extended) | product decision: a "close and open a new resolution" action in stage 1, or wait for several resolutions (stage 4) |
 
