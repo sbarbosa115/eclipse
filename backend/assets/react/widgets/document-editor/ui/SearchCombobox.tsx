@@ -61,8 +61,12 @@ export function SearchCombobox<T>({
   const [text, setText] = useState(selectedLabel);
   const [shown, setShown] = useState(selectedLabel);
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<Status>('idle');
-  const [options, setOptions] = useState<ComboOption<T>[]>([]);
+  // The last answer, for the term it answers: status and options are derived from it while rendering.
+  const [result, setResult] = useState<{
+    term: string;
+    status: 'ready' | 'failed';
+    options: ComboOption<T>[];
+  } | null>(null);
   const [active, setActive] = useState(-1);
   const [position, setPosition] = useState<CSSProperties>({});
   const latest = useRef(search);
@@ -80,33 +84,35 @@ export function SearchCombobox<T>({
   }
 
   const term = text.trim();
+  const searchable = term.length >= minChars;
   useEffect(() => {
-    if (!open) return;
-    if (term.length < minChars) {
-      setStatus(term === '' ? 'idle' : 'short');
-      setOptions([]);
-      return;
-    }
+    if (!open || !searchable) return;
     let cancelled = false;
-    setStatus('loading');
     const timer = setTimeout(() => {
       latest
         .current(term)
         .then((found) => {
           if (cancelled) return;
-          setOptions(found);
-          setStatus('ready');
+          setResult({term, status: 'ready', options: found});
           setActive(found.length > 0 ? 0 : -1);
         })
         .catch(() => {
-          if (!cancelled) setStatus('failed');
+          if (!cancelled) setResult({term, status: 'failed', options: []});
         });
     }, DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term, open, minChars]);
+  }, [term, open, searchable]);
+
+  const answered = searchable && result?.term === term ? result : null;
+  const status: Status = !searchable
+    ? term === ''
+      ? 'idle'
+      : 'short'
+    : (answered?.status ?? 'loading');
+  const options = answered?.options ?? [];
 
   const canCreate =
     onCreate !== undefined && (status === 'ready' || status === 'failed');
@@ -225,37 +231,37 @@ export function SearchCombobox<T>({
             </p>
           )}
           {count > 0 && (
-          <ul id={listId} role="listbox" className="combo-list">
-            {options.map((option, i) => (
-              <li
-                key={option.id}
-                id={optionId(i)}
-                role="option"
-                aria-selected={i === active}
-                className={i === active ? 'is-active' : undefined}
-                onClick={() => choose(i)}
-              >
-                <span className="combo-label">{option.label}</span>
-                {option.detail && (
-                  <span className="combo-detail small muted">
-                    {' '}
-                    {option.detail}
-                  </span>
-                )}
-              </li>
-            ))}
-            {canCreate && (
-              <li
-                id={optionId(options.length)}
-                role="option"
-                aria-selected={active === options.length}
-                className={`combo-create${active === options.length ? ' is-active' : ''}`}
-                onClick={() => choose(options.length)}
-              >
-                {t('documentEditor.search.create')}
-              </li>
-            )}
-          </ul>
+            <ul id={listId} role="listbox" className="combo-list">
+              {options.map((option, i) => (
+                <li
+                  key={option.id}
+                  id={optionId(i)}
+                  role="option"
+                  aria-selected={i === active}
+                  className={i === active ? 'is-active' : undefined}
+                  onClick={() => choose(i)}
+                >
+                  <span className="combo-label">{option.label}</span>
+                  {option.detail && (
+                    <span className="combo-detail small muted">
+                      {' '}
+                      {option.detail}
+                    </span>
+                  )}
+                </li>
+              ))}
+              {canCreate && (
+                <li
+                  id={optionId(options.length)}
+                  role="option"
+                  aria-selected={active === options.length}
+                  className={`combo-create${active === options.length ? ' is-active' : ''}`}
+                  onClick={() => choose(options.length)}
+                >
+                  {t('documentEditor.search.create')}
+                </li>
+              )}
+            </ul>
           )}
         </div>
       )}

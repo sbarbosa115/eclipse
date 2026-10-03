@@ -9,7 +9,13 @@ import {listProducts, type Product, type Tax} from '@/entities/product';
 import {AccountPicker} from '@/features/pick-account';
 import {useTranslation} from '@/shared/i18n';
 import {formatMoney} from '@/shared/lib';
-import {ActionButton, Actions, Button, DataTable, IconButton} from '@/shared/ui';
+import {
+  ActionButton,
+  Actions,
+  Button,
+  DataTable,
+  IconButton,
+} from '@/shared/ui';
 import {setLineMode} from '../model/draft';
 import type {LineAmounts} from '../model/totals';
 import type {DocumentKind, DraftLine, EditorErrors} from '../model/types';
@@ -114,7 +120,10 @@ export function LinesGrid({
     const index = lines.findIndex((line) => line.key === key);
     if (index < 0) return;
 
-    if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+    if (
+      event.altKey &&
+      (event.key === 'ArrowUp' || event.key === 'ArrowDown')
+    ) {
       event.preventDefault();
       const to = event.key === 'ArrowUp' ? index - 1 : index + 1;
       if (to < 0 || to >= lines.length) return;
@@ -192,7 +201,9 @@ export function LinesGrid({
       <td data-col={col}>
         <input
           aria-label={label(column, index)}
-          className={col === 'description' ? 'doc-line-text' : 'doc-line-number'}
+          className={
+            col === 'description' ? 'doc-line-text' : 'doc-line-number'
+          }
           inputMode={col === 'description' ? undefined : 'decimal'}
           value={line[col]}
           onChange={(e) => onChange(index, {[col]: e.target.value})}

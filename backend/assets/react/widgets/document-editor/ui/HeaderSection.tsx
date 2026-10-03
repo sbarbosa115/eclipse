@@ -9,7 +9,12 @@ import {
 } from '@/entities/tercero';
 import {useTranslation} from '@/shared/i18n';
 import {Field} from '@/shared/ui';
-import type {DocumentDraft, DocumentKind, EditorErrors, PartyRef} from '../model/types';
+import type {
+  DocumentDraft,
+  DocumentKind,
+  EditorErrors,
+  PartyRef,
+} from '../model/types';
 import {SearchCombobox, type ComboOption} from './SearchCombobox';
 
 const TERCERO_MIN_CHARS = 3;

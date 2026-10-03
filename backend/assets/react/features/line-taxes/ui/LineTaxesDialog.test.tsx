@@ -67,7 +67,10 @@ describe('the per-line tax dialog (§4.6)', () => {
     const api = fakeApi({});
     const {onApply} = renderDialog();
 
-    await userEvent.selectOptions(screen.getByLabelText('Impuesto cargo'), 'iva5');
+    await userEvent.selectOptions(
+      screen.getByLabelText('Impuesto cargo'),
+      'iva5',
+    );
     await userEvent.selectOptions(
       screen.getByLabelText('Impuesto retención'),
       'rete4',
@@ -85,10 +88,7 @@ describe('the per-line tax dialog (§4.6)', () => {
     const api = fakeApi({'PUT /products/p1/taxes': [200, {id: 'p1'}]});
     const {onApply} = renderDialog();
 
-    await userEvent.selectOptions(
-      screen.getByLabelText('Impuesto cargo'),
-      '',
-    );
+    await userEvent.selectOptions(screen.getByLabelText('Impuesto cargo'), '');
     await userEvent.selectOptions(
       screen.getByLabelText('Impuesto retención'),
       'rete25',

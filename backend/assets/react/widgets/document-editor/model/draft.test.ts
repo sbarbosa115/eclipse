@@ -107,7 +107,10 @@ describe('the document draft', () => {
   it('fills a line from the product chosen: name, price net of IVA, taxes', () => {
     const filled = applyProduct('sales_invoice', emptyLine(), product);
 
-    expect(filled.product).toEqual({id: 'p1', label: 'SRV-01 · Hora de consultoría'});
+    expect(filled.product).toEqual({
+      id: 'p1',
+      label: 'SRV-01 · Hora de consultoría',
+    });
     expect(filled.description).toBe('Hora de consultoría');
     expect(filled.unit_price, 'unit_price_net_of_tax, trailing zeros off').toBe(
       '100000',
@@ -283,7 +286,8 @@ describe('checking the draft before it is saved', () => {
         'Escribe un número con máximo cuatro decimales y punto decimal.',
       'lines.1.discount': 'El descuento es un porcentaje entre 0 y 100.',
       'payments.0.payment_method_id': 'Elige el método de pago.',
-      'payments.0.amount': 'Escribe un valor mayor que cero, con máximo dos decimales.',
+      'payments.0.amount':
+        'Escribe un valor mayor que cero, con máximo dos decimales.',
     });
     expect(hasErrors(errors)).toBe(true);
   });
@@ -293,10 +297,7 @@ describe('checking the draft before it is saved', () => {
       'purchase_invoice',
       draftWith({
         tercero: {id: 'p', name: 'Proveedor'},
-        lines: [
-          aLine({product: null}),
-          setLineMode(aLine(), 'account'),
-        ],
+        lines: [aLine({product: null}), setLineMode(aLine(), 'account')],
       }),
       {net: '0.00', methods: METHODS, forEmission: false, t},
     );
@@ -340,7 +341,10 @@ describe('checking the draft before it is saved', () => {
       'Total formas de pago ($ 100,00) debe ser igual al total neto ($ 119,00).',
     );
     expect(
-      validateDraft('sales_invoice', complete, {...options, forEmission: false}),
+      validateDraft('sales_invoice', complete, {
+        ...options,
+        forEmission: false,
+      }),
     ).toEqual({});
   });
 

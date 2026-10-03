@@ -10,7 +10,5 @@ export function CellError({id, message}: {id: string; message?: string}) {
 
 /** The aria attributes of a control whose error may show under it. */
 export function invalidProps(id: string, message?: string) {
-  return message
-    ? {'aria-invalid': true as const, 'aria-describedby': id}
-    : {};
+  return message ? {'aria-invalid': true as const, 'aria-describedby': id} : {};
 }

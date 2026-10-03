@@ -93,7 +93,10 @@ export function DocumentEditor({
         onIssueDate={(date) => onChange(setIssueDate(value, date))}
         extra={headerExtra}
       />
-      <section className="doc-section" aria-label={t('documentEditor.lines.title')}>
+      <section
+        className="doc-section"
+        aria-label={t('documentEditor.lines.title')}
+      >
         <LinesGrid
           kind={kind}
           lines={value.lines}
@@ -102,7 +105,9 @@ export function DocumentEditor({
           readOnly={readOnly}
           chargeTaxes={options.chargeTaxes}
           withholdingTaxes={options.withholdingTaxes}
-          onChange={(index, change) => onChange(updateLine(value, index, change))}
+          onChange={(index, change) =>
+            onChange(updateLine(value, index, change))
+          }
           onAdd={() => onChange(addLine(value))}
           onRemove={(index) => onChange(removeLine(value, index))}
           onMove={(from, to) => onChange(moveLine(value, from, to))}
@@ -111,7 +116,11 @@ export function DocumentEditor({
               updateLine(
                 value,
                 index,
-                applyProduct(kind, value.lines[index] ?? value.lines[0]!, product),
+                applyProduct(
+                  kind,
+                  value.lines[index] ?? value.lines[0]!,
+                  product,
+                ),
               ),
             )
           }
@@ -159,7 +168,9 @@ export function DocumentEditor({
             setCreatingFor(null);
             const line = value.lines[index];
             if (line) {
-              onChange(updateLine(value, index, applyProduct(kind, line, product)));
+              onChange(
+                updateLine(value, index, applyProduct(kind, line, product)),
+              );
             }
           }}
         />

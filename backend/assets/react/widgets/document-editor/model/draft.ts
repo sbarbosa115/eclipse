@@ -207,7 +207,9 @@ export function setLineMode(
   mode: 'product' | 'account',
 ): DraftLine {
   if (mode === 'account') {
-    return line.account ? line : {...line, product: null, account: {id: null, text: ''}};
+    return line.account
+      ? line
+      : {...line, product: null, account: {id: null, text: ''}};
   }
   return {...line, account: null};
 }
@@ -262,7 +264,8 @@ export function updatePayment(
       if (next.term === 'custom') {
         return {
           ...next,
-          due_date: change.due_date !== undefined ? change.due_date : next.due_date,
+          due_date:
+            change.due_date !== undefined ? change.due_date : next.due_date,
         };
       }
       return {...next, due_date: dueDateFor(next.term, draft.issue_date, null)};

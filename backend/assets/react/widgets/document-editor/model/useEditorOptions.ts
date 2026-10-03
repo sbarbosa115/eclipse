@@ -1,9 +1,6 @@
 import {useEffect, useState} from 'react';
 import {listTaxes, type Tax} from '@/entities/product';
-import {
-  listPaymentMethods,
-  type PaymentMethod,
-} from '../api/documentEditorApi';
+import {listPaymentMethods, type PaymentMethod} from '../api/documentEditorApi';
 import type {DocumentKind} from './types';
 
 export interface EditorOptions {

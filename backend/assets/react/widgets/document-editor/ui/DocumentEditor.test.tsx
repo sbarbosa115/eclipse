@@ -74,7 +74,10 @@ function api(extra: Routes = {}) {
   return fakeApi({
     'GET /taxes': (_body, url) => [
       200,
-      {items: url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING},
+      {
+        items:
+          url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING,
+      },
     ],
     'GET /payment-methods': [200, {items: METHODS}],
     'GET /terceros': [200, {items: [TERCERO], total: 1, page: 1, per_page: 10}],
@@ -82,10 +85,7 @@ function api(extra: Routes = {}) {
       200,
       {items: [{id: 'c1', name: 'Ana Pérez', email: 'ana@uno.co'}]},
     ],
-    'GET /products': [
-      200,
-      {items: [PRODUCT], total: 1, page: 1, per_page: 10},
-    ],
+    'GET /products': [200, {items: [PRODUCT], total: 1, page: 1, per_page: 10}],
     ...extra,
   });
 }
@@ -168,9 +168,13 @@ describe('the document form (§4.6)', () => {
       api();
       renderEditor({value: draft({number: null})});
 
-      expect(screen.getByLabelText('Tipo')).toHaveValue('FV · Factura de venta');
+      expect(screen.getByLabelText('Tipo')).toHaveValue(
+        'FV · Factura de venta',
+      );
       expect(screen.getByLabelText('Tipo')).toHaveAttribute('readonly');
-      expect(screen.getByLabelText('Número')).toHaveValue('Se asigna al emitir');
+      expect(screen.getByLabelText('Número')).toHaveValue(
+        'Se asigna al emitir',
+      );
       expect(screen.getByLabelText('Fecha de elaboración')).toHaveValue(
         '2026-10-03',
       );
@@ -208,12 +212,18 @@ describe('the document form (§4.6)', () => {
     it('creates a client from the search with the role the document needs', async () => {
       const calls = api({
         'GET /terceros': [200, {items: [], total: 0, page: 1, per_page: 10}],
-        'POST /terceros/quick': [201, {...TERCERO, id: 't9', display_name: 'Nuevo S.A.S.'}],
+        'POST /terceros/quick': [
+          201,
+          {...TERCERO, id: 't9', display_name: 'Nuevo S.A.S.'},
+        ],
         'GET /terceros/t9/contacts': [200, {items: []}],
       });
       const {latest} = renderEditor();
 
-      await userEvent.type(screen.getByRole('combobox', {name: 'Cliente'}), 'Nuevo');
+      await userEvent.type(
+        screen.getByRole('combobox', {name: 'Cliente'}),
+        'Nuevo',
+      );
       await userEvent.click(
         await screen.findByRole('option', {name: '+ Crear nuevo'}),
       );
@@ -227,7 +237,10 @@ describe('the document form (§4.6)', () => {
         within(modal).getByLabelText('Número de identificación'),
         '800197268',
       );
-      await userEvent.type(within(modal).getByLabelText('Razón social'), 'Nuevo S.A.S.');
+      await userEvent.type(
+        within(modal).getByLabelText('Razón social'),
+        'Nuevo S.A.S.',
+      );
       await userEvent.type(
         within(modal).getByLabelText('Correo electrónico'),
         'nuevo@x.co',
@@ -246,7 +259,9 @@ describe('the document form (§4.6)', () => {
     });
 
     it('asks a purchase for a proveedor, and creates one as proveedor', async () => {
-      api({'GET /terceros': [200, {items: [], total: 0, page: 1, per_page: 10}]});
+      api({
+        'GET /terceros': [200, {items: [], total: 0, page: 1, per_page: 10}],
+      });
       renderEditor({kind: 'purchase_invoice'});
 
       await userEvent.type(
@@ -258,8 +273,12 @@ describe('the document form (§4.6)', () => {
       );
 
       const modal = screen.getByRole('dialog', {name: /tercero/i});
-      expect(within(modal).getByRole('checkbox', {name: 'Proveedor'})).toBeChecked();
-      expect(within(modal).getByRole('checkbox', {name: 'Cliente'})).not.toBeChecked();
+      expect(
+        within(modal).getByRole('checkbox', {name: 'Proveedor'}),
+      ).toBeChecked();
+      expect(
+        within(modal).getByRole('checkbox', {name: 'Cliente'}),
+      ).not.toBeChecked();
     });
   });
 
@@ -273,11 +292,15 @@ describe('the document form (§4.6)', () => {
         'cons',
       );
       await userEvent.click(
-        await screen.findByRole('option', {name: /SRV-01 · Hora de consultoría/}),
+        await screen.findByRole('option', {
+          name: /SRV-01 · Hora de consultoría/,
+        }),
       );
 
       expect(
-        calls.calls.find((c) => c.path === '/products')?.url.searchParams.get('q'),
+        calls.calls
+          .find((c) => c.path === '/products')
+          ?.url.searchParams.get('q'),
       ).toBe('cons');
       const filled = latest()?.lines[0];
       expect(filled?.product?.id).toBe('p1');
@@ -289,7 +312,9 @@ describe('the document form (§4.6)', () => {
         screen.getByLabelText('Valor unitario, línea 1'),
         'the price net of IVA',
       ).toHaveValue('100000');
-      expect(screen.getByLabelText('Impuesto cargo, línea 1')).toHaveValue('iva19');
+      expect(screen.getByLabelText('Impuesto cargo, línea 1')).toHaveValue(
+        'iva19',
+      );
       expect(
         screen.getByRole('cell', {name: '$ 119.000,00'}),
         'Valor total of an IVA-included price is the list price',
@@ -300,7 +325,10 @@ describe('the document form (§4.6)', () => {
     it('creates a product from the line search and puts it on the line', async () => {
       api({
         'GET /products': [200, {items: [], total: 0, page: 1, per_page: 10}],
-        'POST /products/quick': [201, {...PRODUCT, id: 'p9', code: 'NEW', name: 'Cuaderno'}],
+        'POST /products/quick': [
+          201,
+          {...PRODUCT, id: 'p9', code: 'NEW', name: 'Cuaderno'},
+        ],
       });
       const {latest} = renderEditor();
 
@@ -380,16 +408,24 @@ describe('the document form (§4.6)', () => {
         }),
       });
 
-      await userEvent.click(screen.getByRole('button', {name: 'Bajar línea 1'}));
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Bajar línea 1'}),
+      );
       expect(latest()?.lines.map((l) => l.description)).toEqual(['dos', 'uno']);
 
-      await userEvent.click(screen.getByRole('button', {name: 'Subir línea 2'}));
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Subir línea 2'}),
+      );
       expect(latest()?.lines.map((l) => l.description)).toEqual(['uno', 'dos']);
 
-      await userEvent.click(screen.getByRole('button', {name: 'Agregar línea'}));
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Agregar línea'}),
+      );
       expect(latest()?.lines).toHaveLength(3);
 
-      await userEvent.click(screen.getByRole('button', {name: 'Quitar línea 1'}));
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Quitar línea 1'}),
+      );
       expect(latest()?.lines.map((l) => l.description)).toEqual(['dos', '']);
     });
 
@@ -421,14 +457,22 @@ describe('the document form (§4.6)', () => {
       ).toHaveFocus();
 
       await userEvent.keyboard('{Alt>}{ArrowUp}{/Alt}');
-      expect(latest()?.lines.map((l) => l.description)).toEqual(['dos', 'uno', '']);
+      expect(latest()?.lines.map((l) => l.description)).toEqual([
+        'dos',
+        'uno',
+        '',
+      ]);
       expect(
         screen.getByLabelText('Descripción, línea 1'),
         'the focus moves with the line',
       ).toHaveFocus();
 
       await userEvent.keyboard('{Alt>}{ArrowDown}{/Alt}');
-      expect(latest()?.lines.map((l) => l.description)).toEqual(['uno', 'dos', '']);
+      expect(latest()?.lines.map((l) => l.description)).toEqual([
+        'uno',
+        'dos',
+        '',
+      ]);
       expect(screen.getByLabelText('Descripción, línea 2')).toHaveFocus();
     });
 
@@ -439,14 +483,18 @@ describe('the document form (§4.6)', () => {
       await userEvent.click(
         screen.getByRole('button', {name: 'Impuestos de la línea 1'}),
       );
-      const dialog = screen.getByRole('dialog', {name: 'Impuestos de la línea 1'});
+      const dialog = screen.getByRole('dialog', {
+        name: 'Impuestos de la línea 1',
+      });
       expect(within(dialog).getByText('$ 1.800.000,00')).toBeInTheDocument();
 
       await userEvent.selectOptions(
         await within(dialog).findByLabelText('Impuesto cargo'),
         'iva5',
       );
-      await userEvent.click(within(dialog).getByRole('button', {name: 'Aplicar'}));
+      await userEvent.click(
+        within(dialog).getByRole('button', {name: 'Aplicar'}),
+      );
 
       expect(latest()?.lines[0]?.charge_tax_id).toBe('iva5');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -469,7 +517,11 @@ describe('the document form (§4.6)', () => {
 
     it('rounds once at document level (DocumentTotalsTest)', async () => {
       api();
-      const third = {quantity: '1', unit_price: '0.3333', charge_tax_id: 'iva19'};
+      const third = {
+        quantity: '1',
+        unit_price: '0.3333',
+        charge_tax_id: 'iva19',
+      };
       renderEditor({
         value: draft({lines: [line(third), line(third), line(third)]}),
       });
@@ -482,7 +534,10 @@ describe('the document form (§4.6)', () => {
       api();
       renderEditor({value: draft({lines: [line({quantity: '1'})]})});
 
-      await userEvent.type(screen.getByLabelText('Valor unitario, línea 1'), '1500.5');
+      await userEvent.type(
+        screen.getByLabelText('Valor unitario, línea 1'),
+        '1500.5',
+      );
       expect(total('Total neto')).toBe('$ 1.500,50');
       await userEvent.clear(screen.getByLabelText('Cantidad, línea 1'));
       await userEvent.type(screen.getByLabelText('Cantidad, línea 1'), '3');
@@ -492,7 +547,9 @@ describe('the document form (§4.6)', () => {
 
   describe('formas de pago', () => {
     const priced = draft({
-      lines: [line({quantity: '1', unit_price: '1000', charge_tax_id: 'iva19'})],
+      lines: [
+        line({quantity: '1', unit_price: '1000', charge_tax_id: 'iva19'}),
+      ],
     });
 
     it('shows the check mark when Total formas de pago equals Total neto', async () => {
@@ -506,18 +563,33 @@ describe('the document form (§4.6)', () => {
         screen.getByLabelText('Valor de la forma de pago 1'),
         'the row offers what is left',
       ).toHaveValue('1190.00');
-      expect(screen.getByText('Coincide con el total neto')).toBeInTheDocument();
+      expect(
+        screen.getByText('Coincide con el total neto'),
+      ).toBeInTheDocument();
 
-      await userEvent.clear(screen.getByLabelText('Valor de la forma de pago 1'));
-      await userEvent.type(screen.getByLabelText('Valor de la forma de pago 1'), '1000');
-      expect(screen.queryByText('Coincide con el total neto')).not.toBeInTheDocument();
+      await userEvent.clear(
+        screen.getByLabelText('Valor de la forma de pago 1'),
+      );
+      await userEvent.type(
+        screen.getByLabelText('Valor de la forma de pago 1'),
+        '1000',
+      );
+      expect(
+        screen.queryByText('Coincide con el total neto'),
+      ).not.toBeInTheDocument();
       expect(
         screen.getByText('Faltan $ 190,00 para el total neto'),
       ).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', {name: 'Agregar forma de pago'}));
-      expect(screen.getByLabelText('Valor de la forma de pago 2')).toHaveValue('190.00');
-      expect(screen.getByText('Coincide con el total neto')).toBeInTheDocument();
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Agregar forma de pago'}),
+      );
+      expect(screen.getByLabelText('Valor de la forma de pago 2')).toHaveValue(
+        '190.00',
+      );
+      expect(
+        screen.getByText('Coincide con el total neto'),
+      ).toBeInTheDocument();
     });
 
     it('gives a crédito row its term and due date', async () => {
@@ -531,7 +603,9 @@ describe('the document form (§4.6)', () => {
         screen.getByLabelText('Método de pago 1'),
         await screen.findByRole('option', {name: 'Crédito'}),
       );
-      expect(screen.getByLabelText('Plazo de la forma de pago 1')).toHaveValue('30');
+      expect(screen.getByLabelText('Plazo de la forma de pago 1')).toHaveValue(
+        '30',
+      );
       expect(screen.getByText('02/11/2026')).toBeInTheDocument();
 
       await userEvent.selectOptions(
@@ -552,7 +626,9 @@ describe('the document form (§4.6)', () => {
 
       await waitFor(() => expect(total('Total neto')).toBe('$ 1.190,00'));
       expect(screen.queryByText('Formas de pago')).not.toBeInTheDocument();
-      expect(screen.getByRole('combobox', {name: 'Cliente'})).toBeInTheDocument();
+      expect(
+        screen.getByRole('combobox', {name: 'Cliente'}),
+      ).toBeInTheDocument();
     });
   });
 
@@ -587,16 +663,17 @@ describe('the document form (§4.6)', () => {
         errors: {
           'tercero': 'Elige el tercero.',
           'lines.0.quantity': 'La cantidad debe ser mayor que cero.',
-          'payments': 'Total formas de pago ($ 0,00) debe ser igual al total neto ($ 1,00).',
+          'payments':
+            'Total formas de pago ($ 0,00) debe ser igual al total neto ($ 1,00).',
         },
       });
 
-      expect(screen.getByRole('combobox', {name: 'Cliente'})).toHaveAccessibleDescription(
-        'Elige el tercero.',
-      );
-      expect(screen.getByLabelText('Cantidad, línea 1')).toHaveAccessibleDescription(
-        'La cantidad debe ser mayor que cero.',
-      );
+      expect(
+        screen.getByRole('combobox', {name: 'Cliente'}),
+      ).toHaveAccessibleDescription('Elige el tercero.');
+      expect(
+        screen.getByLabelText('Cantidad, línea 1'),
+      ).toHaveAccessibleDescription('La cantidad debe ser mayor que cero.');
       expect(screen.getByLabelText('Cantidad, línea 1')).toBeInvalid();
       expect(
         screen.getByText(
@@ -609,7 +686,10 @@ describe('the document form (§4.6)', () => {
       api();
       renderEditor({
         readOnly: true,
-        value: draft({tercero: {id: 't1', name: 'Cliente Uno'}, lines: [PRD_LINE]}),
+        value: draft({
+          tercero: {id: 't1', name: 'Cliente Uno'},
+          lines: [PRD_LINE],
+        }),
       });
 
       await waitFor(() => expect(total('Total neto')).toBe('$ 2.070.000,00'));

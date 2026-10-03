@@ -44,7 +44,9 @@ export function FooterSection({
           {t('documentEditor.footer.attachments')}
         </h3>
         {attachments.length === 0 ? (
-          <p className="small muted">{t('documentEditor.footer.noAttachments')}</p>
+          <p className="small muted">
+            {t('documentEditor.footer.noAttachments')}
+          </p>
         ) : (
           <ul className="doc-attachments">
             {attachments.map((file) => (
@@ -64,7 +66,10 @@ export function FooterSection({
           </ul>
         )}
         {!readOnly && onAttach && (
-          <Field label={t('documentEditor.footer.attach')} error={errors['attachments']}>
+          <Field
+            label={t('documentEditor.footer.attach')}
+            error={errors['attachments']}
+          >
             <input
               type="file"
               multiple
