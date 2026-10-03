@@ -17,7 +17,7 @@ final class PucSeedTest extends ApiTestCase
 {
     use LedgerFixtures;
 
-    /** @return array<string, array<string, mixed>> by code */
+    /** @return array<array-key, array<string, mixed>> by code */
     private function chart(?Uuid $company = null): array
     {
         $rows = $this->db()->fetchAllAssociative('SELECT code, name, nature, level, parent_code, standard, active, usable_on_purchases FROM ledger_account WHERE company_id = ?', [($company ?? $this->company)->toBinary()]);
@@ -42,7 +42,7 @@ final class PucSeedTest extends ApiTestCase
                 continue;
             }
             self::assertArrayHasKey((string) $account['parent_code'], $chart, "$code hangs from an account of the chart.");
-            self::assertStringStartsWith((string) $account['parent_code'], (string) $code);
+            self::assertSame((string) $account['parent_code'], substr((string) $code, 0, \strlen((string) $account['parent_code'])));
         }
     }
 

@@ -25,19 +25,21 @@ final class ProvisionLedger implements CompanyProvisioner
 
     public function provision(Uuid $companyId): void
     {
-        /** @var array<string, Account> $chart */
+        /** @var array<array-key, Account> $chart */
         $chart = [];
         foreach ($this->puc->accounts() as $seed) {
             $parent = self::parentCode($seed->code);
             $chart[$seed->code] = new Account($companyId, $seed->code, $seed->name, $seed->nature, $parent, true, Account::isCostOrExpense($seed->code));
         }
         foreach (MustangChart::ACCOUNTS as $code => [$name, $parent]) {
-            $chart[$code] = Account::under($chart[$parent], $code, $name);
+            $code = (string) $code;
+            $chart[$code] = Account::under($chart[$parent] ?? throw new \LogicException("The PUC has no $parent."), $code, $name);
         }
 
         $rules = [];
         foreach (MustangChart::defaultRules() as $concept => $code) {
-            $rules[] = new PostingRule($companyId, PostingConcept::from($concept), $chart[$code]->id());
+            $account = $chart[$code] ?? throw new \LogicException("The chart has no $code.");
+            $rules[] = new PostingRule($companyId, PostingConcept::from($concept), $account->id());
         }
 
         $this->writer->write($companyId, array_values($chart), $rules);
