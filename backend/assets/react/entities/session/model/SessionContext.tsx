@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {ApiError} from '@/shared/api';
+import {ApiError, SIGNED_OUT_EVENT} from '@/shared/api';
 import {
   fetchSession,
   signOut as endSession,
@@ -36,6 +36,10 @@ export function SessionProvider({children}: {children: ReactNode}) {
   // Bumped whenever the session is set from outside (signing in): an older answer to the first "who is signed in?"
   // that arrives later must not undo it.
   const version = useRef(0);
+  const signedIn = useRef(false);
+  useEffect(() => {
+    signedIn.current = status === 'signed-in';
+  }, [status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +63,19 @@ export function SessionProvider({children}: {children: ReactNode}) {
       cancelled = true;
     };
   }, [attempt]);
+
+  // Any call that finds the session over (shared/api): back to signed out, so the shell shows the sign-in page.
+  useEffect(() => {
+    const ended = () => {
+      if (signedIn.current) {
+        version.current += 1;
+        setSession(null);
+        setStatus('signed-out');
+      }
+    };
+    window.addEventListener(SIGNED_OUT_EVENT, ended);
+    return () => window.removeEventListener(SIGNED_OUT_EVENT, ended);
+  }, []);
 
   const replace = useCallback((next: Session) => {
     version.current += 1;

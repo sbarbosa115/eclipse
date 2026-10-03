@@ -1,6 +1,9 @@
 // The JSON API client. Same origin: Symfony serves both the app and /api/v1.
 export const API_BASE = '/api/v1';
 
+/** Dispatched on `window` when a call answers 401: whoever was signed in no longer is. */
+export const SIGNED_OUT_EVENT = 'mustang:signed-out';
+
 /** An answer outside 2xx. `code` is the API's machine-readable "error". */
 export class ApiError extends Error {
   constructor(
@@ -31,6 +34,15 @@ async function request<T>(
   const data: unknown = text === '' ? null : JSON.parse(text);
   if (!response.ok) {
     const error = (data ?? {}) as {error?: string; message?: string};
+    if (
+      response.status === 401 &&
+      path !== '/me' &&
+      !path.startsWith('/auth/')
+    ) {
+      // The session ended (two hours idle, deactivated, password changed elsewhere): the session provider hears it
+      // and the app shows the sign-in page. ("Who is signed in?" is how the provider asks, so it is not counted.)
+      window.dispatchEvent(new Event(SIGNED_OUT_EVENT));
+    }
     throw new ApiError(
       response.status,
       error.error ?? 'http_error',

@@ -1,7 +1,10 @@
 import {lazy, Suspense} from 'react';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
 import {SessionProvider} from '@/entities/session';
+import {AcceptInvitationPage} from '@/pages/accept-invitation';
+import {ForgotPasswordPage} from '@/pages/forgot-password';
 import {NotFoundPage} from '@/pages/not-found';
+import {ResetPasswordPage} from '@/pages/reset-password';
 import {SignInPage} from '@/pages/sign-in';
 import {SignUpPage} from '@/pages/sign-up';
 import {FullPageLoading, ThemedRoot} from '@/shared/ui';
@@ -57,6 +60,16 @@ export function App() {
             <Routes>
               <Route path="ingresar" element={<SignInPage />} />
               <Route path="registro" element={<SignUpPage />} />
+              {/* The pages an e-mailed link opens ("access" item). */}
+              <Route path="invitacion" element={<AcceptInvitationPage />} />
+              <Route
+                path="recuperar-contrasena"
+                element={<ForgotPasswordPage />}
+              />
+              <Route
+                path="restablecer-contrasena"
+                element={<ResetPasswordPage />}
+              />
               <Route element={<AppShell />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="cotizaciones/*" element={<QuotationsPage />} />

@@ -26,6 +26,9 @@ export function SignInPage() {
         <h1>{t('auth.signIn.title')}</h1>
         <SignInForm />
         <p className="muted">
+          <Link to="/recuperar-contrasena">{t('auth.signIn.forgot')}</Link>
+        </p>
+        <p className="muted">
           {t('auth.signIn.noAccount')}{' '}
           <Link to="/registro">{t('auth.signIn.signUpLink')}</Link>
         </p>
