@@ -1,1 +1,56 @@
-{}
+{
+  "intro": "Las formas en que cobras y pagas. Las de contado mueven el dinero a su cuenta (caja o banco); las de crédito crean una cuenta por cobrar o por pagar con fecha de vencimiento.",
+  "new": "Nueva forma de pago",
+  "empty": "No hay formas de pago para mostrar.",
+  "filters": {
+    "kind": "Tipo",
+    "all": "Todas"
+  },
+  "columns": {
+    "name": "Nombre",
+    "kind": "Tipo",
+    "account": "Cuenta"
+  },
+  "kind": {
+    "cash": "Contado",
+    "credit": "Crédito"
+  },
+  "tercerosAccount": "La cuenta del tercero (clientes o proveedores)",
+  "status": {
+    "inactive": "Inactiva"
+  },
+  "actions": {
+    "edit": "Editar",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "delete": "Eliminar"
+  },
+  "form": {
+    "newTitle": "Nueva forma de pago",
+    "editTitle": "Editar forma de pago",
+    "name": "Nombre",
+    "kind": "Tipo",
+    "account": "Cuenta",
+    "accountHint": "Busca por código o nombre de la caja o el banco donde entra el dinero.",
+    "creditNote": "Una forma de pago a crédito no tiene cuenta propia: contabiliza en la cuenta del tercero.",
+    "required": "Este campo es obligatorio.",
+    "accountRequired": "Elige la cuenta donde entra el dinero.",
+    "pickAccount": "Elige una cuenta de la lista."
+  },
+  "confirmDelete": {
+    "title": "Eliminar forma de pago",
+    "body": "¿Eliminar «{{name}}»? Ningún documento la ha usado, así que no deja rastro."
+  },
+  "notice": {
+    "created": "Forma de pago creada.",
+    "updated": "Forma de pago actualizada.",
+    "deactivated": "«{{name}}» ya no se ofrece en los documentos.",
+    "activated": "«{{name}}» se ofrece de nuevo en los documentos.",
+    "deleted": "«{{name}}» eliminada."
+  },
+  "errors": {
+    "payment_method_in_use": "Un documento ya usa esta forma de pago: desactívala en lugar de eliminarla.",
+    "forbidden": "Solo el administrador y el contador pueden cambiar las formas de pago.",
+    "payment_method_not_found": "Esta forma de pago ya no existe."
+  }
+}
