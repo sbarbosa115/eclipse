@@ -87,6 +87,30 @@ final class UserAdminApiTest extends ApiTestCase
         self::assertSame(['from' => 'billing', 'to' => 'accountant'], $log->data());
     }
 
+    public function testAChangedRoleEndsThePersonsOpenSession(): void
+    {
+        $this->signUp();
+        $luis = $this->invite('luis@acme.co', 'billing');
+        $token = $this->linkSentTo('luis@acme.co', 'invitacion');
+        $jar = $this->client->getCookieJar();
+        $owner = $jar->all();
+        $jar->clear();
+        $this->sendJson('POST', '/api/v1/auth/invitations/accept', ['token' => $token, 'name' => 'Luis', 'password' => 'correct horse battery']);
+        $luisCookies = $jar->all();
+
+        $jar->clear();
+        array_map($jar->set(...), $owner);
+        $this->sendJson('PUT', "/api/v1/users/{$luis['id']}/role", ['role' => 'accountant']);
+        self::assertResponseIsSuccessful();
+
+        $jar->clear();
+        array_map($jar->set(...), $luisCookies);
+        $this->getJson('/api/v1/me');
+        self::assertResponseStatusCodeSame(401, 'Nothing keeps working with the old role: he signs in again.');
+        $this->signIn('luis@acme.co');
+        self::assertSame('accountant', $this->getJson('/api/v1/me')['role']);
+    }
+
     public function testTheLastActiveOwnerCannotBeDemoted(): void
     {
         $owner = $this->signUp();

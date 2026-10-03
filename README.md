@@ -92,6 +92,17 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/auth/sign-in` | `{email, password}` → `SessionOutput` and a session cookie | 401 `invalid_credentials`; 429 (5 per minute per e-mail and IP) |
 | POST | `/auth/sign-out` | ends the session → 204 | 405 for another method |
 | GET | `/me` | `SessionOutput {user_id, email, name, role, company_id, company_name, company_nit, company_check_digit}` | 401 |
+| GET | `/users` | `{items: UserOutput[]}` every user of the company (invited and deactivated too) by name: `{id, email, name, role, status: invited\|active\|deactivated, is_you, created_at, last_sign_in_at, invitation_expires_at}`. Owner only | 403 |
+| POST | `/users/invitations` | `{email, role: billing\|accountant}` → 201 `UserOutput` (status `invited`); e-mails a one-use link valid 7 days | 403; 422 on `email` (registered in any company), `role` |
+| POST | `/users/{id}/invitation` | resends the invitation with a new link; the earlier one stops working → `UserOutput` | 403; 404; 409 `not_an_invitation` |
+| PUT | `/users/{id}/role` | `{role: owner\|billing\|accountant}` → `UserOutput`; the person's open session ends | 403; 404; 409 `last_owner`; 422 `role` |
+| POST | `/users/{id}/deactivate`, `/reactivate` | → `UserOutput`; a deactivated user's session ends on its next request; reactivated = active again (or invited, if they never accepted) | 403; 404; 409 `last_owner`, `cannot_deactivate_yourself` |
+| POST | `/auth/invitations/lookup` | public: `{token}` → `InvitationOutput {email, company_name, role}` | 404 `link_invalid` (unknown, used, replaced, expired, or not an invitation) |
+| POST | `/auth/invitations/accept` | public: `{token, name, password ≥ 10}` → `SessionOutput`, signed in | 404 `link_invalid`; 422 |
+| POST | `/auth/password-reset` | public: `{email}` → 202, no body, whoever asks; e-mails a one-use link valid 1 hour to someone who can sign in | 422 `email`; 429 (5 per 10 min per address; one person gets at most 5 e-mails in 10 min, silently) |
+| POST | `/auth/password-reset/check` | public: `{token}` → 204 while the link works | 404 `link_invalid` |
+| POST | `/auth/password-reset/confirm` | public: `{token, password ≥ 10}` → `SessionOutput`, signed in; every other session of the person ends | 404 `link_invalid`; 422 |
+| any | `/api/v1/*` (signed in) | a session with no request for 2 hours ends: 401 `session_expired`, and the UI shows the sign-in page | 401 |
 | GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive | 401 |
 | GET | `/payment-methods` | `{items: PaymentMethodOutput[]}`; `?all=1` | 401 |
 | GET | `/accounts/search` | `{items: AccountOutput[]}` postable accounts, `?q=` code prefix or name, `?purchases=1` | 401 |
@@ -155,9 +166,36 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): owner and billing write, the
   accountant reads. The "access" item's voters may replace it.
 
+- **Users, invitations and resets (Access).** An e-mail is unique across the whole app (§9 Q22): inviting one
+  registered in any company is refused. The owner invites billing users and accountants; an owner may then make
+  someone else an owner, and the last *active* owner is never demoted or deactivated (`last_owner`). Invitation and
+  reset links are `access_token` rows holding only the token's SHA-256; a new link of the same kind replaces the
+  person's earlier unused one, deactivation revokes them, and every refusal of a link answers the same 404
+  `link_invalid`. The token travels after the `#` of the e-mailed URL (`/invitacion#…`, `/restablecer-contrasena#…`),
+  so no server or proxy log ever holds it, and the page takes it out of the address bar.
+- **Sessions end by themselves.** The user provider reloads the user on every request: a deactivated user, a changed
+  role or a changed password (a reset elsewhere) signs the session out at its next request. `InactivityExpiry`
+  keeps the time of the last request in the session and ends one idle for 2 hours (401 `session_expired`); any 401
+  from the API (outside `/me` and `/auth/*`) tells the UI's session provider, which shows the sign-in page.
+- **Who may do what (§8) is a voter.** `Access\UI\Http\Security\RoleMatrixVoter` grants the named permissions of
+  `Shared\UI\Http\Security\Permission` (`MANAGE_USERS`, `MANAGE_SETTINGS`, `MANAGE_BOOKS`, `VIEW_BOOKS`,
+  `WRITE_DOCUMENTS`, `READ_DOCUMENTS`); `tests/Unit/Access/RoleMatrixTest.php` is the matrix in words. Controllers
+  ask `#[IsGranted(Permission::…)]`. The checks items wrote before it (`CatalogAccess::mayWrite`, Ledger's
+  `EditsCatalogs`, `TerceroController`'s role check) say the same thing and can move to it.
+- **One audit port for every context:** `Shared\Application\Audit\AuditTrail` (adapter `DoctrineAuditTrail`) writes
+  `audit_log` in the command's transaction. Access records `user.invited`, `user.invitation_resent`,
+  `user.invitation_accepted`, `user.role_changed {from, to}`, `user.deactivated`, `user.reactivated`,
+  `user.password_reset` (never anything about the password). Ledger's `CatalogAudit` predates it and can delegate.
+- **E-mails leave through the queue.** Command handlers publish an event (`InvitationIssued`,
+  `PasswordResetRequested`, handled after the commit); the handler renders Twig templates (`templates/emails/access/`)
+  and `QueuedMailer` puts them on Messenger's `async` transport, which the worker (a cron line on cPanel) sends.
+
 ## Known gaps
 
 - Terceros: *Autocompletar datos* from RUES/DIAN is out of scope (Q19). The per-tercero account pickers offer the accounts the chart search returns for 1305 / 2205 / 2335 (at most 20 each).
+- Access: a person belongs to one company (§9 Q22); there is no "leave this company" and no e-mail change. The
+  last-owner check is not row-locked: two owners demoting each other at the same instant could both succeed. A user is
+  never deleted, only deactivated (documents name who made them). Passwords have only a length rule (≥ 10).
 - Stage 1 is being built in parallel items; see the split in `docs/pdr/prd-accounting.md`. Until an item merges, its
   section shows "Esta sección se está construyendo." and its endpoints answer 501.
 - Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
