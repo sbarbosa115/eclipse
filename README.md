@@ -154,6 +154,13 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   from `Company\Application\Query\Companies` (a CompanyApi dependency in `deptrac.contexts.yaml`).
 - **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): owner and billing write, the
   accountant reads. The "access" item's voters may replace it.
+- **The document form is one widget** (`widgets/document-editor`), controlled: a page keeps a `DocumentDraft` (decimal
+  strings, never floats) and saves it; `validateDraft()` names problems by field path (`lines.0.quantity`), the same
+  paths the page maps the API's violations to. Its totals are a preview computed with exact decimals (BigInt, one
+  half-up rounding per total, line shares by largest remainder) and match `DocumentTotals` case for case; the server's
+  numbers are what is saved. A line's *Valor total* is its base plus its impuesto cargo (an IVA-included price is the
+  line total, §4.3); retenciones show only in the totals. On a purchase the product's sale price is not copied to the
+  line (it is not a cost).
 
 ## Known gaps
 
@@ -163,6 +170,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
   the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
   Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
+- Document form: until the document pages exist it is tried on a development-only page, `/dev/editor-documento` (not
+  routed in a production build). Its tercero search lists every active tercero, whatever its role. A line whose tax
+  was deactivated after it was chosen previews that tax as 0 (the select lists active taxes only). The form must not be
+  placed inside a `<form>`: its quick-create dialogs are forms of their own.
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.

@@ -117,5 +117,19 @@
     "dueDate": "Elige la fecha de vencimiento.",
     "dueBeforeIssue": "El vencimiento no puede ser anterior a la fecha de elaboración.",
     "paymentsMismatch": "Total formas de pago ({{total}}) debe ser igual al total neto ({{net}})."
+  },
+  "demo": {
+    "title": "Editor de documentos (desarrollo)",
+    "subtitle": "Solo en desarrollo: prueba el formulario compartido de cotizaciones y facturas. Nada se guarda.",
+    "kind": "Documento",
+    "types": {
+      "sales_invoice": "FV · Factura de venta",
+      "purchase_invoice": "FC · Factura de compra",
+      "quotation": "C · Cotización"
+    },
+    "check": "Comprobar",
+    "readOnly": "Ver como emitido",
+    "edit": "Editar",
+    "ready": "El documento está completo: se podría emitir."
   }
 }

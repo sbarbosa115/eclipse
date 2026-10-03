@@ -42,3 +42,4 @@ export type {
   ProductRef,
 } from './model/types';
 export {Decimal} from './lib/decimal';
+export {DocumentEditorDemo} from './ui/DocumentEditorDemo';
