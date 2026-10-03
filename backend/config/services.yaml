@@ -34,7 +34,9 @@ services:
 
   App\Company\Application\CompanyRegistration:
     arguments:
-      $provisioners: !tagged_iterator {tag: app.company_provisioner, default_priority_method: getPriority}
+      $provisioners: !tagged_iterator
+        tag: app.company_provisioner
+        default_priority_method: getPriority
 
   # Replaced by the "company" item.
   App\Company\Application\Numbering\SalesInvoiceNumbering: '@App\Company\Application\Numbering\UnimplementedSalesInvoiceNumbering'

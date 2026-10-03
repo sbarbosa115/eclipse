@@ -15,52 +15,100 @@ deptrac:
         - {type: classNameRegex, value: '#^App\\Shared\\#'}
     - name: Access
       collectors:
-        - {type: classNameRegex, value: '#^App\\Access\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Access\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: AccessApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Access\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Access\\(Application|Domain\\Event)\\#',
+          }
     - name: Company
       collectors:
-        - {type: classNameRegex, value: '#^App\\Company\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Company\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: CompanyApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Company\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Company\\(Application|Domain\\Event)\\#',
+          }
     - name: Ledger
       collectors:
-        - {type: classNameRegex, value: '#^App\\Ledger\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Ledger\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: LedgerApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Ledger\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Ledger\\(Application|Domain\\Event)\\#',
+          }
     - name: Party
       collectors:
-        - {type: classNameRegex, value: '#^App\\Party\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Party\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: PartyApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Party\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Party\\(Application|Domain\\Event)\\#',
+          }
     - name: Catalog
       collectors:
-        - {type: classNameRegex, value: '#^App\\Catalog\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Catalog\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: CatalogApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Catalog\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Catalog\\(Application|Domain\\Event)\\#',
+          }
     - name: Sales
       collectors:
-        - {type: classNameRegex, value: '#^App\\Sales\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Sales\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: SalesApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Sales\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Sales\\(Application|Domain\\Event)\\#',
+          }
     - name: Purchasing
       collectors:
-        - {type: classNameRegex, value: '#^App\\Purchasing\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Purchasing\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: PurchasingApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Purchasing\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Purchasing\\(Application|Domain\\Event)\\#',
+          }
     - name: Reporting
       collectors:
-        - {type: classNameRegex, value: '#^App\\Reporting\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Reporting\\(Domain\\(?!Event\\)|Infrastructure\\|UI\\)#',
+          }
     - name: ReportingApi
       collectors:
-        - {type: classNameRegex, value: '#^App\\Reporting\\(Application|Domain\\Event)\\#'}
+        - {
+            type: classNameRegex,
+            value: '#^App\\Reporting\\(Application|Domain\\Event)\\#',
+          }
 
   ruleset:
     Shared: ~
@@ -82,8 +130,28 @@ deptrac:
     Sales: [Shared, SalesApi, CompanyApi, LedgerApi, PartyApi, CatalogApi]
     SalesApi: [Shared, Sales, CompanyApi, LedgerApi, PartyApi, CatalogApi]
     # The mirror of Sales.
-    Purchasing: [Shared, PurchasingApi, CompanyApi, LedgerApi, PartyApi, CatalogApi]
-    PurchasingApi: [Shared, Purchasing, CompanyApi, LedgerApi, PartyApi, CatalogApi]
+    Purchasing:
+      [Shared, PurchasingApi, CompanyApi, LedgerApi, PartyApi, CatalogApi]
+    PurchasingApi:
+      [Shared, Purchasing, CompanyApi, LedgerApi, PartyApi, CatalogApi]
     # The read side: cartera and reports read every document context and the ledger.
-    Reporting: [Shared, ReportingApi, SalesApi, PurchasingApi, PartyApi, LedgerApi, CompanyApi]
-    ReportingApi: [Shared, Reporting, SalesApi, PurchasingApi, PartyApi, LedgerApi, CompanyApi]
+    Reporting:
+      [
+        Shared,
+        ReportingApi,
+        SalesApi,
+        PurchasingApi,
+        PartyApi,
+        LedgerApi,
+        CompanyApi,
+      ]
+    ReportingApi:
+      [
+        Shared,
+        Reporting,
+        SalesApi,
+        PurchasingApi,
+        PartyApi,
+        LedgerApi,
+        CompanyApi,
+      ]

@@ -1,0 +1,6 @@
+# The API's own validation messages, in Spanish (the validator's built-in ones come translated by Symfony).
+'This e-mail is already registered.': 'Este correo ya está registrado.'
+'A company with this identification is already registered.': 'Ya hay una empresa registrada con este NIT.'
+'Write the NIT with digits only, without the verification digit.': 'Escribe el NIT solo con números, sin el dígito de verificación.'
+'The password must have at least {{ limit }} characters.': 'La contraseña debe tener al menos {{ limit }} caracteres.'
+'This value should be of type %type%.': 'Este valor debe ser de tipo %type%.'

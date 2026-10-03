@@ -1,0 +1,14 @@
+// Loaded before every Vitest file: DOM matchers (toBeInTheDocument…), a clean DOM between tests, and the browser APIs
+// jsdom lacks.
+import '@testing-library/jest-dom/vitest';
+import {cleanup} from '@testing-library/react';
+import {afterEach, vi} from 'vitest';
+
+afterEach(() => cleanup());
+
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+window.ResizeObserver = ResizeObserverMock;

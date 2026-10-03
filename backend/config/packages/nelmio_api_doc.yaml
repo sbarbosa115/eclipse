@@ -10,7 +10,7 @@ when@dev: &nelmio
   nelmio_api_doc:
     documentation:
       info:
-        title: Llyner API
+        title: Mustang API
         description: The JSON API behind the React UI.
         version: 1.0.0
     areas:

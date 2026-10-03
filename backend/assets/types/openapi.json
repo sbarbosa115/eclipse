@@ -1,0 +1,90 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Mustang API",
+        "description": "The JSON API behind the React UI.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/auth/sign-up": {
+            "post": {
+                "summary": "Creates a company and its owner, and signs the owner in.",
+                "operationId": "post_app_access_ui_http_auth_signup",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me": {
+            "get": {
+                "summary": "Who is signed in.",
+                "operationId": "get_app_access_ui_http_auth_me",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "SessionOutput": {
+                "required": [
+                    "user_id",
+                    "email",
+                    "name",
+                    "role",
+                    "company_id",
+                    "company_name",
+                    "company_nit"
+                ],
+                "properties": {
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "title": "owner, billing or accountant",
+                        "type": "string"
+                    },
+                    "company_id": {
+                        "type": "string"
+                    },
+                    "company_name": {
+                        "type": "string"
+                    },
+                    "company_nit": {
+                        "type": "string"
+                    },
+                    "company_check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        }
+    }
+}
