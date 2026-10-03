@@ -11,6 +11,8 @@ doctrine:
       # Money as decimal strings, never floats (Shared\Domain\Money).
       money: App\Shared\Infrastructure\Doctrine\MoneyType
       rate: App\Shared\Infrastructure\Doctrine\RateType
+      quantity: App\Shared\Infrastructure\Doctrine\QuantityType
+      unit_price: App\Shared\Infrastructure\Doctrine\UnitPriceType
   orm:
     validate_xml_mapping: true
     naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
