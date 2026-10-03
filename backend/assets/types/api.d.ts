@@ -94,6 +94,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/taxes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every tax of the company, by class then name. */
+        get: operations["get_app_ledger_ui_http_catalogsettings_taxes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/payment-methods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every payment method of the company, by name. */
+        get: operations["get_app_ledger_ui_http_catalogsettings_paymentmethods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payment-methods/{id}": {
         parameters: {
             query?: never;
@@ -365,6 +399,43 @@ export interface components {
             postable: boolean;
             usable_on_purchases: boolean;
         };
+        TaxSettingOutput: {
+            id: string;
+            name: string;
+            /** charge (impuesto cargo) or withholding (retención) */
+            tax_class: string;
+            /** none, iva, impoconsumo, retefuente, reteiva, reteica */
+            kind: string;
+            /** percentage or per_unit */
+            calculation: string;
+            /** Decimal string: a percentage ("19.0000") or a value per unit ("500.0000"). */
+            rate: string;
+            sales_account_id?: string | null;
+            sales_account_code?: string | null;
+            sales_account_name?: string | null;
+            purchase_account_id?: string | null;
+            purchase_account_code?: string | null;
+            purchase_account_name?: string | null;
+            valid_from?: string | null;
+            valid_to?: string | null;
+            active: boolean;
+            standard: boolean;
+            /** A document, a product or the company uses it: it can only be deactivated. */
+            in_use: boolean;
+        };
+        PaymentMethodSettingOutput: {
+            id: string;
+            name: string;
+            /** cash (contado) or credit (crédito) */
+            kind: string;
+            account_id?: string | null;
+            account_code?: string | null;
+            account_name?: string | null;
+            active: boolean;
+            standard: boolean;
+            /** A document uses it: it can only be deactivated. */
+            in_use: boolean;
+        };
         TerceroSummaryOutput: {
             id: string;
             display_name: string;
@@ -493,7 +564,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaxOutput"];
+                    "application/json": components["schemas"]["TaxSettingOutput"];
                 };
             };
         };
@@ -535,7 +606,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
                 };
             };
         };
@@ -562,6 +633,50 @@ export interface operations {
             };
         };
     };
+    get_app_ledger_ui_http_catalogsettings_taxes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["TaxSettingOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_catalogsettings_paymentmethods: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PaymentMethodSettingOutput"][];
+                    };
+                };
+            };
+        };
+    };
     put_app_ledger_ui_http_paymentmethod_update: {
         parameters: {
             query?: never;
@@ -579,7 +694,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
                 };
             };
         };
@@ -620,7 +735,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
                 };
             };
         };
@@ -642,7 +757,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentMethodOutput"];
+                    "application/json": components["schemas"]["PaymentMethodSettingOutput"];
                 };
             };
         };
@@ -664,7 +779,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaxOutput"];
+                    "application/json": components["schemas"]["TaxSettingOutput"];
                 };
             };
         };
@@ -705,7 +820,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaxOutput"];
+                    "application/json": components["schemas"]["TaxSettingOutput"];
                 };
             };
         };
@@ -727,7 +842,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaxOutput"];
+                    "application/json": components["schemas"]["TaxSettingOutput"];
                 };
             };
         };

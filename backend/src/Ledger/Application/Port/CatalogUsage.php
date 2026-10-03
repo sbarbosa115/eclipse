@@ -14,4 +14,10 @@ interface CatalogUsage
     public function taxIsUsed(Uuid $companyId, Uuid $taxId): bool;
 
     public function paymentMethodIsUsed(Uuid $companyId, Uuid $paymentMethodId): bool;
+
+    /** @return list<string> ids (RFC 4122) of the company's taxes something points at */
+    public function usedTaxIds(Uuid $companyId): array;
+
+    /** @return list<string> ids (RFC 4122) of the company's payment methods something points at */
+    public function usedPaymentMethodIds(Uuid $companyId): array;
 }

@@ -12,7 +12,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class DbalCatalogUsage implements CatalogUsage
 {
-    /** table => the columns that hold a tax id (a line's copy of it, a product's or the company's default) */
+    /** table => the columns that hold a tax id (a line's copy of it, a product's default) */
     private const TAX_COLUMNS = [
         'quotation_line' => ['charge_tax_id', 'withholding_tax_id'],
         'sales_invoice_line' => ['charge_tax_id', 'withholding_tax_id'],
@@ -20,10 +20,10 @@ final class DbalCatalogUsage implements CatalogUsage
         'product' => ['charge_tax_id', 'withholding_tax_id'],
     ];
 
-    /** The company row keeps its defaults under other column names and is keyed by id. */
+    /** The company row keeps its defaults under other column names. */
     private const COMPANY_TAX_COLUMNS = ['default_charge_tax_id', 'default_withholding_tax_id'];
 
-    /** table => the column that holds a payment method id */
+    /** Tables with a payment_method_id column. */
     private const METHOD_TABLES = ['sales_invoice_payment', 'purchase_invoice_payment', 'cash_receipt', 'supplier_payment'];
 
     public function __construct(private readonly Connection $db)
@@ -32,30 +32,46 @@ final class DbalCatalogUsage implements CatalogUsage
 
     public function taxIsUsed(Uuid $companyId, Uuid $taxId): bool
     {
-        foreach (self::TAX_COLUMNS as $table => $columns) {
-            $where = implode(' OR ', array_map(static fn (string $c) => "$c = :id", $columns));
-            if ($this->exists("SELECT 1 FROM $table WHERE company_id = :company AND ($where) LIMIT 1", $companyId, $taxId)) {
-                return true;
-            }
-        }
-        $where = implode(' OR ', array_map(static fn (string $c) => "$c = :id", self::COMPANY_TAX_COLUMNS));
-
-        return $this->exists("SELECT 1 FROM company WHERE id = :company AND ($where) LIMIT 1", $companyId, $taxId);
+        return \in_array($taxId->toRfc4122(), $this->usedTaxIds($companyId), true);
     }
 
     public function paymentMethodIsUsed(Uuid $companyId, Uuid $paymentMethodId): bool
     {
-        foreach (self::METHOD_TABLES as $table) {
-            if ($this->exists("SELECT 1 FROM $table WHERE company_id = :company AND payment_method_id = :id LIMIT 1", $companyId, $paymentMethodId)) {
-                return true;
-            }
-        }
-
-        return false;
+        return \in_array($paymentMethodId->toRfc4122(), $this->usedPaymentMethodIds($companyId), true);
     }
 
-    private function exists(string $sql, Uuid $companyId, Uuid $id): bool
+    public function usedTaxIds(Uuid $companyId): array
     {
-        return false !== $this->db->fetchOne($sql, ['company' => $companyId->toBinary(), 'id' => $id->toBinary()]);
+        $selects = [];
+        foreach (self::TAX_COLUMNS as $table => $columns) {
+            foreach ($columns as $column) {
+                $selects[] = "SELECT DISTINCT $column AS id FROM $table WHERE company_id = :company AND $column IS NOT NULL";
+            }
+        }
+        foreach (self::COMPANY_TAX_COLUMNS as $column) {
+            $selects[] = "SELECT $column AS id FROM company WHERE id = :company AND $column IS NOT NULL";
+        }
+
+        return $this->ids($selects, $companyId);
+    }
+
+    public function usedPaymentMethodIds(Uuid $companyId): array
+    {
+        $selects = array_map(static fn (string $table) => "SELECT DISTINCT payment_method_id AS id FROM $table WHERE company_id = :company", self::METHOD_TABLES);
+
+        return $this->ids($selects, $companyId);
+    }
+
+    /**
+     * @param list<string> $selects
+     *
+     * @return list<string>
+     */
+    private function ids(array $selects, Uuid $companyId): array
+    {
+        /** @var list<string> $binary */
+        $binary = $this->db->fetchFirstColumn(implode(' UNION ', $selects), ['company' => $companyId->toBinary()]);
+
+        return array_map(static fn (string $id) => Uuid::fromBinary($id)->toRfc4122(), $binary);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Ledger\UI\Http\Controller;
 
-use App\Ledger\Application\Query\LedgerCatalog;
+use App\Ledger\Application\Query\CatalogSettings;
 use App\Ledger\Application\Tax\CreateTax;
 use App\Ledger\Application\Tax\DeleteTax;
 use App\Ledger\Application\Tax\SetTaxActive;
@@ -10,7 +10,7 @@ use App\Ledger\Application\Tax\UpdateTax;
 use App\Ledger\Domain\Error\TaxNotFound;
 use App\Ledger\UI\Http\Input\TaxChangesInput;
 use App\Ledger\UI\Http\Input\TaxInput;
-use App\Ledger\UI\Http\Output\TaxOutput;
+use App\Ledger\UI\Http\Output\TaxSettingOutput;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
@@ -35,7 +35,7 @@ final class TaxController extends AbstractController
     public function __construct(
         private readonly InputMapper $inputs,
         private readonly CommandBus $commands,
-        private readonly LedgerCatalog $catalog,
+        private readonly CatalogSettings $settings,
     ) {
     }
 
@@ -43,7 +43,7 @@ final class TaxController extends AbstractController
      * Adds a tax. Its class and kind (IVA, impoconsumo, retefuente, reteiva, reteica) are fixed from here on.
      */
     #[Route('', methods: ['POST'])]
-    #[ApiResponse(TaxOutput::class, status: 201)]
+    #[ApiResponse(TaxSettingOutput::class, status: 201)]
     public function create(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         $this->requireCatalogEditor($user);
@@ -51,14 +51,14 @@ final class TaxController extends AbstractController
         $id = $this->commands->dispatch(new CreateTax($user->companyId(), $user->userId(), $input->name, $input->taxClass, $input->kind, $input->calculation, $input->rate, $input->salesAccountId, $input->purchaseAccountId, $input->validFrom, $input->validTo));
         \assert($id instanceof Uuid);
 
-        return $this->json(TaxOutput::of($this->catalog->tax($user->companyId(), $id)), 201);
+        return $this->json(TaxSettingOutput::of($this->settings->tax($user->companyId(), $id)), 201);
     }
 
     /**
      * Changes a tax's name, calculation, rate, accounts and validity dates. "Ninguno" cannot be changed.
      */
     #[Route('/{id}', methods: ['PUT'])]
-    #[ApiResponse(TaxOutput::class)]
+    #[ApiResponse(TaxSettingOutput::class)]
     public function update(string $id, Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         $this->requireCatalogEditor($user);
@@ -66,21 +66,21 @@ final class TaxController extends AbstractController
         $input = $this->inputs->map($this->inputs->json($request), TaxChangesInput::class);
         $this->commands->dispatch(new UpdateTax($user->companyId(), $user->userId(), $taxId, $input->name, $input->calculation, $input->rate, $input->salesAccountId, $input->purchaseAccountId, $input->validFrom, $input->validTo));
 
-        return $this->json(TaxOutput::of($this->catalog->tax($user->companyId(), $taxId)));
+        return $this->json(TaxSettingOutput::of($this->settings->tax($user->companyId(), $taxId)));
     }
 
     /**
      * Takes the tax out of the pickers; documents that used it keep it.
      */
     #[Route('/{id}/deactivate', methods: ['POST'])]
-    #[ApiResponse(TaxOutput::class)]
+    #[ApiResponse(TaxSettingOutput::class)]
     public function deactivate(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         return $this->setActive($id, false, $user);
     }
 
     #[Route('/{id}/activate', methods: ['POST'])]
-    #[ApiResponse(TaxOutput::class)]
+    #[ApiResponse(TaxSettingOutput::class)]
     public function activate(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         return $this->setActive($id, true, $user);
@@ -104,7 +104,7 @@ final class TaxController extends AbstractController
         $taxId = self::id($id);
         $this->commands->dispatch(new SetTaxActive($user->companyId(), $user->userId(), $taxId, $active));
 
-        return $this->json(TaxOutput::of($this->catalog->tax($user->companyId(), $taxId)));
+        return $this->json(TaxSettingOutput::of($this->settings->tax($user->companyId(), $taxId)));
     }
 
     /** An id that is not a UUID is as unknown as one nobody owns. */

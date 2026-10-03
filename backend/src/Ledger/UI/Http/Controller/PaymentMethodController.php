@@ -6,11 +6,11 @@ use App\Ledger\Application\PaymentMethod\CreatePaymentMethod;
 use App\Ledger\Application\PaymentMethod\DeletePaymentMethod;
 use App\Ledger\Application\PaymentMethod\SetPaymentMethodActive;
 use App\Ledger\Application\PaymentMethod\UpdatePaymentMethod;
-use App\Ledger\Application\Query\LedgerCatalog;
+use App\Ledger\Application\Query\CatalogSettings;
 use App\Ledger\Domain\Error\PaymentMethodNotFound;
 use App\Ledger\UI\Http\Input\PaymentMethodChangesInput;
 use App\Ledger\UI\Http\Input\PaymentMethodInput;
-use App\Ledger\UI\Http\Output\PaymentMethodOutput;
+use App\Ledger\UI\Http\Output\PaymentMethodSettingOutput;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
@@ -35,7 +35,7 @@ final class PaymentMethodController extends AbstractController
     public function __construct(
         private readonly InputMapper $inputs,
         private readonly CommandBus $commands,
-        private readonly LedgerCatalog $catalog,
+        private readonly CatalogSettings $settings,
     ) {
     }
 
@@ -43,7 +43,7 @@ final class PaymentMethodController extends AbstractController
      * Adds a method: contado ("cash") needs a postable account, crédito ("credit") has none.
      */
     #[Route('', methods: ['POST'])]
-    #[ApiResponse(PaymentMethodOutput::class, status: 201)]
+    #[ApiResponse(PaymentMethodSettingOutput::class, status: 201)]
     public function create(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         $this->requireCatalogEditor($user);
@@ -51,14 +51,14 @@ final class PaymentMethodController extends AbstractController
         $id = $this->commands->dispatch(new CreatePaymentMethod($user->companyId(), $user->userId(), $input->name, $input->kind, $input->accountId));
         \assert($id instanceof Uuid);
 
-        return $this->json(PaymentMethodOutput::of($this->catalog->paymentMethod($user->companyId(), $id)), 201);
+        return $this->json(PaymentMethodSettingOutput::of($this->settings->paymentMethod($user->companyId(), $id)), 201);
     }
 
     /**
      * Renames a method and moves its account. Its kind never changes.
      */
     #[Route('/{id}', methods: ['PUT'])]
-    #[ApiResponse(PaymentMethodOutput::class)]
+    #[ApiResponse(PaymentMethodSettingOutput::class)]
     public function update(string $id, Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         $this->requireCatalogEditor($user);
@@ -66,21 +66,21 @@ final class PaymentMethodController extends AbstractController
         $input = $this->inputs->map($this->inputs->json($request), PaymentMethodChangesInput::class);
         $this->commands->dispatch(new UpdatePaymentMethod($user->companyId(), $user->userId(), $methodId, $input->name, $input->accountId));
 
-        return $this->json(PaymentMethodOutput::of($this->catalog->paymentMethod($user->companyId(), $methodId)));
+        return $this->json(PaymentMethodSettingOutput::of($this->settings->paymentMethod($user->companyId(), $methodId)));
     }
 
     /**
      * Takes the method out of the pickers; documents that used it keep it.
      */
     #[Route('/{id}/deactivate', methods: ['POST'])]
-    #[ApiResponse(PaymentMethodOutput::class)]
+    #[ApiResponse(PaymentMethodSettingOutput::class)]
     public function deactivate(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         return $this->setActive($id, false, $user);
     }
 
     #[Route('/{id}/activate', methods: ['POST'])]
-    #[ApiResponse(PaymentMethodOutput::class)]
+    #[ApiResponse(PaymentMethodSettingOutput::class)]
     public function activate(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         return $this->setActive($id, true, $user);
@@ -104,7 +104,7 @@ final class PaymentMethodController extends AbstractController
         $methodId = self::id($id);
         $this->commands->dispatch(new SetPaymentMethodActive($user->companyId(), $user->userId(), $methodId, $active));
 
-        return $this->json(PaymentMethodOutput::of($this->catalog->paymentMethod($user->companyId(), $methodId)));
+        return $this->json(PaymentMethodSettingOutput::of($this->settings->paymentMethod($user->companyId(), $methodId)));
     }
 
     /** An id that is not a UUID is as unknown as one nobody owns. */

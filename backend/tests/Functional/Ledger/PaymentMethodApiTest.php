@@ -201,4 +201,19 @@ final class PaymentMethodApiTest extends CatalogTestCase
 
         self::assertResponseStatusCodeSame(401);
     }
+
+    public function testTheSettingsListShowsWhatIsInUseAndInactiveMethods(): void
+    {
+        $company = $this->signUpOwner();
+        $efectivo = $this->methodsByName()['Efectivo']['id'];
+        $this->usePaymentMethodOnAnInvoice($company, $efectivo);
+        $this->sendJson('POST', '/api/v1/payment-methods/'.$this->methodsByName()['Transferencia']['id'].'/deactivate', []);
+
+        $items = array_column($this->getJson('/api/v1/settings/payment-methods')['items'], null, 'name');
+
+        self::assertResponseIsSuccessful();
+        self::assertTrue($items['Efectivo']['in_use']);
+        self::assertFalse($items['Crédito']['in_use']);
+        self::assertFalse($items['Transferencia']['active'], 'Inactive methods are listed here so they can be reactivated.');
+    }
 }

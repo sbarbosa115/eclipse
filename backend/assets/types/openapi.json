@@ -79,7 +79,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TaxOutput"
+                                    "$ref": "#/components/schemas/TaxSettingOutput"
                                 }
                             }
                         }
@@ -124,7 +124,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodOutput"
+                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
                                 }
                             }
                         }
@@ -161,6 +161,64 @@
                 }
             }
         },
+        "/api/v1/settings/taxes": {
+            "get": {
+                "summary": "Every tax of the company, by class then name.",
+                "operationId": "get_app_ledger_ui_http_catalogsettings_taxes",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TaxSettingOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/payment-methods": {
+            "get": {
+                "summary": "Every payment method of the company, by name.",
+                "operationId": "get_app_ledger_ui_http_catalogsettings_paymentmethods",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PaymentMethodSettingOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/payment-methods/{id}": {
             "put": {
                 "summary": "Renames a method and moves its account. Its kind never changes.",
@@ -181,7 +239,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodOutput"
+                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
                                 }
                             }
                         }
@@ -228,7 +286,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodOutput"
+                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
                                 }
                             }
                         }
@@ -255,7 +313,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodOutput"
+                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
                                 }
                             }
                         }
@@ -283,7 +341,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TaxOutput"
+                                    "$ref": "#/components/schemas/TaxSettingOutput"
                                 }
                             }
                         }
@@ -330,7 +388,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TaxOutput"
+                                    "$ref": "#/components/schemas/TaxSettingOutput"
                                 }
                             }
                         }
@@ -357,7 +415,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TaxOutput"
+                                    "$ref": "#/components/schemas/TaxSettingOutput"
                                 }
                             }
                         }
@@ -736,6 +794,131 @@
                         "type": "boolean"
                     },
                     "usable_on_purchases": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "TaxSettingOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "tax_class",
+                    "kind",
+                    "calculation",
+                    "rate",
+                    "active",
+                    "standard",
+                    "in_use"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "tax_class": {
+                        "title": "charge (impuesto cargo) or withholding (retenci\u00f3n)",
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "none, iva, impoconsumo, retefuente, reteiva, reteica",
+                        "type": "string"
+                    },
+                    "calculation": {
+                        "title": "percentage or per_unit",
+                        "type": "string"
+                    },
+                    "rate": {
+                        "title": "Decimal string: a percentage (\"19.0000\") or a value per unit (\"500.0000\").",
+                        "type": "string"
+                    },
+                    "sales_account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sales_account_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sales_account_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "purchase_account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "purchase_account_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "purchase_account_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "valid_from": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "valid_to": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "standard": {
+                        "type": "boolean"
+                    },
+                    "in_use": {
+                        "title": "A document, a product or the company uses it: it can only be deactivated.",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "PaymentMethodSettingOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "kind",
+                    "active",
+                    "standard",
+                    "in_use"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "cash (contado) or credit (cr\u00e9dito)",
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "standard": {
+                        "type": "boolean"
+                    },
+                    "in_use": {
+                        "title": "A document uses it: it can only be deactivated.",
                         "type": "boolean"
                     }
                 },

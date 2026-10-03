@@ -2,10 +2,10 @@
 
 namespace App\Ledger\Application;
 
+use App\Ledger\Application\Query\LedgerCatalog;
 use App\Ledger\Domain\Error\AccountNotFound;
 use App\Ledger\Domain\Error\InvalidPaymentMethod;
 use App\Ledger\Domain\Error\InvalidTaxDefinition;
-use App\Ledger\Application\Query\LedgerCatalog;
 use Symfony\Component\Uid\Uuid;
 
 /**

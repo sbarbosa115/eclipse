@@ -95,8 +95,8 @@ class Tax implements CompanyOwned
      * The accountant edits a tax: its name, how it is computed, the rate, the accounts and the dates it is in force.
      * Its class and kind never change (they decide how documents post it).
      *
-     * @throws TaxNotEditable        for "Ninguno"
-     * @throws InvalidTaxDefinition  on the field at fault
+     * @throws TaxNotEditable       for "Ninguno"
+     * @throws InvalidTaxDefinition on the field at fault
      */
     public function revise(
         string $name,

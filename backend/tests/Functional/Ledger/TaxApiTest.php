@@ -10,6 +10,8 @@ use Symfony\Component\Uid\Uuid;
 final class TaxApiTest extends CatalogTestCase
 {
     /**
+     * @param array<string, mixed> $override
+     *
      * @return array<string, mixed>
      */
     private function ivaPayload(array $override = []): array
@@ -52,7 +54,7 @@ final class TaxApiTest extends CatalogTestCase
         }
         self::assertSame('per_unit', $taxes['Impoconsumo por valor']['calculation']);
         $ninguno = array_filter($this->getJson('/api/v1/taxes?all=1')['items'], static fn (array $t) => 'Ninguno' === $t['name']);
-        self::assertSame(['charge', 'withholding'], array_values(array_column($ninguno, 'tax_class')), 'Ninguno exists as a charge and as a withholding, so a line can name it.');
+        self::assertSame(['charge', 'withholding'], array_column($ninguno, 'tax_class'), 'Ninguno exists as a charge and as a withholding, so a line can name it.');
         self::assertCount(13, $this->getJson('/api/v1/taxes?all=1')['items'], 'Eleven taxes and the two Ninguno; ReteICA is company-defined.');
         self::assertArrayNotHasKey('ReteICA', $taxes);
     }
@@ -240,5 +242,34 @@ final class TaxApiTest extends CatalogTestCase
 
         self::assertResponseStatusCodeSame(201);
         self::assertSame([TaxClass::Withholding->value, TaxKind::IcaWithholding->value], [$created['tax_class'], $created['kind']]);
+    }
+
+    public function testTheSettingsListShowsAccountNamesAndWhatIsInUse(): void
+    {
+        $company = $this->signUpOwner();
+        $account = $this->account($company, '240805', 'IVA generado');
+        $iva = $this->taxesByName()['IVA 19 %'];
+        $this->sendJson('PUT', '/api/v1/taxes/'.$iva['id'], ['name' => 'IVA 19 %', 'calculation' => 'percentage', 'rate' => '19', 'sales_account_id' => $account, 'purchase_account_id' => null, 'valid_from' => null, 'valid_to' => null]);
+        $this->useTaxOnAQuotation($company, $iva['id']);
+        $this->sendJson('POST', '/api/v1/taxes/'.$this->taxesByName()['IVA 5 %']['id'].'/deactivate', []);
+
+        $items = $this->getJson('/api/v1/settings/taxes')['items'];
+
+        self::assertResponseIsSuccessful();
+        $byName = array_column($items, null, 'name');
+        self::assertSame(['240805', 'IVA generado', null], [$byName['IVA 19 %']['sales_account_code'], $byName['IVA 19 %']['sales_account_name'], $byName['IVA 19 %']['purchase_account_code']]);
+        self::assertTrue($byName['IVA 19 %']['in_use'], 'A quotation line copied it.');
+        self::assertFalse($byName['IVA por servicios 19 %']['in_use']);
+        self::assertContains('IVA 5 %', array_column($items, 'name'), 'Inactive taxes are listed here: this is where they are reactivated.');
+    }
+
+    public function testBillingUsersReadTheSettingsListToo(): void
+    {
+        $company = $this->signUpOwner();
+        $this->signInAs(Role::Billing, $company);
+
+        $this->getJson('/api/v1/settings/taxes');
+
+        self::assertResponseIsSuccessful();
     }
 }
