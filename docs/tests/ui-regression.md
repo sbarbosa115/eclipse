@@ -621,6 +621,81 @@ narrow screen; the inactive row is distinguishable in both themes; the console h
 
 <!-- Owned by item 7 "document-editor" (DOC-01 – 09). -->
 
+The form a cotización, factura de venta and factura de compra share. Until those pages exist (items 8–10) it is tried on
+its development page, **`/dev/editor-documento`** (not routed in a production build): the **Documento** select switches
+between Factura de venta, Factura de compra and Cotización, **Comprobar** checks the draft as emission would, and
+**Ver como emitido** shows it read-only. Nothing is saved. Once the document pages mount it, run these cases there too.
+
+**DOC-01 · The totals preview shows the PRD example as the server computes it**
+Smoke (part): `e2e/documentEditor.spec.ts` runs the PRD example; by hand: the three `0.3333` lines.
+A service `SRV-01` of 1.000.000 with IVA 19 % and ReteFuente servicios 4 % › on line 1 choose it, Cantidad `2`,
+% Descuento `10`.
+**Expected:** Total bruto `$ 2.000.000,00`, Descuentos `$ 200.000,00`, Subtotal `$ 1.800.000,00`, Impuestos
+`$ 342.000,00`, Retenciones `$ 72.000,00`, Total neto `$ 2.070.000,00`; the line's Valor total `$ 2.142.000,00` (base
+plus IVA). Then three lines of Cantidad `1`, Valor unitario `0.3333`, IVA 19 %: Total bruto `$ 1,00`, Impuestos `$ 0,19`
+(rounded once, not per line).
+
+**DOC-02 · The tercero is searched from the third character and brings its contacts**
+Smoke (part): `e2e/documentEditor.spec.ts`; by hand: choosing another client empties Contacto.
+A client with the contact `Ana Pérez` › type two letters of its name in **Cliente**, then a third.
+**Expected:** with two, "Escribe al menos 3 caracteres." and no list; with three, the client with its NIT; choosing it
+fills the box and **Contacto** offers `Ana Pérez`. Choosing another client empties Contacto.
+
+**DOC-03 · A missing tercero is created from the search with the document's role**
+Smoke: `e2e/documentEditor.spec.ts`.
+Type a name nobody has › **+ Crear nuevo** › fill NIT, Razón social, correo › **Crear tercero**; then on Factura de
+compra, **Proveedor** › **+ Crear nuevo**.
+**Expected:** on a sale the dialog opens with *Cliente* ticked, and the new client is chosen in the form when it
+closes; on a purchase *Proveedor* is ticked.
+
+**DOC-04 · A product is created from a line and fills it**
+Smoke: `e2e/documentEditor.spec.ts`.
+On line 1 type `Cuaderno rayado` › **+ Crear nuevo** › Código `CUA-01`, Precio `11900`, *Incluir IVA en el precio*,
+IVA 19 % › **Crear**.
+**Expected:** the dialog starts with Nombre `Cuaderno rayado`; the line shows `CUA-01 · Cuaderno rayado`, Cantidad
+`1`, Valor unitario `10000` (net of IVA) and Valor total `$ 11.900,00` (the list price).
+
+**DOC-05 · The tax dialog changes a line and, when asked, the product from now on**
+Smoke (part): `e2e/documentEditor.spec.ts`; by hand: the product in Productos y servicios, and without the tick.
+Line with `SRV-01` › **Impuestos de la línea 1** › Impuesto cargo `IVA 5 %`, tick *Aplicar estos impuestos al producto
+de ahora en adelante* › **Aplicar**; add a line with `SRV-01` again.
+**Expected:** the dialog shows the line's subtotal (`$ 1.000.000,00`); Impuestos becomes `$ 50.000,00`; the new line
+comes with IVA 5 %, and so does the product in Productos y servicios. Without the tick only the line changes.
+
+**DOC-06 · A purchase line goes straight to an expense account**
+Needs the chart of accounts (item "ledger").
+Documento `FC · Factura de compra` › **Tipo de línea 1** `Cuenta de gasto` › type `5135` in the line and pick
+`513525 · …` from the list; Cantidad `1`, Valor unitario `500000`, IVA 19 %.
+**Expected:** the list offers only accounts usable on purchases (classes 5, 6, 7 and those the accountant marked); the
+line totals `$ 595.000,00`; **Comprobar** asks nothing more of it. Typing an account that is not in the list and
+**Comprobar** says "Elige una cuenta de la lista." under it; switching back to Producto clears the account.
+
+**DOC-07 · Formas de pago add up to Total neto, with a due date on crédito**
+Smoke (part): `e2e/documentEditor.spec.ts`; by hand: *Otra fecha* and moving Fecha de elaboración.
+A line totalling `$ 1.190.000,00` › **Agregar forma de pago** › Efectivo; change Valor to `595000`; **Comprobar**;
+**Agregar forma de pago** › Crédito; then Plazo `Otra fecha` and a date; then Documento `C · Cotización`.
+**Expected:** the first row offers `1190000.00` and the check mark "Coincide con el total neto" shows; at `595000`
+"Faltan $ 595.000,00 para el total neto" and **Comprobar** says "Total formas de pago ($ 595.000,00) debe ser igual al
+total neto ($ 1.190.000,00)."; the crédito row offers the rest, *A 30 días* and its date 30 days after Fecha de
+elaboración, and the check mark is back; *Otra fecha* shows a date field; changing Fecha de elaboración moves the
+computed dates but not the one typed. A quotation has no Formas de pago.
+
+**DOC-08 · The lines work from the keyboard**
+Smoke (part): `e2e/documentEditor.spec.ts`; by hand: the arrows, Enter and Escape in a product search.
+Tab through line 1 to % Descuento › Enter; type in Descripción of line 2 › Alt + ↑; then **Quitar línea 1**. In a
+product search: ↓, ↑, Enter, Escape.
+**Expected:** Enter on the last line adds one and puts the cursor in its Producto/Servicio; Enter on another line goes
+down to the same cell; Alt + ↑/↓ moves the line and the cursor with it; in the search the arrows walk the list, Enter
+chooses, Escape closes it, and Enter in a cell never submits anything.
+
+**DOC-09 · The form on a tablet, in both themes, and read-only**
+At 1366×768, 1024×768 and 768×1024, Tema `Claro` and `Oscuro`, with three lines, two formas de pago and an attachment;
+then **Ver como emitido**.
+**Expected:** the lines table scrolls sideways inside its box and the search lists are not cut by it; the totals sit
+to the right on a wide screen and below on a narrow one; the check mark and "Faltan…" read in both themes (icon and
+words, not colour only). Read-only shows every value with nothing editable and no add, move, remove or tax buttons.
+The console has no errors.
+
 ## 8. Facturas de venta
 
 <!-- Owned by item 8 "sales-invoice" (SAL-01 – 29). -->

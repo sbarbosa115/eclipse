@@ -1,1 +1,135 @@
-{}
+{
+  "header": {
+    "type": "Tipo",
+    "number": "Número",
+    "numberPending": "Se asigna al emitir",
+    "cliente": "Cliente",
+    "proveedor": "Proveedor",
+    "terceroPlaceholder": "Nombre o identificación",
+    "terceroHint": "Escribe al menos 3 caracteres para buscar.",
+    "contact": "Contacto",
+    "noContact": "Sin contacto",
+    "chooseTerceroFirst": "Elige primero el tercero",
+    "issueDate": "Fecha de elaboración"
+  },
+  "search": {
+    "minChars": "Escribe al menos {{count}} caracteres.",
+    "searching": "Buscando…",
+    "none": "Sin resultados.",
+    "create": "+ Crear nuevo",
+    "failed": "No pudimos buscar. Inténtalo de nuevo."
+  },
+  "lines": {
+    "title": "Productos y servicios",
+    "columns": {
+      "item": "Producto/Servicio",
+      "itemPurchase": "Producto/Servicio o cuenta",
+      "description": "Descripción",
+      "quantity": "Cantidad",
+      "unitPrice": "Valor unitario",
+      "discount": "% Descuento",
+      "chargeTax": "Impuesto cargo",
+      "withholdingTax": "Impuesto retención",
+      "total": "Valor total"
+    },
+    "cellLabel": "{{column}}, línea {{n}}",
+    "mode": "Tipo de línea {{n}}",
+    "modeProduct": "Producto",
+    "modeAccount": "Cuenta de gasto",
+    "productPlaceholder": "Código o nombre",
+    "accountPlaceholder": "Código o nombre de la cuenta",
+    "noTax": "Sin impuesto",
+    "add": "Agregar línea",
+    "taxes": "Impuestos de la línea {{n}}",
+    "up": "Subir línea {{n}}",
+    "down": "Bajar línea {{n}}",
+    "remove": "Quitar línea {{n}}",
+    "keyboardHint": "Enter en la última línea agrega otra; Alt + ↑ o ↓ mueve la línea."
+  },
+  "totals": {
+    "title": "Totales",
+    "gross": "Total bruto",
+    "discounts": "Descuentos",
+    "subtotal": "Subtotal",
+    "taxes": "Impuestos",
+    "withholdings": "Retenciones",
+    "net": "Total neto",
+    "preview": "Vista previa: los valores definitivos los calcula el sistema al guardar."
+  },
+  "payments": {
+    "title": "Formas de pago",
+    "method": "Método de pago",
+    "amount": "Valor",
+    "due": "Vencimiento",
+    "chooseMethod": "Elige…",
+    "methodOf": "Método de pago {{n}}",
+    "amountOf": "Valor de la forma de pago {{n}}",
+    "termOf": "Plazo de la forma de pago {{n}}",
+    "dueDateOf": "Fecha de vencimiento de la forma de pago {{n}}",
+    "notApplicable": "De contado",
+    "add": "Agregar forma de pago",
+    "remove": "Quitar forma de pago {{n}}",
+    "empty": "Agrega cómo se paga: de contado o a crédito, en una o varias formas.",
+    "total": "Total formas de pago",
+    "matches": "Coincide con el total neto",
+    "missing": "Faltan {{amount}} para el total neto",
+    "over": "Sobran {{amount}} sobre el total neto",
+    "terms": {
+      "today": "Hoy",
+      "15": "A 15 días",
+      "30": "A 30 días",
+      "60": "A 60 días",
+      "custom": "Otra fecha"
+    }
+  },
+  "footer": {
+    "notes": "Observaciones",
+    "attachments": "Adjuntos",
+    "attach": "Adjuntar archivo",
+    "noAttachments": "Sin archivos adjuntos.",
+    "removeAttachment": "Quitar {{name}}"
+  },
+  "loadFailed": "No pudimos cargar los impuestos o los métodos de pago. Los totales pueden estar incompletos.",
+  "lineTaxes": {
+    "title": "Impuestos de la línea {{n}}",
+    "subtotal": "Subtotal de la línea",
+    "charge": "Impuesto cargo",
+    "withholding": "Impuesto retención",
+    "applyToProduct": "Aplicar estos impuestos al producto de ahora en adelante",
+    "applyToProductHint": "Las próximas líneas con este producto los traerán por defecto.",
+    "apply": "Aplicar",
+    "failed": "No pudimos guardar los impuestos en el producto. La línea no cambió: inténtalo de nuevo.",
+    "forbidden": "Tu rol no puede cambiar los impuestos del producto. La línea no cambió."
+  },
+  "validation": {
+    "tercero": "Elige el tercero.",
+    "issueDate": "Escribe la fecha de elaboración.",
+    "lines": "Agrega al menos una línea.",
+    "product": "Elige un producto o servicio.",
+    "productOrAccount": "Elige un producto o servicio, o una cuenta de gasto.",
+    "account": "Elige una cuenta de la lista.",
+    "quantityFormat": "Escribe un número con máximo cuatro decimales y punto decimal.",
+    "quantityPositive": "La cantidad debe ser mayor que cero.",
+    "unitPrice": "Escribe un valor en pesos, con máximo cuatro decimales y punto decimal.",
+    "discount": "El descuento es un porcentaje entre 0 y 100.",
+    "method": "Elige el método de pago.",
+    "amount": "Escribe un valor mayor que cero, con máximo dos decimales.",
+    "dueDate": "Elige la fecha de vencimiento.",
+    "dueBeforeIssue": "El vencimiento no puede ser anterior a la fecha de elaboración.",
+    "paymentsMismatch": "Total formas de pago ({{total}}) debe ser igual al total neto ({{net}})."
+  },
+  "demo": {
+    "title": "Editor de documentos (desarrollo)",
+    "subtitle": "Solo en desarrollo: prueba el formulario compartido de cotizaciones y facturas. Nada se guarda.",
+    "kind": "Documento",
+    "types": {
+      "sales_invoice": "FV · Factura de venta",
+      "purchase_invoice": "FC · Factura de compra",
+      "quotation": "C · Cotización"
+    },
+    "check": "Comprobar",
+    "readOnly": "Ver como emitido",
+    "edit": "Editar",
+    "ready": "El documento está completo: se podría emitir."
+  }
+}

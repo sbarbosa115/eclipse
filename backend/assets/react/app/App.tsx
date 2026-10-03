@@ -47,6 +47,15 @@ const ProductsPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@/pages/settings').then((m) => ({default: m.SettingsPage})),
 );
+// Development only: the shared document form on a page of its own (item 7), until the document pages mount it.
+const DocumentEditorDemo =
+  process.env.NODE_ENV === 'production'
+    ? null
+    : lazy(() =>
+        import('@/widgets/document-editor').then((m) => ({
+          default: m.DocumentEditorDemo,
+        })),
+      );
 
 export function App() {
   return (
@@ -78,6 +87,12 @@ export function App() {
                 <Route path="terceros/*" element={<TercerosPage />} />
                 <Route path="productos/*" element={<ProductsPage />} />
                 <Route path="configuracion/*" element={<SettingsPage />} />
+                {DocumentEditorDemo && (
+                  <Route
+                    path="dev/editor-documento"
+                    element={<DocumentEditorDemo />}
+                  />
+                )}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>

@@ -193,6 +193,13 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **A resolution's hasta may equal the last number used** (it is then exhausted); it cannot go below it. A resolution that has numbered invoices cannot change desde or prefix, so renewing under a new range/prefix is not possible with the single resolution of §9 Q12 (see Known gaps).
 - **Manual mode** is rejected on a resolution until the owner confirms the DIAN permission (`POST /company/manual-invoicing-confirmation`); the confirmation is permanent and audited, and going back to electronic is always allowed.
 - **The internal series are edited under the same row lock a document takes**; the next number never goes below the current one and the journal's own series (`journal_entry`) is not editable.
+- **The document form is one widget** (`widgets/document-editor`), controlled: a page keeps a `DocumentDraft` (decimal
+  strings, never floats) and saves it; `validateDraft()` names problems by field path (`lines.0.quantity`), the same
+  paths the page maps the API's violations to. Its totals are a preview computed with exact decimals (BigInt, one
+  half-up rounding per total, line shares by largest remainder) and match `DocumentTotals` case for case; the server's
+  numbers are what is saved. A line's *Valor total* is its base plus its impuesto cargo (an IVA-included price is the
+  line total, §4.3); retenciones show only in the totals. On a purchase the product's sale price is not copied to the
+  line (it is not a cost).
 
 ## Known gaps
 
@@ -205,6 +212,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Ledger: no ReteICA auxiliares per municipality yet (A.10: created when the company defines its municipalities);
   `app:ledger:demo-entries` posts sample entries for local review until the document items post real ones.
 - Company: only one invoicing resolution per company (Q12). Once invoices were numbered from it, desde and the prefix are locked, so a renewal whose range restarts or whose prefix changes cannot be entered yet (it would need a second resolution); extending hasta and the dates works. The logo is not yet printed on PDFs (the document items read `GET /company/logo` / `Companies::view()->logoId`).
+- Document form: until the document pages exist it is tried on a development-only page, `/dev/editor-documento` (not
+  routed in a production build). Its tercero search lists every active tercero, whatever its role. A line whose tax
+  was deactivated after it was chosen previews that tax as 0 (the select lists active taxes only). The form must not be
+  placed inside a `<form>`: its quick-create dialogs are forms of their own.
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.
