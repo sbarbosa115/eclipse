@@ -26,6 +26,12 @@ interface LedgerCatalog
     public function account(Uuid $companyId, Uuid $accountId): AccountView;
 
     /**
+     * The id of the company's account with this exact code (a PUC sub-account or an auxiliar), or null while the chart
+     * has none: what seeds (taxes, payment methods) use to point at the chart.
+     */
+    public function accountIdByCode(Uuid $companyId, string $code): ?Uuid;
+
+    /**
      * Postable accounts matching a code prefix or part of the name, for pickers.
      *
      * @return list<AccountView>

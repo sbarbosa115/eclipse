@@ -31,3 +31,4 @@ yarn-error.log
 /node_modules/
 /public/build/
 /e2e/.results/
+/.env.dev.local

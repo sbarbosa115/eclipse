@@ -38,6 +38,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/taxes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones. */
+        get: operations["get_app_ledger_ui_http_catalog_taxes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payment-methods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's payment methods. ?all=1 includes the inactive ones. */
+        get: operations["get_app_ledger_ui_http_catalog_paymentmethods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Postable accounts for a picker: ?q= matches a code prefix or part of the name; ?purchases=1 only those usable on
+         *     purchase lines. At most 20.
+         */
+        get: operations["get_app_ledger_ui_http_catalog_searchaccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terceros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|
+         *     empleado|otro, ?active=1, ?page, ?per_page ≤ 100.
+         */
+        get: operations["get_app_party_ui_http_tercero_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terceros/quick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Quick-create from inside a document (§4.2): {person_type, identification_type, identification_number,
+         *     check_digit?, first_names?, last_names?, business_name?, email?, roles: [cliente|proveedor|…]} → 201.
+         */
+        post: operations["post_app_party_ui_http_tercero_quickcreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terceros/{id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A tercero's contacts, for the document header's Contacto. */
+        get: operations["get_app_party_ui_http_tercero_contacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1, ?page, ?per_page ≤ 100. */
+        get: operations["get_app_catalog_ui_http_product_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/quick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Quick-create from a document line (§4.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,
+         *     withholding_tax_id?} → 201.
+         */
+        post: operations["post_app_catalog_ui_http_product_quickcreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{id}/taxes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Writes "use these taxes on this product from now on" (§4.6 line tax dialog): {charge_tax_id, withholding_tax_id}. */
+        put: operations["put_app_catalog_ui_http_product_settaxes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -52,6 +217,91 @@ export interface components {
             company_name: string;
             company_nit: string;
             company_check_digit?: string | null;
+        };
+        TaxOutput: {
+            id: string;
+            name: string;
+            /** charge (impuesto cargo) or withholding (retención) */
+            tax_class: string;
+            /** none, iva, impoconsumo, retefuente, reteiva, reteica */
+            kind: string;
+            /** percentage or per_unit */
+            calculation: string;
+            /** Decimal string: a percentage ("19.0000") or a value per unit ("500.0000"). */
+            rate: string;
+            sales_account_id?: string | null;
+            purchase_account_id?: string | null;
+            valid_from?: string | null;
+            valid_to?: string | null;
+            active: boolean;
+            standard: boolean;
+        };
+        PaymentMethodOutput: {
+            id: string;
+            name: string;
+            /** cash (contado) or credit (crédito) */
+            kind: string;
+            account_id?: string | null;
+            account_code?: string | null;
+            account_name?: string | null;
+            active: boolean;
+            standard: boolean;
+        };
+        AccountOutput: {
+            id: string;
+            code: string;
+            name: string;
+            /** debit or credit */
+            nature: string;
+            /** class, group, account, subaccount, auxiliary */
+            level: string;
+            parent_code?: string | null;
+            standard: boolean;
+            active: boolean;
+            postable: boolean;
+            usable_on_purchases: boolean;
+        };
+        TerceroSummaryOutput: {
+            id: string;
+            display_name: string;
+            /** persona or empresa */
+            person_type: string;
+            /** cc, nit, ce, pasaporte, … */
+            identification_type: string;
+            identification_number: string;
+            check_digit?: string | null;
+            email?: string | null;
+            city?: string | null;
+            roles: string[];
+            active: boolean;
+        };
+        ContactOutput: {
+            id: string;
+            name: string;
+            email?: string | null;
+            phone?: string | null;
+        };
+        ProductOutput: {
+            id: string;
+            /** producto or servicio */
+            type: string;
+            code: string;
+            name: string;
+            description?: string | null;
+            category_id?: string | null;
+            category_name?: string | null;
+            /** DIAN unit code (94 unidad…) */
+            unit_code: string;
+            /** Decimal string, four decimals: the list price. */
+            sale_price: string;
+            price_includes_tax: boolean;
+            /** The line's unit value: the sale price, net of the charge tax when it includes it (§4.3). */
+            unit_price_net_of_tax: string;
+            charge_tax_id?: string | null;
+            withholding_tax_id?: string | null;
+            revenue_account_id?: string | null;
+            expense_account_id?: string | null;
+            active: boolean;
         };
     };
     responses: never;
@@ -98,6 +348,208 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_catalog_taxes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["TaxOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_catalog_paymentmethods: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PaymentMethodOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_catalog_searchaccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AccountOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_party_ui_http_tercero_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["TerceroSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_party_ui_http_tercero_quickcreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerceroSummaryOutput"];
+                };
+            };
+        };
+    };
+    get_app_party_ui_http_tercero_contacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ContactOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_catalog_ui_http_product_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ProductOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_catalog_ui_http_product_quickcreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
+                };
+            };
+        };
+    };
+    put_app_catalog_ui_http_product_settaxes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOutput"];
                 };
             };
         };

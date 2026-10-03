@@ -630,3 +630,33 @@ second one; it may only extend it through props.
 - **Risk noted for model choice**: item 7 (document editor) is UI with real client state and money preview, hence
   opus; items 10 and 12 are sonnet because they follow 8 and 11 closely. Any item that fails the gate twice on the
   same problem is relaunched one model up.
+
+### Contract as built by item 0 (read before starting an item)
+
+- **Schema:** every table of every context exists (migration `Version20261003212734`). An item that needs another
+  column on a table it owns adds a migration of its own (`doctrine:migrations:diff` on its stack, on dev and test
+  databases); a change to a table another item owns goes back to the coordinator. Cross-context foreign keys are
+  declared with `#[References('table')]` on the property; `company_id` gets one automatically.
+- **Entities have constructors and getters only.** Behaviour (state changes, `emit()`, `void()`, `allocate()`…) is
+  each item's to add, test-first, on the aggregates it owns.
+- **Provisioning:** implement `Shared\Application\Company\CompanyProvisioner` in your context (priority: ledger
+  chart and posting rules 100, taxes and payment methods 50; numbering series exist at 200). Seeds look accounts up
+  with `LedgerCatalog::accountIdByCode()`, and must tolerate a missing account (null) until the "ledger" item merges.
+- **Ports fixed for other items:** `Ledger\Application\Posting\JournalPoster` (+ `tests/Support/FakeJournalPoster`),
+  `Ledger\Application\Query\LedgerCatalog`, `Party\Application\Query\TerceroDirectory`,
+  `Catalog\Application\Query\ProductCatalog`, `Company\Application\Numbering\Numbering` and `SalesInvoiceNumbering`
+  (placeholder `UnimplementedSalesInvoiceNumbering`, replaced by "company"; `UnimplementedJournalPoster`, replaced
+  by "ledger": swap the alias in `config/services.yaml`, the only lines of that file an item may change).
+- **Endpoints fixed for other items (501 until built):** `GET /terceros`, `POST /terceros/quick`,
+  `GET /terceros/{id}/contacts` ("terceros"); `GET /products`, `POST /products/quick`, `PUT /products/{id}/taxes`
+  ("catalog"). Their Output DTOs (`TerceroSummaryOutput`, `ContactOutput`, `ProductOutput`) may gain fields, never
+  lose or rename one. `GET /taxes`, `/payment-methods`, `/accounts/search` already work.
+- **Frontend:** each item owns its page slice (`pages/<x>`, a placeholder today), its widgets, its i18n namespace file
+  (`shared/i18n/locales/es/<namespace>.json`, listed in the index already) and its CSS (inside its slices).
+  Configuración is item 0's page; each tab is a widget owned by one item (`widgets/company-settings`,
+  `resolution-settings`, `user-admin`, `tax-settings`, `payment-method-settings`, `chart-of-accounts`,
+  `posting-rules`). The router (`app/App.tsx`) and the menu (`widgets/app-shell`) are item 0's and already route
+  every section (`/cotizaciones/*` etc.: sub-routes go inside the page).
+- **Regression cases** go in the item's section of `docs/tests/ui-regression.md`, in its ID range; smoke tests in
+  `backend/e2e/<namespace>.spec.ts`, using `newCompany()` from `e2e/support/test.ts`.
+- **Generated files** (`assets/types/openapi.json`, `api.d.ts`) are regenerated, never merged by hand.

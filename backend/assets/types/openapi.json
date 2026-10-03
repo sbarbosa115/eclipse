@@ -41,6 +41,278 @@
                     }
                 }
             }
+        },
+        "/api/v1/taxes": {
+            "get": {
+                "summary": "The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones.",
+                "operationId": "get_app_ledger_ui_http_catalog_taxes",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TaxOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment-methods": {
+            "get": {
+                "summary": "The company's payment methods. ?all=1 includes the inactive ones.",
+                "operationId": "get_app_ledger_ui_http_catalog_paymentmethods",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PaymentMethodOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/accounts/search": {
+            "get": {
+                "summary": "Postable accounts for a picker: ?q= matches a code prefix or part of the name; ?purchases=1 only those usable on\npurchase lines. At most 20.",
+                "operationId": "get_app_ledger_ui_http_catalog_searchaccounts",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AccountOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros": {
+            "get": {
+                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1, ?page, ?per_page \u2264 100.",
+                "operationId": "get_app_party_ui_http_tercero_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TerceroSummaryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/quick": {
+            "post": {
+                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email?, roles: [cliente|proveedor|\u2026]} \u2192 201.",
+                "operationId": "post_app_party_ui_http_tercero_quickcreate",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TerceroSummaryOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/terceros/{id}/contacts": {
+            "get": {
+                "summary": "A tercero's contacts, for the document header's Contacto.",
+                "operationId": "get_app_party_ui_http_tercero_contacts",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ContactOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products": {
+            "get": {
+                "summary": "Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1, ?page, ?per_page \u2264 100.",
+                "operationId": "get_app_catalog_ui_http_product_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/quick": {
+            "post": {
+                "summary": "Quick-create from a document line (\u00a74.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,\nwithholding_tax_id?} \u2192 201.",
+                "operationId": "post_app_catalog_ui_http_product_quickcreate",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}/taxes": {
+            "put": {
+                "summary": "Writes \"use these taxes on this product from now on\" (\u00a74.6 line tax dialog): {charge_tax_id, withholding_tax_id}.",
+                "operationId": "put_app_catalog_ui_http_product_settaxes",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -81,6 +353,304 @@
                     "company_check_digit": {
                         "type": "string",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "TaxOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "tax_class",
+                    "kind",
+                    "calculation",
+                    "rate",
+                    "active",
+                    "standard"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "tax_class": {
+                        "title": "charge (impuesto cargo) or withholding (retenci\u00f3n)",
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "none, iva, impoconsumo, retefuente, reteiva, reteica",
+                        "type": "string"
+                    },
+                    "calculation": {
+                        "title": "percentage or per_unit",
+                        "type": "string"
+                    },
+                    "rate": {
+                        "title": "Decimal string: a percentage (\"19.0000\") or a value per unit (\"500.0000\").",
+                        "type": "string"
+                    },
+                    "sales_account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "purchase_account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "valid_from": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "valid_to": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "standard": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "PaymentMethodOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "kind",
+                    "active",
+                    "standard"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "cash (contado) or credit (cr\u00e9dito)",
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "standard": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "AccountOutput": {
+                "required": [
+                    "id",
+                    "code",
+                    "name",
+                    "nature",
+                    "level",
+                    "standard",
+                    "active",
+                    "postable",
+                    "usable_on_purchases"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "nature": {
+                        "title": "debit or credit",
+                        "type": "string"
+                    },
+                    "level": {
+                        "title": "class, group, account, subaccount, auxiliary",
+                        "type": "string"
+                    },
+                    "parent_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "standard": {
+                        "type": "boolean"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "postable": {
+                        "type": "boolean"
+                    },
+                    "usable_on_purchases": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "TerceroSummaryOutput": {
+                "required": [
+                    "id",
+                    "display_name",
+                    "person_type",
+                    "identification_type",
+                    "identification_number",
+                    "roles",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "person_type": {
+                        "title": "persona or empresa",
+                        "type": "string"
+                    },
+                    "identification_type": {
+                        "title": "cc, nit, ce, pasaporte, \u2026",
+                        "type": "string"
+                    },
+                    "identification_number": {
+                        "type": "string"
+                    },
+                    "check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductOutput": {
+                "required": [
+                    "id",
+                    "type",
+                    "code",
+                    "name",
+                    "unit_code",
+                    "sale_price",
+                    "price_includes_tax",
+                    "unit_price_net_of_tax",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "title": "producto or servicio",
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "unit_code": {
+                        "title": "DIAN unit code (94 unidad\u2026)",
+                        "type": "string"
+                    },
+                    "sale_price": {
+                        "title": "Decimal string, four decimals: the list price.",
+                        "type": "string"
+                    },
+                    "price_includes_tax": {
+                        "type": "boolean"
+                    },
+                    "unit_price_net_of_tax": {
+                        "title": "The line's unit value: the sale price, net of the charge tax when it includes it (\u00a74.3).",
+                        "type": "string"
+                    },
+                    "charge_tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "withholding_tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "revenue_account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "expense_account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"

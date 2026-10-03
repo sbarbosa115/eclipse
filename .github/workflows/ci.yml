@@ -1,0 +1,87 @@
+# CI: the same gate as the local loop (steps/05-static-analysis.md) and the automated suites (steps/07-verify.md),
+# run in the project's own Docker stack so CI and a laptop cannot disagree.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The services and the folder mounted into them (the same settings the skill's scripts read).
+  PHP: docker compose exec -T php
+  NODE: docker compose run --rm --no-deps -T node
+  APP_DIR: backend
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start the stack
+        run: |
+          echo "UID=$(id -u)" >> .env
+          echo "GID=$(id -g)" >> .env
+          docker compose up -d --build --wait php database
+
+      - name: Install dependencies
+        run: |
+          $PHP composer install --no-interaction --no-progress --prefer-dist
+          $NODE npm ci --no-audit --no-fund
+
+      - name: Prepare the test database
+        run: |
+          # PHPStan reads the compiled test container.
+          $PHP php bin/console cache:warmup --env=test
+          $PHP php bin/console doctrine:database:create --env=test --if-not-exists
+          $PHP php bin/console doctrine:migrations:migrate --env=test -n
+
+      - name: Code style
+        run: |
+          if [ -f $APP_DIR/.php-cs-fixer.dist.php ]; then $PHP vendor/bin/php-cs-fixer fix --dry-run --diff --show-progress=none; fi
+          if ls $APP_DIR/.prettierrc* >/dev/null 2>&1; then $NODE npx prettier --check .; fi
+
+      - name: Static analysis
+        run: |
+          $PHP vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+          $PHP composer deptrac
+          $NODE npx eslint .
+          $NODE npx tsc --noEmit
+
+      - name: Security (dependencies)
+        run: |
+          $PHP composer audit --no-interaction
+          $NODE npm audit --omit=dev --audit-level=high
+
+      - name: Tests
+        run: |
+          $PHP php bin/phpunit
+          $NODE npm test --if-present
+
+      # The smoke suite (steps/08-regression-run.md §8.1) against the built app. backend/e2e/smoke.sh prepares the
+      # stack (seed, offline stand-ins) and runs Playwright in the e2e container; it needs the whole stack up.
+      - name: Smoke suite
+        run: |
+          if [ -x $APP_DIR/e2e/smoke.sh ]; then
+            $NODE npm run build
+            docker compose up -d --wait
+            $APP_DIR/e2e/smoke.sh
+          fi
+
+      - name: Smoke suite report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: ${{ env.APP_DIR }}/e2e/.results
+          if-no-files-found: ignore
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail=200

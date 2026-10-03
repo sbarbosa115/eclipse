@@ -63,6 +63,11 @@ final class DoctrineLedgerCatalog implements LedgerCatalog
         return self::accountView($account);
     }
 
+    public function accountIdByCode(Uuid $companyId, string $code): ?Uuid
+    {
+        return $this->em->getRepository(Account::class)->findOneBy(['companyId' => $companyId, 'code' => $code])?->id();
+    }
+
     public function searchAccounts(Uuid $companyId, string $query, bool $usableOnPurchasesOnly = false, int $limit = 20): array
     {
         $qb = $this->em->createQueryBuilder()

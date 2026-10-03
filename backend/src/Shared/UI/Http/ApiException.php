@@ -23,6 +23,12 @@ final class ApiException extends \RuntimeException implements HttpExceptionInter
         return new self(404, 'not_found', 'Resource not found.');
     }
 
+    /** An endpoint whose contract is fixed (item 0) and whose behaviour another item of the split builds. */
+    public static function notImplemented(string $item): self
+    {
+        return new self(501, 'not_implemented', \sprintf('Built by the "%s" item.', $item));
+    }
+
     public static function badRequest(string $errorCode, string $message): self
     {
         return new self(400, $errorCode, $message);

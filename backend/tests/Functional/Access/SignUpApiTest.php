@@ -27,6 +27,7 @@ final class SignUpApiTest extends ApiTestCase
     {
         $this->signUp();
         $this->signOut();
+        self::assertResponseStatusCodeSame(204, 'Signing out answers the UI with no content, not a redirect.');
 
         $this->getJson('/api/v1/me');
         self::assertResponseStatusCodeSame(401, 'Signed out, /me asks to sign in.');
