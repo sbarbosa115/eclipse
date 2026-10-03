@@ -1,0 +1,12 @@
+framework:
+  rate_limiter:
+    # Sign-ups: a person registers one company; a script creating companies is refused.
+    sign_up:
+      policy: sliding_window
+      limit: 5
+      interval: '1 hour'
+    # Password-reset e-mails: each is an e-mail to someone; a script mailing users is refused.
+    password_reset:
+      policy: sliding_window
+      limit: 5
+      interval: '10 minutes'

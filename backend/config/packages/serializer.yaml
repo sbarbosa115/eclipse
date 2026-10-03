@@ -1,0 +1,4 @@
+framework:
+  serializer:
+    # The API's JSON is snake_case (the PRD's wire format: customer_id, business_name…); PHP stays camelCase.
+    name_converter: serializer.name_converter.camel_case_to_snake_case

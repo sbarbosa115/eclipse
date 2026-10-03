@@ -1,0 +1,41 @@
+# Services are autowired from src/; only what a type-hint cannot say is written here.
+parameters:
+  # The public address of the site: links in e-mails.
+  app.url: '%env(APP_URL)%'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  # A write use case's handler is registered on the command bus by implementing the marker: the Application layer
+  # never names Messenger (deptrac.yaml).
+  _instanceof:
+    App\Shared\Application\Command\CommandHandler:
+      tags: [{name: messenger.message_handler, bus: command.bus}]
+    # Handled after the command that published them has committed (App\Shared\Application\Event\EventBus).
+    App\Shared\Application\Event\EventHandler:
+      tags: [{name: messenger.message_handler, bus: command.bus}]
+
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Kernel.php'
+      # Data, not services: domain models and API DTOs.
+      - '../src/*/Domain/Model/'
+      - '../src/*/UI/Http/Output/'
+      - '../src/*/UI/Http/Input/'
+      # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
+      - '../src/Shared/UI/Http/OpenApi/'
+
+# The #[ApiResponse] → OpenAPI describer: dev and test only, like NelmioApiDocBundle itself.
+when@dev:
+  services:
+    App\Shared\UI\Http\OpenApi\ApiResponseDescriber:
+      tags: [{name: nelmio_api_doc.route_describer, priority: -300}]
+
+when@test:
+  services:
+    App\Shared\UI\Http\OpenApi\ApiResponseDescriber:
+      tags: [{name: nelmio_api_doc.route_describer, priority: -300}]

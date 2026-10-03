@@ -1,0 +1,56 @@
+# One entry per bounded context: src/<Context>/UI/Http/Controller.
+access_controllers:
+  resource:
+    path: ../src/Access/UI/Http/Controller/
+    namespace: App\Access\UI\Http\Controller
+  type: attribute
+
+company_controllers:
+  resource:
+    path: ../src/Company/UI/Http/Controller/
+    namespace: App\Company\UI\Http\Controller
+  type: attribute
+
+ledger_controllers:
+  resource:
+    path: ../src/Ledger/UI/Http/Controller/
+    namespace: App\Ledger\UI\Http\Controller
+  type: attribute
+
+party_controllers:
+  resource:
+    path: ../src/Party/UI/Http/Controller/
+    namespace: App\Party\UI\Http\Controller
+  type: attribute
+
+catalog_controllers:
+  resource:
+    path: ../src/Catalog/UI/Http/Controller/
+    namespace: App\Catalog\UI\Http\Controller
+  type: attribute
+
+sales_controllers:
+  resource:
+    path: ../src/Sales/UI/Http/Controller/
+    namespace: App\Sales\UI\Http\Controller
+  type: attribute
+
+purchasing_controllers:
+  resource:
+    path: ../src/Purchasing/UI/Http/Controller/
+    namespace: App\Purchasing\UI\Http\Controller
+  type: attribute
+
+reporting_controllers:
+  resource:
+    path: ../src/Reporting/UI/Http/Controller/
+    namespace: App\Reporting\UI\Http\Controller
+  type: attribute
+
+# The React app: every path that is not an API route or a file gets the SPA shell. Its route has priority -100, so it
+# never shadows a route.
+spa_controllers:
+  resource:
+    path: ../src/Shared/UI/Http/Spa/
+    namespace: App\Shared\UI\Http\Spa
+  type: attribute

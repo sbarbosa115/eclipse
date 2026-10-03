@@ -1,0 +1,38 @@
+framework:
+  messenger:
+    # A message that failed every retry lands here instead of being lost: messenger:failed:show / :retry.
+    failure_transport: failed
+
+    default_bus: messenger.bus.default
+    buses:
+      # E-mails handed to the worker.
+      messenger.bus.default: ~
+      # Write use cases (App\Shared\Application\Command\CommandBus): commands are routed to no transport, so the
+      # handler runs inside dispatch(), in one transaction: flushed and committed when it returns, rolled back
+      # when it throws. Every CommandHandler is registered here (services.yaml, _instanceof).
+      command.bus:
+        middleware:
+          - doctrine_transaction
+
+    transports:
+      # E-mails (App\Shared\Infrastructure\Mail\QueuedMailer). A table in the app's own database
+      # (messenger_messages): a cPanel account has no Redis or RabbitMQ. Drained by "messenger:consume async": the
+      # worker service in docker compose, a cron line on the server (deploy/cpanel-update.sh).
+      async:
+        dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+        options:
+          queue_name: async
+          redeliver_timeout: 300
+        retry_strategy:
+          max_retries: 3
+          delay: 60000
+          multiplier: 5
+      failed: 'doctrine://default?queue_name=failed'
+
+when@test:
+  framework:
+    messenger:
+      transports:
+        # Delivered on the spot in tests, so every test that asserts an e-mail sees it at once.
+        async: 'sync://'
+        failed: 'in-memory://'

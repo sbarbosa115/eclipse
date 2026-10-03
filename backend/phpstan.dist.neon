@@ -1,0 +1,19 @@
+# PHPStan: docker compose exec php vendor/bin/phpstan
+# Findings are fixed, not baselined: a deliberate exception goes in ignoreErrors with its reason.
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    tmpDir: var/cache/phpstan
+    symfony:
+        # The test container: the tests run against it (its test doubles included), and it holds every app service.
+        # Warm it first: docker compose exec php php bin/console cache:warmup --env=test
+        containerXmlPath: var/cache/test/App_KernelTestDebugContainer.xml
+    doctrine:
+        objectManagerLoader: tests/phpstan-object-manager.php
+    ignoreErrors:
+        # Symfony calls it by name to validate APP_ENV (MicroKernelTrait); it is not dead code.
+        -
+            identifier: method.unused
+            path: src/Kernel.php

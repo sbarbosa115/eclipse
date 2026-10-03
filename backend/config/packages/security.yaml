@@ -1,0 +1,56 @@
+# The app is one firewall over /api/v1: e-mail and password (json_login) kept in the PHP session. Signing up, signing
+# in and the password-reset and invitation links are the only public endpoints.
+security:
+  password_hashers:
+    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+  providers:
+    users:
+      id: App\Access\UI\Http\Security\UserProvider
+
+  firewalls:
+    dev:
+      pattern: ^/(_profiler|_wdt|assets|build)/
+      security: false
+
+    api:
+      pattern: ^/api/v1
+      lazy: true
+      provider: users
+      json_login:
+        check_path: /api/v1/auth/sign-in
+        username_path: email
+        password_path: password
+        success_handler: App\Access\UI\Http\Security\SignInSucceeded
+        failure_handler: App\Access\UI\Http\Security\SignInFailed
+      # 5 wrong passwords per e-mail and IP in a minute, then a wait.
+      login_throttling:
+        max_attempts: 5
+        interval: '1 minute'
+      entry_point: App\Access\UI\Http\Security\JsonEntryPoint
+      logout:
+        path: /api/v1/auth/sign-out
+
+    main:
+      security: false
+
+  role_hierarchy:
+    ROLE_OWNER: [ROLE_USER]
+    ROLE_BILLING: [ROLE_USER]
+    ROLE_ACCOUNTANT: [ROLE_USER]
+
+  # Only the first matching rule applies. What each role may do beyond being signed in is decided by voters
+  # (Access\UI\Http\Security).
+  access_control:
+    - {path: ^/api/v1/auth/(sign-up|sign-in|password-reset|invitations), roles: PUBLIC_ACCESS}
+    - {path: ^/api/v1, roles: ROLE_USER}
+
+when@test:
+  security:
+    password_hashers:
+      # Password hashers are slow by design; the lowest cost keeps the suite fast.
+      Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+        algorithm: auto
+        cost: 4
+        time_cost: 3
+        memory_cost: 10
