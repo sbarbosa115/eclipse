@@ -1,0 +1,12 @@
+/* Configuración › Resolución. Scoped under .admin like the kit. */
+.admin .resolution-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.admin .resolution-tab > .card,
+.admin .resolution-tab > .alert + .card {
+  margin-top: 16px;
+}

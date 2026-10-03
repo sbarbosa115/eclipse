@@ -124,6 +124,16 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/products/{id}/deactivate`, `/reactivate` | `ProductOutput`; inactive products leave new documents' pickers (`?active=1`) | 404, 403 |
 | DELETE | `/products/{id}` | 204 when no document line uses it | 409 `product_in_use` (deactivate instead), 404, 403 |
 | GET, POST, PUT | `/product-categories`, `/product-categories/{id}` | flat list by name `{items: {id, name, product_count}[]}`; create `{name}` → 201; rename `{name}` | 422 on `name` (repeated), 404, 403 |
+| GET, PUT | `/company` | `CompanyOutput {id, legal_name, trade_name, identification_type, identification_number, check_digit, address, city, phone, email, logo_id, vat_regime, fiscal_responsibilities, default_charge_tax_id, default_withholding_tax_id}`. PUT replaces the profile (owner); the DV is computed for a NIT when `check_digit` is empty, and kept when given; dots in a NIT are dropped. Every role reads | 403 (PUT, not owner); 422 on `identification_number` (another company's), `identification_type`, `check_digit`, `email`, `vat_regime`, `fiscal_responsibilities[i]`, `default_charge_tax_id` / `default_withholding_tax_id` (not an active tax of that class) |
+| POST | `/company/logo` | multipart field `file`: PNG or JPEG judged by content, ≤ 2 MB (owner) → `CompanyOutput`. Replaces the previous logo (its file is deleted); audited | 403; 413 `logo_too_large`; 415 `logo_unsupported` (also a missing file) |
+| GET, DELETE | `/company/logo` | GET: the image (every role). DELETE: removes it (owner) → 204; audited | 404 `logo_not_found` |
+| GET | `/company/resolution` | `ResolutionSettingsOutput {resolution: ResolutionOutput\|null, status: ResolutionStatusOutput, manual_invoicing_confirmed_at}`; `resolution` carries `next_number` (consecutivo actual) and `has_issued_numbers`. Every role | 401 |
+| GET | `/company/resolution/status` | `{status: missing\|not_yet_valid\|active\|expired\|exhausted, numbers_left, days_left, warning, warning_numbers, warning_days}`; `warning` is true only while active and under either threshold. Every role | 401 |
+| POST, PUT | `/company/resolution` | `{resolution_number, prefix, range_from, range_to, valid_from, valid_to, mode: electronic\|manual}` → `ResolutionSettingsOutput` (201 on POST). Owner. One per company; once invoices were numbered, desde and the prefix cannot change and hasta cannot go below the last number used | 403; 409 `resolution_exists` (POST); 404 `resolution_not_found` (PUT); 422 on `range_to` (below desde / the last used), `valid_to`, `range_from`, `prefix`, `mode` (manual before the confirmation) |
+| PUT | `/company/resolution/warnings` | `{warning_numbers, warning_days}` → `ResolutionSettingsOutput`; audited. Owner | 403; 422 |
+| POST | `/company/manual-invoicing-confirmation` | the owner confirms the company holds the DIAN permission → `ResolutionSettingsOutput`; stored on the company (`manualInvoicingConfirmedBy/At`) and audited; unlocks `mode: manual` | 403 |
+| GET | `/company/numbering` | `{items: {kind, prefix, next_number}[]}`: quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal (not the journal's). Every role | 401 |
+| PUT | `/company/numbering/{kind}` | `{prefix (≤ 10 letters/digits, kept in capitals), next_number}` → the series; audited. Owner | 403; 404 `numbering_series_not_found` (journal_entry, unknown); 422 on `next_number` (below the current one), `prefix` |
 
 ## Data model decisions
 
@@ -154,6 +164,13 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   from `Company\Application\Query\Companies` (a CompanyApi dependency in `deptrac.contexts.yaml`).
 - **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): owner and billing write, the
   accountant reads. The "access" item's voters may replace it.
+- **Company settings are the owner's** (`Company\UI\Http\Controller\EditsCompany`); accountant and billing read. Every change is written to `audit_log` through `Company\Application\Port\CompanyAudit` (`company.updated|logo_changed|logo_removed|manual_invoicing_confirmed|resolution_warnings_updated`, `resolution.created|updated`, `numbering_series.updated`), with from/to.
+- **The logo is a Shared `Attachment`** (owner type `company_logo`, owner id the company) stored under `UPLOADS_DIR/<company>/<attachment id>` by `Company\Infrastructure\Storage\FilesystemCompanyLogos`; the controller checks it by content (`finfo` + `getimagesize`: PNG/JPEG only, never SVG) and size (≤ 2 MB) and hands the handler a path. Replacing or removing deletes the old file and row.
+- **The invoicing resolution's status is computed on Colombian calendar days** (`America/Bogota`, both ends included): not yet valid, active, expired (after `valid_to`) or exhausted (`next_number > range_to`), in that order. `warning` = active and fewer numbers than `resolution_warning_numbers` (default 100) or fewer days than `resolution_warning_days` (default 30) remain; days left is 0 on the last valid day.
+- **`SalesInvoiceNumbering`** (`ResolutionSalesInvoiceNumbering`) locks the resolution row (`SELECT … FOR UPDATE`), refuses with `resolution_missing`, `resolution_inactive` (the *invoice's* date is outside the dates) or `resolution_exhausted` (all `Refused`, 422), and takes the internal consecutive in the same transaction: a rollback gives both numbers back. It needs an open transaction (the command bus opens it) or Doctrine throws.
+- **A resolution's hasta may equal the last number used** (it is then exhausted); it cannot go below it. A resolution that has numbered invoices cannot change desde or prefix, so renewing under a new range/prefix is not possible with the single resolution of §9 Q12 (see Known gaps).
+- **Manual mode** is rejected on a resolution until the owner confirms the DIAN permission (`POST /company/manual-invoicing-confirmation`); the confirmation is permanent and audited, and going back to electronic is always allowed.
+- **The internal series are edited under the same row lock a document takes**; the next number never goes below the current one and the journal's own series (`journal_entry`) is not editable.
 
 ## Known gaps
 
@@ -163,6 +180,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
   the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
   Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
+- Company: only one invoicing resolution per company (Q12). Once invoices were numbered from it, desde and the prefix are locked, so a renewal whose range restarts or whose prefix changes cannot be entered yet (it would need a second resolution); extending hasta and the dates works. The logo is not yet printed on PDFs (the document items read `GET /company/logo` / `Companies::view()->logoId`).
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.
