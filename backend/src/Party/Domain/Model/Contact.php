@@ -33,6 +33,13 @@ class Contact implements CompanyOwned
         $this->id = Uuid::v7();
     }
 
+    public function revise(string $name, ?string $email, ?string $phone): void
+    {
+        $this->name = $name;
+        $this->email = $email;
+        $this->phone = $phone;
+    }
+
     public function id(): Uuid
     {
         return $this->id;

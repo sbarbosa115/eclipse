@@ -2,6 +2,7 @@
 
 namespace App\Party\Domain\Model;
 
+use App\Party\Domain\Error\TerceroErased;
 use App\Shared\Domain\Fiscal\FiscalResponsibility;
 use App\Shared\Domain\Fiscal\IdentificationType;
 use App\Shared\Domain\Fiscal\PersonType;
@@ -131,6 +132,118 @@ class Tercero implements CompanyOwned
         $this->id = Uuid::v7();
         $this->displayName = $displayName;
         $this->contacts = new ArrayCollection();
+    }
+
+
+    /** What an erased tercero is called: documents keep the name they copied, the master keeps only this. */
+    public const ERASED_NAME = 'Datos suprimidos';
+
+    public static function register(Uuid $companyId, TerceroProfile $profile, \DateTimeImmutable $now): self
+    {
+        $tercero = new self($companyId, $profile->personType, $profile->identificationType, $profile->identificationNumber, $profile->checkDigit, $profile->displayName, $now, $profile->branchCode);
+        $tercero->revise($profile);
+
+        return $tercero;
+    }
+
+    /**
+     * Replaces everything the person edits. Contacts are matched by id (documents point at them); the ones left out
+     * go away.
+     *
+     * @throws TerceroErased
+     */
+    public function revise(TerceroProfile $p): void
+    {
+        $this->assertNotErased();
+        $this->personType = $p->personType;
+        $this->identificationType = $p->identificationType;
+        $this->identificationNumber = $p->identificationNumber;
+        $this->checkDigit = $p->checkDigit;
+        $this->branchCode = $p->branchCode;
+        $this->displayName = $p->displayName;
+        $this->firstNames = $p->firstNames;
+        $this->lastNames = $p->lastNames;
+        $this->businessName = $p->businessName;
+        $this->tradeName = $p->tradeName;
+        $this->city = $p->city;
+        $this->address = $p->address;
+        $this->phones = $p->phones;
+        $this->billingContactName = $p->billingContactName;
+        $this->email = $p->email;
+        $this->mobile = $p->mobile;
+        $this->postalCode = $p->postalCode;
+        $this->vatRegime = $p->vatRegime;
+        $this->billingContactIsPayer = $p->billingContactIsPayer;
+        $this->fiscalResponsibilities = array_map(static fn (FiscalResponsibility $r) => $r->value, $p->fiscalResponsibilities);
+        $this->isClient = \in_array('cliente', $p->roles, true);
+        $this->isSupplier = \in_array('proveedor', $p->roles, true);
+        $this->isEmployee = \in_array('empleado', $p->roles, true);
+        $this->isOther = \in_array('otro', $p->roles, true);
+        $this->receivableAccountId = $p->receivableAccountId;
+        $this->payableAccountId = $p->payableAccountId;
+        $this->syncContacts($p->contacts);
+    }
+
+    public function deactivate(): void
+    {
+        $this->active = false;
+    }
+
+    /** @throws TerceroErased */
+    public function reactivate(): void
+    {
+        $this->assertNotErased();
+        $this->active = true;
+    }
+
+    /**
+     * Ley 1581 de 2012: blanks the personal fields and the contacts and deactivates, keeping the row (documents name
+     * it) with its identification, which invoices must carry.
+     */
+    public function erase(\DateTimeImmutable $now): void
+    {
+        if (null !== $this->erasedAt) {
+            return;
+        }
+        $this->displayName = self::ERASED_NAME;
+        $this->firstNames = $this->lastNames = $this->businessName = $this->tradeName = null;
+        $this->city = $this->address = $this->billingContactName = $this->email = $this->mobile = $this->postalCode = null;
+        $this->phones = [];
+        $this->billingContactIsPayer = false;
+        $this->contacts->clear();
+        $this->active = false;
+        $this->erasedAt = $now;
+    }
+
+    /** @param list<ContactDraft> $drafts */
+    private function syncContacts(array $drafts): void
+    {
+        $existing = [];
+        foreach ($this->contacts as $contact) {
+            $existing[$contact->id()->toRfc4122()] = $contact;
+        }
+        $keep = [];
+        foreach ($drafts as $draft) {
+            $contact = null === $draft->id ? null : ($existing[$draft->id->toRfc4122()] ?? null);
+            if (null === $contact) {
+                $this->contacts->add(new Contact($this, $this->companyId, $draft->name, $draft->email, $draft->phone));
+                continue;
+            }
+            $contact->revise($draft->name, $draft->email, $draft->phone);
+            $keep[$contact->id()->toRfc4122()] = true;
+        }
+        foreach ($existing as $id => $contact) {
+            if (!isset($keep[$id])) {
+                $this->contacts->removeElement($contact);
+            }
+        }
+    }
+
+    private function assertNotErased(): void
+    {
+        if (null !== $this->erasedAt) {
+            throw new TerceroErased();
+        }
     }
 
     public function id(): Uuid
