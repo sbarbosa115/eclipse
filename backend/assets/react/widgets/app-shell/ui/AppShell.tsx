@@ -110,8 +110,13 @@ export function AppShell() {
     );
   }
   if (status === 'signed-out' || !session) {
+    // The whole address, query included (?tab=taxes), so signing in comes back to exactly where the link pointed.
     return (
-      <Navigate to="/ingresar" replace state={{from: location.pathname}} />
+      <Navigate
+        to="/ingresar"
+        replace
+        state={{from: location.pathname + location.search}}
+      />
     );
   }
   return <SignedInShell session={session} />;
