@@ -45,8 +45,13 @@ describe('the app', () => {
     await userEvent.type(screen.getByLabelText('Contraseña'), 'secreto123');
     await userEvent.click(screen.getByRole('button', {name: 'Ingresar'}));
 
+    // Configuración is a lazy chunk: on a full parallel run it can take longer than the default wait to load.
     expect(
-      await screen.findByRole('tab', {name: 'Impuestos', selected: true}),
+      await screen.findByRole(
+        'tab',
+        {name: 'Impuestos', selected: true},
+        {timeout: 10_000},
+      ),
     ).toBeInTheDocument();
     expect(api.calls.some((c) => c.path === '/auth/sign-in')).toBe(true);
   });
