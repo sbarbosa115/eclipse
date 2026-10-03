@@ -273,6 +273,97 @@
                 }
             }
         },
+        "/api/v1/posting-rules": {
+            "get": {
+                "summary": "Every concept with the account it posts to, in the order of \u00a75.",
+                "operationId": "get_app_ledger_ui_http_booksettings_postingrules",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PostingRuleOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/posting-rules/{concept}": {
+            "put": {
+                "summary": "Points a concept at another account: {account_id}. The account must be postable (409 account_not_postable) and\nwithin the concept's part of the PUC (422 account_not_allowed_for_concept). 404 for an unknown concept or\nanother company's account.",
+                "operationId": "put_app_ledger_ui_http_booksettings_changepostingrule",
+                "parameters": [
+                    {
+                        "name": "concept",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostingRuleOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/lock-date": {
+            "get": {
+                "summary": "The fecha de bloqueo contable: nothing is emitted or voided on or before it.",
+                "operationId": "get_app_ledger_ui_http_booksettings_lockdate",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LockDateOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Moves the fecha de bloqueo: {locked_until: YYYY-MM-DD}, today at the latest (422 lock_date_in_future).",
+                "operationId": "put_app_ledger_ui_http_booksettings_movelockdate",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LockDateOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/taxes": {
             "get": {
                 "summary": "The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones.",
@@ -443,6 +534,187 @@
                                         }
                                     },
                                     "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/accounts": {
+            "get": {
+                "summary": "The chart in code order: ?q= (digits: a code prefix; words: part of the name), ?class=1\u20269, ?page, ?per_page \u2264 100\n(default 50).",
+                "operationId": "get_app_ledger_ui_http_chart_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AccountOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.",
+                "description": "409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.",
+                "operationId": "post_app_ledger_ui_http_chart_add",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/accounts/{id}": {
+            "put": {
+                "summary": "{name, active, usable_on_purchases}. A PUC account keeps its name (409 account_standard); an account a posting\nrule uses stays active (409 account_in_posting_rule); another company's id is 404.",
+                "operationId": "put_app_ledger_ui_http_chart_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/journal": {
+            "get": {
+                "summary": "Entries by date and number, each with all its lines: ?from, ?to, ?account (a code: that account and its\nchildren), ?tercero_id, ?page, ?per_page \u2264 100 (default 25).",
+                "operationId": "get_app_ledger_ui_http_ledgerreport_journal",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/JournalEntryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/trial-balance": {
+            "get": {
+                "summary": "Per account and its parents: saldo anterior, d\u00e9bitos, cr\u00e9ditos and nuevo saldo for ?from\u2013?to.",
+                "operationId": "get_app_ledger_ui_http_ledgerreport_trialbalance",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrialBalanceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/income-statement": {
+            "get": {
+                "summary": "Ingresos, costos and gastos of ?from\u2013?to, and the period's result.",
+                "operationId": "get_app_ledger_ui_http_ledgerreport_incomestatement",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IncomeStatementOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/balance-sheet": {
+            "get": {
+                "summary": "Activo, pasivo and patrimonio at ?date (default today).",
+                "operationId": "get_app_ledger_ui_http_ledgerreport_balancesheet",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BalanceSheetOutput"
                                 }
                             }
                         }
@@ -1531,6 +1803,47 @@
                 },
                 "type": "object"
             },
+            "PostingRuleOutput": {
+                "required": [
+                    "concept",
+                    "account_id",
+                    "account_code",
+                    "account_name",
+                    "allowed_prefixes"
+                ],
+                "properties": {
+                    "concept": {
+                        "title": "ingreso, descuento_ventas, iva_generado\u2026 (PostingConcept)",
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "account_code": {
+                        "type": "string"
+                    },
+                    "account_name": {
+                        "type": "string"
+                    },
+                    "allowed_prefixes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "LockDateOutput": {
+                "properties": {
+                    "locked_until": {
+                        "title": "YYYY-MM-DD, or null while the books are open.",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "TaxOutput": {
                 "required": [
                     "id",
@@ -1799,6 +2112,315 @@
                     },
                     "in_use": {
                         "title": "A document uses it: it can only be deactivated.",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "JournalLineOutput": {
+                "required": [
+                    "account_id",
+                    "account_code",
+                    "account_name",
+                    "debit",
+                    "credit"
+                ],
+                "properties": {
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "account_code": {
+                        "type": "string"
+                    },
+                    "account_name": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tercero_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "debit": {
+                        "title": "Decimal string; one of d\u00e9bito and cr\u00e9dito is \"0.00\".",
+                        "type": "string"
+                    },
+                    "credit": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "JournalEntryOutput": {
+                "required": [
+                    "id",
+                    "number",
+                    "date",
+                    "source_type",
+                    "source_id",
+                    "source_number",
+                    "description",
+                    "total_debit",
+                    "total_credit",
+                    "lines"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "integer"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "source_type": {
+                        "title": "sales_invoice, cash_receipt, purchase_invoice, supplier_payment\u2026",
+                        "type": "string"
+                    },
+                    "source_id": {
+                        "type": "string"
+                    },
+                    "source_number": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "reverses_id": {
+                        "title": "The entry this one reverses (a void), if any.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "total_debit": {
+                        "type": "string"
+                    },
+                    "total_credit": {
+                        "type": "string"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JournalLineOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrialBalanceRowOutput": {
+                "required": [
+                    "code",
+                    "name",
+                    "level",
+                    "nature",
+                    "opening",
+                    "debit",
+                    "credit",
+                    "closing"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "level": {
+                        "title": "class, group, account, subaccount, auxiliary",
+                        "type": "string"
+                    },
+                    "nature": {
+                        "title": "debit or credit",
+                        "type": "string"
+                    },
+                    "opening": {
+                        "title": "Saldo anterior, d\u00e9bito minus cr\u00e9dito (a cr\u00e9dito balance is negative).",
+                        "type": "string"
+                    },
+                    "debit": {
+                        "type": "string"
+                    },
+                    "credit": {
+                        "type": "string"
+                    },
+                    "closing": {
+                        "title": "Nuevo saldo, d\u00e9bito minus cr\u00e9dito.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "TrialBalanceOutput": {
+                "required": [
+                    "to",
+                    "rows",
+                    "total_debit",
+                    "total_credit",
+                    "balanced"
+                ],
+                "properties": {
+                    "from": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TrialBalanceRowOutput"
+                        }
+                    },
+                    "total_debit": {
+                        "title": "\u03a3 d\u00e9bitos of the period.",
+                        "type": "string"
+                    },
+                    "total_credit": {
+                        "type": "string"
+                    },
+                    "balanced": {
+                        "title": "\u03a3 d\u00e9bitos = \u03a3 cr\u00e9ditos.",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "StatementLineOutput": {
+                "required": [
+                    "code",
+                    "name",
+                    "level",
+                    "amount"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "level": {
+                        "title": "group or account",
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "StatementSectionOutput": {
+                "required": [
+                    "code",
+                    "name",
+                    "total",
+                    "lines"
+                ],
+                "properties": {
+                    "code": {
+                        "title": "The PUC class: 1 activo, 2 pasivo, 3 patrimonio, 4 ingresos, 5 gastos, 6 costos de ventas, 7 costos de producci\u00f3n.",
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StatementLineOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "IncomeStatementOutput": {
+                "required": [
+                    "from",
+                    "to",
+                    "sections",
+                    "revenue",
+                    "costs",
+                    "expenses",
+                    "gross_profit",
+                    "net_income"
+                ],
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "sections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StatementSectionOutput"
+                        }
+                    },
+                    "revenue": {
+                        "type": "string"
+                    },
+                    "costs": {
+                        "type": "string"
+                    },
+                    "expenses": {
+                        "type": "string"
+                    },
+                    "gross_profit": {
+                        "type": "string"
+                    },
+                    "net_income": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "BalanceSheetOutput": {
+                "required": [
+                    "date",
+                    "sections",
+                    "current_earnings",
+                    "total_assets",
+                    "total_liabilities",
+                    "total_equity",
+                    "balanced"
+                ],
+                "properties": {
+                    "date": {
+                        "type": "string"
+                    },
+                    "sections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StatementSectionOutput"
+                        }
+                    },
+                    "current_earnings": {
+                        "title": "The result of classes 4 to 7 not yet closed into patrimonio.",
+                        "type": "string"
+                    },
+                    "total_assets": {
+                        "type": "string"
+                    },
+                    "total_liabilities": {
+                        "type": "string"
+                    },
+                    "total_equity": {
+                        "title": "Class 3 plus the current earnings.",
+                        "type": "string"
+                    },
+                    "balanced": {
+                        "title": "Activo = pasivo + patrimonio.",
                         "type": "boolean"
                     }
                 },
