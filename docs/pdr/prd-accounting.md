@@ -660,3 +660,18 @@ second one; it may only extend it through props.
 - **Regression cases** go in the item's section of `docs/tests/ui-regression.md`, in its ID range; smoke tests in
   `backend/e2e/<namespace>.spec.ts`, using `newCompany()` from `e2e/support/test.ts`.
 - **Generated files** (`assets/types/openapi.json`, `api.d.ts`) are regenerated, never merged by hand.
+
+### Follow-ups found while merging (coordinator)
+
+| # | Found in | What | Who |
+|---|---|---|---|
+| F1 | catalog | The product price field asks for a decimal point ("49999.90"); the taxes form accepts a decimal comma, which is what a Colombian types. One money/number input for every form | a shared `MoneyInput` in `shared/ui`, then catalog adopts it |
+| F2 | catalog, terceros | List pages place their primary action differently (Terceros: header right; Productos: under the subtitle, left). The house rule: `PageHeader` actions | catalog |
+| F3 | taxes-payments, catalog | Two account pickers (`features/pick-account`, `entities/product/ui/AccountPicker`) | keep `features/pick-account`; catalog moves to it |
+| F4 | taxes-payments, catalog, terceros | Local audit writers and role checks (`CatalogAudit`, `CatalogAccess`, controller role checks) | move to `Shared` `AuditTrail` and the voter once "access" merges |
+| F5 | taxes-payments | Tax validity dates are stored but nothing filters by them | document items pick only taxes valid on the document's date |
+| F6 | item 0 | Sign-in dropped the query string of the address it came from | fixed (`2e15736`) |
+
+The coordinator's browser pass of taxes, terceros and products (2026-10-03) opened the lists, the tax modal and the
+tercero form with no console errors; the Chrome extension froze twice on clicks, so the product modal was checked in
+headless Playwright instead (it opens and responds).
