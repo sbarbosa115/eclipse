@@ -211,6 +211,110 @@ a narrow screen; the inactive tint and the action colours are readable in both t
 
 <!-- Owned by item 5 "terceros" (TER-01 – 19). -->
 
+**TER-01 · The first tercero is a company, with its DV computed**
+Smoke: `e2e/terceros.spec.ts`.
+Sign up a new company › **Terceros** (empty: "Aún no tienes terceros…") › **Crear tercero** › Número `800197268`
+(under it "Calculado: 4") › Razón social `Distribuciones Andina S.A.S.` › role Cliente › **Agregar teléfono** `6011234567`
+› **Agregar contacto** `Pedro Ruiz` › **Crear tercero**.
+**Expected:** back on the list with "Tercero Distribuciones Andina S.A.S. creado."; the row shows `NIT 800197268-4` and
+the badge Cliente.
+
+**TER-02 · A person has nombres and a cédula, with no DV**
+Smoke: `e2e/terceros.spec.ts`.
+**Nuevo tercero** › Tipo `Persona`, Tipo de identificación `Cédula de ciudadanía`.
+**Expected:** the DV field disappears and Nombres / Apellidos replace Razón social. Saving `Ana María` `Pérez Soto`,
+`1020304050`, Empleado lists `Ana María Pérez Soto`, `CC 1020304050`, Empleado.
+
+**TER-03 · The same identification twice is refused on its field**
+Smoke: `e2e/terceros.spec.ts`.
+Create a company with NIT `800197268`, then another with `800.197.268` (dots are ignored).
+**Expected:** "Ya existe un tercero con esta identificación." under Número de identificación; nothing was created. The
+same NIT with Código de sucursal `1` is accepted.
+
+**TER-04 · The form says what is missing before saving**
+Smoke: `e2e/terceros.spec.ts`.
+**Nuevo tercero** › **Crear tercero** with nothing filled; then a wrong e-mail and a DV of two digits.
+**Expected:** "Este campo es obligatorio." under the number and the Razón social, "Elige al menos un rol.", "Escribe un
+correo válido.", "El DV es un solo dígito."; no request is sent until they are fixed.
+
+**TER-05 · The list searches, filters and offers a way back**
+Smoke: `e2e/terceros.spec.ts`.
+With two terceros (a cliente and an otro): filter Rol `Otro`; clear it and search `800.197`; search `zzz`;
+**Ver todo**.
+**Expected:** each filter narrows the rows (and the address keeps it: reload keeps the filters); `zzz` shows "Ningún
+tercero coincide con tu búsqueda." with **Ver todo**, which clears every filter.
+
+**TER-06 · A tercero is edited and the change is kept**
+Smoke: `e2e/terceros.spec.ts`.
+**Editar** › Ciudad `Medellín`, DV `9` (replacing the computed one) › **Guardar tercero** › reload.
+**Expected:** "Cambios guardados."; after the reload the city and the DV are as saved.
+
+**TER-07 · A tercero is deactivated and activated again**
+Smoke: `e2e/terceros.spec.ts`.
+**Desactivar** › confirm › filter Estado `Activos` › Estado `Inactivos` › **Activar**.
+**Expected:** the inactive row is tinted and the legend says Inactivo; it leaves Activos and shows in Inactivos;
+**Activar** brings it back with no confirmation.
+
+**TER-08 · A tercero no document uses is deleted after confirming**
+Smoke: `e2e/terceros.spec.ts`.
+**Eliminar** › read the dialog › **Eliminar**.
+**Expected:** the dialog names the tercero; after confirming it is gone and the empty state shows.
+
+**TER-09 · Personal data is erased on request and the row stays**
+Smoke: `e2e/terceros.spec.ts`.
+Create a person with e-mail › **Editar** › **Suprimir datos personales** › confirm.
+**Expected:** a notice says the data was erased on that date; the form is read-only with no Guardar; the list shows
+`Datos suprimidos` with the same `CC` number, no e-mail, inactive.
+
+**TER-10 · The personal data is exported as JSON**
+Create a tercero with phone, contact and e-mail › **Editar** › **Exportar datos (JSON)**.
+**Expected:** a `tercero-<número>.json` file downloads with every field of the tercero (phones, contacts, fiscal
+responsibilities) and the export date. Doing it leaves an entry in the audit log (`tercero.personal_data_exported`).
+
+**TER-11 · The accounting accounts of a tercero**
+Needs the chart of the "ledger" item. **Editar** › Cuentas contables.
+**Expected:** Cuenta por cobrar lists only 1305xx accounts and Cuenta por pagar only 2205xx / 2335xx; the first option
+is "Predeterminada…". Saving a choice keeps it after reload; choosing the default again clears it.
+
+**TER-12 · A tercero a document uses cannot be deleted, only deactivated**
+Needs a document (cotización or factura) for a tercero. **Eliminar** on that tercero › confirm.
+**Expected:** the dialog stays open with "Hay documentos con este tercero: no se puede eliminar, solo desactivar."
+**Desactivar** works, and the document still shows the tercero's name.
+
+**TER-13 · Quick-create from a document**
+Needs the document form. In a new factura de venta, open "Crear tercero" in the client picker, create `Cliente Rápido
+S.A.S.` with NIT, correo, role Cliente (already checked).
+**Expected:** the modal closes and the new tercero is selected in the document; it also appears in Terceros. A NIT
+already used is refused in the modal, next to the number.
+
+**TER-14 · The accountant reads and cannot change**
+Sign in as an accountant (invited in section 1). Open Terceros and a tercero.
+**Expected:** no Nuevo tercero, Desactivar, Eliminar or Suprimir; the row action is **Ver** and the form's fields are
+disabled with no Guardar. Calling the API to write answers 403.
+
+**TER-15 · A billing user creates and edits terceros**
+Sign in as a billing user. Create, edit, deactivate and delete one.
+**Expected:** every action works.
+
+**TER-16 · Another company's terceros do not exist**
+With two companies, copy the address of a tercero of company A (`/terceros/<id>`), sign in as company B and open it.
+**Expected:** the screen says the tercero could not be loaded (404); B's list never shows A's rows or counts.
+
+**TER-17 · The search treats % and _ as plain characters**
+Create `Banco 100% Fiable`. Search `100%`, then `%`, then `_`.
+**Expected:** `100%` finds it; `%` and `_` alone find nothing (they are not wildcards).
+
+**TER-18 · Pagination of a long list**
+With more than 25 terceros (create them, or from the API), open Terceros.
+**Expected:** 25 rows per page, "Página 1 de N", **Siguiente** / **Anterior** work and keep the filters; the page is in
+the address.
+
+**TER-19 · The layout on a tablet and in both themes**
+At 1024×768 and 768×1024, Tema `Claro` and `Oscuro`: the list, the form (all sections, with phones and contacts
+added) and the confirm dialogs.
+**Expected:** nothing overflows sideways; phone and contact rows stack at narrow widths; the Guardar bar stays
+reachable; inactive rows are still distinguishable (tint plus the legend).
+
 ## 6. Products and services
 
 <!-- Owned by item 6 "catalog" (PRD-01 – 19). -->

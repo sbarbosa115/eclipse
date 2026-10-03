@@ -104,12 +104,21 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | PUT | `/payment-methods/{id}` | `{name, account_id}` → `PaymentMethodSettingOutput`; the kind never changes | 403; 404; 422 |
 | POST | `/payment-methods/{id}/deactivate`, `/activate` | → `PaymentMethodSettingOutput` | 403; 404 |
 | DELETE | `/payment-methods/{id}` | → 204; a method no document uses | 403; 404; 409 `payment_method_in_use` |
-| GET, POST | `/terceros`, `/terceros/quick`, `/terceros/{id}/contacts` | contract only: 501 until the "terceros" item | 501 |
+| GET | `/terceros` | `{items: TerceroSummaryOutput[], total, page, per_page}`; `?q=` part of the name, trade name or identification (`%`/`_` literal), `?role=cliente\|proveedor\|empleado\|otro`, `?active=1\|0`, `?page`, `?per_page ≤ 100` | 401 |
+| POST | `/terceros` | full `TerceroInput` → 201 `TerceroOutput` (phones, billing data, responsabilidades, roles, contacts, account overrides). DV computed for a NIT when `check_digit` is empty | 422 `validation_failed` (field), 422 `duplicate_identification` (violation on `identification_number`), 403 accountant |
+| POST | `/terceros/quick` | `{person_type, identification_type, identification_number, check_digit?, first_names?, last_names?, business_name?, email, roles}` → 201 `TerceroSummaryOutput` | 422 as above, 403 |
+| GET, PUT | `/terceros/{id}` | `TerceroOutput`; PUT replaces the whole record (contacts with an `id` are kept, the rest removed) | 404 other company, 422 `tercero_erased`, 403 (PUT, accountant) |
+| DELETE | `/terceros/{id}` | 204 when no document names it | 409 `tercero_in_use`, 403 |
+| POST | `/terceros/{id}/deactivate`, `/reactivate` | `TerceroOutput` | 404, 403, 422 `tercero_erased` (reactivate) |
+| GET | `/terceros/{id}/contacts` | `{items: ContactOutput[]}` | 404 |
+| GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (billing and owner only) |
+| POST | `/terceros/{id}/erase` | Ley 1581: blanks the personal fields and contacts, deactivates, sets `erased_at`; keeps the row and the identification; audited | 404, 403 |
 | GET, POST, PUT | `/products`, `/products/quick`, `/products/{id}/taxes` | contract only: 501 until the "catalog" item | 501 |
 
 ## Data model decisions
 
 - **Ids are UUID v7, stored BINARY(16).** The tenancy filter compares `company_id` to `UNHEX(...)`.
+- **Terceros:** tipo + número (+ código de sucursal) is unique per company; dots and dashes are not part of the number. Roles are four flags (any combination). A tercero a document names (any table with `tercero_id`, found in the schema) is deactivated, never deleted. Erasing (Ley 1581) keeps the row and the identification (invoices carry it) and blanks everything else; an erased tercero cannot be edited or reactivated. Writes: owner and billing; the accountant reads (§9 Q23).
 - **Documents copy what they used** (tax name, rate, accounts; tercero name) so an edit never changes an emitted
   document.
 - **Taxes and payment methods are seeded by a `CompanyProvisioner` (priority 50)** that looks accounts up with
@@ -128,6 +137,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 
 ## Known gaps
 
+- Terceros: *Autocompletar datos* from RUES/DIAN is out of scope (Q19). The per-tercero account pickers offer the accounts the chart search returns for 1305 / 2205 / 2335 (at most 20 each).
 - Stage 1 is being built in parallel items; see the split in `docs/pdr/prd-accounting.md`. Until an item merges, its
   section shows "Esta sección se está construyendo." and its endpoints answer 501.
 - Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);

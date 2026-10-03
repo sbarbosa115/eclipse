@@ -2,6 +2,8 @@
 
 namespace App\Party\UI\Http\Output;
 
+use App\Party\Domain\Model\Tercero;
+
 /**
  * A tercero in a list or a document's search box.
  */
@@ -23,6 +25,32 @@ final readonly class TerceroSummaryOutput
         public ?string $city,
         public array $roles,
         public bool $active,
+        public string $branchCode,
+        public ?string $tradeName,
     ) {
+    }
+
+    public static function of(Tercero $t): self
+    {
+        return new self(
+            $t->id()->toRfc4122(),
+            $t->displayName(),
+            $t->personType()->value,
+            $t->identificationType()->value,
+            $t->identificationNumber(),
+            $t->checkDigit(),
+            $t->email(),
+            $t->city(),
+            self::rolesOf($t),
+            $t->isActive(),
+            $t->branchCode(),
+            $t->tradeName(),
+        );
+    }
+
+    /** @return list<string> */
+    public static function rolesOf(Tercero $t): array
+    {
+        return array_keys(array_filter(['cliente' => $t->isClient(), 'proveedor' => $t->isSupplier(), 'empleado' => $t->isEmployee(), 'otro' => $t->isOther()]));
     }
 }

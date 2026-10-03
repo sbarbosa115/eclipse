@@ -1,0 +1,22 @@
+/* Terceros: what the entity's own pieces and its forms share. Scoped under .admin like the kit. */
+.admin .role-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.admin .tercero-roles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.admin .tercero-roles legend {
+  padding: 0;
+  margin-bottom: 4px;
+}
