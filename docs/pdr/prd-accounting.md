@@ -495,5 +495,138 @@ one auxiliar per ReteICA municipality under 2368 and 135518.
 
 ## Technical plan
 
-*Appended when implementation starts: stack, owning contexts, slices, verification plan and, if needed, the
-parallel-build split. Deliberately absent from this specification.*
+Started 2026-10-03. Built with the `symfony-react-app` process on the base branch `feature/accounting`, split into
+parallel items (below). The open questions of §9 are answered by their **stated defaults** (decided 2026-10-03).
+
+### Stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Hosting | **cPanel**: PHP 8.4 + MariaDB, no always-on processes, no Redis | Decided 2026-10-03; same shape as the Tacoma project |
+| Local runtime | Docker Compose: `php`, `worker`, `nginx`, `database` (MariaDB 11.4), `node`, `mailpit`, `e2e` (profile) | Nothing on the host. MariaDB locally because production is MariaDB |
+| Backend | Symfony 8.1, Doctrine ORM 3 + Migrations, Messenger (Doctrine transport, drained by a cron line in production, by the `worker` container locally) | |
+| Money | `brick/math` `BigDecimal` wrapped in `Shared\Domain\Money` (`Money`, `Rate`, `Quantity`); DECIMAL(18,2) money, DECIMAL(18,4) unit prices, quantities and rates (Q8) | Decimal arithmetic, rounded once at document level |
+| PDF | `dompdf/dompdf` behind a `Shared` port | Pure PHP: runs on cPanel |
+| Frontend | React 19 + TypeScript strict, Webpack Encore, React Router 7, FSD, i18n (`es-CO` only, every string through `t()`) | |
+| API | JSON under `/api/v1`, `snake_case`, OpenAPI by NelmioApiDoc → `openapi-typescript` | Same contract shape as Tacoma |
+| Auth | Email + password, Symfony `json_login` with a session cookie (HttpOnly, SameSite=Lax), login throttling, inactivity expiry | §4.14 |
+
+### Bounded contexts (backend)
+
+| Context | Owns |
+|---|---|
+| `Shared` | kernel: ids (UUID v7), `Money`/`Rate`/`Quantity`, `DocumentTotals` (§4.6 arithmetic, used by Sales and Purchasing), clock, `DomainError` kinds → JSON, command/event buses (transaction middleware), **tenancy** (`CompanyId`, the Doctrine `company` SQL filter, `CurrentCompany`), PDF port, queued mailer, files (attachments), audit log, SPA shell |
+| `Access` | users, password hashes, sign-up (creates the company and its owner), sign-in/out, password reset, invitations, roles (`owner`, `billing`, `accountant`), voters |
+| `Company` | company profile, régimen and responsabilidades, default taxes, the invoicing resolution and its consecutive, internal numbering series, warnings |
+| `Ledger` | chart of accounts (PUC seed), posting rules (concept → account), taxes, payment methods, journal entries, **the posting service** every document calls (`JournalPoster`), the lock date (fecha de bloqueo), libro diario, balance de prueba, estado de resultados and balance general (Q25) |
+| `Party` | terceros, roles, contacts, phones, DV algorithm, per-tercero account overrides |
+| `Catalog` | products and services, categories (flat, Q20), unidades de medida (short list, Q21) |
+| `Sales` | cotización, factura de venta, receivables, recibo de caja and its allocations |
+| `Purchasing` | factura de compra / gasto, payables, recibo de pago / egreso and its allocations |
+| `Reporting` | read side across Sales, Purchasing and Party: cartera de clientes / proveedores with ageing |
+
+Rules that cut across contexts:
+
+- **Posting is synchronous and in the same transaction.** A document's emit or void handler calls
+  `Ledger\Application\Posting\JournalPoster` (through its own `Port/Ledger` adapter) with lines expressed as
+  *concept* or *account*, amount, side and tercero. The poster resolves concepts through the posting rules, checks
+  balance to the cent and the lock date, and stores the entry. A failure rolls the emission back.
+- **Documents snapshot what they used**: tax rates, accounts, tercero name and id on each line and header, so an
+  edited tax or tercero never changes an emitted document.
+- **Numbering** takes a row lock on the series (`SELECT … FOR UPDATE`) inside the emission transaction; numbers are
+  consumed only at emission, never reused.
+- **Tenancy**: every owned table has `company_id` (first column of every index); the `company` SQL filter is
+  switched on for every authenticated request; repositories load by `(company, id)`; another company's id → 404.
+- **Audit**: created/emitted/voided by + at on every document; settings changes in `audit_log` (Shared).
+- **Queue**: e-mails go through Messenger's Doctrine transport (`async`); locally the `worker` drains it, in
+  production a cron line (`messenger:consume async --time-limit=55`).
+
+### FSD (frontend)
+
+`app` (shell with sidebar, router, auth guard) · `pages` (`sign-in`, `sign-up`, `dashboard`, `settings`,
+`terceros`, `products`, `quotations`, `sales-invoices`, `cash-receipts`, `purchase-invoices`, `supplier-payments`,
+`ledger`, `reports`) · `widgets` (one list per document type, `document-editor`, `report-table`) · `features`
+(`emit-document`, `void-document`, `quick-create-tercero`, `quick-create-product`, `line-taxes`, `allocate-payment`,
+`invite-user`, …) · `entities` (`session`, `company`, `account`, `tax`, `payment-method`, `tercero`, `product`,
+`quotation`, `sales-invoice`, `cash-receipt`, `purchase-invoice`, `supplier-payment`, `journal-entry`) · `shared`
+(ui kit, api client, money/date formatting `es-CO`, i18n).
+
+### Nearest existing project
+
+`~/Development/tacoma`: copy the shape of its Docker stack, cPanel deploy script, Deptrac configs, Shared kernel
+(error kinds, buses), ESLint/Prettier/PHPStan configs, e2e set-up and its admin UI kit. Not its age: everything
+meets today's gate.
+
+### Verification
+
+- PHPUnit unit tests per domain rule: `Money`/`DocumentTotals` rounding, DV algorithm, resolution validity,
+  posting balance, lock date, document lifecycles, allocation sums, ageing buckets.
+- Functional tests per endpoint: the role that uses it, each refusal (422/409/403), **another company → 404**.
+- The §7 acceptance criteria are each an end-to-end PHPUnit test in `tests/Functional/Acceptance/` (AC-1 … AC-10).
+- Vitest for the UI logic (totals preview, forms), Playwright smoke tests for the simple cases, a manual run for
+  PDFs, e-mails in Mailpit and the long stories.
+
+### Left out on purpose (README "Known gaps")
+
+Everything §2 lists out of scope, plus: saldos iniciales (Q6), régimen simple / no responsable de IVA behaviour
+(Q2, flag only), UVT thresholds for retenciones (Q3), cuotas (Q9), several resolutions (Q12), autocompletar from
+RUES/DIAN (Q19), Excel export (Q26), multi-company users (Q22).
+
+## Contract (item 0)
+
+Built by the coordinator on `feature/accounting`, alone, before anything runs in parallel:
+
+- **The stack and the gate**: Docker Compose, Symfony + React skeleton, PHPStan, PHP-CS-Fixer, Deptrac (layers and
+  contexts), ESLint (FSD boundaries), Prettier, `tsc`, Vitest, Playwright skeleton, CI workflow, cPanel deploy
+  script.
+- **Shared kernel** complete: money, totals, errors, buses, tenancy filter, audit, PDF and mail ports, files.
+- **Access, minimal**: sign-up (company + owner), sign-in, sign-out, `GET /me`; the tenant isolation test pattern.
+- **The app shell**: sign-in and sign-up pages, sidebar with every section (empty pages), UI kit (table, filter
+  bar, form fields, money input, modal, toast, empty states).
+- **Every entity of every context, with its mapping and one migration** (dev and test databases), repository ports
+  and Doctrine adapters, domain enums (statuses, roles, kinds).
+- **Every endpoint's Input and Output DTO**, routes returning `501 not_implemented`, regenerated `openapi.json` and
+  `api.d.ts`.
+- The `JournalPoster` port signature (`Ledger\Application\Posting`) that Sales and Purchasing call, with a fake for
+  their tests.
+- i18n namespaces (one JSON file per item under `shared/i18n/locales/es/`), CSS files per widget, regression-suite
+  sections and smoke spec files, each with a comment naming its owning item.
+- A no-op handler for each domain event (`InvoiceEmitted`, `DocumentVoided`, …).
+
+## Split
+
+| # | Slug | Item | Owns (context / slice, files) | Tests first | Browser cases | Depends on | Model |
+|---|---|---|---|---|---|---|---|
+| 0 | contract | Stack, gate, Shared kernel, minimal auth, shell, schema, ports, DTOs, types | everything listed under "Contract (item 0)" | MoneyTest, DocumentTotalsTest, SignUpApiTest, TenantIsolationTest, response shapes | ACC-01 – 05 | — | — |
+| 1 | access | Users, invitations, roles, password reset, inactivity expiry, voters | Access (beyond sign-up/in), pages/settings `users` tab, features/invite-user, i18n `access.` | InviteUserApiTest, PasswordResetApiTest, RoleMatrixTest | ACC-06 – 19 | 0 | opus |
+| 2 | company | Company profile, invoicing resolution, internal numbering, warnings, manual-mode confirmation | Company, pages/settings `company` + `resolution` tabs, i18n `company.` | ResolutionTest, NumberingSeriesTest, CompanyApiTest | CO-01 – 19 | 0 | sonnet |
+| 3 | ledger | PUC seed on company creation, posting rules, chart browse/edit, JournalPoster, lock date, libro diario, balance de prueba, estado de resultados, balance general | Ledger (Account, PostingRule, JournalEntry, Posting, reports), pages/ledger, pages/settings `posting-rules` + `chart` tabs, i18n `ledger.` | JournalPosterTest (balance, lock date, concept resolution), PucSeedTest, TrialBalanceApiTest | LED-01 – 29 | 0 | opus |
+| 4 | taxes-payments | Taxes and payment methods: seed, CRUD, validity dates, deactivate-not-delete | Ledger (Tax, PaymentMethod only), pages/settings `taxes` + `payment-methods` tabs, i18n `taxes.`, `paymentMethods.` | TaxApiTest, PaymentMethodApiTest, TaxRateValidityTest | TAX-01 – 19 | 0 | sonnet |
+| 5 | terceros | Terceros: CRUD, roles, contacts, DV, quick-create, deactivate-not-delete, export/erase (Ley 1581) | Party, pages/terceros, entities/tercero, features/quick-create-tercero, i18n `terceros.` | DvTest, TerceroApiTest | TER-01 – 19 | 0 | sonnet |
+| 6 | catalog | Products and services: CRUD, categories, units, IVA-included price, quick-create | Catalog, pages/products, entities/product, features/quick-create-product, i18n `catalog.` | IvaIncludedPriceTest, ProductApiTest | PRD-01 – 19 | 0 | sonnet |
+| 7 | document-editor | The shared document form: header, lines, per-line tax dialog, totals, formas de pago, attachments | widgets/document-editor, features/line-taxes, i18n `documentEditor.` | DocumentEditor.test.tsx (totals, payment check mark, tax dialog) | DOC-01 – 09 | 0 | opus |
+| 8 | sales-invoice | Factura de venta: drafts, emission with resolution number, posting, receivables, void, PDF, e-mail, list | Sales (SalesInvoice, Receivable), pages/sales-invoices, widgets/sales-invoice-list, features/emit-document + void-document, i18n `salesInvoice.` | SalesInvoicePostingTest (A.1), EmitSalesInvoiceApiTest, VoidSalesInvoiceApiTest, AC-3, AC-7, AC-8 | SAL-01 – 29 | 2, 3, 4, 5, 6, 7 | opus |
+| 9 | purchase-invoice | Factura de compra / gasto: lines by product or account, retenciones practicadas, posting, payables, void, list | Purchasing (PurchaseInvoice, Payable), pages/purchase-invoices, widgets/purchase-invoice-list, i18n `purchaseInvoice.` | PurchaseInvoicePostingTest (A.3), EmitPurchaseInvoiceApiTest, AC-5 | PUR-01 – 29 | 2, 3, 4, 5, 6, 7 | opus |
+| 10 | quotation | Cotización: drafts, emission, PDF, e-mail, accept/reject/expire, convert once to a draft invoice | Sales (Quotation), pages/quotations, widgets/quotation-list, features/convert-quotation, i18n `quotation.` | QuotationLifecycleTest, ConvertQuotationApiTest, AC-2 | COT-01 – 19 | 8 | sonnet |
+| 11 | cash-receipt | Recibo de caja: open receivables, allocation, posting, invoice status, void, PDF, e-mail | Sales (CashReceipt), pages/cash-receipts, features/allocate-payment, i18n `cashReceipt.` | AllocationTest, CashReceiptPostingTest (A.2), AC-4 | RC-01 – 19 | 8 | opus |
+| 12 | supplier-payment | Recibo de pago / egreso: open payables, allocation, posting, void, PDF | Purchasing (SupplierPayment), pages/supplier-payments, i18n `supplierPayment.` | SupplierPaymentPostingTest (A.4), AC-6 | PAY-01 – 19 | 9, 11 | sonnet |
+| 13 | reports | Cartera de clientes y proveedores with ageing, CSV and PDF export of every report, dashboard | Reporting, pages/reports, pages/dashboard, widgets/report-table, i18n `reports.` | AgeingBucketTest, CarteraApiTest, invariant 3 of §5 | REP-01 – 19 | 3, 11, 12 | sonnet |
+
+Item 12 depends on 11 so that it reuses the allocation feature (`features/allocate-payment`) instead of building a
+second one; it may only extend it through props.
+
+## Decisions
+
+- **Error codes** are `snake_case` and stable: `resolution_inactive`, `resolution_exhausted`, `period_locked`,
+  `entry_unbalanced`, `payments_do_not_match_total`, `document_not_draft`, `document_has_allocations`,
+  `allocation_exceeds_balance`, `allocations_do_not_match_amount`, `quotation_already_converted`,
+  `tercero_in_use`, `tax_in_use`, `duplicate_identification`, `duplicate_supplier_invoice_number`.
+- **Statuses** on the wire: `draft`, `emitted`, `partially_paid`, `paid`, `voided` (invoices); `draft`, `emitted`,
+  `accepted`, `rejected`, `expired`, `voided` (quotations); `emitted`, `voided` (receipts and payments). The UI
+  shows the Spanish words.
+- **Roles** on the wire: `owner`, `billing`, `accountant`.
+- **Money on the wire** is a decimal string (`"1190000.00"`), never a float; rates are decimal strings
+  (`"19.0000"`).
+- **Risk noted for model choice**: item 7 (document editor) is UI with real client state and money preview, hence
+  opus; items 10 and 12 are sonnet because they follow 8 and 11 closely. Any item that fails the gate twice on the
+  same problem is relaunched one model up.
