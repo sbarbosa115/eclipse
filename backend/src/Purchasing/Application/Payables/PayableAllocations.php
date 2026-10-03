@@ -21,7 +21,7 @@ final class PayableAllocations
     }
 
     /**
-     * @throws \App\Purchasing\Domain\Error\PayableNotFound           another company's payable too
+     * @throws \App\Purchasing\Domain\Error\PayableNotFound          another company's payable too
      * @throws \App\Purchasing\Domain\Error\AllocationExceedsBalance more than its balance
      * @throws \App\Purchasing\Domain\Error\PayableVoided            its invoice was voided
      */

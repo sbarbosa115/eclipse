@@ -19,6 +19,7 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         $this->startPurchasing();
     }
 
+    /** @return array<mixed> */
     private function upload(string $id, string $name, string $content): array
     {
         $path = tempnam(sys_get_temp_dir(), 'att');

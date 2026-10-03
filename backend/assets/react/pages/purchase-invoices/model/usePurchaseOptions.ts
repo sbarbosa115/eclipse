@@ -22,7 +22,10 @@ export function usePurchaseOptions(): {
     ])
       .then(([charge, withholding, methods]) => {
         if (!cancelled) {
-          setOptions({taxes: [...charge, ...withholding], methods: methods.items});
+          setOptions({
+            taxes: [...charge, ...withholding],
+            methods: methods.items,
+          });
         }
       })
       // The editor says when its options failed to load; the server checks the draft anyway.

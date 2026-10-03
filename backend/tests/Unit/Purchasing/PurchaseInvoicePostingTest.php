@@ -72,8 +72,8 @@ final class PurchaseInvoicePostingTest extends TestCase
     }
 
     /**
-     * @param list<PurchaseLineDraft>    $lines
-     * @param list<PurchasePaymentDraft> $payments
+     * @param list<PurchaseLineDraft>          $lines
+     * @param list<PurchasePaymentDraft>       $payments
      * @param array<string, ProductAccounting> $products
      */
     private function post(array $lines, array $payments, array $products = []): EntryDraft
@@ -92,7 +92,7 @@ final class PurchaseInvoicePostingTest extends TestCase
     {
         return array_map(fn (EntryLine $l) => [
             $l->side->value,
-            null !== $l->accountId ? $this->names[$l->accountId->toRfc4122()] ?? '?' : ($l->concept?->value ?? '?'),
+            null !== $l->accountId ? $this->names[$l->accountId->toRfc4122()] ?? '?' : ($l->concept->value ?? '?'),
             $l->amount->toString(),
             $l->terceroId?->equals($this->supplier) ?? false,
         ], $draft->lines);

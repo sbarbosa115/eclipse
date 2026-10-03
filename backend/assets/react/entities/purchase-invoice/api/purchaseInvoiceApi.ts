@@ -14,11 +14,7 @@ export type PurchaseInvoiceAttachment =
   Schema<'PurchaseInvoiceAttachmentOutput'>;
 
 export type PurchaseInvoiceStatus =
-  | 'draft'
-  | 'emitted'
-  | 'partially_paid'
-  | 'paid'
-  | 'voided';
+  'draft' | 'emitted' | 'partially_paid' | 'paid' | 'voided';
 
 export interface PurchaseInvoicePage {
   items: PurchaseInvoiceSummary[];
@@ -105,9 +101,7 @@ export function voidPurchaseInvoice(
   return apiPost<PurchaseInvoice>(`${BASE}/${id}/void`, {reason});
 }
 
-export function duplicatePurchaseInvoice(
-  id: string,
-): Promise<PurchaseInvoice> {
+export function duplicatePurchaseInvoice(id: string): Promise<PurchaseInvoice> {
   return apiPost<PurchaseInvoice>(`${BASE}/${id}/duplicate`, {});
 }
 

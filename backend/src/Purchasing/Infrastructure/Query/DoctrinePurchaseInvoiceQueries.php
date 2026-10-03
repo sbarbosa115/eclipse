@@ -99,7 +99,6 @@ final class DoctrinePurchaseInvoiceQueries implements PurchaseInvoiceQueries
 
         $items = [];
         foreach ($paginator as $i) {
-            \assert($i instanceof PurchaseInvoice);
             $items[] = new PurchaseInvoiceSummary($i->id()->toRfc4122(), $i->status()->value, $i->number(), $i->terceroId()->toRfc4122(), $i->terceroName(), $i->supplierInvoiceNumber(), $i->issueDate()->format('Y-m-d'), $i->dueDate()?->format('Y-m-d'), $i->netTotal()->toString(), $i->paidAmount()->toString(), self::balance($i));
         }
 

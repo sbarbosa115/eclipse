@@ -69,7 +69,7 @@ final class FilesystemSupplierFiles implements SupplierFiles
     /** @return list<Attachment> */
     private function attachments(Uuid $companyId, Uuid $invoiceId): array
     {
-        return array_values($this->em->getRepository(Attachment::class)->findBy(['companyId' => $companyId, 'ownerType' => self::OWNER_TYPE, 'ownerId' => $invoiceId], ['uploadedAt' => 'ASC', 'id' => 'ASC']));
+        return $this->em->getRepository(Attachment::class)->findBy(['companyId' => $companyId, 'ownerType' => self::OWNER_TYPE, 'ownerId' => $invoiceId], ['uploadedAt' => 'ASC', 'id' => 'ASC']);
     }
 
     private function attachment(Uuid $companyId, Uuid $invoiceId, Uuid $attachmentId): Attachment

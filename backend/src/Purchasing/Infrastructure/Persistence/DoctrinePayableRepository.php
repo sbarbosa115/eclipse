@@ -21,7 +21,7 @@ final class DoctrinePayableRepository implements PayableRepository
 
     public function ofInvoice(Uuid $companyId, Uuid $invoiceId): array
     {
-        return array_values($this->em->getRepository(Payable::class)->findBy(['companyId' => $companyId, 'invoiceId' => $invoiceId], ['dueDate' => 'ASC']));
+        return $this->em->getRepository(Payable::class)->findBy(['companyId' => $companyId, 'invoiceId' => $invoiceId], ['dueDate' => 'ASC']);
     }
 
     public function add(Payable $payable): void

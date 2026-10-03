@@ -4,11 +4,11 @@ namespace App\Tests\Functional\Purchasing;
 
 use App\Purchasing\Application\Payables\PayableAllocations;
 use App\Purchasing\Application\Query\PayableQueries;
+use App\Purchasing\Domain\Error\AllocationExceedsBalance;
+use App\Purchasing\Domain\Error\PayableNotFound;
 use App\Purchasing\Infrastructure\Persistence\DoctrinePayableRepository;
 use App\Purchasing\Infrastructure\Persistence\DoctrinePurchaseInvoiceRepository;
 use App\Purchasing\Infrastructure\Query\DoctrinePayableQueries;
-use App\Purchasing\Domain\Error\AllocationExceedsBalance;
-use App\Purchasing\Domain\Error\PayableNotFound;
 use App\Shared\Domain\Money\Money;
 use App\Tests\Support\ApiTestCase;
 use Symfony\Component\Uid\Uuid;

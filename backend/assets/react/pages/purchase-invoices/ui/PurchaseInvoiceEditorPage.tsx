@@ -130,7 +130,9 @@ export function PurchaseInvoiceEditorPage() {
   const readOnly = !writer || !isDraft;
 
   /** Saves the draft (create or update) after checking it; null when it was refused, with the reasons shown. */
-  const save = async (forEmission: boolean): Promise<PurchaseInvoice | null> => {
+  const save = async (
+    forEmission: boolean,
+  ): Promise<PurchaseInvoice | null> => {
     setFailure(null);
     setNotice(null);
     const local = validateDraft('purchase_invoice', draft, {
@@ -453,7 +455,9 @@ export function PurchaseInvoiceEditorPage() {
             setDialog(null);
             show(voided);
             setNotice(
-              t('purchaseInvoice.notices.voided', {number: voided.number ?? ''}),
+              t('purchaseInvoice.notices.voided', {
+                number: voided.number ?? '',
+              }),
             );
           }}
         />

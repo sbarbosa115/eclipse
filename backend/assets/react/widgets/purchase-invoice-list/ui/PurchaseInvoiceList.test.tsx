@@ -58,7 +58,12 @@ describe('the purchase invoice list', () => {
         200,
         page([
           row(),
-          row({id: 'i2', status: 'draft', number: null, supplier_invoice_number: null}),
+          row({
+            id: 'i2',
+            status: 'draft',
+            number: null,
+            supplier_invoice_number: null,
+          }),
         ]),
       ],
     });
@@ -93,7 +98,9 @@ describe('the purchase invoice list', () => {
       await screen.findByText(/Aún no has registrado facturas de compra/),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', {name: 'Registrar la primera factura de compra'}),
+      screen.getByRole('link', {
+        name: 'Registrar la primera factura de compra',
+      }),
     ).toHaveAttribute('href', '/facturas-compra/nueva');
   });
 
@@ -117,7 +124,9 @@ describe('the purchase invoice list', () => {
 
     await userEvent.click(screen.getByRole('button', {name: 'Ver todo'}));
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    expect(screen.getByTestId('where')).toHaveTextContent(/^\/facturas-compra$/);
+    expect(screen.getByTestId('where')).toHaveTextContent(
+      /^\/facturas-compra$/,
+    );
   });
 
   it('shows an error with a way to try again', async () => {
@@ -127,7 +136,9 @@ describe('the purchase invoice list', () => {
     expect(
       await screen.findByText('No pudimos cargar esta información.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: 'Reintentar'})).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: 'Reintentar'}),
+    ).toBeInTheDocument();
   });
 
   it('voids an invoice after asking why', async () => {
@@ -166,7 +177,9 @@ describe('the purchase invoice list', () => {
     expect(api.calls.find((c) => c.method === 'POST')?.body).toEqual({
       reason: 'Registrada dos veces',
     });
-    expect(await screen.findByText('Factura FC-1 anulada.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Factura FC-1 anulada.'),
+    ).toBeInTheDocument();
   });
 
   it('duplicates an invoice into a new draft and opens it', async () => {
@@ -197,6 +210,8 @@ describe('the purchase invoice list', () => {
     expect(
       within(table).queryByRole('button', {name: 'Duplicar'}),
     ).not.toBeInTheDocument();
-    expect(within(table).getByRole('link', {name: 'Abrir'})).toBeInTheDocument();
+    expect(
+      within(table).getByRole('link', {name: 'Abrir'}),
+    ).toBeInTheDocument();
   });
 });

@@ -27,7 +27,10 @@ export function rowStatus(status: string): string | null {
 }
 
 /** §4.12: an emitted invoice is voided only while no payment is allocated to it. */
-export function canVoid(invoice: {status: string; paid_amount: string}): boolean {
+export function canVoid(invoice: {
+  status: string;
+  paid_amount: string;
+}): boolean {
   return invoice.status === 'emitted' && Number(invoice.paid_amount) === 0;
 }
 

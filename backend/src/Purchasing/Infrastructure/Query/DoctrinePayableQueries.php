@@ -30,7 +30,7 @@ final class DoctrinePayableQueries implements PayableQueries
 
     public function ofInvoice(Uuid $companyId, Uuid $invoiceId): array
     {
-        return array_map(self::view(...), array_values($this->em->getRepository(Payable::class)->findBy(['companyId' => $companyId, 'invoiceId' => $invoiceId], ['dueDate' => 'ASC'])));
+        return array_map(self::view(...), $this->em->getRepository(Payable::class)->findBy(['companyId' => $companyId, 'invoiceId' => $invoiceId], ['dueDate' => 'ASC']));
     }
 
     public static function view(Payable $p): PayableView

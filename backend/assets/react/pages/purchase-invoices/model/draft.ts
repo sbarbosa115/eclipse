@@ -86,8 +86,7 @@ export function draftFromInvoice(
     description: line.description,
     quantity: trimZeros(line.quantity),
     unit_price: trimZeros(line.unit_price),
-    discount:
-      Number(line.discount) === 0 ? '' : trimZeros(line.discount),
+    discount: Number(line.discount) === 0 ? '' : trimZeros(line.discount),
     charge_tax_id: line.charge_tax_id ?? null,
     withholding_tax_id: line.withholding_tax_id ?? null,
   }));

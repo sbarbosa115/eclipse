@@ -176,12 +176,12 @@ export function PurchaseInvoiceList({canWrite}: {canWrite: boolean}) {
         ) : (
           <>
             <RowLegend
-              statuses={(['draft', 'partially_paid', 'paid', 'voided'] as const).map(
-                (s) => ({
-                  value: rowStatus(s) ?? s,
-                  label: t(`purchaseInvoice.status.${s}`),
-                }),
-              )}
+              statuses={(
+                ['draft', 'partially_paid', 'paid', 'voided'] as const
+              ).map((s) => ({
+                value: rowStatus(s) ?? s,
+                label: t(`purchaseInvoice.status.${s}`),
+              }))}
             />
             <DataTable
               columns={[
@@ -210,13 +210,19 @@ export function PurchaseInvoiceList({canWrite}: {canWrite: boolean}) {
                   <td>{invoice.supplier_invoice_number}</td>
                   <td>{formatDate(invoice.issue_date)}</td>
                   <td>{formatDate(invoice.due_date)}</td>
-                  <td className="purchase-list-num">{formatMoney(invoice.net_total)}</td>
-                  <td className="purchase-list-num">{formatMoney(invoice.balance)}</td>
+                  <td className="purchase-list-num">
+                    {formatMoney(invoice.net_total)}
+                  </td>
+                  <td className="purchase-list-num">
+                    {formatMoney(invoice.balance)}
+                  </td>
                   <Actions>
                     <Link
                       to={`${BASE}/${invoice.id}`}
                       className={actionClass(
-                        canWrite && invoice.status === 'draft' ? 'edit' : 'open',
+                        canWrite && invoice.status === 'draft'
+                          ? 'edit'
+                          : 'open',
                       )}
                     >
                       {t(

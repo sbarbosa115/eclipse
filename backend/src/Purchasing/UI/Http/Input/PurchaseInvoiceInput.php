@@ -47,8 +47,8 @@ final class PurchaseInvoiceInput
             new \DateTimeImmutable($this->issueDate),
             self::date($this->dueDate),
             $this->notes,
-            array_map(static fn (PurchaseLineInput $l) => new PurchaseLineContents(self::uuid($l->productId), self::uuid($l->accountId), $l->description, $l->quantity, $l->unitPrice, $l->discount ?? '0', self::uuid($l->chargeTaxId), self::uuid($l->withholdingTaxId)), array_values($this->lines)),
-            array_map(static fn (PurchasePaymentInput $p) => new PurchasePaymentContents(Uuid::fromString($p->paymentMethodId), $p->amount, self::date($p->dueDate)), array_values($this->payments)),
+            array_map(static fn (PurchaseLineInput $l) => new PurchaseLineContents(self::uuid($l->productId), self::uuid($l->accountId), $l->description, $l->quantity, $l->unitPrice, $l->discount ?? '0', self::uuid($l->chargeTaxId), self::uuid($l->withholdingTaxId)), $this->lines),
+            array_map(static fn (PurchasePaymentInput $p) => new PurchasePaymentContents(Uuid::fromString($p->paymentMethodId), $p->amount, self::date($p->dueDate)), $this->payments),
         );
     }
 

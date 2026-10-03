@@ -8,7 +8,7 @@ use App\Tests\Support\ApiTestCase;
 
 /**
  * PRD §7, acceptance criterion 5: "A purchase invoice for a service with IVA 19 % and ReteFuente 4 % on credit posts
- * Dr gasto, Dr IVA descontable, Cr 2365, Cr 2205, balanced; cartera de proveedores shows the payable at its net amount."
+ * Dr gasto, Dr IVA descontable, Cr 2365, Cr 2205, balanced; cartera de proveedores shows the payable at its net amount.".
  */
 final class Ac5PurchaseInvoiceTest extends ApiTestCase
 {

@@ -17,8 +17,26 @@ const session = (role: string) => ({
 });
 
 const TAXES = [
-  {id: 'iva19', name: 'IVA 19 %', tax_class: 'charge', kind: 'iva', calculation: 'percentage', rate: '19.0000', active: true, standard: true},
-  {id: 'rete4', name: 'ReteFuente servicios 4 %', tax_class: 'withholding', kind: 'retefuente', calculation: 'percentage', rate: '4.0000', active: true, standard: true},
+  {
+    id: 'iva19',
+    name: 'IVA 19 %',
+    tax_class: 'charge',
+    kind: 'iva',
+    calculation: 'percentage',
+    rate: '19.0000',
+    active: true,
+    standard: true,
+  },
+  {
+    id: 'rete4',
+    name: 'ReteFuente servicios 4 %',
+    tax_class: 'withholding',
+    kind: 'retefuente',
+    calculation: 'percentage',
+    rate: '4.0000',
+    active: true,
+    standard: true,
+  },
 ];
 const METHODS = [
   {id: 'cash', name: 'Efectivo', kind: 'cash', active: true, standard: true},
@@ -74,7 +92,13 @@ const invoice = (over: Record<string, unknown> = {}) => ({
   ],
   payables: [],
   attachments: [
-    {id: 'a1', file_name: 'factura-881.pdf', content_type: 'application/pdf', size: 1200, uploaded_at: ''},
+    {
+      id: 'a1',
+      file_name: 'factura-881.pdf',
+      content_type: 'application/pdf',
+      size: 1200,
+      uploaded_at: '',
+    },
   ],
   journal_entry_id: null,
   reversal_entry_id: null,
@@ -122,7 +146,10 @@ describe('the purchase invoice pages', () => {
   it('lists invoices under a header with the primary action', async () => {
     fakeApi({
       'GET /me': [200, session('owner')],
-      'GET /purchase-invoices': [200, {items: [], total: 0, page: 1, per_page: 25}],
+      'GET /purchase-invoices': [
+        200,
+        {items: [], total: 0, page: 1, per_page: 25},
+      ],
     });
     renderAt('');
 
@@ -143,15 +170,19 @@ describe('the purchase invoice pages', () => {
     renderAt('/i1');
 
     expect(
-      await screen.findByRole('heading', {name: 'Factura de compra (borrador)'}),
+      await screen.findByRole('heading', {
+        name: 'Factura de compra (borrador)',
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Número de factura del proveedor')).toHaveValue(
-      'FAC-881',
-    );
+    expect(
+      screen.getByLabelText('Número de factura del proveedor'),
+    ).toHaveValue('FAC-881');
     expect(screen.getByLabelText(/Fecha de vencimiento/)).toHaveValue(
       '01/11/2026',
     );
-    expect(screen.getByDisplayValue('Mantenimiento de equipos')).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue('Mantenimiento de equipos'),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('link', {name: 'Descargar factura-881.pdf'}),
     ).toHaveAttribute('href', '/api/v1/purchase-invoices/i1/attachments/a1');
@@ -164,15 +195,22 @@ describe('the purchase invoice pages', () => {
       'GET /purchase-invoices/i1': [200, invoice()],
       'PUT /purchase-invoices/i1': (body) => [
         200,
-        invoice({supplier_invoice_number: (body as {supplier_invoice_number: string}).supplier_invoice_number}),
+        invoice({
+          supplier_invoice_number: (body as {supplier_invoice_number: string})
+            .supplier_invoice_number,
+        }),
       ],
       ...OPTIONS,
     });
     renderAt('/i1');
-    const number = await screen.findByLabelText('Número de factura del proveedor');
+    const number = await screen.findByLabelText(
+      'Número de factura del proveedor',
+    );
     await userEvent.clear(number);
     await userEvent.type(number, 'FAC-900');
-    await userEvent.click(screen.getByRole('button', {name: 'Guardar borrador'}));
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Guardar borrador'}),
+    );
 
     expect(await screen.findByText('Borrador guardado.')).toBeInTheDocument();
     const put = api.calls.find((c) => c.method === 'PUT');
@@ -180,8 +218,22 @@ describe('the purchase invoice pages', () => {
       tercero_id: 't1',
       supplier_invoice_number: 'FAC-900',
       due_date: '2026-11-01',
-      lines: [{account_id: 'acc1', product_id: null, quantity: '1', unit_price: '1000000', charge_tax_id: 'iva19'}],
-      payments: [{payment_method_id: 'credit', amount: '1150000.00', due_date: '2026-11-01'}],
+      lines: [
+        {
+          account_id: 'acc1',
+          product_id: null,
+          quantity: '1',
+          unit_price: '1000000',
+          charge_tax_id: 'iva19',
+        },
+      ],
+      payments: [
+        {
+          payment_method_id: 'credit',
+          amount: '1150000.00',
+          due_date: '2026-11-01',
+        },
+      ],
     });
   });
 
@@ -190,7 +242,10 @@ describe('the purchase invoice pages', () => {
       'GET /me': [200, session('billing')],
       'GET /purchase-invoices/i1': [200, invoice()],
       'PUT /purchase-invoices/i1': [200, invoice()],
-      'POST /purchase-invoices/i1/emit': [200, invoice({status: 'emitted', number: 'FC-1'})],
+      'POST /purchase-invoices/i1/emit': [
+        200,
+        invoice({status: 'emitted', number: 'FC-1'}),
+      ],
       ...OPTIONS,
     });
     renderAt('/i1');
@@ -200,10 +255,17 @@ describe('the purchase invoice pages', () => {
       await screen.findByText('Factura FC-1 emitida y contabilizada.'),
     ).toBeInTheDocument();
     expect(api.calls.map((c) => `${c.method} ${c.path}`)).toEqual(
-      expect.arrayContaining(['PUT /purchase-invoices/i1', 'POST /purchase-invoices/i1/emit']),
+      expect.arrayContaining([
+        'PUT /purchase-invoices/i1',
+        'POST /purchase-invoices/i1/emit',
+      ]),
     );
-    expect(screen.getByRole('heading', {name: 'Factura de compra FC-1'})).toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Emitir'})).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {name: 'Factura de compra FC-1'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Emitir'}),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Anular'})).toBeInTheDocument();
   });
 
@@ -216,64 +278,119 @@ describe('the purchase invoice pages', () => {
         {
           error: 'duplicate_supplier_invoice_number',
           message: 'x',
-          violations: [{field: 'supplier_invoice_number', message: 'Ya registraste una factura de este proveedor con este número.'}],
+          violations: [
+            {
+              field: 'supplier_invoice_number',
+              message:
+                'Ya registraste una factura de este proveedor con este número.',
+            },
+          ],
         },
       ],
       ...OPTIONS,
     });
     renderAt('/i1');
-    await userEvent.click(await screen.findByRole('button', {name: 'Guardar borrador'}));
+    await userEvent.click(
+      await screen.findByRole('button', {name: 'Guardar borrador'}),
+    );
 
     const field = screen.getByLabelText('Número de factura del proveedor');
     await waitFor(() => expect(field).toHaveAttribute('aria-invalid', 'true'));
-    expect(screen.getAllByText('Ya registraste una factura de este proveedor con este número.').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        'Ya registraste una factura de este proveedor con este número.',
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it('checks a new draft before sending it', async () => {
     const api = fakeApi({'GET /me': [200, session('owner')], ...OPTIONS});
     renderAt('/nueva');
-    await userEvent.click(await screen.findByRole('button', {name: 'Guardar borrador'}));
+    await userEvent.click(
+      await screen.findByRole('button', {name: 'Guardar borrador'}),
+    );
 
-    expect(await screen.findByText('Revisa los campos marcados.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Revisa los campos marcados.'),
+    ).toBeInTheDocument();
     expect(api.calls.some((c) => c.method === 'POST')).toBe(false);
   });
 
   it('shows an emitted invoice read-only, and voids it after asking why', async () => {
     fakeApi({
       'GET /me': [200, session('owner')],
-      'GET /purchase-invoices/i1': [200, invoice({status: 'emitted', number: 'FC-1'})],
-      'POST /purchase-invoices/i1/void': [200, invoice({status: 'voided', number: 'FC-1', void_reason: 'Duplicada'})],
+      'GET /purchase-invoices/i1': [
+        200,
+        invoice({status: 'emitted', number: 'FC-1'}),
+      ],
+      'POST /purchase-invoices/i1/void': [
+        200,
+        invoice({status: 'voided', number: 'FC-1', void_reason: 'Duplicada'}),
+      ],
       ...OPTIONS,
     });
     renderAt('/i1');
 
-    expect(await screen.findByText(/ya fue emitida: no se puede modificar/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Número de factura del proveedor')).toBeDisabled();
-    expect(screen.getByRole('link', {name: 'PDF'})).toHaveAttribute('href', '/api/v1/purchase-invoices/i1/pdf');
+    expect(
+      await screen.findByText(/ya fue emitida: no se puede modificar/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Número de factura del proveedor'),
+    ).toBeDisabled();
+    expect(screen.getByRole('link', {name: 'PDF'})).toHaveAttribute(
+      'href',
+      '/api/v1/purchase-invoices/i1/pdf',
+    );
     await userEvent.click(screen.getByRole('button', {name: 'Anular'}));
     const dialog = screen.getByRole('dialog');
-    await userEvent.type(within(dialog).getByLabelText('Motivo de la anulación'), 'Duplicada');
-    await userEvent.click(within(dialog).getByRole('button', {name: 'Anular factura'}));
+    await userEvent.type(
+      within(dialog).getByLabelText('Motivo de la anulación'),
+      'Duplicada',
+    );
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Anular factura'}),
+    );
 
-    expect(await screen.findByText('Factura FC-1 anulada.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Factura FC-1 anulada.'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Anulada: Duplicada')).toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Anular'})).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Anular'}),
+    ).not.toBeInTheDocument();
   });
 
   it('duplicates an emitted invoice into a new draft', async () => {
     fakeApi({
       'GET /me': [200, session('owner')],
-      'GET /purchase-invoices/i1': [200, invoice({status: 'emitted', number: 'FC-1'})],
-      'POST /purchase-invoices/i1/duplicate': [201, invoice({id: 'i2', supplier_invoice_number: null})],
-      'GET /purchase-invoices/i2': [200, invoice({id: 'i2', supplier_invoice_number: null})],
+      'GET /purchase-invoices/i1': [
+        200,
+        invoice({status: 'emitted', number: 'FC-1'}),
+      ],
+      'POST /purchase-invoices/i1/duplicate': [
+        201,
+        invoice({id: 'i2', supplier_invoice_number: null}),
+      ],
+      'GET /purchase-invoices/i2': [
+        200,
+        invoice({id: 'i2', supplier_invoice_number: null}),
+      ],
       ...OPTIONS,
     });
     renderAt('/i1');
-    await userEvent.click(await screen.findByRole('button', {name: 'Duplicar'}));
+    await userEvent.click(
+      await screen.findByRole('button', {name: 'Duplicar'}),
+    );
 
-    expect(await screen.findByText(/Se creó un borrador igual/)).toBeInTheDocument();
-    expect(screen.getByTestId('where')).toHaveTextContent('/facturas-compra/i2');
-    expect(await screen.findByLabelText('Número de factura del proveedor')).toHaveValue('');
+    expect(
+      await screen.findByText(/Se creó un borrador igual/),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent(
+      '/facturas-compra/i2',
+    );
+    expect(
+      await screen.findByLabelText('Número de factura del proveedor'),
+    ).toHaveValue('');
   });
 
   it('lets the accountant read a draft but not change it', async () => {
@@ -284,8 +401,14 @@ describe('the purchase invoice pages', () => {
     });
     renderAt('/i1');
 
-    expect(await screen.findByLabelText('Número de factura del proveedor')).toBeDisabled();
-    expect(screen.queryByRole('button', {name: 'Emitir'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Guardar borrador'})).not.toBeInTheDocument();
+    expect(
+      await screen.findByLabelText('Número de factura del proveedor'),
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole('button', {name: 'Emitir'}),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Guardar borrador'}),
+    ).not.toBeInTheDocument();
   });
 });

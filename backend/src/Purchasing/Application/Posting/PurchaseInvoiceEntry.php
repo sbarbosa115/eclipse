@@ -116,7 +116,7 @@ final class PurchaseInvoiceEntry
 
     /**
      * @param array<string, array{EntryLine, Money}> $groups
-     * @param array{?PostingConcept, ?Uuid}           $target
+     * @param array{?PostingConcept, ?Uuid}          $target
      */
     private static function add(array &$groups, array $target, Side $side, Money $amount, ?Uuid $terceroId): void
     {

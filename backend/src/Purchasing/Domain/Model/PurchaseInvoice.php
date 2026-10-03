@@ -213,11 +213,11 @@ class PurchaseInvoice implements CompanyOwned
         $this->notes = $notes;
 
         $this->lines->clear();
-        foreach (array_values($lines) as $position => $l) {
+        foreach ($lines as $position => $l) {
             $this->lines->add(new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, $l->withholdingTax));
         }
         $this->payments->clear();
-        foreach (array_values($payments) as $position => $p) {
+        foreach ($payments as $position => $p) {
             $this->payments->add(new PurchaseInvoicePayment($this, $this->companyId, $position, $p->paymentMethodId, $p->methodName, $p->kind, $p->accountId, $p->amount, $p->dueDate));
         }
         $this->recomputeTotals($this->lines);
@@ -257,14 +257,15 @@ class PurchaseInvoice implements CompanyOwned
         $this->assertEmittable($today);
         $this->prefix = $prefix;
         $this->sequence = $sequence;
-        $this->number = '' === $prefix ? (string) $sequence : $prefix.'-'.$sequence;
+        $number = '' === $prefix ? (string) $sequence : $prefix.'-'.$sequence;
+        $this->number = $number;
         $this->status = InvoiceStatus::Emitted;
         $this->recordEmission($by, $at);
 
         $payables = [];
         foreach ($this->payments() as $payment) {
             if (PaymentKind::Credit === $payment->kind()) {
-                $payables[] = new Payable($this->companyId, $this->id, $this->number, $this->terceroId, $this->issueDate, $payment->dueDate() ?? $this->dueDate ?? $this->issueDate, $payment->amount());
+                $payables[] = new Payable($this->companyId, $this->id, $number, $this->terceroId, $this->issueDate, $payment->dueDate() ?? $this->dueDate ?? $this->issueDate, $payment->amount());
             }
         }
 

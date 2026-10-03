@@ -101,10 +101,10 @@ describe('the purchase invoice draft', () => {
       unit_price: '',
       charge_tax_id: null,
     });
-    const {request, lineIndexes} = toRequest(
-      draft({lines: [blank, line()]}),
-      {supplierInvoiceNumber: ' FAC-881 ', dueDate: ''},
-    );
+    const {request, lineIndexes} = toRequest(draft({lines: [blank, line()]}), {
+      supplierInvoiceNumber: ' FAC-881 ',
+      dueDate: '',
+    });
 
     expect(request.tercero_id).toBe('t1');
     expect(request.supplier_invoice_number).toBe('FAC-881');
@@ -124,15 +124,20 @@ describe('the purchase invoice draft', () => {
     ]);
     expect(lineIndexes).toEqual([1]);
     expect(request.payments).toEqual([
-      {payment_method_id: 'credit', amount: '1190000.00', due_date: '2026-11-01'},
+      {
+        payment_method_id: 'credit',
+        amount: '1190000.00',
+        due_date: '2026-11-01',
+      },
     ]);
   });
 
   it('opens a saved invoice as the editor shows it', () => {
-    const {draft: opened, supplierInvoiceNumber, dueDate} = draftFromInvoice(
-      invoice(),
-      'FC · Factura de compra',
-    );
+    const {
+      draft: opened,
+      supplierInvoiceNumber,
+      dueDate,
+    } = draftFromInvoice(invoice(), 'FC · Factura de compra');
 
     expect(supplierInvoiceNumber).toBe('FAC-1');
     expect(dueDate).toBe('2026-11-01');
@@ -173,5 +178,4 @@ describe('the purchase invoice draft', () => {
       'supplier_invoice_number': 'Repetido.',
     });
   });
-
 });
