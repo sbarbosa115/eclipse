@@ -13,6 +13,7 @@ use App\Catalog\Domain\Model\ProductType;
 use App\Catalog\Domain\Pricing\PriceNetOfTax;
 use App\Ledger\Application\Query\LedgerCatalog;
 use App\Ledger\Application\Query\TaxView;
+use App\Shared\Domain\Error\NotFound;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -76,13 +77,43 @@ final class DoctrineProductCatalog implements ProductCatalog
             $categories[$category->id()->toRfc4122()] = $category->name();
         }
 
-        return array_map(fn (Product $p) => $this->view($p, $taxes[$p->chargeTaxId()?->toRfc4122()] ?? null, $categories), $products);
+        $accounts = $this->accountLabels($companyId, $products);
+
+        return array_map(fn (Product $p) => $this->view($p, $taxes[$p->chargeTaxId()?->toRfc4122()] ?? null, $categories, $accounts), $products);
+    }
+
+    /**
+     * "code · name" of every account the products point at: one lookup per distinct account, not per row.
+     *
+     * @param list<Product> $products
+     *
+     * @return array<string, string>
+     */
+    private function accountLabels(Uuid $companyId, array $products): array
+    {
+        $labels = [];
+        foreach ($products as $p) {
+            foreach ([$p->revenueAccountId(), $p->expenseAccountId()] as $id) {
+                if (null === $id || isset($labels[$id->toRfc4122()])) {
+                    continue;
+                }
+                try {
+                    $account = $this->ledger->account($companyId, $id);
+                    $labels[$id->toRfc4122()] = $account->code.' · '.$account->name;
+                } catch (NotFound) {
+                    // An account that is gone shows no label; its id stays.
+                }
+            }
+        }
+
+        return $labels;
     }
 
     /**
      * @param array<string, string> $categories names by id
+     * @param array<string, string> $accounts   labels by id
      */
-    private function view(Product $p, ?TaxView $charge, array $categories): ProductView
+    private function view(Product $p, ?TaxView $charge, array $categories, array $accounts): ProductView
     {
         $categoryId = $p->categoryId()?->toRfc4122();
 
@@ -110,6 +141,8 @@ final class DoctrineProductCatalog implements ProductCatalog
             $categoryId,
             null === $categoryId ? null : ($categories[$categoryId] ?? null),
             $net,
+            null === $p->revenueAccountId() ? null : ($accounts[$p->revenueAccountId()->toRfc4122()] ?? null),
+            null === $p->expenseAccountId() ? null : ($accounts[$p->expenseAccountId()->toRfc4122()] ?? null),
         );
     }
 }

@@ -27,6 +27,9 @@ final readonly class ProductView
         public ?string $categoryName = null,
         /** The line's unit value (see unitValue()); null only in a view built by hand. */
         public ?string $unitPriceNetOfTax = null,
+        /** "413595 · Venta de otros": the account's code and name, for forms and lists. */
+        public ?string $revenueAccountLabel = null,
+        public ?string $expenseAccountLabel = null,
     ) {
     }
 

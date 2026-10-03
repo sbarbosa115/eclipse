@@ -427,6 +427,13 @@ export interface components {
             revenue_account_id?: string | null;
             expense_account_id?: string | null;
             active: boolean;
+            /**
+             * The revenue account as "413595 · Venta de otros".
+             * @default null
+             */
+            revenue_account_label: string | null;
+            /** @default null */
+            expense_account_label: string | null;
         };
         UnitOutput: {
             /** DIAN code: 94, KGM, MTR, HUR, ZZ */

@@ -915,6 +915,17 @@
                     },
                     "active": {
                         "type": "boolean"
+                    },
+                    "revenue_account_label": {
+                        "title": "The revenue account as \"413595 \u00b7 Venta de otros\".",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "expense_account_label": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                     }
                 },
                 "type": "object"

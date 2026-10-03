@@ -15,6 +15,8 @@ use App\Shared\Domain\Totals\TaxCalculation;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsUp;
 use Doctrine\DBAL\Connection;
+use Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -230,6 +232,7 @@ final class ProductApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertSame($this->postable, $ok['revenue_account_id']);
         self::assertSame($this->postable, $ok['expense_account_id']);
+        self::assertSame('413595 · Venta de otros', $ok['revenue_account_label'], 'Forms show the account by code and name.');
 
         $body = $this->createProduct('R2', 'R2', ['revenue_account_id' => $this->groupAccount, 'expense_account_id' => Uuid::v7()->toRfc4122()]);
         self::assertResponseStatusCodeSame(422);
@@ -283,6 +286,35 @@ final class ProductApiTest extends ApiTestCase
         self::assertSame(5, $page['total'], 'The total counts every match, not the page.');
         self::assertSame(2, $page['per_page']);
         self::assertCount(5, $this->getJson('/api/v1/products?per_page=1000')['items'], 'per_page is capped at 100, not refused.');
+    }
+
+    public function testTheListDoesNotQueryMoreForMoreRows(): void
+    {
+        $this->startCompany();
+        $category = $this->sendJson('POST', '/api/v1/product-categories', ['name' => 'Aseo']);
+        $extra = ['category_id' => $category['id'], 'charge_tax_id' => $this->iva19, 'revenue_account_id' => $this->postable];
+        $this->createProduct('A-0', 'Uno', $extra);
+        $few = $this->queriesOfTheList();
+        self::assertGreaterThan(0, $few, 'The profiler counts the list\'s queries.');
+
+        for ($i = 1; $i <= 8; ++$i) {
+            $this->createProduct("A-$i", "Producto $i", $extra);
+        }
+
+        self::assertSame($few, $this->queriesOfTheList(), 'Eight more rows cost no more queries: no N+1.');
+    }
+
+    private function queriesOfTheList(): int
+    {
+        $this->client->enableProfiler();
+        $this->getJson('/api/v1/products');
+        $profile = $this->client->getProfile();
+        self::assertInstanceOf(Profile::class, $profile, 'The profiler is on in the test environment.');
+
+        $collector = $profile->getCollector('db');
+        self::assertInstanceOf(DoctrineDataCollector::class, $collector);
+
+        return $collector->getQueryCount();
     }
 
     public function testAnotherCompanysProductsAreNeverSeen(): void
