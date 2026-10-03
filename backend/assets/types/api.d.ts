@@ -1093,6 +1093,167 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchase-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The list, newest first: ?q= (part of the internal number, the supplier's number or the supplier's name, matched
+         *     literally), ?status=draft|emitted|partially_paid|paid|voided, ?from and ?to (YYYY-MM-DD, the invoice date, both
+         *     included), ?page, ?per_page ≤ 100.
+         */
+        get: operations["get_app_purchasing_ui_http_purchaseinvoice_list"];
+        put?: never;
+        /**
+         * Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,
+         *     description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,
+         *     amount, due_date? (crédito; the invoice's when missing)}]} → 201. 422 `validation_failed` by field
+         *     (`lines[0].account_id`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseinvoice_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One invoice with its lines, formas de pago, payables and the supplier's files. */
+        get: operations["get_app_purchasing_ui_http_purchaseinvoice_show"];
+        /** Rewrites a draft with the same body as create. 409 `document_not_draft` once emitted. */
+        put: operations["put_app_purchasing_ui_http_purchaseinvoice_update"];
+        post?: never;
+        /** Deletes a draft and its files → 204. 409 `document_not_draft` once emitted (void it instead). */
+        delete: operations["delete_app_purchasing_ui_http_purchaseinvoice_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/emit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emits the draft: the internal number (FC), one payable per crédito line and the entry of Appendix A.3, together.
+         * @description 409 `document_not_draft`, `period_locked`; 422 `payments_do_not_match_total`, `document_has_no_lines`,
+         *     `issue_date_in_future`, `supplier_inactive`, `validation_failed` on `supplier_invoice_number`.
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseinvoice_emit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voids an emitted invoice: {reason}. Posts the reversing entry dated today, voids its payables, keeps the number.
+         * @description 409 `document_has_allocations` (payments allocated: void them first), `document_not_emitted`, `document_voided`,
+         *     `period_locked`.
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseinvoice_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A new draft like this invoice, dated today, without the supplier's number → 201. */
+        post: operations["post_app_purchasing_ui_http_purchaseinvoice_duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's record of the purchase as a PDF (ANULADA when voided). */
+        get: operations["get_app_purchasing_ui_http_purchaseinvoice_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Attaches the supplier's invoice to a draft: multipart field `file`, a PDF or an XML judged by its content, 10 MB
+         *     at most → 201. 413 `attachment_too_large`; 415 `attachment_unsupported` (also a missing file); 409
+         *     `document_not_draft`.
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseinvoice_attach"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/attachments/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Downloads one of the supplier's files (every role). */
+        get: operations["get_app_purchasing_ui_http_purchaseinvoice_download"];
+        put?: never;
+        post?: never;
+        /** Removes a file from a draft → 204. 409 `document_not_draft` once emitted. */
+        delete: operations["delete_app_purchasing_ui_http_purchaseinvoice_removeattachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1477,6 +1638,102 @@ export interface components {
             /** DIAN code: 94, KGM, MTR, HUR, ZZ */
             code: string;
             name: string;
+        };
+        PurchaseInvoiceSummaryOutput: {
+            id: string;
+            /** draft, emitted, partially_paid, paid, voided */
+            status: string;
+            /** The internal number (FC-12); null on a draft. */
+            number?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            supplier_invoice_number?: string | null;
+            issue_date: string;
+            due_date?: string | null;
+            net_total: string;
+            paid_amount: string;
+            /** What is still owed: total neto − paid; 0 on a voided invoice. */
+            balance: string;
+        };
+        PurchaseInvoiceLineOutput: {
+            id: string;
+            position: number;
+            product_id?: string | null;
+            product_label?: string | null;
+            account_id?: string | null;
+            account_label?: string | null;
+            description: string;
+            quantity: string;
+            unit_price: string;
+            discount: string;
+            charge_tax_id?: string | null;
+            charge_tax_name: string;
+            charge_tax_kind: string;
+            charge_tax_rate: string;
+            withholding_tax_id?: string | null;
+            withholding_tax_name: string;
+            withholding_tax_kind: string;
+            withholding_tax_rate: string;
+            gross_amount: string;
+            discount_amount: string;
+            subtotal_amount: string;
+            tax_amount: string;
+            withholding_amount: string;
+            total_amount: string;
+        };
+        PurchaseInvoicePaymentOutput: {
+            id: string;
+            position: number;
+            payment_method_id: string;
+            method_name: string;
+            /** cash or credit */
+            kind: string;
+            amount: string;
+            due_date?: string | null;
+        };
+        PurchasePayableOutput: {
+            id: string;
+            amount: string;
+            balance: string;
+            due_date: string;
+            voided: boolean;
+        };
+        PurchaseInvoiceAttachmentOutput: {
+            id: string;
+            file_name: string;
+            content_type: string;
+            size: number;
+            uploaded_at: string;
+        };
+        PurchaseInvoiceOutput: {
+            id: string;
+            /** draft, emitted, partially_paid, paid, voided */
+            status: string;
+            number?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            supplier_invoice_number?: string | null;
+            issue_date: string;
+            due_date?: string | null;
+            notes?: string | null;
+            gross_total: string;
+            discount_total: string;
+            subtotal: string;
+            tax_total: string;
+            withholding_total: string;
+            net_total: string;
+            paid_amount: string;
+            balance: string;
+            lines: components["schemas"]["PurchaseInvoiceLineOutput"][];
+            payments: components["schemas"]["PurchaseInvoicePaymentOutput"][];
+            payables: components["schemas"]["PurchasePayableOutput"][];
+            attachments: components["schemas"]["PurchaseInvoiceAttachmentOutput"][];
+            journal_entry_id?: string | null;
+            reversal_entry_id?: string | null;
+            created_at: string;
+            emitted_at?: string | null;
+            voided_at?: string | null;
+            void_reason?: string | null;
         };
     };
     responses: never;
@@ -3082,6 +3339,261 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProductOutput"];
                 };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseinvoice_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PurchaseInvoiceSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseinvoice_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseinvoice_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
+    put_app_purchasing_ui_http_purchaseinvoice_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
+    delete_app_purchasing_ui_http_purchaseinvoice_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseinvoice_emit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseinvoice_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseinvoice_duplicate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseinvoice_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseinvoice_attach: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceAttachmentOutput"];
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseinvoice_download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_app_purchasing_ui_http_purchaseinvoice_removeattachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -1,0 +1,10 @@
+/* The purchase invoice list (item 9): the date filters are as wide as a date. */
+.admin .purchase-list-date input {
+  width: 9.5rem;
+}
+
+.admin .purchase-list-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

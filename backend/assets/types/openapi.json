@@ -1792,6 +1792,327 @@
                     }
                 }
             }
+        },
+        "/api/v1/purchase-invoices": {
+            "get": {
+                "summary": "The list, newest first: ?q= (part of the internal number, the supplier's number or the supplier's name, matched\nliterally), ?status=draft|emitted|partially_paid|paid|voided, ?from and ?to (YYYY-MM-DD, the invoice date, both\nincluded), ?page, ?per_page \u2264 100.",
+                "operationId": "get_app_purchasing_ui_http_purchaseinvoice_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PurchaseInvoiceSummaryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,\ndescription, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,\namount, due_date? (cr\u00e9dito; the invoice's when missing)}]} \u2192 201. 422 `validation_failed` by field\n(`lines[0].account_id`\u2026), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).",
+                "operationId": "post_app_purchasing_ui_http_purchaseinvoice_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}": {
+            "get": {
+                "summary": "One invoice with its lines, formas de pago, payables and the supplier's files.",
+                "operationId": "get_app_purchasing_ui_http_purchaseinvoice_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Rewrites a draft with the same body as create. 409 `document_not_draft` once emitted.",
+                "operationId": "put_app_purchasing_ui_http_purchaseinvoice_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes a draft and its files \u2192 204. 409 `document_not_draft` once emitted (void it instead).",
+                "operationId": "delete_app_purchasing_ui_http_purchaseinvoice_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}/emit": {
+            "post": {
+                "summary": "Emits the draft: the internal number (FC), one payable per cr\u00e9dito line and the entry of Appendix A.3, together.",
+                "description": "409 `document_not_draft`, `period_locked`; 422 `payments_do_not_match_total`, `document_has_no_lines`,\n`issue_date_in_future`, `supplier_inactive`, `validation_failed` on `supplier_invoice_number`.",
+                "operationId": "post_app_purchasing_ui_http_purchaseinvoice_emit",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}/void": {
+            "post": {
+                "summary": "Voids an emitted invoice: {reason}. Posts the reversing entry dated today, voids its payables, keeps the number.",
+                "description": "409 `document_has_allocations` (payments allocated: void them first), `document_not_emitted`, `document_voided`,\n`period_locked`.",
+                "operationId": "post_app_purchasing_ui_http_purchaseinvoice_void",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}/duplicate": {
+            "post": {
+                "summary": "A new draft like this invoice, dated today, without the supplier's number \u2192 201.",
+                "operationId": "post_app_purchasing_ui_http_purchaseinvoice_duplicate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}/pdf": {
+            "get": {
+                "summary": "The company's record of the purchase as a PDF (ANULADA when voided).",
+                "operationId": "get_app_purchasing_ui_http_purchaseinvoice_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}/attachments": {
+            "post": {
+                "summary": "Attaches the supplier's invoice to a draft: multipart field `file`, a PDF or an XML judged by its content, 10 MB\nat most \u2192 201. 413 `attachment_too_large`; 415 `attachment_unsupported` (also a missing file); 409\n`document_not_draft`.",
+                "operationId": "post_app_purchasing_ui_http_purchaseinvoice_attach",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceAttachmentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-invoices/{id}/attachments/{attachmentId}": {
+            "get": {
+                "summary": "Downloads one of the supplier's files (every role).",
+                "operationId": "get_app_purchasing_ui_http_purchaseinvoice_download",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "attachmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Removes a file from a draft \u2192 204. 409 `document_not_draft` once emitted.",
+                "operationId": "delete_app_purchasing_ui_http_purchaseinvoice_removeattachment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "attachmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3127,6 +3448,381 @@
                     },
                     "name": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseInvoiceSummaryOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "tercero_id",
+                    "tercero_name",
+                    "issue_date",
+                    "net_total",
+                    "paid_amount",
+                    "balance"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "draft, emitted, partially_paid, paid, voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "title": "The internal number (FC-12); null on a draft.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "supplier_invoice_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "net_total": {
+                        "type": "string"
+                    },
+                    "paid_amount": {
+                        "type": "string"
+                    },
+                    "balance": {
+                        "title": "What is still owed: total neto \u2212 paid; 0 on a voided invoice.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseInvoiceLineOutput": {
+                "required": [
+                    "id",
+                    "position",
+                    "description",
+                    "quantity",
+                    "unit_price",
+                    "discount",
+                    "charge_tax_name",
+                    "charge_tax_kind",
+                    "charge_tax_rate",
+                    "withholding_tax_name",
+                    "withholding_tax_kind",
+                    "withholding_tax_rate",
+                    "gross_amount",
+                    "discount_amount",
+                    "subtotal_amount",
+                    "tax_amount",
+                    "withholding_amount",
+                    "total_amount"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "product_label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "string"
+                    },
+                    "unit_price": {
+                        "type": "string"
+                    },
+                    "discount": {
+                        "type": "string"
+                    },
+                    "charge_tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "charge_tax_name": {
+                        "type": "string"
+                    },
+                    "charge_tax_kind": {
+                        "type": "string"
+                    },
+                    "charge_tax_rate": {
+                        "type": "string"
+                    },
+                    "withholding_tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "withholding_tax_name": {
+                        "type": "string"
+                    },
+                    "withholding_tax_kind": {
+                        "type": "string"
+                    },
+                    "withholding_tax_rate": {
+                        "type": "string"
+                    },
+                    "gross_amount": {
+                        "type": "string"
+                    },
+                    "discount_amount": {
+                        "type": "string"
+                    },
+                    "subtotal_amount": {
+                        "type": "string"
+                    },
+                    "tax_amount": {
+                        "type": "string"
+                    },
+                    "withholding_amount": {
+                        "type": "string"
+                    },
+                    "total_amount": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseInvoicePaymentOutput": {
+                "required": [
+                    "id",
+                    "position",
+                    "payment_method_id",
+                    "method_name",
+                    "kind",
+                    "amount"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "payment_method_id": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "cash or credit",
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PurchasePayableOutput": {
+                "required": [
+                    "id",
+                    "amount",
+                    "balance",
+                    "due_date",
+                    "voided"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "balance": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string"
+                    },
+                    "voided": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseInvoiceAttachmentOutput": {
+                "required": [
+                    "id",
+                    "file_name",
+                    "content_type",
+                    "size",
+                    "uploaded_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "file_name": {
+                        "type": "string"
+                    },
+                    "content_type": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "uploaded_at": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseInvoiceOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "tercero_id",
+                    "tercero_name",
+                    "issue_date",
+                    "gross_total",
+                    "discount_total",
+                    "subtotal",
+                    "tax_total",
+                    "withholding_total",
+                    "net_total",
+                    "paid_amount",
+                    "balance",
+                    "lines",
+                    "payments",
+                    "payables",
+                    "attachments",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "draft, emitted, partially_paid, paid, voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "supplier_invoice_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "gross_total": {
+                        "type": "string"
+                    },
+                    "discount_total": {
+                        "type": "string"
+                    },
+                    "subtotal": {
+                        "type": "string"
+                    },
+                    "tax_total": {
+                        "type": "string"
+                    },
+                    "withholding_total": {
+                        "type": "string"
+                    },
+                    "net_total": {
+                        "type": "string"
+                    },
+                    "paid_amount": {
+                        "type": "string"
+                    },
+                    "balance": {
+                        "type": "string"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurchaseInvoiceLineOutput"
+                        }
+                    },
+                    "payments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurchaseInvoicePaymentOutput"
+                        }
+                    },
+                    "payables": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurchasePayableOutput"
+                        }
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurchaseInvoiceAttachmentOutput"
+                        }
+                    },
+                    "journal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reversal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "emitted_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "voided_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "void_reason": {
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "type": "object"

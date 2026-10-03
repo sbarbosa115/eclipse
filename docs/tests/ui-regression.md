@@ -804,6 +804,135 @@ The console has no errors.
 
 <!-- Owned by item 9 "purchase-invoice" (PUR-01 – 29). -->
 
+Open **Facturas de compra** (`/facturas-compra`). The cases need a supplier (Terceros, role Proveedor) and the seeded
+taxes and payment methods; PUR-13 onwards look at the books, so run them after the ledger is merged.
+
+**PUR-01 · A new company sees what the section is for and how to start**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+A company with no purchase invoices › open Facturas de compra.
+**Expected:** "Aún no has registrado facturas de compra…" with **Registrar la primera factura de compra**, and
+**Nueva factura de compra** in the header; no table, no error.
+
+**PUR-02 · A service bought on credit is saved as a draft from the form**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+**Nueva factura de compra** › Proveedor (type 3 letters, choose it) › Número de factura del proveedor `FAC-881` › line 1
+Tipo **Cuenta de gasto**, `513595`, Mantenimiento de equipos, 1 × 1000000, IVA 19 %, ReteFuente servicios 4 % ›
+**Agregar forma de pago** › Crédito › **Guardar borrador**.
+**Expected:** the forma de pago offers `1150000.00` (the total neto) and a due date 30 days on; "Borrador guardado.";
+the title is "Factura de compra (borrador)" and the address is the invoice's own. By hand: totals read Total bruto
+$ 1.000.000,00, Impuestos $ 190.000,00, Retenciones $ 40.000,00, Total neto $ 1.150.000,00.
+
+**PUR-03 · Emitting numbers the invoice, posts it and leaves it read-only**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+Open the draft of PUR-02 › **Emitir**.
+**Expected:** "Factura FC-1 emitida y contabilizada."; the title is "Factura de compra FC-1"; every field is disabled,
+with **PDF**, **Duplicar** and **Anular** in the header. The libro diario shows one entry FC-1: Dr 513595 1.000.000,
+Dr 240810 190.000, Cr 236525 40.000, Cr 22050501 1.150.000 (acceptance criterion 5).
+
+**PUR-04 · The supplier's number is not recorded twice for the same supplier**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+A second draft for the same supplier › Número de factura del proveedor `fac-881` (other letter case) › **Guardar
+borrador**.
+**Expected:** under the field "Ya registraste una factura de este proveedor con este número."; nothing saved. By hand:
+the same number for another supplier saves.
+
+**PUR-05 · Emitting needs formas de pago that add up to the total neto**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+In a draft change the forma de pago to `1000000` › **Emitir**.
+**Expected:** "Revisa los campos marcados." and "Faltan $ 150.000,00 para el total neto"; it stays a draft.
+
+**PUR-06 · The list shows each invoice with its numbers, money and actions**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+With FC-1 emitted and a second draft.
+**Expected:** a row FC-1 with the supplier, FAC-881, the date and due date as DD/MM/AAAA, $ 1.150.000,00 total and
+saldo, and **Abrir**, **PDF**, **Duplicar**, **Anular**; the draft reads "Borrador" (tinted, in the legend) and has no
+Anular. By hand: the row colours and the legend agree, in light and dark.
+
+**PUR-07 · Search and the status filter narrow the list, and "Ver todo" brings it back**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+Search `882`; clear it; Estado `Emitida`; Estado `Pagada`; **Ver todo**.
+**Expected:** each narrows the table; with nothing "Ninguna factura de compra coincide con lo que buscas." and **Ver
+todo** clears every filter. By hand: searching the internal number (`FC-1`) or the supplier's name finds it; Desde /
+Hasta (DD/MM/AAAA) filter by the invoice date; the address keeps the filters and reloading keeps them.
+
+**PUR-08 · Voiding from the list asks why and keeps the number**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+**Anular** on FC-1 › **Anular factura** with no reason › write `Registrada dos veces` › **Anular factura**.
+**Expected:** first "Escribe por qué se anula la factura."; then "Factura FC-1 anulada.", the row reads Anulada and
+has no Anular. By hand: the libro diario has a second entry FC-1 dated today with débitos and créditos swapped;
+cartera owes nothing on it; the next invoice emitted is FC-2, never FC-1 again (acceptance criterion 7).
+
+**PUR-09 · Duplicating makes a new draft without the supplier's number**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+**Duplicar** on FC-1.
+**Expected:** "Se creó un borrador igual. Escribe el número de factura del proveedor."; a draft dated today with the
+same supplier, lines, taxes and formas de pago (a 30-day crédito is still 30 days), the supplier's number empty.
+
+**PUR-10 · The supplier's PDF is attached to a draft and can be downloaded**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+In a draft, **Adjuntar archivo** › a PDF; then a PNG renamed `.pdf`.
+**Expected:** "Archivo adjunto." and the file listed with **Descargar …**, which downloads it; the PNG is refused with
+"Adjunta la factura del proveedor en PDF o XML.". By hand: an XML (the supplier's electronic invoice) is accepted; a
+file over 10 MB says "El archivo pesa más de 10 MB."; the trash icon removes a file from a draft.
+
+**PUR-11 · The PDF of an emitted invoice downloads**
+Smoke (part): `e2e/purchaseInvoice.spec.ts` checks it is a PDF.
+**PDF** on FC-1. By hand: open it.
+**Expected:** the company's header (logo when it has one, NIT-DV), "Factura de compra" No. FC-1, the supplier and its
+number, dates, the lines with their taxes, the formas de pago and the totals; a voided one shows ANULADA across it and
+its reason.
+
+**PUR-12 · A draft is deleted after confirming**
+Smoke: `e2e/purchaseInvoice.spec.ts`.
+Open a draft › **Eliminar borrador** › **Eliminar**.
+**Expected:** "Borrador eliminado." back on the list, and it is gone. An emitted invoice has no Eliminar (it is voided).
+
+**PUR-13 · Lines by product post to the product's account, 6205 or gasto por defecto**
+A draft with three lines: a producto with its own Cuenta de gasto, a producto without one, a servicio without one;
+contado (Efectivo) for the whole › **Emitir**.
+**Expected:** the entry debits the product's account, 620501 Compras de mercancías and 519595 (gasto por defecto), and
+credits 11050501 Caja; no payable is created (nothing on credit).
+
+**PUR-14 · A discount is netted on the line and impoconsumo is part of the cost**
+A line of 2 × 500.000 with 10 % off and IVA 19 %; another of 100.000 with Impoconsumo 8 %.
+**Expected:** the gasto is debited 900.000 (no discount account on purchases) and the second line 108.000 (impoconsumo
+included); IVA descontable 171.000.
+
+**PUR-15 · No purchase is emitted on or before the fecha de bloqueo**
+Move the fecha de bloqueo (Configuración › Reglas contables) to yesterday › emit a draft dated yesterday.
+**Expected:** "La contabilidad está cerrada hasta el DD/MM/AAAA: usa una fecha posterior."; it stays a draft and the
+FC number is not spent (the next emission takes it). A date in the future says "La fecha de la factura no puede ser
+futura." (acceptance criterion 9).
+
+**PUR-16 · An inactive supplier cannot be emitted to**
+Deactivate the supplier of a draft (Terceros) › **Emitir**.
+**Expected:** "El proveedor está inactivo: reactívalo para emitir."
+
+**PUR-17 · Only accounts usable on purchases are offered on a line**
+Tipo **Cuenta de gasto** › type `1105`, then `5135`.
+**Expected:** caja is not offered (and typing its code is refused under the cell when saving); 5135xx sub-accounts are,
+and so is any account the accountant marked "usable en compras" (§9 Q14).
+
+**PUR-18 · A supplier on credit owes the net amount, paid down by its payments**
+After PUR-03 (and once "supplier-payment" is merged) pay part of FC-1 with a recibo de pago.
+**Expected:** FC-1 reads Pagada parcialmente with its saldo; it can no longer be voided ("La factura tiene pagos
+aplicados: anula primero los recibos de pago."); paying the rest makes it Pagada.
+
+**PUR-19 · The accountant reads purchases but does not change them**
+Sign in as the accountant › Facturas de compra.
+**Expected:** the list and each invoice open (PDF and the supplier's files download); no Nueva, Guardar, Emitir,
+Duplicar, Anular or Eliminar; the form is read-only.
+
+**PUR-20 · Another company's invoice is not found**
+Copy the address of an invoice › sign in as another company's user › open it.
+**Expected:** "No pudimos cargar la factura de compra." with Reintentar; nothing of the other company shows
+(acceptance criterion 10).
+
+**PUR-21 · The screens at laptop and tablet widths, light and dark**
+The list, a draft, an emitted and a voided invoice, the void and delete dialogs.
+**Expected:** no horizontal page scroll; the header's buttons wrap; the supplier's number and due date sit with the
+header fields; money and dates in Colombian format; the console has no errors.
+
 ## 10. Cotizaciones
 
 <!-- Owned by item 10 "quotation" (COT-01 – 19). -->

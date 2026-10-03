@@ -155,6 +155,16 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/company/manual-invoicing-confirmation` | the owner confirms the company holds the DIAN permission → `ResolutionSettingsOutput`; stored on the company (`manualInvoicingConfirmedBy/At`) and audited; unlocks `mode: manual` | 403 |
 | GET | `/company/numbering` | `{items: {kind, prefix, next_number}[]}`: quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal (not the journal's). Every role | 401 |
 | PUT | `/company/numbering/{kind}` | `{prefix (≤ 10 letters/digits, kept in capitals), next_number}` → the series; audited. Owner | 403; 404 `numbering_series_not_found` (journal_entry, unknown); 422 on `next_number` (below the current one), `prefix` |
+| GET | `/purchase-invoices` | `{items: PurchaseInvoiceSummaryOutput[], total, page, per_page}`, newest first; `?q=` part of the internal number, the supplier's number or the supplier's name (`%`/`_` literal), `?status=draft\|emitted\|partially_paid\|paid\|voided`, `?from`, `?to` (invoice date, both included), `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/purchase-invoices/{id}` | `PurchaseInvoiceOutput` (lines with product/account labels and tax copies, payments, payables, attachments, totals, `balance`, void reason) | 404 |
+| POST, PUT | `/purchase-invoices`, `/purchase-invoices/{id}` | a draft `{tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id \| account_id, description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id, amount, due_date?}]}` → `PurchaseInvoiceOutput` (201 on POST). Owner and billing | 403; 404; 409 `document_not_draft`; 422 `validation_failed` by field (`tercero_id`, `lines[0].account_id` — product xor account, an account usable on purchases —, `lines[0].charge_tax_id`, `payments[0].due_date`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`) |
+| DELETE | `/purchase-invoices/{id}` | deletes a draft and its files → 204 | 403; 404; 409 `document_not_draft` |
+| POST | `/purchase-invoices/{id}/emit` | internal number (FC), one payable per crédito line, the entry of Appendix A.3, in one transaction → `PurchaseInvoiceOutput` | 403; 404; 409 `document_not_draft`, `period_locked`; 422 `payments_do_not_match_total`, `document_has_no_lines`, `issue_date_in_future`, `supplier_inactive`, `validation_failed` on `supplier_invoice_number` |
+| POST | `/purchase-invoices/{id}/void` | `{reason}`: reversing entry dated today, payables voided, number kept → `PurchaseInvoiceOutput` | 403; 404; 409 `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason` |
+| POST | `/purchase-invoices/{id}/duplicate` | a new draft dated today with the same supplier, lines and formas de pago (due dates keep their term), no supplier number → 201 | 403; 404 |
+| GET | `/purchase-invoices/{id}/pdf` | the company's record of the purchase (PDF; ANULADA / BORRADOR across) | 404 |
+| POST | `/purchase-invoices/{id}/attachments` | multipart `file`: the supplier's PDF or XML judged by content, ≤ 10 MB, on a draft → 201 `PurchaseInvoiceAttachmentOutput` | 403; 404; 409 `document_not_draft`; 413 `attachment_too_large`; 415 `attachment_unsupported` |
+| GET, DELETE | `/purchase-invoices/{id}/attachments/{attachmentId}` | GET downloads the file (every role); DELETE removes it from a draft → 204 | 403; 404 `attachment_not_found`; 409 `document_not_draft` |
 
 ## Data model decisions
 
@@ -235,6 +245,27 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **E-mails leave through the queue.** Command handlers publish an event (`InvitationIssued`,
   `PasswordResetRequested`, handled after the commit); the handler renders Twig templates (`templates/emails/access/`)
   and `QueuedMailer` puts them on Messenger's `async` transport, which the worker (a cron line on cPanel) sends.
+- **Purchase invoices** (`Purchasing`): a draft may be saved without the supplier's number (the column is nullable
+  since `Version20261003231059`, so a duplicate needs none); emission needs it, unique per supplier (letter case
+  aside). Lines copy their taxes with the tax's **purchase** account; a tax, product or payment method must be active
+  to be newly chosen, and one the draft already had stays allowed. A line by account takes only a postable, active
+  account marked usable on purchases (classes 5–7 by default, §9 Q14).
+- **Posting a purchase (A.3)** is `Purchasing\Application\Posting\PurchaseInvoiceEntry`, built from the line amounts:
+  Dr each line's subtotal (discount netted) + its impoconsumo to the chosen account, else the product's expense account,
+  else `compra_mercancias` (producto) / `gasto_por_defecto` (servicio); Dr IVA to the tax's purchase account, else
+  `iva_descontable`; Cr each retención to its purchase account, else its kind's `*_practicada` concept (with the
+  supplier as tercero); Cr `proveedores` (the supplier's own payable account if set) per crédito payment and the
+  method's account per contado payment. Debits and retenciones to the same account are merged; payments stay one line
+  each. The product's accounts are read at emission, not when the line was written.
+- **Payables**: one per crédito payment line, due on that line's date (the invoice's when it had none). Item 12 pays
+  them through `Purchasing\Application\Payables\PayableAllocations::apply()/unapply()` inside its own transaction (the
+  payable's balance and the invoice's `partially_paid`/`paid`/`emitted` follow); open payables of a supplier are
+  `PayableQueries::openFor()`.
+- **Supplier's files** are Shared `Attachment`s (owner type `purchase_invoice`) under `UPLOADS_DIR/<company>/<id>`
+  (`FilesystemSupplierFiles`), PDF or XML by `finfo`, ≤ 10 MB; added and removed only while the invoice is a draft.
+- **Purchase roles** are checked in `Purchasing\UI\Http\PurchasingAccess` (owner and billing write, emit and void; the
+  accountant reads) until the "access" item's voters replace it (F4). Dates are Colombian calendar days
+  (`America/Bogota`): "not in the future" and the void date.
 
 ## Known gaps
 
@@ -254,6 +285,12 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   routed in a production build). Its tercero search lists every active tercero, whatever its role. A line whose tax
   was deactivated after it was chosen previews that tax as 0 (the select lists active taxes only). The form must not be
   placed inside a `<form>`: its quick-create dialogs are forms of their own.
+- Purchase invoices: the supplier is any active tercero (the role Proveedor is not required, so the editor's search,
+  which lists every role, never leads to a refusal). Retenciones are chosen per line by the user; nothing proposes them
+  from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3), and ReteIVA is computed
+  on the line's base like every withholding (`DocumentTotals`), not on its IVA. Taxes are not filtered by their validity
+  dates (F5). No e-mail of a purchase invoice (it is the supplier's document). The list's row tints borrow the kit's
+  existing tones (`prospect`, `order_confirmed`, `active`, `cancelled`) until the kit has invoice statuses.
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.

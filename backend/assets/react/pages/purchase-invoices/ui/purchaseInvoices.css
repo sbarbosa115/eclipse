@@ -1,0 +1,5 @@
+/* Facturas de compra (item 9): the supplier's files to download, under the editor's own list. */
+.admin .purchase-downloads ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
