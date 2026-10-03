@@ -113,7 +113,17 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/terceros/{id}/contacts` | `{items: ContactOutput[]}` | 404 |
 | GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (billing and owner only) |
 | POST | `/terceros/{id}/erase` | Ley 1581: blanks the personal fields and contacts, deactivates, sets `erased_at`; keeps the row and the identification; audited | 404, 403 |
-| GET, POST, PUT | `/products`, `/products/quick`, `/products/{id}/taxes` | contract only: 501 until the "catalog" item | 501 |
+| GET, POST | `/terceros`, `/terceros/quick`, `/terceros/{id}/contacts` | contract only: 501 until the "terceros" item | 501 |
+| GET | `/products` | `{items: ProductOutput[], total, page, per_page}` by name; `?q=` (código or name, matched literally), `?type=producto\|servicio`, `?active=1` only active / `0` only inactive, `?page`, `?per_page` ≤ 100. Every role | 401 |
+| GET | `/products/units` | `{items: {code, name}[]}`: the short DIAN list (94, KGM, MTR, HUR, ZZ) | 401 |
+| GET | `/products/{id}` | `ProductOutput` (`unit_price_net_of_tax` is the value a line starts from; `*_account_label` is "code · name") | 404 |
+| POST | `/products` | full form `{type, code, name, description?, category_id?, unit_code?, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?, revenue_account_id?, expense_account_id?}` → 201. Taxes missing = the company's defaults; unit missing = 94 (producto) / ZZ (servicio) | 422 on `code` (taken in this company), on a tax (not an active tax of that class), an account (not postable), `category_id`, `sale_price` (under a per-unit tax it includes); 403 accountant |
+| POST | `/products/quick` | `{type, code, name, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?}` → 201 `ProductOutput` | as above |
+| PUT | `/products/{id}` | the full form again; what is missing is **none** (no default is filled) | 404, 422, 403 |
+| PUT | `/products/{id}/taxes` | `{charge_tax_id, withholding_tax_id}`, null = no tax ("use these taxes from now on") | 404, 422, 403 |
+| POST | `/products/{id}/deactivate`, `/reactivate` | `ProductOutput`; inactive products leave new documents' pickers (`?active=1`) | 404, 403 |
+| DELETE | `/products/{id}` | 204 when no document line uses it | 409 `product_in_use` (deactivate instead), 404, 403 |
+| GET, POST, PUT | `/product-categories`, `/product-categories/{id}` | flat list by name `{items: {id, name, product_count}[]}`; create `{name}` → 201; rename `{name}` | 422 on `name` (repeated), 404, 403 |
 
 ## Data model decisions
 
@@ -134,6 +144,16 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   the rule. Nothing filters by them yet: document pickers will (see Known gaps).
 - **Line amounts add up to the document totals to the cent** (largest remainder after one rounding per total), so a
   journal entry built from lines always balances.
+- **A product's price may include IVA.** `unit_price_net_of_tax` is the price divided by `1 + rate/100` (rounded half up
+  to four decimals), or minus the value for a per-unit tax (`Catalog\Domain\Pricing\PriceNetOfTax`): a line of one unit
+  then totals the list price after the document's single rounding. The list price itself is kept as typed.
+- **The unidad de medida list lives in one place** (`Catalog\Domain\Model\UnitOfMeasure`): 94 unidad, KGM kilogramo, MTR
+  metro, HUR hora and ZZ servicio (DIAN's "mutuamente definido"); the full DIAN list arrives with stage 4.
+- **A product used by a document line is never deleted**, only deactivated (`Catalog\Application\Port\ProductUsage`
+  asks the line tables by SQL, so Catalog names no Sales or Purchasing class). Catalog reads the company's default taxes
+  from `Company\Application\Query\Companies` (a CompanyApi dependency in `deptrac.contexts.yaml`).
+- **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): owner and billing write, the
+  accountant reads. The "access" item's voters may replace it.
 
 ## Known gaps
 

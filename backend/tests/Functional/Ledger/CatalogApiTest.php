@@ -46,13 +46,4 @@ final class CatalogApiTest extends ApiTestCase
 
         self::assertResponseStatusCodeSame(401);
     }
-
-    public function testEndpointsOfLaterItemsAnswerNotImplemented(): void
-    {
-        $this->signUp();
-        $body = $this->getJson('/api/v1/products');
-
-        self::assertResponseStatusCodeSame(501);
-        self::assertSame('not_implemented', $body['error']);
-    }
 }

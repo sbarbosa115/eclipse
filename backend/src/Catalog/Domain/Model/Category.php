@@ -25,6 +25,11 @@ class Category implements CompanyOwned
         $this->id = Uuid::v7();
     }
 
+    public function rename(string $name): void
+    {
+        $this->name = $name;
+    }
+
     public function id(): Uuid
     {
         return $this->id;

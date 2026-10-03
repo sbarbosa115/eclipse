@@ -69,22 +69,6 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "summary": "Adds a tax. Its class and kind (IVA, impoconsumo, retefuente, reteiva, reteica) are fixed from here on.",
-                "operationId": "post_app_ledger_ui_http_tax_create",
-                "responses": {
-                    "201": {
-                        "description": "Created.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TaxSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/api/v1/payment-methods": {
@@ -109,22 +93,6 @@
                                         }
                                     },
                                     "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "summary": "Adds a method: contado (\"cash\") needs a postable account, cr\u00e9dito (\"credit\") has none.",
-                "operationId": "post_app_ledger_ui_http_paymentmethod_create",
-                "responses": {
-                    "201": {
-                        "description": "Created.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
                                 }
                             }
                         }
@@ -161,271 +129,9 @@
                 }
             }
         },
-        "/api/v1/settings/taxes": {
-            "get": {
-                "summary": "Every tax of the company, by class then name.",
-                "operationId": "get_app_ledger_ui_http_catalogsettings_taxes",
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "required": [
-                                        "items"
-                                    ],
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/TaxSettingOutput"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/settings/payment-methods": {
-            "get": {
-                "summary": "Every payment method of the company, by name.",
-                "operationId": "get_app_ledger_ui_http_catalogsettings_paymentmethods",
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "required": [
-                                        "items"
-                                    ],
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/PaymentMethodSettingOutput"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/payment-methods/{id}": {
-            "put": {
-                "summary": "Renames a method and moves its account. Its kind never changes.",
-                "operationId": "put_app_ledger_ui_http_paymentmethod_update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "summary": "Deletes a method nothing uses: 204. One a document used answers 409 `payment_method_in_use`.",
-                "operationId": "delete_app_ledger_ui_http_paymentmethod_delete",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/payment-methods/{id}/deactivate": {
-            "post": {
-                "summary": "Takes the method out of the pickers; documents that used it keep it.",
-                "operationId": "post_app_ledger_ui_http_paymentmethod_deactivate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/payment-methods/{id}/activate": {
-            "post": {
-                "operationId": "post_app_ledger_ui_http_paymentmethod_activate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PaymentMethodSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/taxes/{id}": {
-            "put": {
-                "summary": "Changes a tax's name, calculation, rate, accounts and validity dates. \"Ninguno\" cannot be changed.",
-                "operationId": "put_app_ledger_ui_http_tax_update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TaxSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "summary": "Deletes a tax nothing uses: 204. A tax a document, a product or the company uses answers 409 `tax_in_use`.",
-                "operationId": "delete_app_ledger_ui_http_tax_delete",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/taxes/{id}/deactivate": {
-            "post": {
-                "summary": "Takes the tax out of the pickers; documents that used it keep it.",
-                "operationId": "post_app_ledger_ui_http_tax_deactivate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TaxSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/taxes/{id}/activate": {
-            "post": {
-                "operationId": "post_app_ledger_ui_http_tax_activate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TaxSettingOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/terceros": {
             "get": {
-                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page \u2264 100.",
+                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1, ?page, ?per_page \u2264 100.",
                 "operationId": "get_app_party_ui_http_tercero_list",
                 "responses": {
                     "200": {
@@ -462,28 +168,11 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "summary": "The full form: creates the tercero (datos b\u00e1sicos, facturaci\u00f3n y env\u00edo, responsabilidades, contactos, cuentas).",
-                "description": "422 `duplicate_identification` (violation on `identification_number`) when tipo + n\u00famero + sucursal exist.",
-                "operationId": "post_app_party_ui_http_tercero_create",
-                "responses": {
-                    "201": {
-                        "description": "Created.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TerceroOutput"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/api/v1/terceros/quick": {
             "post": {
-                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|\u2026]} \u2192 201.",
+                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email?, roles: [cliente|proveedor|\u2026]} \u2192 201.",
                 "operationId": "post_app_party_ui_http_tercero_quickcreate",
                 "responses": {
                     "201": {
@@ -538,36 +227,54 @@
                 }
             }
         },
-        "/api/v1/terceros/{id}": {
+        "/api/v1/product-categories": {
             "get": {
-                "summary": "One tercero with everything on its form.",
-                "operationId": "get_app_party_ui_http_tercero_show",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
+                "summary": "Every category of the company, by name, with how many products are in it.",
+                "operationId": "get_app_catalog_ui_http_category_list",
                 "responses": {
                     "200": {
                         "description": "OK.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TerceroOutput"
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CategoryOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     }
                 }
             },
+            "post": {
+                "summary": "{name} \u2192 201. 422 on `name` when the company has a category with it.",
+                "operationId": "post_app_catalog_ui_http_category_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/product-categories/{id}": {
             "put": {
-                "summary": "Replaces the tercero's data (the whole form is sent). Contacts with an `id` are kept, the ones left out are\nremoved. 422 `duplicate_identification`; 422 `tercero_erased` once its personal data was erased.",
-                "operationId": "put_app_party_ui_http_tercero_update",
+                "operationId": "put_app_catalog_ui_http_category_rename",
                 "parameters": [
                     {
                         "name": "id",
@@ -584,137 +291,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TerceroOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "summary": "Deletes a tercero no document references; 409 `tercero_in_use` otherwise (deactivate it instead).",
-                "operationId": "delete_app_party_ui_http_tercero_delete",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/terceros/{id}/deactivate": {
-            "post": {
-                "summary": "Stops offering the tercero on new documents. Existing documents are untouched.",
-                "operationId": "post_app_party_ui_http_tercero_deactivate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TerceroOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/terceros/{id}/reactivate": {
-            "post": {
-                "operationId": "post_app_party_ui_http_tercero_reactivate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TerceroOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/terceros/{id}/export": {
-            "get": {
-                "summary": "Ley 1581 de 2012: the tercero's personal data as JSON (served as a download). Leaves an audit-log entry.",
-                "operationId": "get_app_party_ui_http_tercero_export",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TerceroExportOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/terceros/{id}/erase": {
-            "post": {
-                "summary": "Ley 1581 de 2012: blanks the tercero's personal data and its contacts and deactivates it; the row stays (its\ndocuments name it), with its identification and `erased_at`. Cannot be undone.",
-                "operationId": "post_app_party_ui_http_tercero_erase",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TerceroOutput"
+                                    "$ref": "#/components/schemas/CategoryOutput"
                                 }
                             }
                         }
@@ -724,7 +301,7 @@
         },
         "/api/v1/products": {
             "get": {
-                "summary": "Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1, ?page, ?per_page \u2264 100.",
+                "summary": "Search: ?q= (part of the code or name), ?type=producto|servicio, ?active=1 (only active) or ?active=0 (only\ninactive), ?page, ?per_page \u2264 100. By name.",
                 "operationId": "get_app_catalog_ui_http_product_list",
                 "responses": {
                     "200": {
@@ -761,11 +338,129 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "summary": "The full form: {type, code, name, description?, category_id?, unit_code? (the type's default), sale_price,\nprice_includes_tax, charge_tax_id?, withholding_tax_id? (the company's defaults when missing), revenue_account_id?,\nexpense_account_id?} \u2192 201. 422 `duplicate_code` is a `code` violation.",
+                "operationId": "post_app_catalog_ui_http_product_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/units": {
+            "get": {
+                "summary": "The unidades de medida a product can use: the short DIAN list (94 unidad, KGM kilogramo, MTR metro, HUR hora,\nZZ servicio).",
+                "operationId": "get_app_catalog_ui_http_product_units",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UnitOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}": {
+            "get": {
+                "summary": "One product or service.",
+                "operationId": "get_app_catalog_ui_http_product_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Rewrites the product with the full form's fields (as in create); a missing tax or account is \"none\", not the\ncompany's default.",
+                "operationId": "put_app_catalog_ui_http_product_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes a product no document has used \u2192 204. 409 `product_in_use` otherwise: deactivate it instead.",
+                "operationId": "delete_app_catalog_ui_http_product_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
             }
         },
         "/api/v1/products/quick": {
             "post": {
-                "summary": "Quick-create from a document line (\u00a74.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,\nwithholding_tax_id?} \u2192 201.",
+                "summary": "Quick-create from a document line (\u00a74.3): {type, code, name, sale_price, price_includes_tax, charge_tax_id?,\nwithholding_tax_id?} \u2192 201. The taxes missing are the company's defaults; the unit is the type's.",
                 "operationId": "post_app_catalog_ui_http_product_quickcreate",
                 "responses": {
                     "201": {
@@ -783,8 +478,63 @@
         },
         "/api/v1/products/{id}/taxes": {
             "put": {
-                "summary": "Writes \"use these taxes on this product from now on\" (\u00a74.6 line tax dialog): {charge_tax_id, withholding_tax_id}.",
+                "summary": "Writes \"use these taxes on this product from now on\" (\u00a74.6 line tax dialog): {charge_tax_id, withholding_tax_id};\na null is \"no tax\".",
                 "operationId": "put_app_catalog_ui_http_product_settaxes",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}/deactivate": {
+            "post": {
+                "summary": "Takes the product out of the pickers of new documents; the documents that used it keep it.",
+                "operationId": "post_app_catalog_ui_http_product_deactivate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}/reactivate": {
+            "post": {
+                "operationId": "post_app_catalog_ui_http_product_reactivate",
                 "parameters": [
                     {
                         "name": "id",
@@ -1000,131 +750,6 @@
                 },
                 "type": "object"
             },
-            "TaxSettingOutput": {
-                "required": [
-                    "id",
-                    "name",
-                    "tax_class",
-                    "kind",
-                    "calculation",
-                    "rate",
-                    "active",
-                    "standard",
-                    "in_use"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "tax_class": {
-                        "title": "charge (impuesto cargo) or withholding (retenci\u00f3n)",
-                        "type": "string"
-                    },
-                    "kind": {
-                        "title": "none, iva, impoconsumo, retefuente, reteiva, reteica",
-                        "type": "string"
-                    },
-                    "calculation": {
-                        "title": "percentage or per_unit",
-                        "type": "string"
-                    },
-                    "rate": {
-                        "title": "Decimal string: a percentage (\"19.0000\") or a value per unit (\"500.0000\").",
-                        "type": "string"
-                    },
-                    "sales_account_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "sales_account_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "sales_account_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "purchase_account_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "purchase_account_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "purchase_account_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "valid_from": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "valid_to": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "active": {
-                        "type": "boolean"
-                    },
-                    "standard": {
-                        "type": "boolean"
-                    },
-                    "in_use": {
-                        "title": "A document, a product or the company uses it: it can only be deactivated.",
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "PaymentMethodSettingOutput": {
-                "required": [
-                    "id",
-                    "name",
-                    "kind",
-                    "active",
-                    "standard",
-                    "in_use"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "kind": {
-                        "title": "cash (contado) or credit (cr\u00e9dito)",
-                        "type": "string"
-                    },
-                    "account_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "account_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "account_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "active": {
-                        "type": "boolean"
-                    },
-                    "standard": {
-                        "type": "boolean"
-                    },
-                    "in_use": {
-                        "title": "A document uses it: it can only be deactivated.",
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
             "TerceroSummaryOutput": {
                 "required": [
                     "id",
@@ -1133,8 +758,7 @@
                     "identification_type",
                     "identification_number",
                     "roles",
-                    "active",
-                    "branch_code"
+                    "active"
                 ],
                 "properties": {
                     "id": {
@@ -1174,51 +798,6 @@
                     },
                     "active": {
                         "type": "boolean"
-                    },
-                    "branch_code": {
-                        "type": "string"
-                    },
-                    "trade_name": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "PhoneOutput": {
-                "required": [
-                    "indicative",
-                    "number"
-                ],
-                "properties": {
-                    "indicative": {
-                        "type": "string"
-                    },
-                    "number": {
-                        "type": "string"
-                    },
-                    "extension": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "AccountRefOutput": {
-                "required": [
-                    "id",
-                    "code",
-                    "name"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "code": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -1246,161 +825,21 @@
                 },
                 "type": "object"
             },
-            "TerceroOutput": {
+            "CategoryOutput": {
                 "required": [
                     "id",
-                    "display_name",
-                    "person_type",
-                    "identification_type",
-                    "identification_number",
-                    "branch_code",
-                    "phones",
-                    "billing_contact_is_payer",
-                    "fiscal_responsibilities",
-                    "roles",
-                    "contacts",
-                    "active",
-                    "created_at"
+                    "name",
+                    "product_count"
                 ],
                 "properties": {
                     "id": {
                         "type": "string"
                     },
-                    "display_name": {
+                    "name": {
                         "type": "string"
                     },
-                    "person_type": {
-                        "title": "persona or empresa",
-                        "type": "string"
-                    },
-                    "identification_type": {
-                        "title": "cc, nit, ce, pasaporte, \u2026",
-                        "type": "string"
-                    },
-                    "identification_number": {
-                        "type": "string"
-                    },
-                    "check_digit": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "branch_code": {
-                        "type": "string"
-                    },
-                    "first_names": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "last_names": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "business_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "trade_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "city": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "address": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "phones": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/PhoneOutput"
-                        }
-                    },
-                    "billing_contact_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "email": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "mobile": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "postal_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "vat_regime": {
-                        "title": "responsable, no_responsable or simple",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "billing_contact_is_payer": {
-                        "type": "boolean"
-                    },
-                    "fiscal_responsibilities": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "roles": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "receivable_account": {
-                        "nullable": true,
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/AccountRefOutput"
-                            }
-                        ]
-                    },
-                    "payable_account": {
-                        "nullable": true,
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/AccountRefOutput"
-                            }
-                        ]
-                    },
-                    "contacts": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ContactOutput"
-                        }
-                    },
-                    "active": {
-                        "type": "boolean"
-                    },
-                    "erased_at": {
-                        "title": "ISO 8601 date-time when the personal data was erased on request (Ley 1581), else null",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "created_at": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "TerceroExportOutput": {
-                "required": [
-                    "exported_at",
-                    "tercero"
-                ],
-                "properties": {
-                    "exported_at": {
-                        "title": "ISO 8601 date-time of the export",
-                        "type": "string"
-                    },
-                    "tercero": {
-                        "$ref": "#/components/schemas/TerceroOutput"
+                    "product_count": {
+                        "type": "integer"
                     }
                 },
                 "type": "object"
@@ -1476,6 +915,33 @@
                     },
                     "active": {
                         "type": "boolean"
+                    },
+                    "revenue_account_label": {
+                        "title": "The revenue account as \"413595 \u00b7 Venta de otros\".",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "expense_account_label": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    }
+                },
+                "type": "object"
+            },
+            "UnitOutput": {
+                "required": [
+                    "code",
+                    "name"
+                ],
+                "properties": {
+                    "code": {
+                        "title": "DIAN code: 94, KGM, MTR, HUR, ZZ",
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
                     }
                 },
                 "type": "object"

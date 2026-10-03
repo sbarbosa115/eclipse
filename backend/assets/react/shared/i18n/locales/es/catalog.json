@@ -1,1 +1,101 @@
-{}
+{
+  "intro": "Lo que vendes y compras: cada producto o servicio guarda sus impuestos y cuentas para que los documentos los usen por defecto.",
+  "new": "Nuevo producto o servicio",
+  "categories": "Categorías",
+  "type": {
+    "label": "Tipo",
+    "producto": "Producto",
+    "servicio": "Servicio",
+    "all": "Todos los tipos"
+  },
+  "status": {
+    "label": "Estado",
+    "all": "Todos",
+    "active": "Activos",
+    "inactive": "Inactivos"
+  },
+  "searchPlaceholder": "Código o nombre",
+  "columns": {
+    "code": "Código",
+    "name": "Nombre",
+    "type": "Tipo",
+    "unit": "Unidad",
+    "price": "Precio de venta"
+  },
+  "inactive": "Inactivo",
+  "priceIncludesTax": "IVA incluido",
+  "netOfTax": "base {{amount}}",
+  "noTax": "Sin impuesto",
+  "actions": {
+    "edit": "Editar",
+    "view": "Ver",
+    "deactivate": "Desactivar",
+    "reactivate": "Reactivar",
+    "delete": "Eliminar"
+  },
+  "empty": {
+    "title": "Aún no tienes productos ni servicios. Créalos aquí o desde una línea de factura.",
+    "filtered": "Ningún producto o servicio coincide con lo que buscas."
+  },
+  "form": {
+    "createTitle": "Nuevo producto o servicio",
+    "editTitle": "Editar producto o servicio",
+    "viewTitle": "Producto o servicio",
+    "code": "Código",
+    "codeHint": "Único en tu empresa.",
+    "name": "Nombre",
+    "description": "Descripción larga",
+    "category": "Categoría",
+    "noCategory": "Sin categoría",
+    "unit": "Unidad de medida DIAN",
+    "salePrice": "Precio de venta (COP)",
+    "salePriceHint": "Solo números; decimales con punto, por ejemplo 49999.90.",
+    "includesTax": "Incluir IVA en el precio",
+    "includesTaxHint": "El precio ya trae el impuesto: en la línea del documento el valor unitario queda sin él.",
+    "chargeTax": "Impuesto cargo",
+    "withholdingTax": "Impuesto retención",
+    "companyDefault": "El de la empresa",
+    "noTaxOption": "Sin impuesto",
+    "revenueAccount": "Cuenta de ingreso",
+    "revenueAccountHint": "Si la dejas vacía se usa la de las reglas de contabilización.",
+    "expenseAccount": "Cuenta de gasto o costo",
+    "expenseAccountHint": "Para compras. Si la dejas vacía se usa la de las reglas de contabilización.",
+    "accountPlaceholder": "Código o nombre de la cuenta",
+    "accountMissing": "Elige una cuenta de la lista o borra el campo.",
+    "saved": "Producto guardado.",
+    "created": "Producto creado."
+  },
+  "validation": {
+    "required": "Este campo es obligatorio.",
+    "price": "Escribe el precio en pesos, con máximo cuatro decimales."
+  },
+  "deactivate": {
+    "done": "«{{name}}» quedó inactivo: no aparece en documentos nuevos.",
+    "reactivated": "«{{name}}» está activo otra vez."
+  },
+  "delete": {
+    "title": "Eliminar producto o servicio",
+    "confirm": "¿Eliminar «{{name}}»? No se puede deshacer.",
+    "done": "«{{name}}» se eliminó.",
+    "inUse": "«{{name}}» ya está en documentos: no se puede eliminar. Desactívalo para que no aparezca en documentos nuevos."
+  },
+  "categoriesModal": {
+    "title": "Categorías de productos",
+    "name": "Nombre de la categoría",
+    "add": "Agregar categoría",
+    "products": "Productos",
+    "rename": "Renombrar",
+    "save": "Guardar nombre",
+    "empty": "Aún no hay categorías. Agrega la primera.",
+    "close": "Cerrar"
+  },
+  "quick": {
+    "title": "Crear producto o servicio",
+    "submit": "Crear",
+    "fullForm": "Creación completa",
+    "taxesHint": "Si no eliges impuestos, se usan los de la empresa."
+  },
+  "errors": {
+    "forbidden": "Tu rol solo puede consultar productos y servicios."
+  }
+}
