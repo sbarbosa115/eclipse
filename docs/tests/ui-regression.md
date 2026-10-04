@@ -572,10 +572,9 @@ S.A.S.` with NIT, correo, role Cliente (already checked).
 **Expected:** the modal closes and the new tercero is selected in the document; it also appears in Terceros. A NIT
 already used is refused in the modal, next to the number.
 
-**TER-14 · The accountant reads and cannot change**
+**TER-14 · The accountant writes terceros like billing** *(rule changed 2026-10-04: §8)*
 Sign in as an accountant (invited in section 1). Open Terceros and a tercero.
-**Expected:** no Nuevo tercero, Desactivar, Eliminar or Suprimir; the row action is **Ver** and the form's fields are
-disabled with no Guardar. Calling the API to write answers 403.
+**Expected:** Nuevo tercero, Editar, Desactivar and Eliminar are offered and work as for the owner; the form saves.
 
 **TER-15 · A billing user creates and edits terceros**
 Sign in as a billing user. Create, edit, deactivate and delete one.
@@ -587,7 +586,7 @@ With two companies, copy the address of a tercero of company A (`/terceros/<id>`
 
 **TER-17 · The search treats % and _ as plain characters**
 Create `Banco 100% Fiable`. Search `100%`, then `%`, then `_`.
-**Expected:** `100%` finds it; `%` and `_` alone find nothing (they are not wildcards).
+**Expected:** `100%` finds it; `%` alone finds only names that contain a `%` (it is a character, not a wildcard: it never lists everyone), and `_` finds nothing.
 
 **TER-18 · Pagination of a long list**
 With more than 25 terceros (create them, or from the API), open Terceros.
@@ -711,11 +710,10 @@ Needs an emitted factura de venta with the product.
 **Expected:** "«…» ya está en documentos: no se puede eliminar. Desactívalo…" with **Desactivar**; choosing it leaves the
 product inactive. A new document no longer offers it; the emitted document still shows it.
 
-**PRD-18 · The accountant only reads**
+**PRD-18 · The accountant writes the catalog like billing** *(rule changed 2026-10-04: §8)*
 Needs an invited accountant (item "access").
-Sign in as the accountant › open Productos y servicios › **Ver** a product › **Categorías**.
-**Expected:** no **Nuevo producto o servicio**, **Desactivar** or **Eliminar**; **Ver** opens the form with every field
-disabled and only **Cerrar**; Categorías shows the list with no way to add or rename. A billing user sees and does it all.
+Sign in as the accountant › Productos y servicios › **Nuevo producto o servicio**, **Editar**, **Categorías**.
+**Expected:** every action is offered and saves, as for a billing user.
 
 **PRD-19 · The layout on a tablet and in both themes**
 At 1024×768 and 768×1024, Tema `Claro` and `Oscuro`: the list, the form, the Categorías dialog and the quick-create
@@ -941,10 +939,9 @@ Line SRV-01, Cantidad `2`, % Descuento `10`, ReteFuente servicios 4 %, all on Cr
 Productos y servicios › SRV-01 › Cuenta de ingreso `415595` › invoice it and emit.
 **Expected:** the libro diario credits 415595 instead of 413595.
 
-**SAL-22 · The accountant reads invoices and cannot change them**
+**SAL-22 · The accountant writes invoices like billing** *(rule changed 2026-10-04: §8)*
 Signed in as the accountant (section 1).
-**Expected:** the list and every invoice open, the PDF downloads; no Nueva factura, Guardar, Emitir, Duplicar, Enviar
-or Anular anywhere.
+**Expected:** Nueva factura, Guardar, Emitir, Duplicar, Enviar and Anular are offered and work; the PDF downloads.
 
 **SAL-23 · A billing user invoices**
 Signed in as a billing user: create, save, emit and void an invoice.
@@ -1079,10 +1076,10 @@ After PUR-03 (and once "supplier-payment" is merged) pay part of FC-1 with a rec
 **Expected:** FC-1 reads Pagada parcialmente with its saldo; it can no longer be voided ("La factura tiene pagos
 aplicados: anula primero los recibos de pago."); paying the rest makes it Pagada.
 
-**PUR-19 · The accountant reads purchases but does not change them**
+**PUR-19 · The accountant writes purchases like billing** *(rule changed 2026-10-04: §8)*
 Sign in as the accountant › Facturas de compra.
-**Expected:** the list and each invoice open (PDF and the supplier's files download); no Nueva, Guardar, Emitir,
-Duplicar, Anular or Eliminar; the form is read-only.
+**Expected:** Nueva, Guardar, Emitir, Duplicar, Anular and Eliminar (a draft) are offered and work; the supplier's files
+download.
 
 **PUR-20 · Another company's invoice is not found**
 Copy the address of an invoice › sign in as another company's user › open it.
@@ -1216,11 +1213,9 @@ first and then convert it.
 **Expected:** the second tab says "Esta cotización ya se convirtió en factura: solo se convierte una vez." and no second
 invoice exists; a quotation accepted by hand converts normally, once.
 
-**COT-17 · Roles**
-By hand (after the invitations of section 1).
+**COT-17 · Roles** *(rule changed 2026-10-04: §8)*
 As a billing user, then as the accountant: open Cotizaciones and a quotation.
-**Expected:** the billing user does everything above; the accountant sees the list and the PDF but no Nueva cotización,
-Guardar, Emitir, Enviar, Aceptar, Rechazar, Convertir ni Anular (and the API answers 403 to them).
+**Expected:** both do everything: create, emit, send, accept or reject, convert, void, duplicate.
 
 **COT-18 · The accepted draft invoice is emitted like any other**
 By hand (needs the invoicing resolution).
@@ -1314,10 +1309,9 @@ FE-1 on crédito with a partial receipt (RC-04 without the void) › FE-1 in Fac
 **Expected:** FE-1 is Pagada parcialmente without Anular; after voiding the receipt, FE-1 is Emitida and can be voided
 (SAL-24).
 
-**RC-12 · The accountant reads receipts and cannot change them**
+**RC-12 · The accountant receives and voids like billing** *(rule changed 2026-10-04: §8)*
 Signed in as the accountant (section 1).
-**Expected:** the list and every receipt open and the PDF downloads; no Nuevo recibo, Enviar or Anular anywhere;
-`/recibos-caja/nuevo` says "Tu rol no puede hacer esto con los recibos de caja."
+**Expected:** Nuevo recibo, Enviar and Anular are offered and work; `/recibos-caja/nuevo` opens the form.
 
 **RC-13 · A billing user receives**
 Signed in as a billing user: create, send and void a receipt.
