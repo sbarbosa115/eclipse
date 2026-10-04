@@ -355,6 +355,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   accounts, posting rules, the lock date), Company (profile, logo, resolution, numbering series) and Party (a
   tercero's personal data exported or erased, subject `tercero`) record through it too, with the same actions and
   data as before (their tests assert the rows).
+- **Security headers on every answer** (`Shared\UI\Http\Security\SecurityHeaders`): `nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy`, HSTS over HTTPS, and on the HTML page a Content-Security-Policy that runs only the app's own built
+  files (`script-src 'self'`, no inline script or style: `spa.html.twig` must stay that way). The dev toolbar adds its
+  nonces in development only.
 - **A company's e-mails are bounded** (`Shared\UI\Http\Security\EmailQuota`, `config/packages/rate_limiter.yaml`):
   200 document e-mails and 20 invitations an hour per company, asked in the controller before anything changes. Anyone
   can sign up and a tercero's e-mail is whatever is typed, so without it the app would relay mail under its sender
