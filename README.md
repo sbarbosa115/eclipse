@@ -431,8 +431,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   placed inside a `<form>`: its quick-create dialogs are forms of their own.
 - Purchase invoices: the supplier is any active tercero (the role Proveedor is not required, so the editor's search,
   which lists every role, never leads to a refusal). Retenciones are chosen per line by the user; nothing proposes them
-  from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3), and ReteIVA is computed
-  on the line's base like every withholding (`DocumentTotals`), not on its IVA. No e-mail of a purchase invoice (it is the supplier's document).
+  from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3). (ReteIVA is a percentage of
+  the line's IVA: `TaxBase::ChargeTax`, F12.) No e-mail of a purchase invoice (it is the supplier's document).
 - Quotations: accepting and rejecting record no user or moment (only emission and void do); there is no partial acceptance (one conversion, §9 Q17); the editor has no attachments, and Encabezado sits in the form's footer (the shared form has no slot above the lines). The offer's validity is stored per quotation, not configurable per company (30 days default).
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several

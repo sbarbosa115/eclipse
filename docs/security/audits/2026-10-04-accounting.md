@@ -1,0 +1,410 @@
+# Security audit — accounting — 2026-10-04
+
+- **Branch:** `feature/accounting` at `35930d4`, against `origin/main`
+- **Scope:** <!-- routes, inputs, uploads, rendered content, jobs, dependencies this feature added or changed -->
+- **Tools:**
+  - `composer audit`: clean
+  - `npm audit --omit=dev`: clean
+  - secrets in the diff: 6 found (see Findings)
+
+## Leads from audit.py
+
+Each one checked against the checklist in `docs/security/README.md` and resolved into a finding or "nothing found".
+
+- [ ] [A03 XSS] `backend/assets/react/pages/cash-receipts/ui/CashReceiptView.tsx:111`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/cash-receipts/ui/CashReceiptsList.tsx:236`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/purchase-invoices/ui/PurchaseInvoiceEditorPage.tsx:318`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/purchase-invoices/ui/PurchaseInvoiceEditorPage.tsx:434`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/quotations/ui/QuotationEditor.tsx:313`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/sales-invoices/ui/SalesInvoiceEditor.tsx:300`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/supplier-payments/ui/SupplierPaymentView.tsx:111`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/pages/supplier-payments/ui/SupplierPaymentsList.tsx:236`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/widgets/company-settings/ui/CompanySettings.tsx:370`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/widgets/purchase-invoice-list/ui/PurchaseInvoiceList.tsx:235`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/widgets/quotation-list/ui/QuotationList.tsx:254`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/widgets/report-table/ui/ExportLinks.tsx:63`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 XSS] `backend/assets/react/widgets/sales-invoice-list/ui/SalesInvoiceList.tsx:262`: user-controlled href/src: is the scheme checked (javascript:)?
+- [ ] [A03 Injection] `backend/src/Ledger/Infrastructure/Query/DbalChartQueries.php:29`: value concatenated into a query: bind it with setParameter
+- [ ] [A03 Injection] `backend/src/Shared/Application/Audit/AuditTrail.php:17`: shell execution: use Process with an argument array
+- [ ] [A08 Uploads] `backend/src/Company/UI/Http/Controller/CompanyController.php:20`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/src/Company/UI/Http/Controller/CompanyController.php:86`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/src/Company/UI/Http/Controller/CompanyController.php:99`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:32`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:215`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:225`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/tests/Functional/Company/CompanyApiTest.php:9`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/tests/Functional/Company/CompanyApiTest.php:52`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:6`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Uploads] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:27`: file upload handling: MIME from content, size limit, stored outside the web root
+- [ ] [A08 Path traversal] `backend/src/Company/Infrastructure/Storage/FilesystemCompanyLogos.php:50`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Company/UI/Http/Controller/CompanyController.php:111`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Purchasing/Application/Document/SupplierPaymentPdf.php:93`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Purchasing/Application/Query/PurchaseInvoicePdf.php:32`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Purchasing/Infrastructure/Storage/FilesystemSupplierFiles.php:84`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:243`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Reporting/Application/Export/ReportPdf.php:91`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Sales/Application/Document/CashReceiptPdf.php:92`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Sales/Application/Document/QuotationPdf.php:158`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/src/Sales/Application/Document/SalesInvoicePdf.php:139`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/tests/Functional/Company/CompanyApiTest.php:51`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/tests/Functional/Company/CompanyApiTest.php:218`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A08 Path traversal] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:26`: filesystem path built from a variable: normalise and keep it inside the root
+- [ ] [A10 SSRF] `backend/src/Purchasing/Application/Document/SupplierPaymentPdf.php:93`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/src/Purchasing/Application/Query/PurchaseInvoicePdf.php:32`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/src/Reporting/Application/Export/ReportPdf.php:91`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/src/Sales/Application/Document/CashReceiptPdf.php:92`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/src/Sales/Application/Document/QuotationPdf.php:158`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/src/Sales/Application/Document/SalesInvoicePdf.php:139`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Access/SignUpApiTest.php:87`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Company/CompanyApiTest.php:52`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Company/CompanyApiTest.php:213`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Company/CompanyApiTest.php:218`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Company/CompanyApiTest.php:239`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Company/CompanyApiTest.php:302`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Company/CompanyApiTest.php:316`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:27`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:245`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:283`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/PurchaseInvoiceApiTest.php:324`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/SupplierPaymentApiTest.php:357`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/SupplierPaymentApiTest.php:380`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Purchasing/SupplierPaymentApiTest.php:414`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/DashboardApiTest.php:88`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:28`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:41`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:136`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:138`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:142`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:146`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:162`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:164`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:183`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:188`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:197`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:200`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Reporting/ReportExportApiTest.php:204`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/CashReceiptApiTest.php:317`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/CashReceiptApiTest.php:358`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/EmitSalesInvoiceApiTest.php:217`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/EmitSalesInvoiceApiTest.php:227`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/QuotationApiTest.php:299`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/SalesInvoiceApiTest.php:177`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Functional/Sales/VoidSalesInvoiceApiTest.php:146`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Support/ApiTestCase.php:39`: server-side request: is the URL user-supplied?
+- [ ] [A10 SSRF] `backend/tests/Support/SignsUp.php:31`: server-side request: is the URL user-supplied?
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AccountRecoveryController.php:39`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AccountRecoveryController.php:55`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AccountRecoveryController.php:68`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AccountRecoveryController.php:84`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AccountRecoveryController.php:104`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AccountRecoveryController.php:116`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AuthController.php:24`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AuthController.php:37`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/AuthController.php:62`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:32`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:46`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:59`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:74`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:88`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:103`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:113`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/CategoryController.php:25`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/CategoryController.php:39`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/CategoryController.php:49`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/CategoryController.php:61`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:34`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:49`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:69`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:79`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:91`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:110`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:129`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:148`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:163`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:170`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Catalog/UI/Http/Controller/ProductController.php:180`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/CompanyController.php:31`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/CompanyController.php:50`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/CompanyController.php:61`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/CompanyController.php:80`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/CompanyController.php:107`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/CompanyController.php:120`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/NumberingController.php:23`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/NumberingController.php:38`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/NumberingController.php:49`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:26`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:41`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:52`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:63`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:74`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:84`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Company/UI/Http/Controller/ResolutionController.php:99`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/BookSettingsController.php:30`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/BookSettingsController.php:43`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/BookSettingsController.php:55`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/BookSettingsController.php:70`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/BookSettingsController.php:80`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogController.php:21`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogController.php:31`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogController.php:44`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogController.php:55`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogSettingsController.php:19`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogSettingsController.php:29`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/CatalogSettingsController.php:39`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/ChartController.php:29`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/ChartController.php:44`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/ChartController.php:60`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/ChartController.php:76`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/LedgerReportController.php:29`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/LedgerReportController.php:43`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/LedgerReportController.php:66`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/LedgerReportController.php:79`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/LedgerReportController.php:92`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/PaymentMethodController.php:30`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/PaymentMethodController.php:45`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/PaymentMethodController.php:60`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/PaymentMethodController.php:75`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/PaymentMethodController.php:82`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/PaymentMethodController.php:92`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/TaxController.php:30`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/TaxController.php:45`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/TaxController.php:60`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/TaxController.php:75`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/TaxController.php:82`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Ledger/UI/Http/Controller/TaxController.php:92`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:44`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:60`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:81`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:96`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:110`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:122`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:133`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:148`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:160`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:171`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:185`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Party/UI/Http/Controller/TerceroController.php:204`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:45`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:66`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:91`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:104`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:119`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:134`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:148`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:164`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:179`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:193`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:208`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:239`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/PurchaseInvoiceController.php:252`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:42`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:60`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:87`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:101`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:116`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:142`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:155`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:165`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/CarteraController.php:30`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/CarteraController.php:47`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/CarteraController.php:71`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/DashboardController.php:17`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/DashboardController.php:25`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/ReportExportController.php:34`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/ReportExportController.php:52`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/ReportExportController.php:77`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:41`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:58`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:85`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:99`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:114`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:140`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:153`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:163`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:50`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:70`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:95`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:107`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:119`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:134`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:143`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:152`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:162`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:174`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:186`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:205`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:217`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:229`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:44`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:62`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:86`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:98`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:110`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:127`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:138`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:146`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:159`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:172`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/SalesInvoiceController.php:184`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/src/Shared/UI/Http/Spa/SpaController.php:15`: new route: firewall, role and ownership checked, and a test for another tenant
+- [ ] [A01 Access control] `backend/config/packages/security.yaml:44`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/config/packages/security.yaml:47`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/config/reference.php:1362`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/config/routes.yaml:2`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:25`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Access/UI/Http/Controller/UserController.php:33`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:34`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:43`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:117`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:143`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Purchasing/UI/Http/Controller/SupplierPaymentController.php:156`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/CarteraController.php:23`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/CarteraController.php:31`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/DashboardController.php:14`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/DashboardController.php:18`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/ReportExportController.php:26`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/ReportExportController.php:53`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Reporting/UI/Http/Controller/ReportExportController.php:78`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:33`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:42`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:115`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:141`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/CashReceiptController.php:154`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:43`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:51`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:108`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:120`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:135`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:144`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:153`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:163`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:175`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:187`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:206`: access check removed or loosened?
+- [ ] [A01 Access control] `backend/src/Sales/UI/Http/Controller/QuotationController.php:218`: access check removed or loosened?
+- [ ] [A04 Mass assignment] `backend/src/Shared/UI/Http/InputMapper.php:40`: entity built from the request by the serializer: use an Input DTO
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:1`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:2`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:3`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:5`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:6`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:7`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:8`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:10`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:11`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:12`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:13`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:14`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:15`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:16`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:17`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:18`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:19`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:20`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:22`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:23`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:24`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:25`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/framework.yaml:26`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:1`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:2`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:3`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:4`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:5`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:7`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:8`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:9`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:11`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:12`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:13`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:14`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:16`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:17`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:18`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:19`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:20`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:21`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:22`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:23`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:24`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:25`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:26`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:27`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:28`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:29`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:30`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:31`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:32`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:34`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:35`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:37`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:38`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:39`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:40`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:42`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:43`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:44`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:45`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:46`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:47`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:48`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:49`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:51`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:52`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:53`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:54`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:55`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:56`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:57`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:58`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/packages/security.yaml:59`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/framework.yaml:1`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/framework.yaml:2`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/framework.yaml:3`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/framework.yaml:4`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:1`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:2`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:3`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:5`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:6`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:7`: security/CORS/framework config changed
+- [ ] [A05 Config] `backend/config/routes/security.yaml:8`: security/CORS/framework config changed
+- [ ] [Frontend] `backend/assets/react/pages/accept-invitation/ui/AcceptInvitationPage.tsx:25`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/cash-receipts/ui/CashReceiptView.tsx:37`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/cash-receipts/ui/CashReceiptsList.tsx:50`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/purchase-invoices/ui/PurchaseInvoiceEditorPage.tsx:65`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/purchase-invoices/ui/PurchaseInvoiceListPage.tsx:11`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/purchase-invoices/ui/PurchaseInvoicesPage.test.tsx:121`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/quotations/ui/QuotationEditor.tsx:82`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/quotations/ui/QuotationsList.tsx:11`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/reset-password/ui/ResetPasswordPage.tsx:18`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/sales-invoices/ui/SalesInvoiceEditor.tsx:69`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/sales-invoices/ui/SalesInvoicesList.tsx:11`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/sign-in/ui/SignInPage.tsx:11`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/supplier-payments/ui/SupplierPaymentView.tsx:37`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/supplier-payments/ui/SupplierPaymentsList.tsx:50`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/terceros/ui/TercerosList.tsx:49`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/widgets/app-shell/ui/AppShell.tsx:107`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/widgets/app-shell/ui/AppShell.tsx:133`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/widgets/purchase-invoice-list/ui/PurchaseInvoiceList.test.tsx:30`: open redirect: only follow same-origin relative paths
+- [ ] [Frontend] `backend/assets/react/pages/cash-receipts/ui/CashReceiptView.tsx:112`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/pages/cash-receipts/ui/CashReceiptsList.tsx:237`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/pages/quotations/ui/QuotationEditor.tsx:314`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/pages/sales-invoices/ui/SalesInvoiceEditor.tsx:301`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/pages/supplier-payments/ui/SupplierPaymentView.tsx:112`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/pages/supplier-payments/ui/SupplierPaymentsList.tsx:237`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/widgets/quotation-list/ui/QuotationList.tsx:255`: target=_blank without rel="noopener noreferrer"
+- [ ] [Frontend] `backend/assets/react/widgets/sales-invoice-list/ui/SalesInvoiceList.tsx:263`: target=_blank without rel="noopener noreferrer"
+
+## Findings
+
+| # | Severity | Category | Where | What an attacker could do | Status |
+|---|---|---|---|---|---|
+
+## Checked, nothing found
+
+<!-- every checklist section that applies, with what was checked -->
+
+## Not applicable
+
+<!-- sections that do not apply, and why -->
