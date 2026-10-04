@@ -394,7 +394,8 @@ Smoke: `e2e/taxes.spec.ts`.
 Sign up a new company › Configuración › **Impuestos**.
 **Expected:** IVA 19 %, IVA 5 %, IVA 0 %, IVA por servicios 19 %, Impoconsumo 8 %, Impoconsumo por valor, ReteFuente
 servicios 4 %, ReteFuente compras 2,5 %, ReteFuente honorarios 10 % and 11 %, ReteIVA 15 % and two **Ninguno** rows;
-rates read `19 %`, `2,5 %`; no ReteICA; no console errors.
+rates read `19 %`, `2,5 %`; Impoconsumo por valor is listed as inactive (its value per unit is set by the company
+first); no ReteICA; no console errors.
 
 **TAX-02 · The class filter narrows the list**
 Smoke: `e2e/taxes.spec.ts`.
@@ -826,7 +827,7 @@ warns "Aún no has registrado tu resolución de facturación…" and still lets 
 Smoke: `e2e/salesInvoice.spec.ts`.
 **Nueva factura** › Cliente `Dis…` › Distribuciones Andina › line 1 `SRV-01` › **Agregar forma de pago** Efectivo
 `595000` › **Agregar forma de pago** Crédito (*A 30 días*) › **Guardar** › **Emitir** › confirm.
-**Expected:** Tipo reads "Factura electrónica de venta (FE)"; after Guardar "Borrador guardado." and the address is
+**Expected:** Tipo reads "Factura de venta (FE)"; after Guardar "Borrador guardado." and the address is
 the invoice's; after Emitir "Factura FE-1 emitida y contabilizada.", the title is "Factura de venta FE-1", everything is
 read-only with "Saldo por cobrar: $ 595.000,00". In Contabilidad › Libro diario one entry: Dr 11050501 595.000, Dr
 13050501 595.000 (the client), Cr 413595 1.000.000, Cr 240805 190.000.

@@ -2,8 +2,8 @@
   "title": "Facturas de venta",
   "subtitle": "Factura a tus clientes con la numeración de tu resolución; al emitir se contabiliza sola.",
   "new": "Nueva factura",
-  "typeLabel": "Factura electrónica de venta",
-  "typeLabelWithPrefix": "Factura electrónica de venta ({{prefix}})",
+  "typeLabel": "Factura de venta",
+  "typeLabelWithPrefix": "Factura de venta ({{prefix}})",
   "statuses": {
     "draft": "Borrador",
     "emitted": "Emitida",

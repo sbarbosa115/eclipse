@@ -168,7 +168,7 @@ test('SAL-02 · an invoice paid half in cash and half at 30 days is saved, emitt
 
   await page.goto('/facturas-venta/nueva');
   await expect(page.getByLabel('Tipo')).toHaveValue(
-    'Factura electrónica de venta (FE)',
+    'Factura de venta (FE)',
   );
   await page.getByRole('combobox', {name: 'Cliente'}).fill('Dis');
   await page.getByRole('option', {name: /Distribuciones Andina/}).click();

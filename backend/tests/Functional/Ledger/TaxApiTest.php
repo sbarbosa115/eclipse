@@ -50,7 +50,8 @@ final class TaxApiTest extends CatalogTestCase
         foreach ($expected as $name => [$class, $kind, $rate]) {
             self::assertArrayHasKey($name, $taxes, "$name is seeded.");
             self::assertSame([$class, $kind, $rate], [$taxes[$name]['tax_class'], $taxes[$name]['kind'], $taxes[$name]['rate']], $name);
-            self::assertTrue($taxes[$name]['standard'] && $taxes[$name]['active'], "$name comes from the seed and is active.");
+            self::assertTrue($taxes[$name]['standard'], "$name comes from the seed.");
+            self::assertSame('Impoconsumo por valor' !== $name, $taxes[$name]['active'], 'Active, except the impoconsumo por valor, which waits for its value.');
         }
         self::assertSame('per_unit', $taxes['Impoconsumo por valor']['calculation']);
         $ninguno = array_filter($this->getJson('/api/v1/taxes?all=1')['items'], static fn (array $t) => 'Ninguno' === $t['name']);

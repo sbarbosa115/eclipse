@@ -31,8 +31,12 @@ final class CatalogProvisioner implements CompanyProvisioner
     public function provision(Uuid $companyId): void
     {
         $account = fn (?string $code): ?Uuid => null === $code ? null : $this->catalog->accountIdByCode($companyId, $code);
-        $tax = function (string $name, TaxClass $class, TaxKind $kind, string $rate, ?string $sales, ?string $purchases, TaxCalculation $calculation = TaxCalculation::Percentage) use ($companyId, $account): void {
-            $this->taxes->add(new Tax($companyId, $name, $class, $kind, $calculation, $rate, $account($sales), $account($purchases), standard: true));
+        $tax = function (string $name, TaxClass $class, TaxKind $kind, string $rate, ?string $sales, ?string $purchases, TaxCalculation $calculation = TaxCalculation::Percentage, bool $active = true) use ($companyId, $account): void {
+            $tax = new Tax($companyId, $name, $class, $kind, $calculation, $rate, $account($sales), $account($purchases), standard: true);
+            if (!$active) {
+                $tax->deactivate();
+            }
+            $this->taxes->add($tax);
         };
 
         $tax('Ninguno', TaxClass::Charge, TaxKind::None, '0.0000', null, null);
@@ -42,7 +46,8 @@ final class CatalogProvisioner implements CompanyProvisioner
         $tax('IVA por servicios 19 %', TaxClass::Charge, TaxKind::Vat, '19.0000', '240805', '240810');
         // Impoconsumo: no standard sub-account in the PUC for it, so null until the company creates one (§9 Q7).
         $tax('Impoconsumo 8 %', TaxClass::Charge, TaxKind::Consumption, '8.0000', '249505', null);
-        $tax('Impoconsumo por valor', TaxClass::Charge, TaxKind::Consumption, '0.0000', '249505', null, TaxCalculation::PerUnit);
+        // Its value per unit depends on what the company sells: seeded inactive at 0 until the accountant sets it.
+        $tax('Impoconsumo por valor', TaxClass::Charge, TaxKind::Consumption, '0.0000', '249505', null, TaxCalculation::PerUnit, active: false);
 
         $tax('Ninguno', TaxClass::Withholding, TaxKind::None, '0.0000', null, null);
         // Retención sufrida (sales) in 135515; practicada (purchases) by concept (§5).

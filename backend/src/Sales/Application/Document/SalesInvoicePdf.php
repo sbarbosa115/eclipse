@@ -68,7 +68,7 @@ final class SalesInvoicePdf
         return [
             'company' => $this->companies->view($companyId),
             'logo_data_uri' => $this->logo($companyId),
-            'title' => 'Factura electrónica de venta',
+            'title' => 'Factura de venta',
             'number' => $invoice->number(),
             'voided' => InvoiceStatus::Voided === $invoice->status(),
             'draft' => InvoiceStatus::Draft === $invoice->status(),

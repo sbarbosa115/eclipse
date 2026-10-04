@@ -70,6 +70,10 @@ test('TAX-01 · a new company has the seeded taxes', async ({
     await expect(rowOf(page, name), name).toBeVisible();
   }
   await expect(rowOf(page, 'ReteFuente compras 2,5 %')).toContainText('2,5 %');
+  await expect(
+    page.getByRole('cell', {name: /^Inactiv[oa]: Impoconsumo por valor$/}),
+    'seeded inactive until the company sets its value',
+  ).toBeVisible();
   await expect(rowOf(page, 'IVA 19 %')).toContainText('Impuesto · IVA');
   expect(errors).toEqual([]);
 });

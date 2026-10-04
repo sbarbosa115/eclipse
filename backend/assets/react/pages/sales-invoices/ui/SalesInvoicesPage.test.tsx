@@ -283,7 +283,7 @@ describe('the sales invoice editor', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByDisplayValue('Factura electrónica de venta (FE)'),
+      screen.getByDisplayValue('Factura de venta (FE)'),
     ).toBeInTheDocument();
     for (const name of ['Guardar', 'Emitir', 'Emitir y enviar']) {
       expect(screen.getByRole('button', {name})).toBeInTheDocument();
@@ -307,7 +307,7 @@ describe('the sales invoice editor', () => {
   it('does not save a draft without its client and shows why', async () => {
     const {calls} = api('owner');
     renderAt('/nueva');
-    await screen.findByDisplayValue('Factura electrónica de venta (FE)');
+    await screen.findByDisplayValue('Factura de venta (FE)');
 
     await userEvent.click(screen.getByRole('button', {name: 'Guardar'}));
 
