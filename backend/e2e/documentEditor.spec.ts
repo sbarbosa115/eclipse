@@ -202,7 +202,9 @@ test('DOC-04 · a product is created from a line and fills it', async ({
   await expect(
     page.getByRole('combobox', {name: 'Producto/Servicio, línea 1'}),
   ).toHaveValue('CUA-01 · Cuaderno rayado');
-  await expect(page.getByLabel('Valor unitario, línea 1')).toHaveValue('10.000');
+  await expect(page.getByLabel('Valor unitario, línea 1')).toHaveValue(
+    '10.000',
+  );
   await expect(
     page.getByRole('cell', {name: '$ 11.900,00'}),
     'an IVA-included price is the line total',
