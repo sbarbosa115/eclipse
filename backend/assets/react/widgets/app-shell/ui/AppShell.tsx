@@ -88,6 +88,17 @@ const MENU: NavSection[] = [
   },
 ];
 
+/** The section a path belongs to: the longest menu entry it starts with ("/" only for the dashboard itself). */
+export function sectionOf(pathname: string): NavItem | undefined {
+  return MENU.flatMap((section) => section.items)
+    .filter((item) =>
+      item.end
+        ? pathname === item.to
+        : pathname === item.to || pathname.startsWith(`${item.to}/`),
+    )
+    .sort((a, b) => b.to.length - a.to.length)[0];
+}
+
 function menuFor(session: Session): NavSection[] {
   return MENU.map((section) => ({
     ...section,
@@ -139,6 +150,13 @@ function SignedInShell({session}: {session: Session}) {
     setOpenedOn(location.pathname);
     setOpen(false);
   }
+  // The tab's title names the section, so it never keeps the one of the page before (sign-in, an invitation…).
+  const section = sectionOf(location.pathname);
+  const title = section ? t(section.label) : null;
+  useEffect(() => {
+    document.title = title ? `${title} · Mustang` : 'Mustang';
+  }, [title]);
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event: KeyboardEvent) => {

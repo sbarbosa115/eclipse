@@ -71,4 +71,17 @@ describe('the app', () => {
       'A billing user does not configure the company.',
     ).not.toBeInTheDocument();
   });
+
+  it('names the browser tab after the section, not the page before (M4)', async () => {
+    fakeApi({'GET /me': [200, ANA]});
+    document.title = 'Ingresar · Mustang';
+    window.history.pushState({}, '', '/terceros');
+    render(<App />);
+
+    await screen.findAllByText('Acme S.A.S.');
+    await vi.waitFor(() => expect(document.title).toBe('Terceros · Mustang'));
+
+    await userEvent.click(screen.getByRole('link', {name: 'Tablero'}));
+    await vi.waitFor(() => expect(document.title).toBe('Tablero · Mustang'));
+  });
 });
