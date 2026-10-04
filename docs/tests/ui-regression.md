@@ -1320,6 +1320,108 @@ has no errors.
 
 <!-- Owned by item 12 "supplier-payment" (PAY-01 – 19). -->
 
+Recibos de pago at **`/recibos-pago`**. Every case runs as the owner of a company with a supplier **Servicios Andinos
+S.A.S.** (role Proveedor, with an e-mail) and emitted facturas de compra for it with a part on **Crédito** (section 9:
+a service of 1.000.000 with IVA 19 % and ReteFuente 4 % is a payable of 1.150.000), unless it says otherwise. A payment
+has no draft: **Guardar** emits it.
+
+**PAY-01 · A company without payments is told what the section is for**
+Smoke: `e2e/supplierPayment.spec.ts`.
+A brand-new company › **Recibos de pago** › **Registrar el primer recibo de pago**.
+**Expected:** the list says "Aún no has registrado recibos de pago…"; the new payment says "Elige el proveedor para ver
+sus facturas pendientes de pago.", *De dónde sale el dinero* lists Efectivo, Tarjeta débito, Tarjeta crédito and
+Transferencia but not Crédito, Fecha is today as DD/MM/AAAA, and **Guardar** is disabled.
+
+**PAY-02 · A payment clears the payable and pays the purchase invoice (AC-6)**
+Smoke: `e2e/supplierPayment.spec.ts`; by hand: the libro diario and the balance de prueba.
+A factura de compra of 1.150.000 on crédito › **Nuevo recibo de pago** › Proveedor `Ser…` › Servicios Andinos ›
+Transferencia › Valor pagado `1.150.000` › **Pagar todo** on the invoice › **Guardar**.
+**Expected:** the table shows the invoice with fecha, vencimiento (30 days on), valor and saldo $ 1.150.000,00; "✓
+Cuadra…" once the row is paid; "Recibo de pago RP-1 guardado y contabilizado." on the payment, read-only. The factura de
+compra is **Pagada**. Libro diario: one entry RP-1, Dr 22050501 1.150.000 (the supplier), Cr 11100501 1.150.000; the
+supplier's 2205 balance is zero and the balance de prueba still balances.
+
+**PAY-03 · The running difference holds Guardar until it is zero**
+Smoke: `e2e/supplierPayment.spec.ts`.
+Two invoices on crédito › Valor pagado `700000` › `595000` on the first › `200000` on the second › `595000,01` on the
+first › `500000` on the first.
+**Expected:** "Falta aplicar $ 105.000,00.", then "Aplicaste $ 95.000,00 de más.", then "Supera el saldo de la
+factura." under the row, each with Guardar disabled; then "✓ Cuadra…" and Guardar enabled.
+
+**PAY-04 · A payment is voided with a reason and the invoice is owed again**
+Smoke: `e2e/supplierPayment.spec.ts`; by hand: the libro diario.
+A payment paying the invoice in full › open it › **Anular** › **Anular recibo de pago** with no reason › `Transferencia
+rechazada` › **Anular recibo de pago**.
+**Expected:** without a reason "Escribe el motivo de la anulación."; then "Recibo de pago RP-1 anulado.", "Anulado el
+… Motivo: Transferencia rechazada", no Anular; the factura de compra is **Emitida** with its saldo again; the libro
+diario shows the reversing entry dated today; the next payment is RP-2.
+
+**PAY-05 · The list searches, filters and offers a way back**
+Smoke: `e2e/supplierPayment.spec.ts` (status, search); by hand: Desde / Hasta.
+Two payments › **Estado** Anulado › **Ver todo** › search `RP-1`, then `andinos`; **Desde** / **Hasta** around a date.
+**Expected:** newest first, each row with its number and badge, proveedor, fecha, de dónde salió, the invoices it paid
+and the valor (right-aligned), tinted by status with the legend; Anulado with none says "Ningún recibo coincide con
+estos filtros." and **Ver todo** clears every filter.
+
+**PAY-06 · Guardar y enviar mails the PDF to the supplier**
+Smoke: `e2e/supplierPayment.spec.ts`; by hand: open the attachment.
+A payment filled in › **Guardar y enviar**.
+**Expected:** "Recibo de pago RP-1 guardado; el correo con el PDF va en camino."; in Mailpit "Recibo de pago RP-1 de …"
+to the supplier's e-mail with `recibo-de-pago-RP-1.pdf` attached. **Enviar** in the list or on the payment sends it
+again. A supplier without e-mail: "El proveedor no tiene correo…" and nothing is saved.
+
+**PAY-07 · A payment that does not exist, or another company's, says so**
+Smoke: `e2e/supplierPayment.spec.ts`.
+Open `/recibos-pago/<an id of another company>`.
+**Expected:** "Este recibo de pago no existe." with **Volver a recibos de pago**.
+
+**PAY-08 · The PDF reads as a recibo de pago, and ANULADA once voided**
+Open a payment › **Descargar PDF**; then void it and download again.
+**Expected:** the company's header and logo, "Recibo de pago", "No. RP-1", the supplier with its NIT, the date, where
+the money went out from, each invoice with the amount applied, "Total pagado", the observaciones and a signature line;
+after the void *ANULADA* across the page and "ANULADO el … Motivo: …".
+
+**PAY-09 · A supplier with nothing owed, and a refusal from the server**
+A supplier whose invoices are all cash › **Nuevo recibo de pago** › choose it. Then, in two tabs, the same payable paid
+in full in each › **Guardar** in the first, then in the second.
+**Expected:** "Este proveedor no tiene facturas pendientes de pago."; the second tab is refused with "Un valor aplicado
+supera el saldo de su factura…" and the table reloads with the saldo now left (zero rows if paid).
+
+**PAY-10 · Nothing is paid on or before the lock date (AC-9)**
+Contabilidad › fecha de bloqueo yesterday › a payment dated yesterday › **Guardar**.
+**Expected:** "La fecha está en un periodo contable cerrado (fecha de bloqueo)." and nothing is numbered or applied; a
+payment dated today saves. With the lock date today, **Anular** is refused the same way.
+
+**PAY-11 · An invoice with a payment applied is voided only after the payment**
+A factura de compra with a partial payment (PAY-04 without the void) › the invoice in Facturas de compra.
+**Expected:** the invoice is Pagada parcialmente and cannot be voided ("tiene pagos aplicados"); after voiding the
+payment it is Emitida and can be voided.
+
+**PAY-12 · The accountant pays and voids like billing**
+Signed in as the accountant (section 1): create, send and void a payment.
+**Expected:** everything works as for the owner (decided 2026-10-04: the accountant does every document action).
+
+**PAY-13 · A billing user pays**
+Signed in as a billing user: create, send and void a payment.
+**Expected:** everything works as for the owner.
+
+**PAY-14 · The supplier search only offers suppliers**
+A client-only tercero named like the supplier › **Nuevo recibo de pago** › Proveedor `Ser…`.
+**Expected:** only terceros with the role Proveedor are listed; a search with fewer than 3 characters says "Escribe al
+menos 3 caracteres."; a name that matches nobody says "Ningún proveedor coincide."
+
+**PAY-15 · Cash receipts are unchanged by the shared allocation table**
+Open **Nuevo recibo de caja** with a client's invoices (section 11).
+**Expected:** the table still reads "Valor recibido", "Cuadra: el valor aplicado es igual al valor recibido." (the
+recibo de pago says "valor pagado").
+
+**PAY-16 · The screens on a tablet, in both themes**
+At 1366×768, 1024×768 and 768×1024, Tema Claro and Oscuro: the list with filters, a new payment with three invoices, a
+payment and a voided one, the void dialog.
+**Expected:** the supplier search list opens under its box; the allocation table's amount inputs and Pagar todo stay
+visible (the table scrolls inside its frame on a narrow screen); the difference line reads in both themes; the console
+has no errors.
+
 ## 13. Cartera, reports and dashboard
 
 <!-- Owned by item 13 "reports" (REP-01 – 19). -->

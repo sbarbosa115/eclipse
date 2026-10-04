@@ -49,3 +49,8 @@ export {
   type IdentityValues,
 } from './ui/IdentificationFields';
 export {RoleCheckboxes} from './ui/RoleCheckboxes';
+export {
+  TerceroPicker,
+  type PickedTercero,
+  type TerceroPickerLabels,
+} from './ui/TerceroPicker';

@@ -4,8 +4,8 @@ namespace App\Tests\Unit\Purchasing;
 
 use App\Purchasing\Domain\Error\AllocationExceedsBalance;
 use App\Purchasing\Domain\Error\InvalidPayment;
-use App\Purchasing\Domain\Error\PaymentAlreadyVoided;
 use App\Purchasing\Domain\Error\PaymentAllocationsDoNotMatchAmount;
+use App\Purchasing\Domain\Error\PaymentAlreadyVoided;
 use App\Purchasing\Domain\Model\Payable;
 use App\Purchasing\Domain\Model\PayableAllocation;
 use App\Purchasing\Domain\Model\SupplierPayment;

@@ -4,8 +4,8 @@ namespace App\Purchasing\Domain\Model;
 
 use App\Purchasing\Domain\Error\AllocationExceedsBalance;
 use App\Purchasing\Domain\Error\InvalidPayment;
-use App\Purchasing\Domain\Error\PaymentAlreadyVoided;
 use App\Purchasing\Domain\Error\PaymentAllocationsDoNotMatchAmount;
+use App\Purchasing\Domain\Error\PaymentAlreadyVoided;
 use App\Shared\Domain\Model\CompanyOwned;
 use App\Shared\Domain\Model\DocumentAuditColumns;
 use App\Shared\Domain\Model\ReceiptColumns;
