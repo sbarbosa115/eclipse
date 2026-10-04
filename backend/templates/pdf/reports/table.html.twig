@@ -1,0 +1,31 @@
+{#
+    Any report as a table, in the company's frame (reports item). Context: columns [{label, numeric}], rows (lists of
+    already printed text), totals (a printed row or null), subtitle (lines under the header); company, logo_data_uri,
+    title as the frame needs.
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% block body %}
+    {% for line in subtitle %}<div class="muted">{{ line }}</div>{% endfor %}
+    <table class="lines">
+        <thead>
+            <tr>
+                {% for column in columns %}<th{% if column.numeric %} class="num"{% endif %}>{{ column.label }}</th>{% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for cell in row %}<td{% if columns[loop.index0].numeric %} class="num"{% endif %}>{{ cell }}</td>{% endfor %}
+                </tr>
+            {% else %}
+                <tr><td colspan="{{ columns|length }}" class="muted">Sin datos para este reporte.</td></tr>
+            {% endfor %}
+            {% if totals %}
+                <tr>
+                    {% for cell in totals %}<td class="{% if columns[loop.index0].numeric %}num {% endif %}total"><strong>{{ cell }}</strong></td>{% endfor %}
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+{% endblock %}
