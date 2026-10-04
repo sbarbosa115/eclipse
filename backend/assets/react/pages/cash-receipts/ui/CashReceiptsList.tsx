@@ -33,7 +33,6 @@ import {
 } from '../api/cashReceiptApi';
 import {cashReceiptErrorMessage} from '../lib/errorMessage';
 import {canWriteCashReceipts} from '../model/access';
-import {receiptTone} from '../model/status';
 
 const PER_PAGE = 25;
 
@@ -196,7 +195,7 @@ export function CashReceiptsList() {
             <>
               <RowLegend
                 statuses={RECEIPT_STATUSES.map((s) => ({
-                  value: receiptTone(s),
+                  value: s,
                   label: statusLabel(s),
                 }))}
               />
@@ -214,12 +213,12 @@ export function CashReceiptsList() {
                 renderRow={(receipt) => (
                   <Row
                     key={receipt.id}
-                    status={receiptTone(receipt.status)}
+                    status={receipt.status}
                     label={statusLabel(receipt.status)}
                   >
                     <td>
                       <Link to={receipt.id}>{receipt.number}</Link>{' '}
-                      <Badge value={receiptTone(receipt.status)}>
+                      <Badge value={receipt.status}>
                         {statusLabel(receipt.status)}
                       </Badge>
                     </td>

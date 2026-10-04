@@ -24,7 +24,6 @@ import {
 } from '../api/supplierPaymentApi';
 import {supplierPaymentErrorMessage} from '../lib/errorMessage';
 import {canWriteSupplierPayments} from '../model/access';
-import {paymentTone} from '../model/status';
 
 type Load =
   | {status: 'loading'}
@@ -101,9 +100,7 @@ export function SupplierPaymentView() {
     <div className="supplier-payment-view">
       <PageHeader
         title={t('supplierPayment.view.title', {number: payment.number})}
-        subtitle={
-          <Badge value={paymentTone(payment.status)}>{statusLabel}</Badge>
-        }
+        subtitle={<Badge value={payment.status}>{statusLabel}</Badge>}
         actions={
           <>
             {back}

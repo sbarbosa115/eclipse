@@ -6,7 +6,6 @@ import {
   listPurchaseInvoices,
   purchaseErrorMessage,
   purchaseInvoicePdfUrl,
-  rowStatus,
   STATUSES,
   VoidPurchaseInvoiceModal,
   type PurchaseInvoicePage,
@@ -177,9 +176,15 @@ export function PurchaseInvoiceList({canWrite}: {canWrite: boolean}) {
           <>
             <RowLegend
               statuses={(
-                ['draft', 'partially_paid', 'paid', 'voided'] as const
+                [
+                  'draft',
+                  'emitted',
+                  'partially_paid',
+                  'paid',
+                  'voided',
+                ] as const
               ).map((s) => ({
-                value: rowStatus(s) ?? s,
+                value: s,
                 label: t(`purchaseInvoice.status.${s}`),
               }))}
             />
@@ -198,7 +203,7 @@ export function PurchaseInvoiceList({canWrite}: {canWrite: boolean}) {
               renderRow={(invoice) => (
                 <Row
                   key={invoice.id}
-                  status={rowStatus(invoice.status)}
+                  status={invoice.status}
                   label={t(`purchaseInvoice.status.${invoice.status}`)}
                 >
                   <td>

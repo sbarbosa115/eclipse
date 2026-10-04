@@ -318,6 +318,9 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   de pago search every role or `proveedor`, inactive ones included; the document editor searches active terceros and
   offers the quick-create. Every account search is `features/pick-account` (product accounts, taxes, payment methods,
   purchase lines).
+- **Document statuses have their own tones in the kit** (`toneFor`, badges and row tints): `draft` warning,
+  `emitted` info, `partially_paid` accent, `paid` and `accepted` success, `rejected`, `expired` and `voided`
+  neutral; every document list (facturas, cotizaciones, recibos) passes its status as it is.
 - **Amounts are typed the Colombian way, everywhere:** `MoneyInput` (`@/shared/ui`) accepts `1.190.000,50`,
   `595000,5` or `595000.50` and hands its form a decimal string with a point (`places` 2 for money, 4 for unit prices
   and tax rates; `parseDecimal`/`parseAmount` in `@/shared/lib`). A dot followed by groups of three digits is a
@@ -428,8 +431,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   which lists every role, never leads to a refusal). Retenciones are chosen per line by the user; nothing proposes them
   from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3), and ReteIVA is computed
   on the line's base like every withholding (`DocumentTotals`), not on its IVA. Taxes are not filtered by their validity
-  dates (F5). No e-mail of a purchase invoice (it is the supplier's document). The list's row tints borrow the kit's
-  existing tones (`prospect`, `order_confirmed`, `active`, `cancelled`) until the kit has invoice statuses.
+  dates (F5). No e-mail of a purchase invoice (it is the supplier's document).
 - Quotations: accepting and rejecting record no user or moment (only emission and void do); there is no partial acceptance (one conversion, §9 Q17); the editor has no attachments, and Encabezado sits in the form's footer (the shared form has no slot above the lines). The offer's validity is stored per quotation, not configurable per company (30 days default).
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several

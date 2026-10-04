@@ -10,22 +10,6 @@ export const STATUSES = [
   'voided',
 ] as const;
 
-/**
- * The kit's row tint for a status (tables have no status column, the colour is the status): a draft waits for the
- * user, a partly paid one is in progress, a paid one is done, a voided one is over. An emitted, unpaid one is plain.
- */
-const ROW_TONES: Record<string, string | null> = {
-  draft: 'prospect',
-  emitted: null,
-  partially_paid: 'order_confirmed',
-  paid: 'active',
-  voided: 'cancelled',
-};
-
-export function rowStatus(status: string): string | null {
-  return ROW_TONES[status] ?? null;
-}
-
 /** §4.12: an emitted invoice is voided only while no payment is allocated to it. */
 export function canVoid(invoice: {
   status: string;

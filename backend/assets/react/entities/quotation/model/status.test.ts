@@ -1,4 +1,4 @@
-import {canConvert, canDecide, canSend, canVoid, statusTone} from './status';
+import {canConvert, canDecide, canSend, canVoid} from './status';
 
 describe('what can be done with a quotation', () => {
   it('lets an open emitted quotation be sent, decided, converted and voided', () => {
@@ -39,11 +39,5 @@ describe('what can be done with a quotation', () => {
         canConvert({status}),
       ]).toEqual([false, false, false]);
     }
-  });
-
-  it('colours each status for the list', () => {
-    expect(statusTone('accepted')).toBe('active');
-    expect(statusTone('draft')).toBe('prospect');
-    expect(statusTone('nonsense')).toBe('neutral');
   });
 });

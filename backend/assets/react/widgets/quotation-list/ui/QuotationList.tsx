@@ -9,7 +9,6 @@ import {
   quotationErrorMessage,
   quotationPdfUrl,
   sendQuotation,
-  statusTone,
   voidQuotation,
   type QuotationPage,
   type QuotationSummary,
@@ -203,7 +202,7 @@ export function QuotationList({
           <>
             <RowLegend
               statuses={QUOTATION_STATUSES.map((s) => ({
-                value: statusTone(s),
+                value: s,
                 label: statusLabel(s),
               }))}
             />
@@ -220,14 +219,14 @@ export function QuotationList({
               renderRow={(quotation) => (
                 <Row
                   key={quotation.id}
-                  status={statusTone(quotation.status)}
+                  status={quotation.status}
                   label={statusLabel(quotation.status)}
                 >
                   <td>
                     <Link to={quotation.id}>
                       {quotation.number ?? t('quotation.list.draftNumber')}
                     </Link>{' '}
-                    <Badge value={statusTone(quotation.status)}>
+                    <Badge value={quotation.status}>
                       {statusLabel(quotation.status)}
                     </Badge>
                   </td>

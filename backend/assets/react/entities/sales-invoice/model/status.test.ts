@@ -1,4 +1,4 @@
-import {canSend, canVoid, statusTone} from './status';
+import {canSend, canVoid} from './status';
 
 describe('sales invoice status helpers', () => {
   it('voids an emitted invoice only while nothing was collected', () => {
@@ -15,11 +15,5 @@ describe('sales invoice status helpers', () => {
     expect(canSend({status: 'emitted'})).toBe(true);
     expect(canSend({status: 'draft'})).toBe(false);
     expect(canSend({status: 'voided'})).toBe(false);
-  });
-
-  it('gives every status a tone of the kit', () => {
-    expect(statusTone('paid')).toBe('active');
-    expect(statusTone('voided')).toBe('cancelled');
-    expect(statusTone('unknown')).toBe('neutral');
   });
 });
