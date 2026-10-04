@@ -66,7 +66,9 @@ export function InviteUserModal({
       setFailure(
         error instanceof ApiError && error.status === 403
           ? t('access.users.errors.forbidden')
-          : t('common.errors.unexpected'),
+          : error instanceof ApiError && error.code === 'too_many_emails'
+            ? t('access.users.errors.too_many_emails')
+            : t('common.errors.unexpected'),
       );
     }
   };

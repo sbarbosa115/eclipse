@@ -41,6 +41,7 @@ const KNOWN_ERRORS = [
   'not_an_invitation',
   'user_not_found',
   'forbidden',
+  'too_many_emails',
 ];
 
 type Notice = {kind: 'success' | 'error'; text: string} | null;

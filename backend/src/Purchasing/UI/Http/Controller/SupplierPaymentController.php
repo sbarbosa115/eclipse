@@ -22,6 +22,7 @@ use App\Shared\Application\Command\CommandBus;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\Security\EmailQuota;
 use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -116,9 +117,12 @@ final class SupplierPaymentController extends AbstractController
     #[Route('', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]
     #[ApiResponse(SupplierPaymentOutput::class, status: 201)]
-    public function create(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
+    public function create(Request $request, #[CurrentUser] SignedInUser $user, EmailQuota $quota): JsonResponse
     {
         $in = $this->inputs->map($this->inputs->json($request), SupplierPaymentInput::class);
+        if ($in->send) {
+            $quota->spendOnDocument($user);
+        }
         $id = $this->commands->dispatch(new PaySupplier(
             $user->companyId(),
             $user->userId(),
@@ -154,8 +158,9 @@ final class SupplierPaymentController extends AbstractController
     /** E-mails the payment's PDF to the supplier again → 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`. */
     #[Route('/{id}/send', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]
-    public function send(string $id, #[CurrentUser] SignedInUser $user): Response
+    public function send(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): Response
     {
+        $quota->spendOnDocument($user);
         $this->commands->dispatch(new SendSupplierPayment($user->companyId(), self::paymentId($id)));
 
         return new Response(null, 202);

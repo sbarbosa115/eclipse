@@ -123,6 +123,7 @@
     "not_found": "No encontramos lo que buscabas.",
     "forbidden": "Tu rol no puede hacer esto con los recibos de caja.",
     "validation_failed": "Revisa los campos marcados.",
+    "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde.",
     "unexpected": "Algo salió mal. Inténtalo de nuevo."
   }
 }

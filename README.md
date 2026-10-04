@@ -84,7 +84,9 @@ slice's `index.ts`. Types come from the OpenAPI schema (`Schema<'TaxOutput'>`). 
 
 All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (`"1190000.00"`, `"19.0000"`). Errors are
 `{"error": "<code>", "message": "…", "detail"?: {…}, "violations"?: [{field, message}]}`; another company's id is
-404. Writes must come from the app's own origin (403 otherwise).
+404. Writes must come from the app's own origin (403 otherwise). Every call that e-mails (`send`, `emit-and-send`,
+`send: true` on a receipt or payment, an invitation or its resend) counts against the company's hourly e-mail quota:
+429 `too_many_emails` once it is spent, and nothing is emitted or sent.
 
 | Method | Path | Answers | Errors |
 |---|---|---|---|
@@ -353,6 +355,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   accounts, posting rules, the lock date), Company (profile, logo, resolution, numbering series) and Party (a
   tercero's personal data exported or erased, subject `tercero`) record through it too, with the same actions and
   data as before (their tests assert the rows).
+- **A company's e-mails are bounded** (`Shared\UI\Http\Security\EmailQuota`, `config/packages/rate_limiter.yaml`):
+  200 document e-mails and 20 invitations an hour per company, asked in the controller before anything changes. Anyone
+  can sign up and a tercero's e-mail is whatever is typed, so without it the app would relay mail under its sender
+  (security audit 2026-10-04).
 - **E-mails leave through the queue.** Command handlers publish an event (`InvitationIssued`,
   `PasswordResetRequested`, handled after the commit); the handler renders Twig templates (`templates/emails/access/`)
   and `QueuedMailer` puts them on Messenger's `async` transport, which the worker (a cron line on cPanel) sends.

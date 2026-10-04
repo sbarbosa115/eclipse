@@ -27,6 +27,7 @@ use App\Shared\Domain\Error\NotFound;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\Security\EmailQuota;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -137,16 +138,20 @@ final class SalesInvoiceController extends AbstractController
      */
     #[Route('/{id}/emit-and-send', methods: ['POST'])]
     #[ApiResponse(SalesInvoiceOutput::class)]
-    public function emitAndSend(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
+    public function emitAndSend(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): JsonResponse
     {
+        $this->access->mayWrite($user);
+        $quota->spendOnDocument($user);
+
         return $this->emitting($id, $user, true);
     }
 
     /** E-mails an emitted invoice's PDF again → 202. 409 `document_not_emitted`; 422 `tercero_has_no_email`. */
     #[Route('/{id}/send', methods: ['POST'])]
-    public function send(string $id, #[CurrentUser] SignedInUser $user): Response
+    public function send(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): Response
     {
         $this->access->mayWrite($user);
+        $quota->spendOnDocument($user);
         $this->commands->dispatch(new SendSalesInvoice($user->companyId(), $this->access->invoiceId($id)));
 
         return new Response(null, 202);

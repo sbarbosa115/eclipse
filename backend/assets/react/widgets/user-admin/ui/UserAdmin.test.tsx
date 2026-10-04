@@ -263,6 +263,36 @@ describe('Configuración › Usuarios', () => {
     expect(api.calls.filter((c) => c.method === 'POST')).toHaveLength(1);
   });
 
+  it('explains that the company sent too many e-mails this hour', async () => {
+    fakeApi({
+      'GET /me': [200, sessionOf('owner')],
+      'GET /users': [200, {items: [user(), EVA]}],
+      'POST /users/u3/invitation': [429, {error: 'too_many_emails'}],
+      'POST /users/invitations': [429, {error: 'too_many_emails'}],
+    });
+    renderTab();
+    const tooMany =
+      'La empresa envió demasiados correos en la última hora. Inténtalo más tarde.';
+
+    await userEvent.click(
+      await screen.findByRole('button', {name: 'Reenviar invitación'}),
+    );
+    expect(await screen.findByText(tooMany)).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Invitar a tu contador'}),
+    );
+    const dialog = screen.getByRole('dialog', {name: 'Invitar a tu contador'});
+    await userEvent.type(
+      within(dialog).getByLabelText('Correo electrónico'),
+      'otra@contadores.co',
+    );
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Enviar invitación'}),
+    );
+    expect(await within(dialog).findByText(tooMany)).toBeInTheDocument();
+  });
+
   it('filters by status, and "Ver todo" brings everyone back', async () => {
     fakeApi({
       'GET /me': [200, sessionOf('owner')],

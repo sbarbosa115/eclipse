@@ -15,6 +15,7 @@ use App\Access\UI\Http\Output\UserOutput;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\Security\EmailQuota;
 use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -58,9 +59,10 @@ final class UserController extends AbstractController
      */
     #[Route('/invitations', methods: ['POST'])]
     #[ApiResponse(UserOutput::class, status: 201)]
-    public function invite(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
+    public function invite(Request $request, #[CurrentUser] SignedInUser $user, EmailQuota $quota): JsonResponse
     {
         $input = $this->inputs->map($this->inputs->json($request), InviteUserInput::class);
+        $quota->spendOnInvitation($user);
         $id = $this->commands->dispatch(new InviteUser($user->companyId(), $user->userId(), $input->email, Role::from($input->role)));
         \assert($id instanceof Uuid);
 
@@ -73,9 +75,10 @@ final class UserController extends AbstractController
      */
     #[Route('/{id}/invitation', methods: ['POST'])]
     #[ApiResponse(UserOutput::class)]
-    public function resend(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
+    public function resend(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): JsonResponse
     {
         $userId = self::id($id);
+        $quota->spendOnInvitation($user);
         $this->commands->dispatch(new ResendInvitation($user->companyId(), $user->userId(), $userId));
 
         return $this->json($this->output($user, $userId));

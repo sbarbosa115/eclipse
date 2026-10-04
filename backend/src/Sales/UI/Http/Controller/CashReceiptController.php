@@ -21,6 +21,7 @@ use App\Shared\Application\Command\CommandBus;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\Security\EmailQuota;
 use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -114,9 +115,12 @@ final class CashReceiptController extends AbstractController
     #[Route('', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]
     #[ApiResponse(CashReceiptOutput::class, status: 201)]
-    public function create(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
+    public function create(Request $request, #[CurrentUser] SignedInUser $user, EmailQuota $quota): JsonResponse
     {
         $in = $this->inputs->map($this->inputs->json($request), CashReceiptInput::class);
+        if ($in->send) {
+            $quota->spendOnDocument($user);
+        }
         $id = $this->commands->dispatch(new ReceiveCash(
             $user->companyId(),
             $user->userId(),
@@ -152,8 +156,9 @@ final class CashReceiptController extends AbstractController
     /** E-mails the receipt's PDF to the client again → 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`. */
     #[Route('/{id}/send', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]
-    public function send(string $id, #[CurrentUser] SignedInUser $user): Response
+    public function send(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): Response
     {
+        $quota->spendOnDocument($user);
         $this->commands->dispatch(new SendCashReceipt($user->companyId(), self::receiptId($id)));
 
         return new Response(null, 202);

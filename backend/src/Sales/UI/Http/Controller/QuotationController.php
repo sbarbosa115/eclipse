@@ -31,6 +31,7 @@ use App\Shared\Domain\Error\NotFound;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\Security\EmailQuota;
 use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -143,16 +144,19 @@ final class QuotationController extends AbstractController
     #[Route('/{id}/emit-and-send', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]
     #[ApiResponse(QuotationOutput::class)]
-    public function emitAndSend(string $id, #[CurrentUser] SignedInUser $user): JsonResponse
+    public function emitAndSend(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): JsonResponse
     {
+        $quota->spendOnDocument($user);
+
         return $this->emitting($id, $user, true);
     }
 
     /** E-mails an emitted quotation's PDF again → 202. 409 `quotation_not_open`; 422 `tercero_has_no_email`. */
     #[Route('/{id}/send', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]
-    public function send(string $id, #[CurrentUser] SignedInUser $user): Response
+    public function send(string $id, #[CurrentUser] SignedInUser $user, EmailQuota $quota): Response
     {
+        $quota->spendOnDocument($user);
         $this->commands->dispatch(new SendQuotation($user->companyId(), $this->quotationId($id)));
 
         return new Response(null, 202);

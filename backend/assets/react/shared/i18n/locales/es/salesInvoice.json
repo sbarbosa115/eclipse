@@ -96,6 +96,7 @@
     "sales_invoice_not_found": "Esta factura no existe.",
     "forbidden": "Tu rol no puede hacer esto con las facturas.",
     "validation_failed": "Revisa los campos marcados.",
+    "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde.",
     "unexpected": "Algo salió mal. Inténtalo de nuevo."
   }
 }

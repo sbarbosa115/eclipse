@@ -64,7 +64,8 @@
       "cannot_deactivate_yourself": "No puedes desactivarte a ti mismo.",
       "not_an_invitation": "Esta persona ya aceptó la invitación.",
       "user_not_found": "Este usuario ya no existe.",
-      "forbidden": "Solo el administrador gestiona los usuarios."
+      "forbidden": "Solo el administrador gestiona los usuarios.",
+      "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde."
     }
   },
   "invite": {
