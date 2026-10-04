@@ -204,6 +204,15 @@ final class SalesInvoiceApiTest extends ApiTestCase
         self::assertStringStartsWith('%PDF-', (string) $this->client->getResponse()->getContent());
     }
 
+    public function testAnEmptyDueDateIsNoDueDateNotToday(): void
+    {
+        $credit = ['payment_method_id' => $this->methodId('Crédito'), 'amount' => '1190000.00', 'due_date' => ''];
+        $body = $this->sendJson('POST', '/api/v1/sales-invoices', $this->payload($this->client(), $this->service(), ['payments' => [$credit]]));
+
+        self::assertResponseStatusCodeSame(422, 'An empty due date is missing, not today: a crédito line needs one.');
+        self::assertContains('payments.0.due_date', array_column($body['violations'] ?? [], 'field'), json_encode($body) ?: '');
+    }
+
     public function testTheAccountantWritesSalesInvoices(): void
     {
         $client = $this->client();

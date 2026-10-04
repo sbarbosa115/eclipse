@@ -31,8 +31,8 @@ final class UpdateTaxHandler implements CommandHandler
             $command->rate,
             $this->accounts->forTax($command->companyId, $command->salesAccountId, 'sales_account_id'),
             $this->accounts->forTax($command->companyId, $command->purchaseAccountId, 'purchase_account_id'),
-            null === $command->validFrom ? null : new \DateTimeImmutable($command->validFrom),
-            null === $command->validTo ? null : new \DateTimeImmutable($command->validTo),
+            null === $command->validFrom || '' === $command->validFrom ? null : new \DateTimeImmutable($command->validFrom),
+            null === $command->validTo || '' === $command->validTo ? null : new \DateTimeImmutable($command->validTo),
         );
         $this->audit->record($command->companyId, $command->userId, 'tax.updated', 'tax', $tax->id(), ['from' => $before, 'to' => TaxSnapshots::of($tax)]);
     }

@@ -68,6 +68,16 @@ final class TaxApiTest extends CatalogTestCase
         self::assertSame($this->account($company, '240810'), $iva['purchase_account_id'], 'IVA descontable posts to 240810.');
     }
 
+    public function testEmptyValidityDatesMeanAlwaysValidNotToday(): void
+    {
+        $this->signUpOwner();
+
+        $created = $this->sendJson('POST', '/api/v1/taxes', $this->ivaPayload(['valid_from' => '', 'valid_to' => '']));
+
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame([null, null], [$created['valid_from'], $created['valid_to']], 'An empty date is no date: the tax is always valid.');
+    }
+
     public function testTheAccountantCreatesATaxWithItsAccountsAndValidityDates(): void
     {
         $company = $this->signUpOwner();
