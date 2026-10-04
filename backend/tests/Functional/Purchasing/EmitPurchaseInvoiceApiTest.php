@@ -168,7 +168,7 @@ final class EmitPurchaseInvoiceApiTest extends ApiTestCase
 
         self::assertResponseIsSuccessful();
         $profile = $this->client->getProfile();
-        self::assertNotFalse($profile);
+        self::assertInstanceOf(\Symfony\Component\HttpKernel\Profiler\Profile::class, $profile, 'The profiler collected this request.');
         /** @var \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector $db */
         $db = $profile->getCollector('db');
         $locks = array_filter(array_merge(...array_values($db->getQueries())), static fn (array $q) => str_contains($q['sql'], 'purchase_invoice') && str_contains($q['sql'], 'FOR UPDATE'));
