@@ -26,11 +26,10 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Index(name: 'quotation_tercero', columns: ['company_id', 'tercero_id'])]
 class Quotation implements CompanyOwned
 {
-    /** §9 Q17: how long an offer is valid unless the person says otherwise. */
-    public const VALIDITY_DAYS = 30;
-
     use DocumentAuditColumns;
     use DocumentTotalsColumns;
+    /** §9 Q17: how long an offer is valid unless the person says otherwise. */
+    public const VALIDITY_DAYS = 30;
 
     #[ORM\Id]
     #[ORM\Column(type: 'uuid')]

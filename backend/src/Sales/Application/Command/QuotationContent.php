@@ -66,7 +66,7 @@ final class QuotationContent
             throw new InvalidQuotation($this->violations);
         }
 
-        $quotation->revise($data->terceroId, $client?->displayName ?? $quotation->terceroName(), $data->contactId, $data->responsibleId, $data->issueDate, $data->expiryDate, $data->header, $data->terms, $data->notes);
+        $quotation->revise($data->terceroId, null === $client ? $quotation->terceroName() : $client->displayName, $data->contactId, $data->responsibleId, $data->issueDate, $data->expiryDate, $data->header, $data->terms, $data->notes);
         $quotation->replaceLines($lines);
     }
 

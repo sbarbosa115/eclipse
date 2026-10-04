@@ -1,0 +1,9 @@
+/* Item 10 (quotation): the cotizaciones list. */
+.admin .quotation-date input {
+  width: 9.5rem;
+}
+
+.admin .quotation-list td.num {
+  text-align: right;
+  white-space: nowrap;
+}

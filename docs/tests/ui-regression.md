@@ -1084,6 +1084,143 @@ header fields; money and dates in Colombian format; the console has no errors.
 
 <!-- Owned by item 10 "quotation" (COT-01 – 19). -->
 
+Cotizaciones at **`/cotizaciones`**. Every case runs as the owner of a company with a client **Distribuciones Andina
+S.A.S.** (with an e-mail) and a service **SRV-01 Consultoría mensual** of 1.000.000 with IVA 19 %, unless it says
+otherwise. A quotation needs no invoicing resolution. An emitted quotation past its *Válida hasta* date reads as
+**Vencida**: it is worked out from the date each time it is read, nothing runs at night.
+
+**COT-01 · A company without quotations is told what the section is for**
+Smoke: `e2e/quotation.spec.ts`.
+A brand-new company › **Cotizaciones** › **Nueva cotización**.
+**Expected:** the list says "Aún no has hecho cotizaciones…" with **Crear la primera cotización**; the new quotation
+shows Tipo "Cotización", the extra fields **Responsable de la cotización**, **Válida hasta** (30 days from today, as
+DD/MM/AAAA), **Encabezado** and **Condiciones comerciales**, and no *Formas de pago* section.
+
+**COT-02 · A quotation is saved with its own fields, emitted as C-1 and posts nothing (AC-2)**
+Smoke: `e2e/quotation.spec.ts`.
+**Nueva cotización** › Cliente `Dis…` › line 1 `SRV` › Responsable (an employee) › type an Encabezado and Condiciones ›
+**Guardar** › **Emitir** › confirm.
+**Expected:** "Borrador guardado." and the address is the quotation's; after Emitir "Cotización C-1 emitida.", the title
+is "Cotización C-1", everything is read-only ("Esta cotización ya fue emitida…") with the texts as typed. Contabilidad ›
+Libro diario has no entry.
+
+**COT-03 · A quotation without its client or lines is not emitted**
+Smoke: `e2e/quotation.spec.ts`.
+**Nueva cotización** › **Emitir** with nothing filled.
+**Expected:** no confirmation opens; "Revisa los campos marcados." with the client and the line marked; nothing is
+numbered.
+
+**COT-04 · Emitir y enviar mails the PDF to the client**
+Smoke: `e2e/quotation.spec.ts`; by hand: the e-mail's look.
+A saved draft › **Emitir y enviar** › confirm; open Mailpit.
+**Expected:** the dialog says the PDF goes to the client's e-mail; "Cotización C-1 emitida; el correo con el PDF va en
+camino."; Mailpit shows "Cotización C-1 de <empresa>" to the client with the PDF attached and the *Válida hasta* date in
+the text. A client without e-mail: "El cliente no tiene correo…" and nothing is emitted.
+
+**COT-05 · The client accepts one quotation and rejects another**
+Smoke: `e2e/quotation.spec.ts`.
+Two emitted quotations › open C-1 › **Aceptar** › confirm; open C-2 › **Rechazar** › confirm.
+**Expected:** "Cotización C-1 aceptada." (no more Rechazar; Convertir a factura still offered); "Cotización C-2 rechazada."
+(no Convertir a factura). The list shows both statuses.
+
+**COT-06 · Converting makes a draft invoice with the same lines and the quotation shows Aceptada (AC-2)**
+Smoke: `e2e/quotation.spec.ts`.
+An emitted quotation with two lines, one with discount and ReteFuente › **Convertir a factura** › confirm.
+**Expected:** the draft invoice opens ("Factura de venta · borrador", "Se creó este borrador de factura a partir de la
+cotización C-1.") with the same client, lines, taxes and totals (compare both pages) and no formas de pago yet; back on
+the quotation: "Aceptada", **Ver la factura** opens the draft, and there is no Convertir a factura any more. The libro
+diario still has no entry.
+
+**COT-07 · What the invoice refuses is listed on the quotation, and nothing is converted**
+Smoke: `e2e/quotation.spec.ts` (product); by hand: tax and client.
+Emit a quotation, then deactivate its product (Productos), then an IVA it uses (Configuración › Impuestos), then the
+client (Terceros) — one at a time, converting after each.
+**Expected:** a red box "No se pudo convertir la cotización" lists "Línea 1: Este producto está inactivo." (or the tax,
+or "Este cliente está inactivo."); the quotation stays Emitida, no invoice was made (Facturas de venta is empty),
+Convertir a factura is still offered. **Duplicar** gives a draft the person can correct.
+
+**COT-08 · An emitted quotation past its vencimiento reads as Vencida**
+Smoke: `e2e/quotation.spec.ts`.
+An emitted quotation dated 40 days ago (30 days of validity) and a current one › list › **Estado** Vencida; open the old one.
+**Expected:** only the old one is listed, as Vencida; its page says "La oferta venció el DD/MM/AAAA: ya no se puede
+aceptar ni convertir…" and offers only Anular, PDF and Duplicar. On its last valid day it still reads Emitida.
+
+**COT-09 · An emitted quotation is voided with a reason and keeps its number**
+Smoke: `e2e/quotation.spec.ts`.
+**Anular** › **Anular cotización** with no reason › type `Cambió el alcance` › **Anular cotización**.
+**Expected:** without a reason "Escribe el motivo de la anulación."; then "Cotización C-1 anulada.", "Anulada el
+DD/MM/AAAA. Motivo: Cambió el alcance", no more actions but PDF and Duplicar. The libro diario has nothing to reverse.
+
+**COT-10 · The list searches, filters by status and duplicates**
+Smoke: `e2e/quotation.spec.ts` (search, status, duplicate); by hand: Desde / Hasta.
+An emitted C-1 and a draft › **Estado** Borrador, then Anulada › **Ver todo** › search `C-1`, then `andina` ›
+**Desde** / **Hasta** around a date › **Duplicar** on C-1.
+**Expected:** each filter narrows the rows (newest first; a draft shows "Borrador" as its number); Anulada with none says
+"Ninguna cotización coincide con estos filtros."; **Ver todo** clears every filter; dates are typed as DD/MM/AAAA; the
+status filter offers Borrador, Emitida, Aceptada, Rechazada, Vencida and Anulada. Duplicar opens a new draft dated today
+with the same client and lines, *Válida hasta* 30 days from today.
+
+**COT-11 · What is typed in the texts is shown as typed, never as markup**
+Smoke: `e2e/quotation.spec.ts` (screen); by hand: PDF.
+Save a quotation with Encabezado `<b>Hola</b> <script>alert(1)</script>` and Condiciones `<img src=x onerror=alert(1)>`,
+emit it, open it, download the PDF.
+**Expected:** the screen shows the characters exactly as typed, no bold text, no alert; the PDF shows the same
+characters (escaped), with a blank line in the text starting a new paragraph and a single line break kept inside one.
+
+**COT-12 · The PDF downloads and another company's quotation does not exist (AC-10)**
+Smoke: `e2e/quotation.spec.ts`.
+**PDF** on an emitted quotation; then, signed in to another company, open the first one's address.
+**Expected:** a PDF named `cotizacion-C-1.pdf`; the other company sees "Esta cotización no existe." and its list is empty.
+
+**COT-13 · The PDF reads like a quotation**
+By hand.
+Download the PDF of an emitted quotation with a logo, a responsable, an Encabezado, two lines, a discount, IVA, a
+ReteFuente and Condiciones comerciales; then one of a draft and one voided.
+**Expected:** the company's header and logo; "Cotización" and "No. C-1"; the client's fiscal data and contact; Fecha de
+elaboración, Válida hasta and Responsable; the Encabezado above the lines; lines, totals and taxes in Colombian format;
+Condiciones comerciales and Observaciones below. No *Formas de pago*. A draft is marked BORRADOR (no number), a voided
+one ANULADA with the reason.
+
+**COT-14 · The responsable is an employee and the vencimiento follows the date**
+By hand.
+**Nueva cotización** › open **Responsable**; change **Fecha de elaboración** to another day; then type a **Válida hasta**
+and change the date again; type a Válida hasta before the date and **Guardar**.
+**Expected:** Responsable lists only active terceros with the role empleado (and "Sin responsable"); Válida hasta moves
+with the date (always 30 days) until it is typed by hand, then stays; one before the date is refused ("La oferta no
+puede vencer antes de la fecha de la cotización.") next to the field.
+
+**COT-15 · A draft is edited, an emitted quotation is not**
+By hand.
+Save a draft › change a line and the texts › **Guardar** › reload; **Emitir** › try to change anything.
+**Expected:** the changes persist; after emitting every field is disabled and there is no Guardar or Emitir; a second
+**Emitir** in another tab says "Esta cotización ya fue emitida: no se puede modificar."
+
+**COT-16 · A quotation converts only once**
+By hand.
+Convert a quotation; in another tab opened before, press **Convertir a factura**; also **Aceptar** a quotation by hand
+first and then convert it.
+**Expected:** the second tab says "Esta cotización ya se convirtió en factura: solo se convierte una vez." and no second
+invoice exists; a quotation accepted by hand converts normally, once.
+
+**COT-17 · Roles**
+By hand (after the invitations of section 1).
+As a billing user, then as the accountant: open Cotizaciones and a quotation.
+**Expected:** the billing user does everything above; the accountant sees the list and the PDF but no Nueva cotización,
+Guardar, Emitir, Enviar, Aceptar, Rechazar, Convertir ni Anular (and the API answers 403 to them).
+
+**COT-18 · The accepted draft invoice is emitted like any other**
+By hand (needs the invoicing resolution).
+Convert a quotation › on the draft invoice add a forma de pago for the whole total › **Emitir**.
+**Expected:** the invoice is FE-1 and posts as in SAL-02; the quotation stays Aceptada and its **Ver la factura** link
+opens that invoice.
+
+**COT-19 · Layout**
+By hand, at 1366 px and at a phone width.
+Open the list, a new quotation and an emitted one.
+**Expected:** no horizontal page scroll; the header's buttons wrap; Responsable and Válida hasta sit with the header
+fields and the two texts with the footer; the red conversion box reads well; money and dates in Colombian format; the
+console has no errors.
+
 ## 11. Recibos de caja
 
 <!-- Owned by item 11 "cash-receipt" (RC-01 – 19). -->

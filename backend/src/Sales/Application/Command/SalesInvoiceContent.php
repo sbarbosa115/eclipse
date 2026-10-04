@@ -117,7 +117,7 @@ final class SalesInvoiceContent
      * The lines of a draft (a quotation's or an invoice's) resolved against the catalogs: what the draft already has
      * keeps its inactive products and taxes, a new choice must be active. Every problem is reported at once.
      *
-     * @param list<CommercialLine>      $current the draft's lines as they are now
+     * @param list<CommercialLine>       $current the draft's lines as they are now
      * @param list<SalesInvoiceLineData> $lines
      *
      * @return array{list<InvoiceLineDraft>, list<array{field: string, message: string}>} the drafts and the violations
@@ -131,7 +131,7 @@ final class SalesInvoiceContent
     }
 
     /**
-     * @param list<CommercialLine>      $current
+     * @param list<CommercialLine>       $current
      * @param list<SalesInvoiceLineData> $lines
      *
      * @return list<InvoiceLineDraft>

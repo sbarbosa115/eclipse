@@ -90,7 +90,7 @@ final class QuotationApiTest extends ApiTestCase
         $quotation = $this->quotationDraft($this->quotationPayload($this->client(), $this->service(), ['header' => '<script>alert(1)</script> <b>Hola</b>']));
 
         self::assertSame('<script>alert(1)</script> <b>Hola</b>', $quotation['header'], 'JSON carries what was typed; the screens escape it.');
-        $html = static::getContainer()->get('twig')->render(QuotationPdf::TEMPLATE, static::getContainer()->get(QuotationPdf::class)->context($this->em()->getRepository(Quotation::class)->find(Uuid::fromString($quotation['id']))));
+        $html = static::getContainer()->get('twig')->render(QuotationPdf::TEMPLATE, static::getContainer()->get(QuotationPdf::class)->context($this->em()->getRepository(Quotation::class)->find(Uuid::fromString($quotation['id'])) ?? self::fail('No quotation.')));
         self::assertStringNotContainsString('<script>', $html, 'No HTML from users in the PDF.');
         self::assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt; &lt;b&gt;Hola&lt;/b&gt;', $html);
     }
@@ -304,7 +304,7 @@ final class QuotationApiTest extends ApiTestCase
         self::assertStringStartsWith('%PDF-', (string) $this->client->getResponse()->getContent());
 
         $this->sendJson('POST', '/api/v1/quotations/'.$quotation['id'].'/void', ['reason' => 'x']);
-        $document = static::getContainer()->get(QuotationPdf::class)->context($this->em()->getRepository(Quotation::class)->find(Uuid::fromString($quotation['id'])));
+        $document = static::getContainer()->get(QuotationPdf::class)->context($this->em()->getRepository(Quotation::class)->find(Uuid::fromString($quotation['id'])) ?? self::fail('No quotation.'));
         self::assertSame('ANULADA', $document['banner']);
     }
 
