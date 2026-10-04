@@ -4,7 +4,7 @@ namespace App\Reporting\Application\Dashboard;
 
 use App\Reporting\Application\Cartera\CarteraQueries;
 use App\Reporting\Application\Cartera\CarteraSide;
-use App\Reporting\Application\ReportingCalendar;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 /** What the home screen shows: five queries whatever the size of the company, nothing per tercero or per document. */
@@ -13,7 +13,7 @@ final class DashboardService
     public function __construct(
         private readonly CarteraQueries $cartera,
         private readonly DashboardQueries $queries,
-        private readonly ReportingCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

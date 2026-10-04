@@ -34,18 +34,14 @@ import {
 import {
   computeTotals,
   DocumentEditor,
+  editorErrorsFrom,
   emptyDraft,
   hasErrors,
   validateDraft,
   type DocumentDraft,
   type EditorErrors,
 } from '@/widgets/document-editor';
-import {
-  draftFromInvoice,
-  editorErrorsFrom,
-  toRequest,
-  type PurchaseHeader,
-} from '../model/draft';
+import {draftFromInvoice, toRequest, type PurchaseHeader} from '../model/draft';
 import {usePurchaseOptions} from '../model/usePurchaseOptions';
 
 const BASE = '/facturas-compra';
@@ -154,7 +150,7 @@ export function PurchaseInvoiceEditorPage() {
       setErrors({});
       return saved;
     } catch (error) {
-      setErrors(editorErrorsFrom(error, lineIndexes));
+      setErrors(editorErrorsFrom(error, lineIndexes) ?? {});
       setFailure(purchaseErrorMessage(error, t));
       return null;
     }
@@ -200,7 +196,7 @@ export function PurchaseInvoiceEditorPage() {
         return;
       }
       show(saved);
-      setErrors(editorErrorsFrom(error, []));
+      setErrors(editorErrorsFrom(error, []) ?? {});
       setFailure(purchaseErrorMessage(error, t));
     }
   };

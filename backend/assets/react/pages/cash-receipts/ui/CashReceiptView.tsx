@@ -24,7 +24,6 @@ import {
 } from '../api/cashReceiptApi';
 import {cashReceiptErrorMessage} from '../lib/errorMessage';
 import {canWriteCashReceipts} from '../model/access';
-import {receiptTone} from '../model/status';
 
 type Load =
   | {status: 'loading'}
@@ -101,9 +100,7 @@ export function CashReceiptView() {
     <div className="cash-receipt-view">
       <PageHeader
         title={t('cashReceipt.view.title', {number: receipt.number})}
-        subtitle={
-          <Badge value={receiptTone(receipt.status)}>{statusLabel}</Badge>
-        }
+        subtitle={<Badge value={receipt.status}>{statusLabel}</Badge>}
         actions={
           <>
             {back}

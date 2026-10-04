@@ -175,9 +175,10 @@ describe('the document form (§4.6)', () => {
       expect(screen.getByLabelText('Número')).toHaveValue(
         'Se asigna al emitir',
       );
-      expect(screen.getByLabelText('Fecha de elaboración')).toHaveValue(
-        '2026-10-03',
-      );
+      expect(
+        screen.getByLabelText('Fecha de elaboración'),
+        'DD/MM/YYYY whatever the browser’s language',
+      ).toHaveValue('03/10/2026');
     });
 
     it('searches terceros only from the third character, then loads the contacts of the one chosen', async () => {
@@ -310,8 +311,8 @@ describe('the document form (§4.6)', () => {
       expect(screen.getByLabelText('Cantidad, línea 1')).toHaveValue('1');
       expect(
         screen.getByLabelText('Valor unitario, línea 1'),
-        'the price net of IVA',
-      ).toHaveValue('100000');
+        'the price net of IVA, as a Colombian writes it',
+      ).toHaveValue('100.000');
       expect(screen.getByLabelText('Impuesto cargo, línea 1')).toHaveValue(
         'iva19',
       );
@@ -543,6 +544,112 @@ describe('the document form (§4.6)', () => {
       await userEvent.type(screen.getByLabelText('Cantidad, línea 1'), '3');
       expect(total('Total neto')).toBe('$ 4.501,50');
     });
+
+    it('reads a unit price and a payment typed the Colombian way', async () => {
+      api();
+      const {latest} = renderEditor({
+        value: draft({lines: [line({quantity: '1'})]}),
+      });
+
+      await userEvent.type(
+        screen.getByLabelText('Valor unitario, línea 1'),
+        '1.190.000,5',
+      );
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Agregar forma de pago'}),
+      );
+      await userEvent.clear(
+        screen.getByLabelText('Valor de la forma de pago 1'),
+      );
+      await userEvent.type(
+        screen.getByLabelText('Valor de la forma de pago 1'),
+        '1.000.000,25',
+      );
+
+      expect(
+        latest()?.lines[0]?.unit_price,
+        'the draft holds a decimal with a point, never what was typed',
+      ).toBe('1190000.5');
+      expect(latest()?.payments[0]?.amount).toBe('1000000.25');
+      expect(total('Total neto')).toBe('$ 1.190.000,50');
+    });
+  });
+
+  describe('taxes in force (F5)', () => {
+    /** IVA 5 % is in force only from 2027: the server leaves it out of ?on= before then. */
+    function datedApi() {
+      return api({
+        'GET /taxes': (_body, url) => {
+          const items =
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING;
+          const on = url.searchParams.get('on');
+          return [
+            200,
+            {
+              items:
+                on !== null && on < '2027-01-01'
+                  ? items.filter((tx) => tx.id !== 'iva5')
+                  : items,
+            },
+          ];
+        },
+      });
+    }
+
+    it('offers the taxes in force on the fecha de elaboración and asks again when it changes', async () => {
+      const calls = datedApi();
+      renderEditor({value: draft({lines: [line({quantity: '1'})]})});
+
+      const select = screen.getByLabelText('Impuesto cargo, línea 1');
+      await waitFor(() =>
+        expect(
+          within(select).getByRole('option', {name: 'IVA 19 %'}),
+        ).toBeInTheDocument(),
+      );
+      expect(
+        within(select).queryByRole('option', {name: 'IVA 5 %'}),
+        'not in force on 03/10/2026',
+      ).not.toBeInTheDocument();
+      expect(
+        calls.calls.some(
+          (c) =>
+            c.path === '/taxes' &&
+            c.url.searchParams.get('on') === '2026-10-03',
+        ),
+        'the editor asks with the document’s date',
+      ).toBe(true);
+
+      const date = screen.getByLabelText('Fecha de elaboración');
+      await userEvent.clear(date);
+      await userEvent.type(date, '15/01/2027');
+
+      await waitFor(() =>
+        expect(
+          within(screen.getByLabelText('Impuesto cargo, línea 1')).getByRole(
+            'option',
+            {name: 'IVA 5 %'},
+          ),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it('keeps showing the tax a line already has, even when it is not in force that day', async () => {
+      datedApi();
+      renderEditor({
+        value: draft({
+          lines: [
+            line({quantity: '1', unit_price: '1000', charge_tax_id: 'iva5'}),
+          ],
+        }),
+      });
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Impuesto cargo, línea 1')).toHaveValue(
+          'iva5',
+        ),
+      );
+      expect(total('Impuestos')).toBe('$ 50,00');
+    });
   });
 
   describe('formas de pago', () => {
@@ -561,8 +668,8 @@ describe('the document form (§4.6)', () => {
       );
       expect(
         screen.getByLabelText('Valor de la forma de pago 1'),
-        'the row offers what is left',
-      ).toHaveValue('1190.00');
+        'the row offers what is left, as a Colombian writes it',
+      ).toHaveValue('1.190');
       expect(
         screen.getByText('Coincide con el total neto'),
       ).toBeInTheDocument();
@@ -585,7 +692,7 @@ describe('the document form (§4.6)', () => {
         screen.getByRole('button', {name: 'Agregar forma de pago'}),
       );
       expect(screen.getByLabelText('Valor de la forma de pago 2')).toHaveValue(
-        '190.00',
+        '190',
       );
       expect(
         screen.getByText('Coincide con el total neto'),
@@ -616,7 +723,7 @@ describe('the document form (§4.6)', () => {
         'Fecha de vencimiento de la forma de pago 1',
       );
       await userEvent.clear(date);
-      await userEvent.type(date, '2026-12-24');
+      await userEvent.type(date, '24/12/2026');
       expect(latest()?.payments[0]?.due_date).toBe('2026-12-24');
     });
 

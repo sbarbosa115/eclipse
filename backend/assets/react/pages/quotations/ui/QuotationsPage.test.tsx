@@ -299,18 +299,18 @@ describe('the quotation editor', () => {
     const issue = screen.getByLabelText('Fecha de elaboración');
 
     const today = (issue as HTMLInputElement).value;
-    expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(today).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
     const first = (expiry as HTMLInputElement).value;
     expect(first).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
 
     await userEvent.clear(issue);
-    await userEvent.type(issue, '2026-10-01');
+    await userEvent.type(issue, '01/10/2026');
     expect(expiry).toHaveValue('31/10/2026');
 
     await userEvent.clear(expiry);
     await userEvent.type(expiry, '15/11/2026');
     await userEvent.clear(issue);
-    await userEvent.type(issue, '2026-10-02');
+    await userEvent.type(issue, '02/10/2026');
     expect(expiry).toHaveValue('15/11/2026');
   });
 

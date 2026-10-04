@@ -2,9 +2,9 @@
 
 namespace App\Sales\Application\Command;
 
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 final class CreateDraftQuotationHandler implements CommandHandler
@@ -12,7 +12,7 @@ final class CreateDraftQuotationHandler implements CommandHandler
     public function __construct(
         private readonly QuotationRepository $quotations,
         private readonly QuotationContent $content,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

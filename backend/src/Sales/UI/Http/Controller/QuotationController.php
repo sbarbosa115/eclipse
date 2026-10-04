@@ -18,7 +18,6 @@ use App\Sales\Application\Command\VoidQuotation;
 use App\Sales\Application\Document\QuotationPdf;
 use App\Sales\Application\Query\QuotationFilter;
 use App\Sales\Application\Query\QuotationQueries;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\QuotationNotFound;
 use App\Sales\UI\Http\Input\QuotationInput;
 use App\Sales\UI\Http\Input\SalesInvoiceLineInput;
@@ -27,6 +26,7 @@ use App\Sales\UI\Http\Output\QuotationOutput;
 use App\Sales\UI\Http\Output\QuotationSummaryOutput;
 use App\Sales\UI\Http\SalesInvoiceAccess;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
@@ -58,7 +58,7 @@ final class QuotationController extends AbstractController
         private readonly ProductCatalog $products,
         private readonly TerceroDirectory $terceros,
         private readonly QuotationPdf $pdf,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

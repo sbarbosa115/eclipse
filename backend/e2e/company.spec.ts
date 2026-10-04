@@ -55,8 +55,12 @@ const fillResolution = async (
   await page.getByLabel(/^Prefijo/).fill(values.prefix ?? 'SETP');
   await page.getByLabel('Desde', {exact: true}).fill(values.from ?? '1');
   await page.getByLabel('Hasta', {exact: true}).fill(values.to ?? '1000');
-  await page.getByLabel('Fecha de inicio').fill(values.start ?? isoDay(-10));
-  await page.getByLabel('Fecha de fin').fill(values.end ?? isoDay(300));
+  // The date fields read DD/MM/YYYY (DateInput), whatever the browser's language.
+  const dmy = (iso: string) => iso.split('-').reverse().join('/');
+  await page
+    .getByLabel('Fecha de inicio')
+    .fill(dmy(values.start ?? isoDay(-10)));
+  await page.getByLabel('Fecha de fin').fill(dmy(values.end ?? isoDay(300)));
 };
 
 test('CO-01 · the profile shows what the sign-up gave, with its DV', async ({

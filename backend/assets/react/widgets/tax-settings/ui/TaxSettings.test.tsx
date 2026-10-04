@@ -168,7 +168,7 @@ describe('Configuración › Impuestos', () => {
     await userEvent.type(within(dialog).getByLabelText('Tarifa (%)'), '16');
     await userEvent.type(
       within(dialog).getByLabelText(/Vigente desde/),
-      '2027-01-01',
+      '01/01/2027',
     );
     await userEvent.type(
       within(dialog).getByLabelText(/Cuenta en ventas/),
@@ -273,11 +273,11 @@ describe('Configuración › Impuestos', () => {
     await userEvent.type(within(dialog).getByLabelText('Tarifa (%)'), '19');
     await userEvent.type(
       within(dialog).getByLabelText(/Vigente desde/),
-      '2027-02-01',
+      '01/02/2027',
     );
     await userEvent.type(
       within(dialog).getByLabelText(/Vigente hasta/),
-      '2027-01-01',
+      '01/01/2027',
     );
     await userEvent.click(
       within(dialog).getByRole('button', {name: 'Guardar'}),

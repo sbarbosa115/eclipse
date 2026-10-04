@@ -1,35 +1,14 @@
 import {useEffect, useState, type ReactNode} from 'react';
 import {QuickCreateTerceroModal} from '@/features/quick-create-tercero';
-import {
-  fetchContacts,
-  identificationLabel,
-  searchTerceros,
-  type Contact,
-  type TerceroSummary,
-} from '@/entities/tercero';
+import {fetchContacts, TerceroPicker, type Contact} from '@/entities/tercero';
 import {useTranslation} from '@/shared/i18n';
-import {Field} from '@/shared/ui';
+import {DateInput, Field} from '@/shared/ui';
 import type {
   DocumentDraft,
   DocumentKind,
   EditorErrors,
   PartyRef,
 } from '../model/types';
-import {SearchCombobox, type ComboOption} from './SearchCombobox';
-
-const TERCERO_MIN_CHARS = 3;
-
-async function findTerceros(
-  term: string,
-): Promise<ComboOption<TerceroSummary>[]> {
-  const page = await searchTerceros({q: term, active: '1', per_page: 10});
-  return page.items.map((tercero) => ({
-    id: tercero.id,
-    label: tercero.display_name,
-    detail: identificationLabel(tercero),
-    value: tercero,
-  }));
-}
 
 /** Tipo, Número, the tercero (search from 3 characters, or create one), its contact and Fecha de elaboración. */
 export function HeaderSection({
@@ -96,16 +75,18 @@ export function HeaderSection({
         hint={t('documentEditor.header.terceroHint')}
         error={errors['tercero']}
       >
-        <SearchCombobox<TerceroSummary>
-          selectedLabel={value.tercero?.name ?? ''}
-          minChars={TERCERO_MIN_CHARS}
-          search={findTerceros}
-          placeholder={t('documentEditor.header.terceroPlaceholder')}
-          onSelect={(option) =>
-            onTercero({id: option.id, name: option.value.display_name})
-          }
-          onClear={() => onTercero(null)}
+        <TerceroPicker
+          activeOnly
+          value={value.tercero}
+          onChange={onTercero}
           onCreate={() => setCreating(true)}
+          labels={{
+            placeholder: t('documentEditor.header.terceroPlaceholder'),
+            minChars: (count) => t('common.combo.minChars', {count}),
+            searching: t('common.combo.searching'),
+            none: t('common.combo.none'),
+            failed: t('common.combo.failed'),
+          }}
         />
       </Field>
       <Field
@@ -134,11 +115,7 @@ export function HeaderSection({
         label={t('documentEditor.header.issueDate')}
         error={errors['issue_date']}
       >
-        <input
-          type="date"
-          value={value.issue_date}
-          onChange={(e) => onIssueDate(e.target.value)}
-        />
+        <DateInput value={value.issue_date} onChange={onIssueDate} />
       </Field>
       {extra}
       {creating && (

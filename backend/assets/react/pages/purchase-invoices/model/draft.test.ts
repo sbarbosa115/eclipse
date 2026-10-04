@@ -1,7 +1,6 @@
-import {ApiError} from '@/shared/api';
 import type {DocumentDraft} from '@/widgets/document-editor';
 import type {PurchaseInvoice} from '@/entities/purchase-invoice';
-import {draftFromInvoice, editorErrorsFrom, toRequest} from './draft';
+import {draftFromInvoice, toRequest} from './draft';
 
 const line = (over: Partial<DocumentDraft['lines'][number]> = {}) => ({
   key: 'l1',
@@ -157,25 +156,5 @@ describe('the purchase invoice draft', () => {
     });
     expect(opened.attachments).toEqual([{id: 'a1', name: 'fac.pdf', size: 10}]);
     expect(opened.notes).toBe('Octubre');
-  });
-
-  it("puts the API's violations on the editor's fields", () => {
-    const error = new ApiError(422, 'validation_failed', 'x', {
-      violations: [
-        {field: 'tercero_id', message: 'Elige el proveedor.'},
-        {field: 'lines[0].account_id', message: 'Cuenta no válida.'},
-        {field: 'lines[0].product_id', message: 'Producto inactivo.'},
-        {field: 'payments[1].due_date', message: 'Falta vencimiento.'},
-        {field: 'supplier_invoice_number', message: 'Repetido.'},
-      ],
-    });
-
-    expect(editorErrorsFrom(error, [3])).toEqual({
-      'tercero': 'Elige el proveedor.',
-      'lines.3.account': 'Cuenta no válida.',
-      'lines.3.product': 'Producto inactivo.',
-      'payments.1.due_date': 'Falta vencimiento.',
-      'supplier_invoice_number': 'Repetido.',
-    });
   });
 });

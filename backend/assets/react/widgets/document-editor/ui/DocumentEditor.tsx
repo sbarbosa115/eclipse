@@ -17,7 +17,7 @@ import {
 } from '../model/draft';
 import {computeTotals} from '../model/totals';
 import type {DocumentDraft, DocumentKind, EditorErrors} from '../model/types';
-import {useEditorOptions} from '../model/useEditorOptions';
+import {offeredTaxes, useEditorOptions} from '../model/useEditorOptions';
 import {FooterSection} from './FooterSection';
 import {HeaderSection} from './HeaderSection';
 import {LinesGrid} from './LinesGrid';
@@ -59,7 +59,7 @@ export function DocumentEditor({
   onRemoveAttachment,
 }: DocumentEditorProps) {
   const {t} = useTranslation();
-  const options = useEditorOptions(kind);
+  const options = useEditorOptions(kind, value.issue_date);
   const [creatingFor, setCreatingFor] = useState<{
     key: string;
     text: string;
@@ -103,8 +103,9 @@ export function DocumentEditor({
           amounts={totals.lines}
           errors={errors}
           readOnly={readOnly}
-          chargeTaxes={options.chargeTaxes}
-          withholdingTaxes={options.withholdingTaxes}
+          chargeTaxes={options.inForce.charge}
+          withholdingTaxes={options.inForce.withholding}
+          knownTaxes={[...options.chargeTaxes, ...options.withholdingTaxes]}
           onChange={(index, change) =>
             onChange(updateLine(value, index, change))
           }
@@ -181,8 +182,16 @@ export function DocumentEditor({
           subtotal={totals.lines[taxLine]?.subtotal ?? '0.00'}
           chargeTaxId={taxLineValue.charge_tax_id}
           withholdingTaxId={taxLineValue.withholding_tax_id}
-          chargeTaxes={options.chargeTaxes}
-          withholdingTaxes={options.withholdingTaxes}
+          chargeTaxes={offeredTaxes(
+            options.inForce.charge,
+            options.chargeTaxes,
+            taxLineValue.charge_tax_id,
+          )}
+          withholdingTaxes={offeredTaxes(
+            options.inForce.withholding,
+            options.withholdingTaxes,
+            taxLineValue.withholding_tax_id,
+          )}
           productId={taxLineValue.product?.id ?? null}
           onClose={() => setTaxesFor(null)}
           onApply={(taxes) => {

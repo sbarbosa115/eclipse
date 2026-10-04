@@ -11,6 +11,7 @@ import {
   Button,
   Card,
   DateInput,
+  MoneyInput,
   EmptyState,
   ErrorState,
   Field,
@@ -215,12 +216,10 @@ export function NewSupplierPayment() {
             </select>
           </Field>
           <Field label={t('supplierPayment.form.amount')} error={errors.amount}>
-            <input
-              type="text"
-              inputMode="decimal"
+            <MoneyInput
               placeholder={t('supplierPayment.form.amountPlaceholder')}
               value={form.amount}
-              onChange={(event) => update({amount: event.target.value})}
+              onChange={(amount) => update({amount})}
             />
           </Field>
           <Field

@@ -8,7 +8,6 @@ use App\Ledger\Application\Query\LedgerCatalog;
 use App\Ledger\Application\Query\PaymentMethodView;
 use App\Party\Application\Query\TerceroDirectory;
 use App\Party\Application\Query\TerceroView;
-use App\Purchasing\Application\ColombianCalendar;
 use App\Purchasing\Application\Payables\PayableAllocations;
 use App\Purchasing\Application\Posting\SupplierPaymentPosting;
 use App\Purchasing\Domain\Error\InvalidPayment;
@@ -20,7 +19,7 @@ use App\Purchasing\Domain\Repository\PayableLocks;
 use App\Purchasing\Domain\Repository\SupplierPaymentRepository;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Application\Event\EventBus;
-use App\Shared\Domain\Clock;
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Money\Money;
 use Symfony\Component\Uid\Uuid;
@@ -43,7 +42,7 @@ final class PaySupplierHandler implements CommandHandler
         private readonly Numbering $numbering,
         private readonly JournalPoster $poster,
         private readonly EventBus $events,
-        private readonly Clock $clock,
+        private readonly Calendar $calendar,
     ) {
     }
 
@@ -75,7 +74,7 @@ final class PaySupplierHandler implements CommandHandler
         $payment = SupplierPayment::issue(
             $companyId, $number->prefix, $number->sequence, $command->terceroId, $supplier->displayName, $command->receiptDate,
             $command->paymentMethodId, $method->name, Uuid::fromString($accountId), Money::of($command->amount), self::notes($command->notes),
-            $allocations, ColombianCalendar::today($this->clock), $command->userId, $this->clock->now(),
+            $allocations, $this->calendar->today(), $command->userId, $this->calendar->now(),
         );
         $this->payments->add($payment);
         foreach ($payment->allocations() as $allocation) {

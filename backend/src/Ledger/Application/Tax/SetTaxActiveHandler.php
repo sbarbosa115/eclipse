@@ -2,15 +2,15 @@
 
 namespace App\Ledger\Application\Tax;
 
-use App\Ledger\Application\Port\CatalogAudit;
 use App\Ledger\Domain\Repository\TaxRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class SetTaxActiveHandler implements CommandHandler
 {
     public function __construct(
         private readonly TaxRepository $taxes,
-        private readonly CatalogAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

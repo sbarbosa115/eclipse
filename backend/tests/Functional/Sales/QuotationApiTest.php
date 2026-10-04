@@ -50,6 +50,21 @@ final class QuotationApiTest extends ApiTestCase
         self::assertArrayNotHasKey('payments', $quotation, 'A quotation has no formas de pago.');
     }
 
+    public function testATaxNotInForceOnTheQuotationsDateIsNotChosen(): void
+    {
+        $client = $this->client();
+        $product = $this->service();
+        $five = $this->taxId('IVA 5 %');
+        $this->taxInForceFrom($five, '2099-01-01');
+
+        $body = $this->sendJson('POST', '/api/v1/quotations', $this->quotationPayload($client, $product, ['lines' => [$this->line($product, ['charge_tax_id' => $five])]]));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['lines.0.charge_tax_id'], array_column($body['violations'], 'field'));
+        self::assertSame('Este impuesto no está vigente en la fecha del documento.', $body['violations'][0]['message']);
+        $this->quotationDraft($this->quotationPayload($client, $product, ['issue_date' => '2099-01-01', 'expiry_date' => '2099-01-31', 'lines' => [$this->line($product, ['charge_tax_id' => $five])]]));
+    }
+
     public function testTheOfferIsValidForThirtyDaysByDefault(): void
     {
         $quotation = $this->quotationDraft($this->quotationPayload($this->client(), $this->service(), ['issue_date' => self::today('-2 days')]));

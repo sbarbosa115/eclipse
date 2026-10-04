@@ -2,11 +2,11 @@
 
 namespace App\Ledger\Application\PaymentMethod;
 
-use App\Ledger\Application\Port\CatalogAudit;
 use App\Ledger\Application\PostableAccounts;
 use App\Ledger\Domain\Error\InvalidPaymentMethod;
 use App\Ledger\Domain\Model\PaymentMethod;
 use App\Ledger\Domain\Repository\PaymentMethodRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Domain\Model\PaymentKind;
 use Symfony\Component\Uid\Uuid;
@@ -16,7 +16,7 @@ final class CreatePaymentMethodHandler implements CommandHandler
     public function __construct(
         private readonly PaymentMethodRepository $methods,
         private readonly PostableAccounts $accounts,
-        private readonly CatalogAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

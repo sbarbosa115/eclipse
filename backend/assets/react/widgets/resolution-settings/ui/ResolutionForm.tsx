@@ -3,7 +3,7 @@ import {useState} from 'react';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {formatDate} from '@/shared/lib';
-import {Alert, Button, Card, Field} from '@/shared/ui';
+import {Alert, Button, Card, DateInput, Field} from '@/shared/ui';
 import type {ResolutionPayload, ResolutionSettings} from '../api/resolutionApi';
 
 type Errors = Record<string, string>;
@@ -171,13 +171,21 @@ export function ResolutionForm({
               label={t('company.resolution.fields.validFrom')}
               error={errors['valid_from']}
             >
-              <input type="date" {...text('valid_from')} />
+              <DateInput
+                value={form.valid_from}
+                onChange={(validFrom) =>
+                  setForm({...form, valid_from: validFrom})
+                }
+              />
             </Field>
             <Field
               label={t('company.resolution.fields.validTo')}
               error={errors['valid_to']}
             >
-              <input type="date" {...text('valid_to')} />
+              <DateInput
+                value={form.valid_to}
+                onChange={(validTo) => setForm({...form, valid_to: validTo})}
+              />
             </Field>
             <Field
               label={t('company.resolution.fields.mode')}

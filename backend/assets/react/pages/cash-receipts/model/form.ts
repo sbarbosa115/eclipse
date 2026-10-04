@@ -1,9 +1,6 @@
 import type {Translate} from '@/shared/i18n';
-import {
-  allocationsOf,
-  parseAmount,
-  type OpenItem,
-} from '@/features/allocate-payment';
+import {allocationsOf, type OpenItem} from '@/features/allocate-payment';
+import {parseAmount} from '@/shared/lib';
 import type {CashReceiptRequest, OpenReceivable} from '../api/cashReceiptApi';
 
 /** The new recibo de caja as the person fills it in: text as typed, the amounts per receivable id. */

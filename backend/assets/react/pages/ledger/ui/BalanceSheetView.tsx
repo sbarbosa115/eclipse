@@ -5,6 +5,7 @@ import {fetchBalanceSheet} from '../api/ledgerApi';
 import {today} from '../lib/period';
 import {useLoaded} from '../lib/useLoaded';
 import {DateFilter} from './DateFilter';
+import {LedgerExports} from './LedgerExports';
 import {StatementTable} from './StatementTable';
 
 /** §9 Q25: the basic balance general at a date, from the balance de prueba. */
@@ -24,6 +25,7 @@ export function BalanceSheetView() {
           onChange={(value) => setParams({date: value})}
         />
       </FilterBar>
+      <LedgerExports book="balanceSheet" params={{date}} />
       {failed ? (
         <ErrorState message={t('common.loadFailed')} onRetry={retry} />
       ) : !data ? (

@@ -123,3 +123,8 @@ export class Decimal {
     return `${negative ? '-' : ''}${whole}${this.scale > 0 ? `.${fraction}` : ''}`;
   }
 }
+
+/** An API decimal as a person writes it: "1000000.0000" → "1000000", "2.5000" → "2.5". */
+export function trimDecimal(value: string): string {
+  return value.includes('.') ? value.replace(/\.?0+$/, '') : value;
+}

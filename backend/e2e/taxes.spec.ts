@@ -94,7 +94,7 @@ test('TAX-03 · the accountant creates a tax', async ({page, newCompany}) => {
   await openTaxes(page);
 
   await newTax(page, 'IVA 16 %', '16', async (dialog) => {
-    await dialog.getByLabel(/Vigente desde/).fill('2027-01-01');
+    await dialog.getByLabel(/Vigente desde/).fill('01/01/2027');
   });
 
   const row = rowOf(page, 'IVA 16 %');
@@ -149,8 +149,8 @@ test('TAX-06 · the form explains what is wrong', async ({page, newCompany}) => 
 
   await dialog.getByLabel('Nombre').fill('IVA 16 %');
   await dialog.getByLabel(/^Tarifa/).fill('16');
-  await dialog.getByLabel(/Vigente desde/).fill('2027-02-01');
-  await dialog.getByLabel(/Vigente hasta/).fill('2027-01-01');
+  await dialog.getByLabel(/Vigente desde/).fill('01/02/2027');
+  await dialog.getByLabel(/Vigente hasta/).fill('01/01/2027');
   await dialog.getByRole('button', {name: 'Guardar'}).click();
   await expect(
     dialog.getByText('La fecha final no puede ser anterior a la inicial.'),
@@ -180,7 +180,7 @@ test('TAX-07 · editing a tax changes its rate and dates, not its kind', async (
   ).toHaveCount(0);
   await expect(dialog.getByLabel(/^Tarifa/)).toHaveValue('5');
   await dialog.getByLabel(/^Tarifa/).fill('6');
-  await dialog.getByLabel(/Vigente hasta/).fill('2030-12-31');
+  await dialog.getByLabel(/Vigente hasta/).fill('31/12/2030');
   await dialog.getByRole('button', {name: 'Guardar'}).click();
 
   await expect(page.getByText('Impuesto actualizado.')).toBeVisible();

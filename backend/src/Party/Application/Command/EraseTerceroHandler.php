@@ -2,8 +2,8 @@
 
 namespace App\Party\Application\Command;
 
-use App\Party\Application\Port\AuditTrail;
 use App\Party\Domain\Repository\TerceroRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Domain\Clock;
 
@@ -22,7 +22,7 @@ final class EraseTerceroHandler implements CommandHandler
         $wasErased = null !== $tercero->erasedAt();
         $tercero->erase($this->clock->now());
         if (!$wasErased) {
-            $this->audit->record($command->companyId, $command->userId, 'tercero.personal_data_erased', $tercero->id());
+            $this->audit->record($command->companyId, $command->userId, 'tercero.personal_data_erased', 'tercero', $tercero->id());
         }
     }
 }

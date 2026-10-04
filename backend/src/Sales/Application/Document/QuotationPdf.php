@@ -5,12 +5,12 @@ namespace App\Sales\Application\Document;
 use App\Company\Application\Query\Companies;
 use App\Company\Application\Query\LogoReader;
 use App\Party\Application\Query\TerceroDirectory;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Model\Quotation;
 use App\Sales\Domain\Model\QuotationLine;
 use App\Sales\Domain\Model\QuotationStatus;
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Port\PdfRenderer;
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Model\TaxSnapshot;
 use App\Shared\Domain\Money\Money;
@@ -32,7 +32,7 @@ final class QuotationPdf
         private readonly LogoReader $logos,
         private readonly TerceroDirectory $terceros,
         private readonly PdfRenderer $renderer,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

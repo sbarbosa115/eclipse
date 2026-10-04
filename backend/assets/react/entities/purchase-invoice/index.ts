@@ -24,7 +24,6 @@ export {
   canVoid,
   canWritePurchases,
   purchaseErrorMessage,
-  rowStatus,
   STATUSES,
 } from './model/status';
 export {VoidPurchaseInvoiceModal} from './ui/VoidPurchaseInvoiceModal';

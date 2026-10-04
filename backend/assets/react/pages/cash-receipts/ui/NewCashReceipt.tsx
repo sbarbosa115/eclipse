@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {useSession} from '@/entities/session';
+import {TerceroPicker} from '@/entities/tercero';
 import {AllocatePayment, summarize} from '@/features/allocate-payment';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
@@ -10,6 +11,7 @@ import {
   Button,
   Card,
   DateInput,
+  MoneyInput,
   EmptyState,
   ErrorState,
   Field,
@@ -34,7 +36,6 @@ import {
   type FieldErrors,
   type ReceiptForm,
 } from '../model/form';
-import {ClientPicker} from './ClientPicker';
 
 type Receivables =
   | {clientId: string; status: 'loading'}
@@ -175,9 +176,17 @@ export function NewCashReceipt() {
             hint={t('cashReceipt.form.clientHint')}
             error={errors.tercero_id}
           >
-            <ClientPicker
+            <TerceroPicker
               value={form.client}
               onChange={(client) => update({client, amounts: {}})}
+              labels={{
+                placeholder: t('cashReceipt.form.clientPlaceholder'),
+                minChars: (count) =>
+                  t('cashReceipt.form.search.minChars', {count}),
+                searching: t('cashReceipt.form.search.searching'),
+                none: t('cashReceipt.form.search.none'),
+                failed: t('cashReceipt.form.search.failed'),
+              }}
             />
           </Field>
           <Field label={t('cashReceipt.form.date')} error={errors.receipt_date}>
@@ -200,12 +209,10 @@ export function NewCashReceipt() {
             </select>
           </Field>
           <Field label={t('cashReceipt.form.amount')} error={errors.amount}>
-            <input
-              type="text"
-              inputMode="decimal"
+            <MoneyInput
               placeholder={t('cashReceipt.form.amountPlaceholder')}
               value={form.amount}
-              onChange={(event) => update({amount: event.target.value})}
+              onChange={(amount) => update({amount})}
             />
           </Field>
           <Field

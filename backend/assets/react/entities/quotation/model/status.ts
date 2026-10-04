@@ -1,22 +1,3 @@
-import type {QuotationStatus} from '../api/quotationApi';
-
-/**
- * The kit's row tone for each status (toneFor): a draft waits (warning), an emitted one is open (info), an accepted one
- * is won (success), a rejected, expired or voided one is over (neutral).
- */
-const TONE_KEYS: Record<QuotationStatus, string> = {
-  draft: 'prospect',
-  emitted: 'order_confirmed',
-  accepted: 'active',
-  rejected: 'declined',
-  expired: 'order_completed',
-  voided: 'cancelled',
-};
-
-export function statusTone(status: string): string {
-  return TONE_KEYS[status as QuotationStatus] ?? 'neutral';
-}
-
 type Standing = {status: string; converted_invoice_id?: string | null};
 
 /** Sent by e-mail: an emitted quotation whose offer is still valid. */

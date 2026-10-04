@@ -602,7 +602,7 @@
         },
         "/api/v1/taxes": {
             "get": {
-                "summary": "The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones.",
+                "summary": "The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones; ?on=YYYY-MM-DD only those in\nforce that day (a document's date: no validity dates means always in force). 400 invalid_date for another format.",
                 "operationId": "get_app_ledger_ui_http_catalog_taxes",
                 "responses": {
                     "200": {

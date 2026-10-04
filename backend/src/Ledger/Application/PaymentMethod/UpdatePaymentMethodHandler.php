@@ -2,10 +2,10 @@
 
 namespace App\Ledger\Application\PaymentMethod;
 
-use App\Ledger\Application\Port\CatalogAudit;
 use App\Ledger\Application\PostableAccounts;
 use App\Ledger\Domain\Error\InvalidPaymentMethod;
 use App\Ledger\Domain\Repository\PaymentMethodRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class UpdatePaymentMethodHandler implements CommandHandler
@@ -13,7 +13,7 @@ final class UpdatePaymentMethodHandler implements CommandHandler
     public function __construct(
         private readonly PaymentMethodRepository $methods,
         private readonly PostableAccounts $accounts,
-        private readonly CatalogAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

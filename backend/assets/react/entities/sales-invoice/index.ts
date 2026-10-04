@@ -21,5 +21,5 @@ export {
   type SalesInvoiceRequest,
   type SalesInvoiceSummary,
 } from './api/salesInvoiceApi';
-export {canSend, canVoid, statusTone} from './model/status';
+export {canSend, canVoid} from './model/status';
 export {salesInvoiceErrorMessage} from './lib/errorMessage';

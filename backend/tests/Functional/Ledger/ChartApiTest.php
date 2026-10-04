@@ -60,6 +60,8 @@ final class ChartApiTest extends ApiTestCase
         ]);
         self::assertSame(['11100502'], array_column($this->getJson('/api/v1/accounts/search?q=11100502')['items'], 'code'), 'Documents can pick it right away.');
         self::assertSame(1, (int) $this->db()->fetchOne("SELECT COUNT(*) FROM audit_log WHERE company_id = ? AND action = 'account.created'", [$this->company->toBinary()]));
+        $row = $this->db()->fetchAssociative("SELECT subject_type, data, user_id IS NOT NULL AS by_someone FROM audit_log WHERE company_id = ? AND action = 'account.created'", [$this->company->toBinary()]);
+        self::assertSame(['ledger_account', ['code' => '11100502', 'name' => 'Bancolombia ahorros'], 1], [$row['subject_type'] ?? null, json_decode((string) ($row['data'] ?? ''), true), (int) ($row['by_someone'] ?? 0)]);
     }
 
     public function testAnExpenseAccountIsUsableOnPurchasesUnlessSaidOtherwise(): void

@@ -32,3 +32,10 @@
 .admin .ledger-period input[type='text'] {
   min-height: 40px;
 }
+
+/* A book's CSV and PDF buttons, under its filters on the right. */
+.admin .ledger-exports {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 12px;
+}

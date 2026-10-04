@@ -2,11 +2,11 @@
 
 namespace App\Sales\Application\Command;
 
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Model\QuotationLine;
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -20,7 +20,7 @@ final class ConvertQuotationHandler implements CommandHandler
     public function __construct(
         private readonly QuotationRepository $quotations,
         private readonly CommandBus $commands,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

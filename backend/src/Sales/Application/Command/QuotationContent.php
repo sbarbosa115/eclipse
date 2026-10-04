@@ -60,7 +60,7 @@ final class QuotationContent
         if (null !== $data->expiryDate && $data->expiryDate->format('Y-m-d') < $data->issueDate->format('Y-m-d')) {
             $this->violate('expiry_date', 'The offer cannot expire before the quotation date.');
         }
-        [$lines, $lineViolations] = $this->lines->resolveLines($companyId, $quotation->lines(), $data->lines);
+        [$lines, $lineViolations] = $this->lines->resolveLines($companyId, $quotation->lines(), $data->lines, $data->issueDate);
         array_push($this->violations, ...$lineViolations);
         if ([] !== $this->violations) {
             throw new InvalidQuotation($this->violations);

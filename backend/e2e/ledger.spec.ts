@@ -117,13 +117,13 @@ test('LED-05 · the owner locks the books, never beyond today', async ({
     page.getByText('Los libros están abiertos: no hay fecha de bloqueo.'),
   ).toBeVisible();
 
-  await page.getByLabel('Bloquear hasta').fill('2999-01-01');
+  await page.getByLabel('Bloquear hasta').fill('01/01/2999');
   await page.getByRole('button', {name: 'Guardar fecha'}).click();
   await expect(
     page.getByText('La fecha de bloqueo no puede ser posterior a hoy.'),
   ).toBeVisible();
 
-  await page.getByLabel('Bloquear hasta').fill('2026-01-31');
+  await page.getByLabel('Bloquear hasta').fill('31/01/2026');
   await page.getByRole('button', {name: 'Guardar fecha'}).click();
   await expect(
     page.getByText('Libros bloqueados hasta el 31/01/2026.'),
@@ -159,5 +159,32 @@ test('LED-06 · a new company opens each book, empty and balanced', async ({
 
   await page.getByRole('tab', {name: 'Balance general'}).click();
   await expect(page.getByText('Activo = pasivo + patrimonio.')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('LED-13 · each book downloads as CSV and PDF from its own page', async ({
+  page,
+  newCompany,
+}) => {
+  const errors = consoleErrors(page);
+  await newCompany('Libros');
+
+  for (const [path, name] of [
+    ['diario?from=2026-01-01&to=2026-12-31', 'Libro diario'],
+    ['balance-prueba?from=2026-01-01&to=2026-12-31', 'Balance de prueba'],
+    ['estado-resultados?from=2026-01-01&to=2026-12-31', 'Estado de resultados'],
+    ['balance-general?date=2026-12-31', 'Balance general'],
+  ] as const) {
+    await page.goto(`/contabilidad/${path}`);
+    const csv = page.getByRole('link', {name: `Descargar ${name} en CSV`});
+    await expect(csv).toBeVisible();
+    await expect(
+      page.getByRole('link', {name: `Descargar ${name} en PDF`}),
+    ).toBeVisible();
+    const download = page.waitForEvent('download');
+    await csv.click();
+    const file = await download;
+    expect(file.suggestedFilename(), name).toMatch(/\.csv$/);
+  }
   expect(errors).toEqual([]);
 });

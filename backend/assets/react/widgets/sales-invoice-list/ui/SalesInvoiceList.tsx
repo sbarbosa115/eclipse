@@ -9,7 +9,6 @@ import {
   salesInvoiceErrorMessage,
   salesInvoicePdfUrl,
   sendSalesInvoice,
-  statusTone,
   voidSalesInvoice,
   type SalesInvoicePage,
   type SalesInvoiceSummary,
@@ -205,7 +204,7 @@ export function SalesInvoiceList({
           <>
             <RowLegend
               statuses={INVOICE_STATUSES.map((s) => ({
-                value: statusTone(s),
+                value: s,
                 label: statusLabel(s),
               }))}
             />
@@ -223,14 +222,14 @@ export function SalesInvoiceList({
               renderRow={(invoice) => (
                 <Row
                   key={invoice.id}
-                  status={statusTone(invoice.status)}
+                  status={invoice.status}
                   label={statusLabel(invoice.status)}
                 >
                   <td>
                     <Link to={invoice.id}>
                       {invoice.number ?? t('salesInvoice.list.draftNumber')}
                     </Link>{' '}
-                    <Badge value={statusTone(invoice.status)}>
+                    <Badge value={invoice.status}>
                       {statusLabel(invoice.status)}
                     </Badge>
                   </td>

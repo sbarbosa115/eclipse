@@ -38,6 +38,10 @@ final class PaymentMethodApiTest extends CatalogTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertSame(['Bancolombia', 'cash', $bank, '11100502', true, false], [$created['name'], $created['kind'], $created['account_id'], $created['account_code'], $created['active'], $created['standard']]);
         self::assertCount(1, $this->audit($company, 'payment_method.created'));
+        $row = $this->audit($company, 'payment_method.created')[0];
+        self::assertSame(['payment_method', $created['id']], [$row->subjectType(), $row->subjectId()?->toRfc4122()]);
+        self::assertNotNull($row->userId());
+        self::assertSame(['name' => 'Bancolombia', 'kind' => 'cash', 'account_id' => $bank], $row->data(), 'The row holds the method as created.');
     }
 
     public function testAContadoMethodNeedsAPostableAccount(): void

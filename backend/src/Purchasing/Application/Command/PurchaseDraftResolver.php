@@ -67,7 +67,7 @@ final class PurchaseDraftResolver
 
         $lines = [];
         foreach ($contents->lines as $i => $line) {
-            $lines[] = $this->line($companyId, "lines[$i]", $line, $kept);
+            $lines[] = $this->line($companyId, "lines[$i]", $line, $kept, $contents->issueDate);
         }
         $payments = [];
         foreach ($contents->payments as $i => $payment) {
@@ -99,7 +99,7 @@ final class PurchaseDraftResolver
     /**
      * @param array<string, true> $kept
      */
-    private function line(Uuid $companyId, string $at, PurchaseLineContents $line, array $kept): ?PurchaseLineDraft
+    private function line(Uuid $companyId, string $at, PurchaseLineContents $line, array $kept, \DateTimeImmutable $issueDate): ?PurchaseLineDraft
     {
         $ok = true;
         if ((null === $line->productId) === (null === $line->accountId)) {
@@ -129,8 +129,8 @@ final class PurchaseDraftResolver
             }
         }
 
-        $charge = $this->tax($companyId, "$at.charge_tax_id", $line->chargeTaxId, 'charge', $kept);
-        $withholding = $this->tax($companyId, "$at.withholding_tax_id", $line->withholdingTaxId, 'withholding', $kept);
+        $charge = $this->tax($companyId, "$at.charge_tax_id", $line->chargeTaxId, 'charge', $kept, $issueDate);
+        $withholding = $this->tax($companyId, "$at.withholding_tax_id", $line->withholdingTaxId, 'withholding', $kept, $issueDate);
         if (!$ok || null === $charge || null === $withholding) {
             return null;
         }
@@ -139,9 +139,11 @@ final class PurchaseDraftResolver
     }
 
     /**
+     * A tax newly chosen must be active and in force on the invoice's date (F5); one the draft already had is kept.
+     *
      * @param array<string, true> $kept
      */
-    private function tax(Uuid $companyId, string $field, ?Uuid $taxId, string $class, array $kept): ?TaxSnapshot
+    private function tax(Uuid $companyId, string $field, ?Uuid $taxId, string $class, array $kept, \DateTimeImmutable $issueDate): ?TaxSnapshot
     {
         if (null === $taxId) {
             return TaxSnapshot::none();
@@ -155,6 +157,11 @@ final class PurchaseDraftResolver
         }
         if ($tax->taxClass !== $class || (!$tax->active && !isset($kept['tax:'.$tax->id]))) {
             $this->violate($field, 'Choose an active tax of this class.');
+
+            return null;
+        }
+        if (!isset($kept['tax:'.$tax->id]) && !$tax->isValidOn($issueDate)) {
+            $this->violate($field, 'This tax is not in force on the document\'s date.');
 
             return null;
         }

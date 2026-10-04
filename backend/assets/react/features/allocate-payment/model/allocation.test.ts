@@ -1,9 +1,4 @@
-import {
-  allocationsOf,
-  parseAmount,
-  summarize,
-  type OpenItem,
-} from './allocation';
+import {allocationsOf, summarize, type OpenItem} from './allocation';
 
 const item = (id: string, balance: string): OpenItem => ({
   id,
@@ -12,28 +7,6 @@ const item = (id: string, balance: string): OpenItem => ({
   dueDate: '2026-10-01',
   amount: '1190000.00',
   balance,
-});
-
-describe('reading an amount as a Colombian types it', () => {
-  it.each([
-    ['595000', '595000.00'],
-    ['595000.5', '595000.50'],
-    ['595000,5', '595000.50'],
-    ['595.000', '595000.00'],
-    ['1.190.000,00', '1190000.00'],
-    ['$ 1.190.000', '1190000.00'],
-    [' 0012 ', '12.00'],
-    ['0,01', '0.01'],
-  ])('%s is %s pesos', (text, value) => {
-    expect(parseAmount(text)).toBe(value);
-  });
-
-  it.each(['', 'abc', '1,234,5', '12.345.6', '-5', '1.5.5', '10,123'])(
-    '%s is not an amount',
-    (text) => {
-      expect(parseAmount(text)).toBeNull();
-    },
-  );
 });
 
 describe('the running difference', () => {

@@ -202,7 +202,9 @@ test('DOC-04 · a product is created from a line and fills it', async ({
   await expect(
     page.getByRole('combobox', {name: 'Producto/Servicio, línea 1'}),
   ).toHaveValue('CUA-01 · Cuaderno rayado');
-  await expect(page.getByLabel('Valor unitario, línea 1')).toHaveValue('10000');
+  await expect(page.getByLabel('Valor unitario, línea 1')).toHaveValue(
+    '10.000',
+  );
   await expect(
     page.getByRole('cell', {name: '$ 11.900,00'}),
     'an IVA-included price is the line total',
@@ -255,7 +257,7 @@ test('DOC-07 · formas de pago add up to Total neto, with a due date on crédito
   await page.getByRole('button', {name: 'Agregar forma de pago'}).click();
   await page.getByLabel('Método de pago 1').selectOption({label: 'Efectivo'});
   await expect(page.getByLabel('Valor de la forma de pago 1')).toHaveValue(
-    '1190000.00',
+    '1.190.000',
   );
   await expect(page.getByText('Coincide con el total neto')).toBeVisible();
 
@@ -305,4 +307,64 @@ test('DOC-08 · the lines work from the keyboard', async ({newCompany}) => {
   await page.getByRole('button', {name: 'Quitar línea 1'}).click();
   await expect(page.getByLabel('Descripción, línea 1')).toHaveValue('Primera');
   expect(errors).toEqual([]);
+});
+
+/** Every column of the lines grid (headers and the cells of line 1) lies inside the table's visible box. */
+async function expectEveryColumnVisible(page: Page) {
+  const table = page
+    .locator('.doc-lines .table-wrap, .doc-lines table')
+    .first();
+  await expect(table).toBeVisible();
+  const box = await table.boundingBox();
+  expect(box, 'the lines table').not.toBeNull();
+  const scrolls = await page.locator('.doc-lines table').evaluate((el) => {
+    let node: HTMLElement | null = el.parentElement;
+    while (node && !node.classList.contains('doc-lines')) {
+      if (node.scrollWidth > node.clientWidth + 1) return true;
+      node = node.parentElement;
+    }
+    return false;
+  });
+  expect(scrolls, 'the lines table does not scroll sideways').toBe(false);
+  const headers = page.locator('.doc-lines thead th');
+  const names = await headers.allTextContents();
+  for (const name of ['Impuesto retención', 'Valor total', 'Acciones']) {
+    expect(names.map((n) => n.trim())).toContain(name);
+  }
+  const cells = page.locator(
+    '.doc-lines thead th, .doc-lines tbody tr:first-child > td',
+  );
+  const count = await cells.count();
+  for (let i = 0; i < count; i += 1) {
+    const cell = await cells.nth(i).boundingBox();
+    const label = (await cells.nth(i).textContent())?.trim() || `cell ${i}`;
+    expect(cell, label).not.toBeNull();
+    expect(cell!.x, `${label} starts inside the table`).toBeGreaterThanOrEqual(
+      box!.x - 1,
+    );
+    expect(
+      cell!.x + cell!.width,
+      `${label} ends inside the table (${box!.x + box!.width})`,
+    ).toBeLessThanOrEqual(box!.x + box!.width + 1);
+  }
+}
+
+test('DOC-10 · at 1366×768 every column of the lines is visible without scrolling the table', async ({
+  newCompany,
+}) => {
+  const {page} = await newCompany();
+  await page.setViewportSize({width: 1366, height: 768});
+
+  await seedService(page);
+  await page.goto('/facturas-venta/nueva');
+  await expect(
+    page.getByRole('combobox', {name: 'Producto/Servicio, línea 1'}),
+  ).toBeVisible();
+  await pickProduct(page, 1, 'SRV');
+  await expectEveryColumnVisible(page);
+
+  await page.goto('/facturas-compra/nueva');
+  await expect(page.getByLabel('Tipo de línea 1')).toBeVisible();
+  await page.getByLabel('Tipo de línea 1').selectOption('account');
+  await expectEveryColumnVisible(page);
 });

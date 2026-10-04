@@ -6,14 +6,13 @@ use App\Catalog\Application\Query\ProductCatalog;
 use App\Company\Application\Numbering\Numbering;
 use App\Ledger\Application\Posting\JournalPoster;
 use App\Party\Application\Query\TerceroDirectory;
-use App\Purchasing\Application\ColombianCalendar;
 use App\Purchasing\Application\Posting\ProductAccounting;
 use App\Purchasing\Application\Posting\PurchaseInvoiceEntry;
 use App\Purchasing\Domain\Error\SupplierInactive;
 use App\Purchasing\Domain\Repository\PayableRepository;
 use App\Purchasing\Domain\Repository\PurchaseInvoiceRepository;
 use App\Shared\Application\Command\CommandHandler;
-use App\Shared\Domain\Clock;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -30,14 +29,14 @@ final class EmitPurchaseInvoiceHandler implements CommandHandler
         private readonly ProductCatalog $products,
         private readonly Numbering $numbering,
         private readonly JournalPoster $poster,
-        private readonly Clock $clock,
+        private readonly Calendar $calendar,
     ) {
     }
 
     public function __invoke(EmitPurchaseInvoice $command): void
     {
         $invoice = $this->invoices->get($command->companyId, $command->invoiceId);
-        $today = ColombianCalendar::today($this->clock);
+        $today = $this->calendar->today();
         $invoice->assertEmittable($today);
         if (!$this->terceros->get($command->companyId, $invoice->terceroId())->active) {
             throw new SupplierInactive();
@@ -52,7 +51,7 @@ final class EmitPurchaseInvoiceHandler implements CommandHandler
         }
 
         $number = $this->numbering->purchaseInvoice($command->companyId);
-        foreach ($invoice->emit($number->prefix, $number->sequence, $command->userId, $this->clock->now(), $today) as $payable) {
+        foreach ($invoice->emit($number->prefix, $number->sequence, $command->userId, $this->calendar->now(), $today) as $payable) {
             $this->payables->add($payable);
         }
         $invoice->recordEntry($this->poster->post(PurchaseInvoiceEntry::draft($invoice, $products, $command->userId)));

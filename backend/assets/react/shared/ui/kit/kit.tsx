@@ -282,6 +282,16 @@ const TONES: Record<string, string> = {
   exists: 'neutral',
   skipped: 'neutral',
   invalid: 'warning',
+  // Documents (facturas, cotizaciones, recibos): a draft is not in the books yet, an emitted one waits for its money or
+  // its answer, partly paid is on its way, paid or accepted is done; rejected, expired and voided are over.
+  draft: 'warning',
+  emitted: 'info',
+  partially_paid: 'accent',
+  paid: 'success',
+  accepted: 'success',
+  rejected: 'neutral',
+  expired: 'neutral',
+  voided: 'neutral',
 };
 
 export function toneFor(status: string): string {

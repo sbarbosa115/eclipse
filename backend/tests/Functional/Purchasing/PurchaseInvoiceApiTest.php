@@ -72,6 +72,27 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         self::assertSame('Ninguno', $draft['lines'][0]['charge_tax_name'], 'No tax is "Ninguno".');
     }
 
+    public function testATaxNotInForceOnTheInvoicesDateIsNotNewlyChosenButADraftKeepsItsOwn(): void
+    {
+        $five = $this->taxId('IVA 5 %');
+        $lines = $this->payload()['lines'];
+        $lines[0]['charge_tax_id'] = $five;
+        $payload = ['lines' => $lines, 'payments' => [['payment_method_id' => $this->methodId('Crédito'), 'amount' => '1010000.00', 'due_date' => self::today(29)]]];
+        $kept = $this->createDraft($payload);
+        $this->taxInForceFrom($five, '2099-01-01');
+
+        $body = $this->sendJson('POST', '/api/v1/purchase-invoices', $this->payload($payload + ['supplier_invoice_number' => 'FAC-882']));
+
+        self::assertResponseStatusCodeSame(422, 'F5: a tax is chosen only on a date it is in force.');
+        self::assertSame(['lines[0].charge_tax_id'], self::violationFields($body));
+        self::assertSame('Este impuesto no está vigente en la fecha del documento.', $body['violations'][0]['message']);
+
+        $this->sendJson('PUT', "/api/v1/purchase-invoices/{$kept['id']}", $this->payload($payload));
+        self::assertResponseIsSuccessful('A draft that already had the tax keeps it.');
+        $this->sendJson('POST', "/api/v1/purchase-invoices/{$kept['id']}/emit", []);
+        self::assertResponseIsSuccessful('And it is emitted.');
+    }
+
     public function testADraftMayWaitForTheSupplierNumber(): void
     {
         $draft = $this->createDraft(['supplier_invoice_number' => '  ']);

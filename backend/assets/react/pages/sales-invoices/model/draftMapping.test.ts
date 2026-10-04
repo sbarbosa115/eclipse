@@ -1,12 +1,6 @@
-import {ApiError} from '@/shared/api';
 import {emptyDraft, emptyLine} from '@/widgets/document-editor';
 import type {SalesInvoice} from '@/entities/sales-invoice';
-import {
-  draftFromInvoice,
-  editorErrorsFrom,
-  requestFromDraft,
-  termFor,
-} from './draftMapping';
+import {draftFromInvoice, requestFromDraft, termFor} from './draftMapping';
 
 const invoice = (over: Partial<SalesInvoice> = {}): SalesInvoice =>
   ({
@@ -111,26 +105,5 @@ describe('the sales invoice draft and the API', () => {
         },
       ],
     });
-  });
-
-  it('puts the API violations on the form rows they belong to', () => {
-    const error = new ApiError(422, 'validation_failed', '', {
-      violations: [
-        {field: 'tercero_id', message: 'Elige el cliente.'},
-        {field: 'lines[0].quantity', message: 'Cantidad.'},
-        {field: 'lines.1.product_id', message: 'Producto.'},
-        {field: 'payments.0.due_date', message: 'Vencimiento.'},
-      ],
-    });
-
-    expect(editorErrorsFrom(error, [2, 4])).toEqual({
-      'tercero': 'Elige el cliente.',
-      'lines.2.quantity': 'Cantidad.',
-      'lines.4.product': 'Producto.',
-      'payments.0.due_date': 'Vencimiento.',
-    });
-    expect(
-      editorErrorsFrom(new ApiError(409, 'period_locked', '', null), []),
-    ).toBeNull();
   });
 });

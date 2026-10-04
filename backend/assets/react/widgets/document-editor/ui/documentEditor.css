@@ -19,21 +19,58 @@
   margin: 0 0 8px;
 }
 
-/* The grid: the cells are controls, so they keep a usable width and the table scrolls inside its box. */
-.admin .doc-lines .table td {
-  padding: 8px;
+/* The grid: the cells are controls that fill their column. On a laptop (1366 px) every column, through Valor total
+   and the actions, fits without scrolling (F8, DOC-10): fixed widths for the numbers, taxes and actions; Descripción
+   takes what is left. Below the table's min-width it scrolls inside its box. */
+.admin .doc-lines .table {
+  table-layout: fixed;
+  min-width: 960px;
 }
 
-.admin .doc-lines .doc-line-item {
-  min-width: 220px;
+.admin .doc-lines .table th,
+.admin .doc-lines .table td {
+  padding: 8px 5px;
+}
+
+.admin .doc-lines .table th:first-child,
+.admin .doc-lines .table td:first-child {
+  padding-left: 10px;
+}
+
+.admin .doc-lines .table th {
+  white-space: normal;
+  vertical-align: bottom;
+  font-size: 0.72rem;
+}
+
+.admin .doc-lines .table th:nth-child(1) {
+  width: 160px;
+}
+
+.admin .doc-lines .table th:nth-child(3),
+.admin .doc-lines .table th:nth-child(5) {
+  width: 76px;
+}
+
+.admin .doc-lines .table th:nth-child(4) {
+  width: 124px;
+}
+
+.admin .doc-lines .table th:nth-child(6),
+.admin .doc-lines .table th:nth-child(7) {
+  width: 118px;
+}
+
+.admin .doc-lines .table th:nth-child(8) {
+  width: 130px;
+}
+
+.admin .doc-lines .table th.col-actions {
+  width: 84px;
 }
 
 .admin .doc-lines .doc-line-mode {
   margin-bottom: 6px;
-}
-
-.admin .doc-lines .doc-line-text {
-  min-width: 180px;
 }
 
 .admin .doc-editor .doc-line-number {
@@ -41,8 +78,24 @@
   text-align: right;
 }
 
+.admin .doc-lines .doc-line-number,
+.admin .doc-lines .doc-line-text,
 .admin .doc-lines select {
-  min-width: 150px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin .doc-lines input,
+.admin .doc-lines select {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* Taxes, up, down and remove: two by two, so the column stays narrow. */
+.admin .doc-lines .row-actions {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px;
 }
 
 .admin .doc-editor .doc-amount {
@@ -61,59 +114,6 @@
   align-items: center;
   gap: 8px 16px;
   margin-top: 10px;
-}
-
-/* The search box and its floating list. */
-.admin .combo {
-  position: relative;
-}
-
-.admin .combo input {
-  width: 100%;
-}
-
-.admin .combo-popup {
-  position: fixed;
-  z-index: 40;
-  max-width: min(480px, calc(100vw - 32px));
-  max-height: 280px;
-  overflow-y: auto;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
-}
-
-.admin .combo-status {
-  margin: 0;
-  padding: 8px 12px;
-}
-
-.admin .combo-list {
-  list-style: none;
-  margin: 0;
-  padding: 4px 0;
-}
-
-.admin .combo-list li {
-  padding: 8px 12px;
-  min-height: 44px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
-
-.admin .combo-list li.is-active,
-.admin .combo-list li:hover {
-  background: var(--color-primary-soft);
-}
-
-.admin .combo-list .combo-create {
-  color: var(--color-primary);
-  font-weight: 600;
-  border-top: 1px solid var(--color-border);
 }
 
 /* Payments, footer and totals: the totals sit on the right on a wide screen, below on a narrow one. */

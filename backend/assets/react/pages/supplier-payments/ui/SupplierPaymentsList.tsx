@@ -33,7 +33,6 @@ import {
 } from '../api/supplierPaymentApi';
 import {supplierPaymentErrorMessage} from '../lib/errorMessage';
 import {canWriteSupplierPayments} from '../model/access';
-import {paymentTone} from '../model/status';
 
 const PER_PAGE = 25;
 
@@ -196,7 +195,7 @@ export function SupplierPaymentsList() {
             <>
               <RowLegend
                 statuses={PAYMENT_STATUSES.map((s) => ({
-                  value: paymentTone(s),
+                  value: s,
                   label: statusLabel(s),
                 }))}
               />
@@ -214,12 +213,12 @@ export function SupplierPaymentsList() {
                 renderRow={(payment) => (
                   <Row
                     key={payment.id}
-                    status={paymentTone(payment.status)}
+                    status={payment.status}
                     label={statusLabel(payment.status)}
                   >
                     <td>
                       <Link to={payment.id}>{payment.number}</Link>{' '}
-                      <Badge value={paymentTone(payment.status)}>
+                      <Badge value={payment.status}>
                         {statusLabel(payment.status)}
                       </Badge>
                     </td>

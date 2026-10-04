@@ -211,7 +211,7 @@ describe('Productos y servicios', () => {
     await userEvent.type(screen.getByLabelText('Nombre'), 'Nuevo');
     await userEvent.type(
       screen.getByLabelText('Precio de venta (COP)'),
-      '119000',
+      '119.000,50',
     );
     await userEvent.click(screen.getByLabelText('Incluir IVA en el precio'));
     await userEvent.click(screen.getByRole('button', {name: 'Guardar'}));
@@ -226,7 +226,7 @@ describe('Productos y servicios', () => {
       code: 'N-1',
       name: 'Nuevo',
       unit_code: '94',
-      sale_price: '119000',
+      sale_price: '119000.50',
       price_includes_tax: true,
     });
     expect(sent, 'the company’s default taxes apply').not.toHaveProperty(

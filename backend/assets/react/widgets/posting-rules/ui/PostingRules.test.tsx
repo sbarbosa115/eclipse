@@ -143,7 +143,7 @@ describe('Reglas contables', () => {
         'Los libros están abiertos: no hay fecha de bloqueo.',
       ),
     ).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText('Bloquear hasta'), '2026-09-30');
+    await userEvent.type(screen.getByLabelText('Bloquear hasta'), '30/09/2026');
     await userEvent.click(screen.getByRole('button', {name: 'Guardar fecha'}));
 
     expect(
@@ -168,7 +168,7 @@ describe('Reglas contables', () => {
 
     await userEvent.type(
       await screen.findByLabelText('Bloquear hasta'),
-      '2999-01-01',
+      '01/01/2999',
     );
     await userEvent.click(screen.getByRole('button', {name: 'Guardar fecha'}));
 

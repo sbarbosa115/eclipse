@@ -2,6 +2,7 @@ import {useState, type MouseEvent} from 'react';
 import {useTranslation} from '@/shared/i18n';
 import {Alert, Icon} from '@/shared/ui';
 import type {ExportFormat} from '../lib/exportUrl';
+import './reportTable.css';
 
 export interface ExportTarget {
   /** What the person is told they download: "Cartera de clientes". */

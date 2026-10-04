@@ -2,10 +2,10 @@
 
 namespace App\Ledger\Application\Command;
 
-use App\Ledger\Application\Port\AuditTrail;
 use App\Ledger\Domain\Error\AccountInPostingRule;
 use App\Ledger\Domain\Repository\AccountRepository;
 use App\Ledger\Domain\Repository\PostingRuleRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class UpdateAccountHandler implements CommandHandler

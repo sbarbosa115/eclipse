@@ -21,13 +21,7 @@ export {
   type QuotationStatus,
   type QuotationSummary,
 } from './api/quotationApi';
-export {
-  canConvert,
-  canDecide,
-  canSend,
-  canVoid,
-  statusTone,
-} from './model/status';
+export {canConvert, canDecide, canSend, canVoid} from './model/status';
 export {
   quotationErrorMessage,
   violationsOf,

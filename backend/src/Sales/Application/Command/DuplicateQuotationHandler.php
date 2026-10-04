@@ -2,12 +2,12 @@
 
 namespace App\Sales\Application\Command;
 
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Model\InvoiceLineDraft;
 use App\Sales\Domain\Model\Quotation;
 use App\Sales\Domain\Model\QuotationLine;
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 /** A new draft dated today; the offer keeps its validity (the same number of days after the new date). */
@@ -15,7 +15,7 @@ final class DuplicateQuotationHandler implements CommandHandler
 {
     public function __construct(
         private readonly QuotationRepository $quotations,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

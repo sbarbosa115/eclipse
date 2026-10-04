@@ -12,13 +12,6 @@
     "chooseTerceroFirst": "Elige primero el tercero",
     "issueDate": "Fecha de elaboración"
   },
-  "search": {
-    "minChars": "Escribe al menos {{count}} caracteres.",
-    "searching": "Buscando…",
-    "none": "Sin resultados.",
-    "create": "+ Crear nuevo",
-    "failed": "No pudimos buscar. Inténtalo de nuevo."
-  },
   "lines": {
     "title": "Productos y servicios",
     "columns": {

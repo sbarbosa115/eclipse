@@ -2,3 +2,9 @@
 export * from './kit';
 export {Icon} from './Icon';
 export {DateInput, parseDayFirst} from './date-input';
+export {MoneyInput} from './money-input';
+export {
+  SearchCombobox,
+  type ComboMessages,
+  type ComboOption,
+} from './search-combobox';

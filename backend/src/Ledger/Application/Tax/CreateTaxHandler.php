@@ -2,13 +2,13 @@
 
 namespace App\Ledger\Application\Tax;
 
-use App\Ledger\Application\Port\CatalogAudit;
 use App\Ledger\Application\PostableAccounts;
 use App\Ledger\Domain\Error\InvalidTaxDefinition;
 use App\Ledger\Domain\Model\Tax;
 use App\Ledger\Domain\Model\TaxClass;
 use App\Ledger\Domain\Model\TaxKind;
 use App\Ledger\Domain\Repository\TaxRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Domain\Totals\TaxCalculation;
 use Symfony\Component\Uid\Uuid;
@@ -18,7 +18,7 @@ final class CreateTaxHandler implements CommandHandler
     public function __construct(
         private readonly TaxRepository $taxes,
         private readonly PostableAccounts $accounts,
-        private readonly CatalogAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

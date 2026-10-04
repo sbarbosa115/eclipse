@@ -5,6 +5,7 @@ import {fetchIncomeStatement} from '../api/ledgerApi';
 import {startOfYear, today} from '../lib/period';
 import {useLoaded} from '../lib/useLoaded';
 import {DateFilter} from './DateFilter';
+import {LedgerExports} from './LedgerExports';
 import {StatementTable} from './StatementTable';
 
 /** §9 Q25: the basic estado de resultados of a period, from the balance de prueba. */
@@ -37,6 +38,7 @@ export function IncomeStatementView() {
           onChange={(value) => change('to', value)}
         />
       </FilterBar>
+      <LedgerExports book="incomeStatement" params={{from, to}} />
       {failed ? (
         <ErrorState message={t('common.loadFailed')} onRetry={retry} />
       ) : !data ? (

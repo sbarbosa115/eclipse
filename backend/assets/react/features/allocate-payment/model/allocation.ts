@@ -1,5 +1,6 @@
 // The arithmetic of allocating money received (or paid) to open items: exact, in cents (BigInt), never floats
 // (CLAUDE.md). What is posted is the server's; this only keeps the person's running difference honest.
+import {parseAmount} from '@/shared/lib';
 
 /** One open receivable or payable, as the allocation table shows it. */
 export interface OpenItem {
@@ -24,30 +25,6 @@ export interface AllocationSummary {
   balanced: boolean;
   /** By item id. */
   errors: Record<string, RowError>;
-}
-
-const THOUSANDS = /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/;
-const COMMA_DECIMAL = /^\d+(,\d{1,2})?$/;
-const POINT_DECIMAL = /^\d+(\.\d{1,2})?$/;
-
-/**
- * Pesos as typed ("1.190.000,50", "595000,5", "595000.50", "$ 1.190.000") → "1190000.50"; null when it is not an
- * amount. A dot followed by groups of three digits is a thousands separator, a comma is the decimal separator; a
- * lone dot with one or two decimals is a decimal point.
- */
-export function parseAmount(text: string): string | null {
-  const plain = text.replace(/[\s$]/g, '');
-  let normalized: string;
-  if (THOUSANDS.test(plain)) {
-    normalized = plain.replace(/\./g, '').replace(',', '.');
-  } else if (COMMA_DECIMAL.test(plain)) {
-    normalized = plain.replace(',', '.');
-  } else if (POINT_DECIMAL.test(plain)) {
-    normalized = plain;
-  } else {
-    return null;
-  }
-  return fromCents(toCents(normalized));
 }
 
 function toCents(decimal: string): bigint {

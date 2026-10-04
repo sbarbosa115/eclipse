@@ -185,7 +185,7 @@ test('PUR-02 · a service bought on credit is saved as a draft from the form', a
   await page.getByRole('button', {name: 'Agregar forma de pago'}).click();
   await page.getByLabel('Método de pago 1').selectOption({label: 'Crédito'});
   await expect(page.getByLabel('Valor de la forma de pago 1')).toHaveValue(
-    '1150000.00',
+    '1.150.000',
   );
   await page.getByRole('button', {name: 'Guardar borrador'}).click();
 

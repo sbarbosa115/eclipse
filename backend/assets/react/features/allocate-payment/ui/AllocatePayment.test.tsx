@@ -77,9 +77,10 @@ describe('allocating a payment to open items', () => {
     await userEvent.click(
       screen.getByRole('button', {name: 'Pagar todo el saldo de FE-2'}),
     );
-    expect(screen.getByLabelText('Valor a aplicar a FE-2')).toHaveValue(
-      '300000.00',
-    );
+    expect(
+      screen.getByLabelText('Valor a aplicar a FE-2'),
+      'the balance is shown as a Colombian writes it',
+    ).toHaveValue('300.000');
     expect(screen.getByRole('status')).toHaveTextContent('Cuadra');
   });
 

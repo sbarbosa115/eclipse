@@ -11,7 +11,6 @@ export {
   quickCreateProduct,
   reactivateProduct,
   renameCategory,
-  searchAccounts,
   setProductTaxes,
   updateProduct,
   type Account,
@@ -46,5 +45,4 @@ export {
   type ProductOptions,
 } from './model/useProductOptions';
 export {useTaxOptions} from './model/useTaxOptions';
-export {AccountPicker} from './ui/AccountPicker';
 export {IncludesTaxCheckbox, TaxSelect, TypeSelect} from './ui/ProductFields';

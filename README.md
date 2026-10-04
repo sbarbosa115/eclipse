@@ -103,7 +103,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/auth/password-reset/check` | public: `{token}` → 204 while the link works | 404 `link_invalid` |
 | POST | `/auth/password-reset/confirm` | public: `{token, password ≥ 10}` → `SessionOutput`, signed in; every other session of the person ends | 404 `link_invalid`; 422 |
 | any | `/api/v1/*` (signed in) | a session with no request for 2 hours ends: 401 `session_expired`, and the UI shows the sign-in page | 401 |
-| GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive | 401 |
+| GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive, `?on=YYYY-MM-DD` only those in force that day (no dates = always) | 401; 400 `invalid_date` |
 | GET | `/payment-methods` | `{items: PaymentMethodOutput[]}`; `?all=1` | 401 |
 | GET | `/accounts/search` | `{items: AccountOutput[]}` postable accounts, `?q=` code prefix or name, `?purchases=1` | 401 |
 | GET | `/settings/taxes`, `/settings/payment-methods` | `{items: TaxSettingOutput[]}` / `{items: PaymentMethodSettingOutput[]}`: every row, inactive too, with the accounts' codes and names and `in_use` (a document, product or company default points at it). Every role | 401 |
@@ -217,11 +217,14 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   the chart has them). "Ninguno" is seeded once per class and is fixed: not editable, deactivated or deleted.
 - **A tax's class and kind, and a payment method's kind, never change** after creation (they decide how documents post
   them); the rest is editable and every change is written to `audit_log` (`tax.created|updated|activated|deactivated|
-  deleted`, `payment_method.…`) by `Ledger\Application\Port\CatalogAudit`.
+  deleted`, `payment_method.…`) through `Shared\Application\Audit\AuditTrail`.
 - **"In use" is a query** (`CatalogUsage`, DBAL) over the line/payment/receipt tables, products and the company's default
   taxes; a table that starts pointing at a tax or method must be added to `DbalCatalogUsage`.
-- **Validity dates** (`valid_from`, `valid_to`, both included, either open) are stored and shown; `Tax::isValidOn()` is
-  the rule. Nothing filters by them yet: document pickers will (see Known gaps).
+- **Validity dates** (`valid_from`, `valid_to`, both included, either open): `Tax::isValidOn()` / `TaxView::isValidOn()`
+  is the rule. `GET /taxes?on=` lists the taxes in force on a day and the document editor asks with the document's
+  date (a line keeps showing the tax it already has). Saving a factura de venta, cotización or factura de compra
+  refuses a **newly chosen** tax not in force on its date (422 on `lines.N.charge_tax_id`, "Este impuesto no está
+  vigente en la fecha del documento."); a tax the draft already had keeps its snapshot and is emitted as it is.
 - **Line amounts add up to the document totals to the cent** (largest remainder after one rounding per total), so a
   journal entry built from lines always balances.
 - **A product's price may include IVA.** `unit_price_net_of_tax` is the price divided by `1 + rate/100` (rounded half up
@@ -248,6 +251,9 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   entries.
 - **Company settings are the owner's** (`Company\UI\Http\Controller\EditsCompany`); accountant and billing read. Every change is written to `audit_log` through `Company\Application\Port\CompanyAudit` (`company.updated|logo_changed|logo_removed|manual_invoicing_confirmed|resolution_warnings_updated`, `resolution.created|updated`, `numbering_series.updated`), with from/to.
 - **The logo is a Shared `Attachment`** (owner type `company_logo`, owner id the company) stored under `UPLOADS_DIR/<company>/<attachment id>` by `Company\Infrastructure\Storage\FilesystemCompanyLogos`; the controller checks it by content (`finfo` + `getimagesize`: PNG/JPEG only, never SVG) and size (≤ 2 MB) and hands the handler a path. Replacing or removing deletes the old file and row.
+- **One calendar on the server:** `Shared\Domain\Calendar` (from the Clock) gives today and a moment's day in
+  `America/Bogota`; documents, the resolution's status, reports and e-mails date things with it, and no other class
+  names the time zone.
 - **The invoicing resolution's status is computed on Colombian calendar days** (`America/Bogota`, both ends included): not yet valid, active, expired (after `valid_to`) or exhausted (`next_number > range_to`), in that order. `warning` = active and fewer numbers than `resolution_warning_numbers` (default 100) or fewer days than `resolution_warning_days` (default 30) remain; days left is 0 on the last valid day.
 - **`SalesInvoiceNumbering`** (`ResolutionSalesInvoiceNumbering`) locks the resolution row (`SELECT … FOR UPDATE`), refuses with `resolution_missing`, `resolution_inactive` (the *invoice's* date is outside the dates) or `resolution_exhausted` (all `Refused`, 422), and takes the internal consecutive in the same transaction: a rollback gives both numbers back. It needs an open transaction (the command bus opens it) or Doctrine throws.
 - **A resolution's hasta may equal the last number used** (it is then exhausted); it cannot go below it. A resolution that has numbered invoices cannot change desde or prefix, so renewing under a new range/prefix is not possible with the single resolution of §9 Q12 (see Known gaps).
@@ -265,7 +271,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **Collection is the cash-receipt item's door, not an edit of the invoice:** `Sales\Application\Collection\InvoiceCollections::apply()` / `unapply()` (call them inside the receipt's handler) move the receivable's balance and the invoice's `paid_amount` and status; more than the balance is `allocation_exceeds_balance`.
 - **A cotización converts by dispatching `CreateDraftSalesInvoice`** with the quotation's id, stored as the invoice's `quotation_id`.
 - **A cotización** (`Sales\Domain\Model\Quotation`) is a draft until emitted: the same lines and totals as an invoice (`SalesInvoiceContent::resolveLines` checks them against the catalogs, a new choice must be active), no formas de pago, plus `responsible_id` (a tercero with role empleado), `header` and `terms` (plain text) and `expiry_date` (default issue date + 30 days, §9 Q17). Emission takes `Numbering::quotation()` (series C), freezes it and posts **nothing**: `EmitQuotationHandler` does not know the `JournalPoster`.
-- **Expiry is computed on read, not by a job:** `Quotation::statusOn(today)` reads an emitted quotation whose `expiry_date` is before today (Colombia's calendar, `SalesCalendar`) as `expired`; the stored status stays `emitted`, and the list's `?status=expired` / `emitted` filters apply the same date. So no cron line is needed (nothing is added to `deploy/cpanel-update.sh`) and a status can never be stale. An expired offer cannot be accepted, rejected, converted or sent (`quotation_not_open`); it can still be voided or duplicated.
+- **Expiry is computed on read, not by a job:** `Quotation::statusOn(today)` reads an emitted quotation whose `expiry_date` is before today (Colombia's calendar, `Shared\Domain\Calendar`) as `expired`; the stored status stays `emitted`, and the list's `?status=expired` / `emitted` filters apply the same date. So no cron line is needed (nothing is added to `deploy/cpanel-update.sh`) and a status can never be stale. An expired offer cannot be accepted, rejected, converted or sent (`quotation_not_open`); it can still be voided or duplicated.
 - **Convert** (`ConvertQuotationHandler`): once (`quotation_already_converted`), from an emitted, unexpired quotation or one accepted by hand that has no invoice yet. It dispatches `CreateDraftSalesInvoice` through the command bus (same transaction), so an inactive client, product or tax is refused there with the invoice's own violations (422, by field path), which the quotation page lists; nothing is changed then. The invoice is dated today, its *vendedor* is the quotation's *responsable*, and it has no formas de pago yet. The quotation becomes `accepted` and keeps `converted_invoice_id`.
 - **Plain text, never HTML:** `header`, `terms` and `notes` are stored as typed (trimmed). The UI shows them in a textarea (React escapes), the PDF splits them into paragraphs (`QuotationPdf::paragraphs`) and Twig escapes each one (`nl2br` escapes first).
 - **Quotation writes use the voter:** `#[IsGranted(Permission::READ_DOCUMENTS)]` on the controller and `WRITE_DOCUMENTS` on every action that changes anything.
@@ -309,9 +315,20 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   Purchasing has no `Printed` helper of its own (Sales' is not Purchasing's to import): `SupplierPaymentPdf` prints
   pesos and dates itself.
 - **The allocation table takes its words from a namespace** (`AllocatePayment`'s optional `labels`, default
-  `cashReceipt.allocate`; the recibo de pago passes `supplierPayment.allocate`). The supplier search is the generic
-  `entities/tercero` `TerceroPicker` (role as a prop, words as props), since `pages/cash-receipts`' `ClientPicker` is a
-  page's and FSD forbids importing it.
+  `cashReceipt.allocate`; the recibo de pago passes `supplierPayment.allocate`). Every tercero search is
+  `entities/tercero`'s `TerceroPicker` (role, `activeOnly` and an optional "+ Crear nuevo" as props, words as props),
+  built on the kit's `SearchCombobox` (`@/shared/ui`, which the editor's product search also uses): recibos de caja and
+  de pago search every role or `proveedor`, inactive ones included; the document editor searches active terceros and
+  offers the quick-create. Every account search is `features/pick-account` (product accounts, taxes, payment methods,
+  purchase lines).
+- **Document statuses have their own tones in the kit** (`toneFor`, badges and row tints): `draft` warning,
+  `emitted` info, `partially_paid` accent, `paid` and `accepted` success, `rejected`, `expired` and `voided`
+  neutral; every document list (facturas, cotizaciones, recibos) passes its status as it is.
+- **Amounts are typed the Colombian way, everywhere:** `MoneyInput` (`@/shared/ui`) accepts `1.190.000,50`,
+  `595000,5` or `595000.50` and hands its form a decimal string with a point (`places` 2 for money, 4 for unit prices
+  and tax rates; `parseDecimal`/`parseAmount` in `@/shared/lib`). A dot followed by groups of three digits is a
+  thousands separator (`1.190` is 1190, `0.966` is 0,966). Product prices, the editor's unit prices and payments, tax
+  rates, recibos de caja/pago and their allocations use it.
 
 - **Users, invitations and resets (Access).** An e-mail is unique across the whole app (§9 Q22): inviting one
   registered in any company is refused. The owner invites billing users and accountants; an owner may then make
@@ -332,7 +349,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **One audit port for every context:** `Shared\Application\Audit\AuditTrail` (adapter `DoctrineAuditTrail`) writes
   `audit_log` in the command's transaction. Access records `user.invited`, `user.invitation_resent`,
   `user.invitation_accepted`, `user.role_changed {from, to}`, `user.deactivated`, `user.reactivated`,
-  `user.password_reset` (never anything about the password). Ledger's `CatalogAudit` predates it and can delegate.
+  `user.password_reset` (never anything about the password). It is the only writer: Ledger (taxes, payment methods,
+  accounts, posting rules, the lock date), Company (profile, logo, resolution, numbering series) and Party (a
+  tercero's personal data exported or erased, subject `tercero`) record through it too, with the same actions and
+  data as before (their tests assert the rows).
 - **E-mails leave through the queue.** Command handlers publish an event (`InvitationIssued`,
   `PasswordResetRequested`, handled after the commit); the handler renders Twig templates (`templates/emails/access/`)
   and `QueuedMailer` puts them on Messenger's `async` transport, which the worker (a cron line on cPanel) sends.
@@ -400,8 +420,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   never deleted, only deactivated (documents name who made them). Passwords have only a length rule (≥ 10).
 - Stage 1 is being built in parallel items; see the split in `docs/pdr/prd-accounting.md`. Until an item merges, its
   section shows "Esta sección se está construyendo." and its endpoints answer 501.
-- Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
-  the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
+- Taxes: the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
   Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
 - Ledger: no ReteICA auxiliares per municipality yet (A.10: created when the company defines its municipalities);
   `app:ledger:demo-entries` posts sample entries for local review until the document items post real ones.
@@ -413,20 +432,15 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Purchase invoices: the supplier is any active tercero (the role Proveedor is not required, so the editor's search,
   which lists every role, never leads to a refusal). Retenciones are chosen per line by the user; nothing proposes them
   from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3), and ReteIVA is computed
-  on the line's base like every withholding (`DocumentTotals`), not on its IVA. Taxes are not filtered by their validity
-  dates (F5). No e-mail of a purchase invoice (it is the supplier's document). The list's row tints borrow the kit's
-  existing tones (`prospect`, `order_confirmed`, `active`, `cancelled`) until the kit has invoice statuses.
+  on the line's base like every withholding (`DocumentTotals`), not on its IVA. No e-mail of a purchase invoice (it is the supplier's document).
 - Quotations: accepting and rejecting record no user or moment (only emission and void do); there is no partial acceptance (one conversion, §9 Q17); the editor has no attachments, and Encabezado sits in the form's footer (the shared form has no slot above the lines). The offer's validity is stored per quotation, not configurable per company (30 days default).
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.
-- Recibos de caja: no attachments yet (the PRD lists them; the form offers none); the client search is the page's own
-  combobox (the document editor's `SearchCombobox` is not exported from its widget): one shared combobox in
-  `shared/ui` would serve both. A receipt's client is any tercero (role Cliente not required, as on invoices).
+- Recibos de caja: no attachments yet (the PRD lists them; the form offers none). A receipt's client is any tercero (role Cliente not required, as on invoices).
   `VoidSalesInvoiceHandler` reads the invoice without a row lock, so a receipt committing at the same instant as the
   invoice's void is not excluded by a lock (the invoice item's to tighten).
 - Sales invoices: no *Vendedor* field in the form yet (the API takes `seller_id`, an empleado); no attachments on invoices (the form lists none and offers no upload); the read-only form previews a tax deactivated since as 0 (the saved totals are right, from the server); the PDF prints the DIAN fields stage 1 stores, no CUFE/QR (stage 4).
-- Reports: no Excel (.xlsx; Q26 decided CSV and PDF). The ledger pages (`pages/ledger`) do not yet have export buttons
-  of their own or use `widgets/report-table`: the exports are reached from *Reportes › Exportar* (the reusable table is
-  ready for them). The dashboard has no chart. Cartera is by tercero and due date, with no per-sales-person or
+- Reports: no Excel (.xlsx; Q26 decided CSV and PDF). Each ledger page (`pages/ledger`) has its CSV and PDF buttons
+  (`widgets/report-table`'s `ExportLinks`, with the filters on screen); its table is still its own, not `ReportTable`. The dashboard has no chart. Cartera is by tercero and due date, with no per-sales-person or
   per-product cut, and a cartera "as of" a past date ignores later changes to a tercero's name.

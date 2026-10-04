@@ -2,13 +2,13 @@
 
 namespace App\Company\Application\Resolution;
 
-use App\Company\Application\Port\CompanyAudit;
 use App\Company\Domain\Error\ResolutionExists;
 use App\Company\Domain\Error\ResolutionNotFound;
 use App\Company\Domain\Model\InvoicingMode;
 use App\Company\Domain\Model\InvoicingResolution;
 use App\Company\Domain\Repository\CompanyRepository;
 use App\Company\Domain\Repository\InvoicingResolutionRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use Symfony\Component\Uid\Uuid;
 
@@ -17,7 +17,7 @@ final class SaveResolutionHandler implements CommandHandler
     public function __construct(
         private readonly InvoicingResolutionRepository $resolutions,
         private readonly CompanyRepository $companies,
-        private readonly CompanyAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

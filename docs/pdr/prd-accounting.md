@@ -665,18 +665,22 @@ second one; it may only extend it through props.
 
 | # | Found in | What | Who |
 |---|---|---|---|
-| F1 | catalog | The product price field asks for a decimal point ("49999.90"); the taxes form accepts a decimal comma, which is what a Colombian types. One money/number input for every form | a shared `MoneyInput` in `shared/ui`, then catalog adopts it |
-| F2 | catalog, terceros | List pages place their primary action differently (Terceros: header right; Productos: under the subtitle, left). The house rule: `PageHeader` actions | catalog |
-| F3 | taxes-payments, catalog | Two account pickers (`features/pick-account`, `entities/product/ui/AccountPicker`) | keep `features/pick-account`; catalog moves to it |
-| F4 | taxes-payments, catalog, terceros | Local audit writers and role checks (`CatalogAudit`, `CatalogAccess`, controller role checks) | move to `Shared` `AuditTrail` and the voter once "access" merges |
-| F5 | taxes-payments | Tax validity dates are stored but nothing filters by them | document items pick only taxes valid on the document's date |
+| F1 | catalog | The product price field asks for a decimal point ("49999.90"); the taxes form accepts a decimal comma, which is what a Colombian types. One money/number input for every form | fixed (`5e9e20d`, `cc94bea`): `MoneyInput` in `@/shared/ui` (`parseDecimal`/`parseAmount` in `@/shared/lib`); product price, editor unit price and payments, tax rate, recibos and their allocations |
+| F2 | catalog, terceros | List pages place their primary action differently (Terceros: header right; Productos: under the subtitle, left). The house rule: `PageHeader` actions | fixed (`6b44e82`): `PageHeader` keeps its actions on the right when the subtitle is long (every list already passed them there) |
+| F3 | taxes-payments, catalog | Two account pickers (`features/pick-account`, `entities/product/ui/AccountPicker`) | fixed (`6b44e82`): catalog on `features/pick-account`; `entities/product`'s picker removed. Tercero search: one `TerceroPicker` on the kit's `SearchCombobox` (recibos and the editor) |
+| F4 | taxes-payments, catalog, terceros | Local audit writers and role checks (`CatalogAudit`, `CatalogAccess`, controller role checks) | fixed (`e4038f2`): audit writers on `Shared\Application\Audit\AuditTrail`. Role checks: `CatalogAccess`, `EditsCatalogs`, `SalesInvoiceAccess`, `PurchasingAccess` already read `Permission::MATRIX`; moving them to `#[IsGranted]` would change their 403 error codes, left for a decision |
+| F5 | taxes-payments | Tax validity dates are stored but nothing filters by them | fixed (`e39ca27`): `GET /taxes?on=`, the editor asks with the document's date, saving refuses a newly chosen tax not in force |
 | F6 | item 0 | Sign-in dropped the query string of the address it came from | fixed (`2e15736`) |
-| F7 | company, ledger, document-editor | Native `<input type="date">` shows the browser's format (`mm/dd/yyyy` in an English browser; the balance de prueba showed `10/03/2026` for 3 October). §5 NFR: `DD/MM/YYYY` | `DateInput` added to `@/shared/ui` (item 0); new forms use it, existing ones (company, ledger, document-editor, taxes) adopt it in the polish pass |
-| F8 | document-editor | At 1366 px the line grid scrolls sideways inside the table and hides Impuesto retención and Valor total | document-editor layout: description narrower or wrapping, numeric columns compact |
-| F10 | sales, purchasing, company | Three copies of "today in Bogotá" on the server (`SalesCalendar`, `ColombianCalendar`, `Resolutions::TIMEZONE`) | one `Shared\Domain\Calendar` (or a Clock method), used everywhere |
+| F7 | company, ledger, document-editor | Native `<input type="date">` shows the browser's format (`mm/dd/yyyy` in an English browser; the balance de prueba showed `10/03/2026` for 3 October). §5 NFR: `DD/MM/YYYY` | fixed (`1657ff8`): every date field is `DateInput` |
+| F8 | document-editor | At 1366 px the line grid scrolls sideways inside the table and hides Impuesto retención and Valor total | fixed (`51f7388`): fixed-width columns, actions two by two; DOC-10 checks it in Playwright |
+| F10 | sales, purchasing, company | Three copies of "today in Bogotá" on the server (`SalesCalendar`, `ColombianCalendar`, `Resolutions::TIMEZONE`) | fixed (`ecfb3da`): `Shared\Domain\Calendar` |
 | F11 | item 0 | Dates: the UI took "today" and timestamps from the browser/UTC calendar | fixed: `todayInColombia()`, `formatDate()` on Colombia's calendar |
 | F12 | item 0 | ReteIVA was computed on the line's base instead of its IVA | fixed: `TaxBase::ChargeTax`, mirrored in the editor's preview |
 | F9 | company | One resolution per company and desde/prefijo locked after use: a renewal with a new range or prefix cannot be entered (only extended) | **Decided 2026-10-04: later.** Stage 4 (several resolutions); stage 1 keeps extending hasta and the dates |
+| F13 | polish | Document lists borrowed unrelated kit tones (`prospect`, `order_confirmed`…) | fixed (`59b81ef`): document statuses in `toneFor`/RowLegend |
+| F14 | polish | The ledger pages had no export buttons (only *Reportes › Exportar*) | fixed (`c0c0a21`): `ExportLinks` on each book (LED-13) |
+| F15 | polish | `editorErrorsFrom` and the draft mapping copied in three pages | fixed (`57be59c`): `widgets/document-editor/lib/mapping` |
+| F16 | dashboard | At 1366 px the first row's tiles did not share a top edge or height | fixed (`b568aa7`): REP-20 |
 
 After merging ledger, company and document-editor the visual pass (company, resolution, chart, posting rules, payment
 methods, the four books, the editor's demo page) was done in headless Playwright with screenshots: no console errors.

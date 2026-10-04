@@ -18,6 +18,17 @@ export interface ComboOption<T> {
 
 type Status = 'idle' | 'short' | 'loading' | 'ready' | 'failed';
 
+/** The words of the list; each one the caller leaves out is the kit's (`common.combo.*`). */
+export interface ComboMessages {
+  /** "Escribe al menos 3 caracteres." */
+  minChars: (count: number) => string;
+  searching: string;
+  none: string;
+  failed: string;
+  /** "+ Crear nuevo" */
+  create: string;
+}
+
 interface Props<T> {
   /** The label of what is chosen; '' while nothing is. */
   'selectedLabel': string;
@@ -30,6 +41,7 @@ interface Props<T> {
   /** "+ Crear nuevo", with what was typed. */
   'onCreate'?: (text: string) => void;
   'placeholder'?: string;
+  'messages'?: Partial<ComboMessages>;
   'disabled'?: boolean;
   'id'?: string;
   'aria-label'?: string;
@@ -40,7 +52,8 @@ interface Props<T> {
 const DEBOUNCE_MS = 250;
 
 /**
- * A search box with a list of matches (the ARIA combobox pattern): ↓ and ↑ walk the list, Enter chooses, Escape
+ * A search box with a list of matches (the ARIA combobox pattern), for products in the document editor's lines and
+ * for terceros everywhere (through `entities/tercero`'s TerceroPicker): ↓ and ↑ walk the list, Enter chooses, Escape
  * closes. The last option is "+ Crear nuevo" when the form can create what is missing. The list floats over the page
  * (position: fixed), so a table that scrolls sideways does not cut it.
  */
@@ -52,10 +65,19 @@ export function SearchCombobox<T>({
   onClear,
   onCreate,
   placeholder,
+  messages,
   disabled = false,
   ...aria
 }: Props<T>) {
   const {t} = useTranslation();
+  const words: ComboMessages = {
+    minChars: (count) => t('common.combo.minChars', {count}),
+    searching: t('common.combo.searching'),
+    none: t('common.combo.none'),
+    failed: t('common.combo.failed'),
+    create: t('common.combo.create'),
+    ...messages,
+  };
   const listId = `${useId()}-list`;
   const input = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(selectedLabel);
@@ -180,13 +202,13 @@ export function SearchCombobox<T>({
 
   const message =
     status === 'short'
-      ? t('documentEditor.search.minChars', {count: minChars})
+      ? words.minChars(minChars)
       : status === 'loading'
-        ? t('documentEditor.search.searching')
+        ? words.searching
         : status === 'failed'
-          ? t('documentEditor.search.failed')
+          ? words.failed
           : status === 'ready' && options.length === 0
-            ? t('documentEditor.search.none')
+            ? words.none
             : null;
   const expanded = open && (message !== null || count > 0);
   const optionId = (i: number) => `${listId}-${i}`;
@@ -258,7 +280,7 @@ export function SearchCombobox<T>({
                   className={`combo-create${active === options.length ? ' is-active' : ''}`}
                   onClick={() => choose(options.length)}
                 >
-                  {t('documentEditor.search.create')}
+                  {words.create}
                 </li>
               )}
             </ul>

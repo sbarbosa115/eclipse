@@ -6,7 +6,7 @@ import {
 } from '@/features/pick-account';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {Field, FormModal} from '@/shared/ui';
+import {DateInput, Field, FormModal, MoneyInput} from '@/shared/ui';
 import type {NewTaxPayload, Tax, TaxPayload} from '../api/taxSettingsApi';
 
 const KINDS: Record<string, readonly string[]> = {
@@ -51,9 +51,7 @@ export function TaxForm({tax, onClose, onSave}: Props) {
   const [calculation, setCalculation] = useState(
     tax?.calculation ?? 'percentage',
   );
-  const [rate, setRate] = useState(
-    tax ? tax.rate.replace(/\.?0+$/, '').replace('.', ',') : '',
-  );
+  const [rate, setRate] = useState(tax?.rate ?? '');
   const [sales, setSales] = useState(
     choiceOf(
       tax?.sales_account_id,
@@ -89,7 +87,7 @@ export function TaxForm({tax, onClose, onSave}: Props) {
   const validate = (): Errors => {
     const found: Errors = {};
     if (name.trim() === '') found.name = t('taxes.form.required');
-    if (!/^\d+([.,]\d{1,4})?$/.test(rate.trim())) {
+    if (!/^\d+(\.\d{1,4})?$/.test(rate.trim())) {
       found.rate = t('taxes.form.rateInvalid');
     }
     if (sales.text.trim() !== '' && sales.id === null) {
@@ -112,7 +110,7 @@ export function TaxForm({tax, onClose, onSave}: Props) {
     const payload: TaxPayload = {
       name: name.trim(),
       calculation,
-      rate: rate.trim().replace(',', '.'),
+      rate: rate.trim(),
       sales_account_id: sales.id,
       purchase_account_id: purchases.id,
       valid_from: validFrom || null,
@@ -203,29 +201,17 @@ export function TaxForm({tax, onClose, onSave}: Props) {
         hint={perUnit ? t('taxes.form.valueHint') : t('taxes.form.rateHint')}
         error={errors.rate}
       >
-        <input
-          inputMode="decimal"
-          value={rate}
-          onChange={(e) => setRate(e.target.value)}
-        />
+        <MoneyInput places={4} value={rate} onChange={setRate} />
       </Field>
       <Field
         label={t('taxes.form.validFrom')}
         error={errors.valid_from}
         optional
       >
-        <input
-          type="date"
-          value={validFrom}
-          onChange={(e) => setValidFrom(e.target.value)}
-        />
+        <DateInput value={validFrom} onChange={setValidFrom} />
       </Field>
       <Field label={t('taxes.form.validTo')} error={errors.valid_to} optional>
-        <input
-          type="date"
-          value={validTo}
-          onChange={(e) => setValidTo(e.target.value)}
-        />
+        <DateInput value={validTo} onChange={setValidTo} />
       </Field>
       <Field
         label={t('taxes.form.salesAccount')}
