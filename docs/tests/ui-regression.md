@@ -719,7 +719,7 @@ narrow screen; the inactive row is distinguishable in both themes; the console h
 
 ## 7. The document form
 
-<!-- Owned by item 7 "document-editor" (DOC-01 – 09). -->
+<!-- Owned by item 7 "document-editor" (DOC-01 – 10). -->
 
 The form a cotización, factura de venta and factura de compra share. Until those pages exist (items 8–10) it is tried on
 its development page, **`/dev/editor-documento`** (not routed in a production build): the **Documento** select switches
@@ -753,7 +753,7 @@ Smoke: `e2e/documentEditor.spec.ts`.
 On line 1 type `Cuaderno rayado` › **+ Crear nuevo** › Código `CUA-01`, Precio `11900`, *Incluir IVA en el precio*,
 IVA 19 % › **Crear**.
 **Expected:** the dialog starts with Nombre `Cuaderno rayado`; the line shows `CUA-01 · Cuaderno rayado`, Cantidad
-`1`, Valor unitario `10000` (net of IVA) and Valor total `$ 11.900,00` (the list price).
+`1`, Valor unitario `10.000` (net of IVA) and Valor total `$ 11.900,00` (the list price).
 
 **DOC-05 · The tax dialog changes a line and, when asked, the product from now on**
 Smoke (part): `e2e/documentEditor.spec.ts`; by hand: the product in Productos y servicios, and without the tick.
@@ -774,7 +774,7 @@ line totals `$ 595.000,00`; **Comprobar** asks nothing more of it. Typing an acc
 Smoke (part): `e2e/documentEditor.spec.ts`; by hand: *Otra fecha* and moving Fecha de elaboración.
 A line totalling `$ 1.190.000,00` › **Agregar forma de pago** › Efectivo; change Valor to `595000`; **Comprobar**;
 **Agregar forma de pago** › Crédito; then Plazo `Otra fecha` and a date; then Documento `C · Cotización`.
-**Expected:** the first row offers `1190000.00` and the check mark "Coincide con el total neto" shows; at `595000`
+**Expected:** the first row offers `1.190.000` and the check mark "Coincide con el total neto" shows; at `595000`
 "Faltan $ 595.000,00 para el total neto" and **Comprobar** says "Total formas de pago ($ 595.000,00) debe ser igual al
 total neto ($ 1.190.000,00)."; the crédito row offers the rest, *A 30 días* and its date 30 days after Fecha de
 elaboración, and the check mark is back; *Otra fecha* shows a date field; changing Fecha de elaboración moves the
@@ -791,10 +791,18 @@ chooses, Escape closes it, and Enter in a cell never submits anything.
 **DOC-09 · The form on a tablet, in both themes, and read-only**
 At 1366×768, 1024×768 and 768×1024, Tema `Claro` and `Oscuro`, with three lines, two formas de pago and an attachment;
 then **Ver como emitido**.
-**Expected:** the lines table scrolls sideways inside its box and the search lists are not cut by it; the totals sit
+**Expected:** at 1366×768 every column of the lines (through Impuesto retención, Valor total and the actions) is visible
+without scrolling the table (DOC-10); on a narrower screen the lines table scrolls sideways inside its box; the search
+lists are not cut by it; the totals sit
 to the right on a wide screen and below on a narrow one; the check mark and "Faltan…" read in both themes (icon and
 words, not colour only). Read-only shows every value with nothing editable and no add, move, remove or tax buttons.
 The console has no errors.
+
+**DOC-10 · At 1366×768 every column of the lines is visible**
+Smoke: `e2e/documentEditor.spec.ts`.
+At 1366×768, a new factura de venta with a product on line 1, and a new factura de compra with line 1 by account.
+**Expected:** Producto/Servicio, Descripción, Cantidad, Valor unitario, % Descuento, Impuesto cargo, Impuesto
+retención, Valor total and Acciones all sit inside the table's box; the table does not scroll sideways.
 
 ## 8. Facturas de venta
 
