@@ -79,6 +79,8 @@ final class CompanyApiTest extends CatalogTestCase
         self::assertCount(1, $rows, 'Every change is written to the audit log.');
         self::assertSame('Acme S.A.S.', $rows[0]->data()['from']['legalName']);
         self::assertSame('Acme Ltda.', $rows[0]->data()['to']['legalName']);
+        self::assertSame(['company', $companyId->toRfc4122()], [$rows[0]->subjectType(), $rows[0]->subjectId()?->toRfc4122()]);
+        self::assertNotNull($rows[0]->userId());
     }
 
     public function testTheCheckDigitIsComputedWhenEmptyAndKeptWhenGiven(): void

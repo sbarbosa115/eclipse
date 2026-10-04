@@ -2,11 +2,11 @@
 
 namespace App\Ledger\Application\Command;
 
-use App\Ledger\Application\Port\AuditTrail;
 use App\Ledger\Domain\Error\AccountCodeTaken;
 use App\Ledger\Domain\Error\ParentAccountNotFound;
 use App\Ledger\Domain\Model\Account;
 use App\Ledger\Domain\Repository\AccountRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use Symfony\Component\Uid\Uuid;
 

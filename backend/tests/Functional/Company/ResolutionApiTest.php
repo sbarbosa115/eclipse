@@ -58,6 +58,11 @@ final class ResolutionApiTest extends CatalogTestCase
         self::assertContains($created['status']['days_left'], [299, 300, 301], 'About 300 days remain (the day boundary depends on the hour).');
         self::assertSame($created, $this->getJson('/api/v1/company/resolution'));
         self::assertCount(1, $this->audit($companyId, 'resolution.created'), 'The setup is in the audit log.');
+        $row = $this->audit($companyId, 'resolution.created')[0];
+        self::assertSame('invoicing_resolution', $row->subjectType());
+        self::assertNotNull($row->subjectId());
+        self::assertNotNull($row->userId());
+        self::assertSame(['to'], array_keys($row->data()), 'A new resolution logs what it was set up with.');
         self::assertSame($created['status'], $this->getJson('/api/v1/company/resolution/status'));
     }
 

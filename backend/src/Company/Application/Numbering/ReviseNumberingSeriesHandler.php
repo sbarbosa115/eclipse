@@ -2,17 +2,17 @@
 
 namespace App\Company\Application\Numbering;
 
-use App\Company\Application\Port\CompanyAudit;
 use App\Company\Domain\Error\NumberingSeriesNotFound;
 use App\Company\Domain\Model\SeriesKind;
 use App\Company\Domain\Repository\NumberingSeriesRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class ReviseNumberingSeriesHandler implements CommandHandler
 {
     public function __construct(
         private readonly NumberingSeriesRepository $series,
-        private readonly CompanyAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

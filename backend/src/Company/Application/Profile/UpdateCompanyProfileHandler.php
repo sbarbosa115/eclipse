@@ -2,11 +2,11 @@
 
 namespace App\Company\Application\Profile;
 
-use App\Company\Application\Port\CompanyAudit;
 use App\Company\Application\Query\Companies;
 use App\Company\Domain\Error\InvalidCompanyProfile;
 use App\Company\Domain\Repository\CompanyRepository;
 use App\Ledger\Application\Query\LedgerCatalog;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Fiscal\FiscalResponsibility;
@@ -19,7 +19,7 @@ final class UpdateCompanyProfileHandler implements CommandHandler
     public function __construct(
         private readonly CompanyRepository $companies,
         private readonly LedgerCatalog $ledger,
-        private readonly CompanyAudit $audit,
+        private readonly AuditTrail $audit,
         private readonly Companies $views,
     ) {
     }

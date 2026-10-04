@@ -118,6 +118,12 @@ final class TaxApiTest extends CatalogTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(['IVA 6 %', '6.0000', $account, '2027-01-01', 'iva', 'charge'], [$updated['name'], $updated['rate'], $updated['sales_account_id'], $updated['valid_from'], $updated['kind'], $updated['tax_class']], 'Name, rate, accounts and dates change; the class and kind never do.');
         self::assertCount(1, $this->audit($company, 'tax.updated'), 'The change is in the audit log.');
+        $row = $this->audit($company, 'tax.updated')[0];
+        self::assertSame(['tax', $tax['id']], [$row->subjectType(), $row->subjectId()?->toRfc4122()], 'The row names the tax.');
+        self::assertNotNull($row->userId(), 'The row names who changed it.');
+        self::assertSame(['from', 'to'], array_keys($row->data()));
+        self::assertSame(['name' => 'IVA 6 %', 'calculation' => 'percentage', 'rate' => '6.0000', 'sales_account_id' => $account, 'purchase_account_id' => null, 'valid_from' => '2027-01-01', 'valid_to' => null], $row->data()['to'], 'The data is the tax as it was left.');
+        self::assertSame('IVA 5 %', $row->data()['from']['name']);
     }
 
     public function testRefusalsNameTheFieldAtFault(): void

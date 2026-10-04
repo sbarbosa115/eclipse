@@ -2,15 +2,15 @@
 
 namespace App\Company\Application\Resolution;
 
-use App\Company\Application\Port\CompanyAudit;
 use App\Company\Domain\Repository\CompanyRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class UpdateResolutionWarningsHandler implements CommandHandler
 {
     public function __construct(
         private readonly CompanyRepository $companies,
-        private readonly CompanyAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

@@ -2,15 +2,15 @@
 
 namespace App\Ledger\Application\PaymentMethod;
 
-use App\Ledger\Application\Port\CatalogAudit;
 use App\Ledger\Domain\Repository\PaymentMethodRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class SetPaymentMethodActiveHandler implements CommandHandler
 {
     public function __construct(
         private readonly PaymentMethodRepository $methods,
-        private readonly CatalogAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 

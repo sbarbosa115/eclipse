@@ -2,8 +2,8 @@
 
 namespace App\Ledger\Application\Command;
 
-use App\Ledger\Application\Port\AuditTrail;
 use App\Ledger\Domain\Repository\LedgerSettingsRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Domain\Clock;
 

@@ -217,7 +217,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   the chart has them). "Ninguno" is seeded once per class and is fixed: not editable, deactivated or deleted.
 - **A tax's class and kind, and a payment method's kind, never change** after creation (they decide how documents post
   them); the rest is editable and every change is written to `audit_log` (`tax.created|updated|activated|deactivated|
-  deleted`, `payment_method.…`) by `Ledger\Application\Port\CatalogAudit`.
+  deleted`, `payment_method.…`) through `Shared\Application\Audit\AuditTrail`.
 - **"In use" is a query** (`CatalogUsage`, DBAL) over the line/payment/receipt tables, products and the company's default
   taxes; a table that starts pointing at a tax or method must be added to `DbalCatalogUsage`.
 - **Validity dates** (`valid_from`, `valid_to`, both included, either open) are stored and shown; `Tax::isValidOn()` is
@@ -340,7 +340,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **One audit port for every context:** `Shared\Application\Audit\AuditTrail` (adapter `DoctrineAuditTrail`) writes
   `audit_log` in the command's transaction. Access records `user.invited`, `user.invitation_resent`,
   `user.invitation_accepted`, `user.role_changed {from, to}`, `user.deactivated`, `user.reactivated`,
-  `user.password_reset` (never anything about the password). Ledger's `CatalogAudit` predates it and can delegate.
+  `user.password_reset` (never anything about the password). It is the only writer: Ledger (taxes, payment methods,
+  accounts, posting rules, the lock date), Company (profile, logo, resolution, numbering series) and Party (a
+  tercero's personal data exported or erased, subject `tercero`) record through it too, with the same actions and
+  data as before (their tests assert the rows).
 - **E-mails leave through the queue.** Command handlers publish an event (`InvitationIssued`,
   `PasswordResetRequested`, handled after the commit); the handler renders Twig templates (`templates/emails/access/`)
   and `QueuedMailer` puts them on Messenger's `async` transport, which the worker (a cron line on cPanel) sends.

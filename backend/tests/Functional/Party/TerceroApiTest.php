@@ -375,6 +375,7 @@ final class TerceroApiTest extends ApiTestCase
         $log = static::getContainer()->get(EntityManagerInterface::class)->getRepository(AuditLog::class)->findOneBy(['action' => 'tercero.personal_data_exported']);
         self::assertNotNull($log, 'An export of personal data leaves a trace.');
         self::assertSame($session['user_id'], $log->userId()?->toRfc4122());
+        self::assertSame(['tercero', $t['id'], []], [$log->subjectType(), $log->subjectId()?->toRfc4122(), $log->data()], 'The row names the tercero and nothing of its data.');
     }
 
     public function testEraseBlanksPersonalDataAndKeepsTheRow(): void

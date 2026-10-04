@@ -2,10 +2,10 @@
 
 namespace App\Company\Application\Profile;
 
-use App\Company\Application\Port\CompanyAudit;
 use App\Company\Application\Port\CompanyLogos;
 use App\Company\Domain\Error\LogoNotFound;
 use App\Company\Domain\Repository\CompanyRepository;
+use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
 
 final class RemoveLogoHandler implements CommandHandler
@@ -13,7 +13,7 @@ final class RemoveLogoHandler implements CommandHandler
     public function __construct(
         private readonly CompanyRepository $companies,
         private readonly CompanyLogos $logos,
-        private readonly CompanyAudit $audit,
+        private readonly AuditTrail $audit,
     ) {
     }
 
