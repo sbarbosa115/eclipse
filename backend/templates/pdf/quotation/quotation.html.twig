@@ -1,0 +1,100 @@
+{#
+    La cotización (§4.7), from Sales\Application\Document\QuotationPdf::context(): every value arrives already printed
+    ($ 1.190.000,00, DD/MM/YYYY). The encabezado, the condiciones comerciales and the observaciones are plain text split
+    into paragraphs: Twig escapes them (nl2br escapes before it adds its breaks), so nothing a person types is markup.
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% block watermark %}
+    {% if banner %}<div class="voided">{{ banner }}</div>{% endif %}
+{% endblock %}
+
+{% block body %}
+    <style>
+        .parties { width: 100%; margin-bottom: 10px; }
+        .parties td { vertical-align: top; width: 50%; padding-right: 8px; }
+        .label { color: #616e7c; font-size: 7.5pt; text-transform: uppercase; }
+        .totals { width: 45%; margin-left: 55%; margin-top: 8px; border-collapse: collapse; }
+        .totals td { padding: 2px 4px; }
+        .totals .net td { font-weight: bold; border-top: 1px solid #1f2933; }
+        .section { margin-top: 10px; }
+        .section p { margin: 0 0 6px 0; }
+        .note { color: #b42318; font-weight: bold; margin-bottom: 8px; }
+    </style>
+
+    {% if voided %}
+        <div class="note">ANULADA el {{ quotation.voided_at }}. Motivo: {{ quotation.void_reason }}</div>
+    {% elseif status_note %}
+        <div class="note">{{ status_note }}</div>
+    {% endif %}
+
+    <table class="parties">
+        <tr>
+            <td>
+                <div class="label">Cliente</div>
+                <strong>{{ client.name }}</strong><br>
+                {{ client.identification }}<br>
+                {% if client.address %}{{ client.address }}<br>{% endif %}
+                {% if client.email %}{{ client.email }}<br>{% endif %}
+                {% if client.contact %}Contacto: {{ client.contact }}<br>{% endif %}
+            </td>
+            <td>
+                <div class="label">Cotización</div>
+                Fecha de elaboración: {{ quotation.issue_date }}<br>
+                Válida hasta: {{ quotation.expiry_date }}<br>
+                {% if quotation.responsible %}Responsable: {{ quotation.responsible }}<br>{% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if quotation.header %}
+        <div class="section">
+            {% for paragraph in quotation.header %}<p>{{ paragraph|nl2br }}</p>{% endfor %}
+        </div>
+    {% endif %}
+
+    <table class="lines">
+        <thead>
+            <tr>
+                <th>#</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Valor unitario</th>
+                <th class="num">% Desc.</th><th>Impuesto</th><th class="num">Valor total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+                <tr>
+                    <td>{{ line.position }}</td>
+                    <td>{{ line.description }}</td>
+                    <td class="num">{{ line.quantity }}</td>
+                    <td class="num">{{ line.unit_price }}</td>
+                    <td class="num">{{ line.discount }}</td>
+                    <td>{{ line.charge_tax }}</td>
+                    <td class="num">{{ line.total }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr><td>Total bruto</td><td class="num">{{ totals.gross }}</td></tr>
+        {% if totals.has_discounts %}<tr><td>Descuentos</td><td class="num">-{{ totals.discounts }}</td></tr>{% endif %}
+        <tr><td>Subtotal</td><td class="num">{{ totals.subtotal }}</td></tr>
+        {% for tax in taxes %}<tr><td>{{ tax.name }} <span class="muted">(base {{ tax.base }})</span></td><td class="num">{{ tax.amount }}</td></tr>{% endfor %}
+        {% for tax in withholdings %}<tr><td>{{ tax.name }} <span class="muted">(base {{ tax.base }})</span></td><td class="num">-{{ tax.amount }}</td></tr>{% endfor %}
+        <tr class="net"><td>Total neto</td><td class="num">{{ totals.net }}</td></tr>
+    </table>
+
+    {% if quotation.terms %}
+        <div class="section">
+            <div class="label">Condiciones comerciales</div>
+            {% for paragraph in quotation.terms %}<p>{{ paragraph|nl2br }}</p>{% endfor %}
+        </div>
+    {% endif %}
+
+    {% if quotation.notes %}
+        <div class="section">
+            <div class="label">Observaciones</div>
+            {% for paragraph in quotation.notes %}<p>{{ paragraph|nl2br }}</p>{% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -2,7 +2,7 @@
 
 namespace App\Sales\UI\Http\Output;
 
-use App\Sales\Domain\Model\SalesInvoiceLine;
+use App\Shared\Domain\Model\CommercialLine;
 
 /** A line with its taxes as the invoice copied them and its share of the totals. */
 final readonly class SalesInvoiceLineOutput
@@ -35,7 +35,7 @@ final readonly class SalesInvoiceLineOutput
     ) {
     }
 
-    public static function of(SalesInvoiceLine $l, ?string $productLabel): self
+    public static function of(CommercialLine $l, ?string $productLabel): self
     {
         return new self(
             $l->id()->toRfc4122(),
