@@ -139,10 +139,16 @@ final class TerceroInput
             $this->billingContactIsPayer,
             array_map(FiscalResponsibility::from(...), $this->fiscalResponsibilities),
             $this->roles,
-            null === $this->receivableAccountId ? null : Uuid::fromString($this->receivableAccountId),
-            null === $this->payableAccountId ? null : Uuid::fromString($this->payableAccountId),
-            array_map(static fn (ContactInput $c) => new ContactDraft(null === $c->id ? null : Uuid::fromString($c->id), trim($c->name), self::blank($c->email), self::blank($c->phone)), $this->contacts),
+            self::uuid($this->receivableAccountId),
+            self::uuid($this->payableAccountId),
+            array_map(static fn (ContactInput $c) => new ContactDraft(self::uuid($c->id), trim($c->name), self::blank($c->email), self::blank($c->phone)), $this->contacts),
         );
+    }
+
+    /** An optional id: null or "" (an empty select) is none. */
+    private static function uuid(?string $id): ?Uuid
+    {
+        return null === $id || '' === $id ? null : Uuid::fromString($id);
     }
 
     private static function blank(?string $value): ?string

@@ -30,8 +30,9 @@ final class CatalogAccess
         return Uuid::isValid($id) ? Uuid::fromString($id) : throw new CategoryNotFound();
     }
 
+    /** An optional id: null or "" (an empty select) is none. */
     public static function optionalUuid(?string $id): ?Uuid
     {
-        return null === $id ? null : Uuid::fromString($id);
+        return null === $id || '' === $id ? null : Uuid::fromString($id);
     }
 }

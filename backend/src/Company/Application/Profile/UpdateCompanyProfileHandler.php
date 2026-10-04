@@ -76,7 +76,7 @@ final class UpdateCompanyProfileHandler implements CommandHandler
      */
     private function defaultTax(Uuid $companyId, ?string $id, string $class, string $field, string $message, array &$violations): ?Uuid
     {
-        if (null === $id) {
+        if (null === $id || '' === $id) {
             return null;
         }
         try {
