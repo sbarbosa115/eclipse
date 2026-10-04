@@ -16,12 +16,13 @@ import {
   DataTable,
   IconButton,
   MoneyInput,
+  SearchCombobox,
+  type ComboOption,
 } from '@/shared/ui';
 import {setLineMode} from '../model/draft';
 import type {LineAmounts} from '../model/totals';
 import type {DocumentKind, DraftLine, EditorErrors} from '../model/types';
 import {CellError, invalidProps} from './CellError';
-import {SearchCombobox, type ComboOption} from './SearchCombobox';
 
 type Column =
   | 'item'

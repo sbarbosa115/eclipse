@@ -6,10 +6,13 @@ import type {
   QuickProductRequest,
 } from '../api/productApi';
 
-/** An account chosen in a picker: its id once one is picked from the list, and the text the person sees. */
+/**
+ * An account chosen in a picker: its id once one is picked from the list, and the text the person sees. The same
+ * shape as `features/pick-account`'s choice, whose picker the product form uses (an entity cannot import a feature).
+ */
 export interface AccountChoice {
   id: string | null;
-  label: string;
+  text: string;
 }
 
 /** What the full form edits. Selects keep '' for "none"/"the default". */
@@ -30,7 +33,7 @@ export interface ProductFormData {
 
 export type ProductFormErrors = Partial<Record<string, string>>;
 
-const NO_ACCOUNT: AccountChoice = {id: null, label: ''};
+const NO_ACCOUNT: AccountChoice = {id: null, text: ''};
 /** Pesos with up to four decimals, like the API's unit prices. */
 export const PRICE = /^\d{1,14}(\.\d{1,4})?$/;
 
@@ -78,11 +81,11 @@ export function formFromProduct(product: Product): ProductFormData {
     withholding_tax_id: product.withholding_tax_id ?? '',
     revenue_account: {
       id: product.revenue_account_id ?? null,
-      label: product.revenue_account_label ?? '',
+      text: product.revenue_account_label ?? '',
     },
     expense_account: {
       id: product.expense_account_id ?? null,
-      label: product.expense_account_label ?? '',
+      text: product.expense_account_label ?? '',
     },
   };
 }
@@ -101,7 +104,7 @@ export function validateProductForm(
     errors.sale_price = t('catalog.validation.price');
   for (const field of ['revenue_account', 'expense_account'] as const) {
     const choice = data[field];
-    if (choice.label.trim() !== '' && choice.id === null) {
+    if (choice.text.trim() !== '' && choice.id === null) {
       errors[`${field}_id`] = t('catalog.form.accountMissing');
     }
   }

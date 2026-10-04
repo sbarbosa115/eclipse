@@ -60,7 +60,6 @@
     "revenueAccountHint": "Si la dejas vacía se usa la de las reglas de contabilización.",
     "expenseAccount": "Cuenta de gasto o costo",
     "expenseAccountHint": "Para compras. Si la dejas vacía se usa la de las reglas de contabilización.",
-    "accountPlaceholder": "Código o nombre de la cuenta",
     "accountMissing": "Elige una cuenta de la lista o borra el campo.",
     "saved": "Producto guardado.",
     "created": "Producto creado."

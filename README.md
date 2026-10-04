@@ -309,9 +309,12 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   Purchasing has no `Printed` helper of its own (Sales' is not Purchasing's to import): `SupplierPaymentPdf` prints
   pesos and dates itself.
 - **The allocation table takes its words from a namespace** (`AllocatePayment`'s optional `labels`, default
-  `cashReceipt.allocate`; the recibo de pago passes `supplierPayment.allocate`). The supplier search is the generic
-  `entities/tercero` `TerceroPicker` (role as a prop, words as props), since `pages/cash-receipts`' `ClientPicker` is a
-  page's and FSD forbids importing it.
+  `cashReceipt.allocate`; the recibo de pago passes `supplierPayment.allocate`). Every tercero search is
+  `entities/tercero`'s `TerceroPicker` (role, `activeOnly` and an optional "+ Crear nuevo" as props, words as props),
+  built on the kit's `SearchCombobox` (`@/shared/ui`, which the editor's product search also uses): recibos de caja and
+  de pago search every role or `proveedor`, inactive ones included; the document editor searches active terceros and
+  offers the quick-create. Every account search is `features/pick-account` (product accounts, taxes, payment methods,
+  purchase lines).
 - **Amounts are typed the Colombian way, everywhere:** `MoneyInput` (`@/shared/ui`) accepts `1.190.000,50`,
   `595000,5` or `595000.50` and hands its form a decimal string with a point (`places` 2 for money, 4 for unit prices
   and tax rates; `parseDecimal`/`parseAmount` in `@/shared/lib`). A dot followed by groups of three digits is a
@@ -425,9 +428,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.
-- Recibos de caja: no attachments yet (the PRD lists them; the form offers none); the client search is the page's own
-  combobox (the document editor's `SearchCombobox` is not exported from its widget): one shared combobox in
-  `shared/ui` would serve both. A receipt's client is any tercero (role Cliente not required, as on invoices).
+- Recibos de caja: no attachments yet (the PRD lists them; the form offers none). A receipt's client is any tercero (role Cliente not required, as on invoices).
   `VoidSalesInvoiceHandler` reads the invoice without a row lock, so a receipt committing at the same instant as the
   invoice's void is not excluded by a lock (the invoice item's to tighten).
 - Sales invoices: no *Vendedor* field in the form yet (the API takes `seller_id`, an empleado); no attachments on invoices (the form lists none and offers no upload); the read-only form previews a tax deactivated since as 0 (the saved totals are right, from the server); the PDF prints the DIAN fields stage 1 stores, no CUFE/QR (stage 4).

@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import './products.css';
 import {
-  AccountPicker,
   createProduct,
   defaultUnit,
   emptyProductForm,
@@ -18,6 +17,7 @@ import {
   type ProductFormErrors,
   type ProductOptions,
 } from '@/entities/product';
+import {AccountPicker} from '@/features/pick-account';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {Button, Field, FormModal, Modal, MoneyInput} from '@/shared/ui';
@@ -197,20 +197,28 @@ export function ProductFormModal({
           error={errors.withholding_tax_id}
           onChange={(id) => set('withholding_tax_id', id)}
         />
-        <AccountPicker
+        <Field
           label={t('catalog.form.revenueAccount')}
           hint={t('catalog.form.revenueAccountHint')}
-          value={data.revenue_account}
           error={errors.revenue_account_id}
-          onChange={(choice) => set('revenue_account', choice)}
-        />
-        <AccountPicker
+          optional
+        >
+          <AccountPicker
+            value={data.revenue_account}
+            onChange={(choice) => set('revenue_account', choice)}
+          />
+        </Field>
+        <Field
           label={t('catalog.form.expenseAccount')}
           hint={t('catalog.form.expenseAccountHint')}
-          value={data.expense_account}
           error={errors.expense_account_id}
-          onChange={(choice) => set('expense_account', choice)}
-        />
+          optional
+        >
+          <AccountPicker
+            value={data.expense_account}
+            onChange={(choice) => set('expense_account', choice)}
+          />
+        </Field>
       </div>
     </fieldset>
   );

@@ -126,8 +126,3 @@ export async function listTaxes(
 ): Promise<Tax[]> {
   return (await apiGet<{items: Tax[]}>(`/taxes?class=${taxClass}`)).items;
 }
-
-export async function searchAccounts(query: string): Promise<Account[]> {
-  const q = encodeURIComponent(query);
-  return (await apiGet<{items: Account[]}>(`/accounts/search?q=${q}`)).items;
-}

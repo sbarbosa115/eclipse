@@ -64,7 +64,7 @@ describe('the product form', () => {
         code: 'A',
         name: 'A',
         sale_price: '1',
-        revenue_account: {id: null, label: '4135'},
+        revenue_account: {id: null, text: '4135'},
       },
       t,
     );
@@ -101,9 +101,9 @@ describe('the product form', () => {
     expect(form.sale_price).toBe('119000');
     expect(form.revenue_account).toEqual({
       id: 'acc',
-      label: '413595 · Venta de otros',
+      text: '413595 · Venta de otros',
     });
-    expect(form.expense_account).toEqual({id: null, label: ''});
+    expect(form.expense_account).toEqual({id: null, text: ''});
     expect(trimDecimals('42016.8067')).toBe('42016.8067');
     expect(trimDecimals('10000.5000')).toBe('10000.5');
     expect(trimDecimals('10000')).toBe('10000');

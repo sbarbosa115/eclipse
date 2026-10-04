@@ -24,5 +24,12 @@
     "network": "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.",
     "unexpected": "Algo salió mal. Inténtalo de nuevo.",
     "tooManyRequests": "Demasiados intentos. Espera un momento e inténtalo de nuevo."
+  },
+  "combo": {
+    "minChars": "Escribe al menos {{count}} caracteres.",
+    "searching": "Buscando…",
+    "none": "Sin resultados.",
+    "create": "+ Crear nuevo",
+    "failed": "No pudimos buscar. Inténtalo de nuevo."
   }
 }
