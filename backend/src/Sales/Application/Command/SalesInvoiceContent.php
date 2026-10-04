@@ -12,6 +12,7 @@ use App\Sales\Domain\Model\InvoiceLineDraft;
 use App\Sales\Domain\Model\InvoicePaymentDraft;
 use App\Sales\Domain\Model\SalesInvoice;
 use App\Shared\Domain\Error\NotFound;
+use App\Shared\Domain\Model\CommercialLine;
 use App\Shared\Domain\Model\PaymentKind;
 use App\Shared\Domain\Model\TaxSnapshot;
 use App\Shared\Domain\Money\Money;
@@ -47,7 +48,7 @@ final class SalesInvoiceContent
         $this->violations = [];
         $name = $this->client($invoice, $data);
         $this->contactAndSeller($invoice->companyId(), $data);
-        $lines = $this->lines($invoice, $data->lines);
+        $lines = $this->lines($invoice->companyId(), $invoice->lines(), $data->lines);
         $payments = $this->payments($invoice, $data->payments);
 
         $invoice->revise($data->terceroId, $name ?? $invoice->terceroName(), $data->contactId, $data->sellerId, $data->issueDate, $data->notes);
@@ -113,15 +114,33 @@ final class SalesInvoiceContent
     }
 
     /**
+     * The lines of a draft (a quotation's or an invoice's) resolved against the catalogs: what the draft already has
+     * keeps its inactive products and taxes, a new choice must be active. Every problem is reported at once.
+     *
+     * @param list<CommercialLine>       $current the draft's lines as they are now
+     * @param list<SalesInvoiceLineData> $lines
+     *
+     * @return array{list<InvoiceLineDraft>, list<array{field: string, message: string}>} the drafts and the violations
+     */
+    public function resolveLines(Uuid $companyId, array $current, array $lines): array
+    {
+        $this->violations = [];
+        $drafts = $this->lines($companyId, $current, $lines);
+
+        return [$drafts, $this->violations];
+    }
+
+    /**
+     * @param list<CommercialLine>       $current
      * @param list<SalesInvoiceLineData> $lines
      *
      * @return list<InvoiceLineDraft>
      */
-    private function lines(SalesInvoice $invoice, array $lines): array
+    private function lines(Uuid $companyId, array $current, array $lines): array
     {
         $kept = [];
         $keptProducts = [];
-        foreach ($invoice->lines() as $line) {
+        foreach ($current as $line) {
             foreach ([$line->chargeTax(), $line->withholdingTax()] as $tax) {
                 if (null !== $tax->taxId()) {
                     $kept[$tax->taxId()->toRfc4122()] = $tax;
@@ -139,7 +158,7 @@ final class SalesInvoiceContent
                 $this->violate("$at.product_id", 'Choose a product or service.');
             } else {
                 try {
-                    $product = $this->products->get($invoice->companyId(), $line->productId);
+                    $product = $this->products->get($companyId, $line->productId);
                     if (!$product->active && !isset($keptProducts[$product->id])) {
                         $this->violate("$at.product_id", 'This product is inactive.');
                     }
@@ -150,8 +169,8 @@ final class SalesInvoiceContent
             if ('' === trim($line->description)) {
                 $this->violate("$at.description", 'Write the description.');
             }
-            $charge = $this->tax($invoice->companyId(), $line->chargeTaxId, 'charge', "$at.charge_tax_id", $kept);
-            $withholding = $this->tax($invoice->companyId(), $line->withholdingTaxId, 'withholding', "$at.withholding_tax_id", $kept);
+            $charge = $this->tax($companyId, $line->chargeTaxId, 'charge', "$at.charge_tax_id", $kept);
+            $withholding = $this->tax($companyId, $line->withholdingTaxId, 'withholding', "$at.withholding_tax_id", $kept);
             $quantity = Quantity::of($line->quantity);
             if (!$quantity->toBigDecimal()->isPositive()) {
                 $this->violate("$at.quantity", 'The quantity is greater than zero.');

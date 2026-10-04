@@ -1093,6 +1093,212 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=draft|emitted|
+         *     accepted|rejected|expired|voided (an emitted quotation past its vencimiento is `expired`), ?from=, ?to= (fecha de
+         *     elaboración, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page ≤ 100.
+         */
+        get: operations["get_app_sales_ui_http_quotation_list"];
+        put?: never;
+        /**
+         * A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,
+         *     notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}]} → 201.
+         * @description 422 `validation_failed` by field path (`lines.0.product_id`, `expiry_date`…).
+         */
+        post: operations["post_app_sales_ui_http_quotation_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One quotation, whole. */
+        get: operations["get_app_sales_ui_http_quotation_show"];
+        /** Rewrites a draft with the same body as create. 409 `document_not_draft` once emitted. */
+        put: operations["put_app_sales_ui_http_quotation_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/emit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emits the draft (§4.7): the next number of series C, frozen; no journal entry. 422 `validation_failed` (`lines`,
+         *     `issue_date` in the future), `tercero_inactive`; 409 `document_not_draft`.
+         */
+        post: operations["post_app_sales_ui_http_quotation_emit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/emit-and-send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** "Emitir y enviar": emits, then e-mails the PDF to the client through the queue. Also 422 `tercero_has_no_email`. */
+        post: operations["post_app_sales_ui_http_quotation_emitandsend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** E-mails an emitted quotation's PDF again → 202. 409 `quotation_not_open`; 422 `tercero_has_no_email`. */
+        post: operations["post_app_sales_ui_http_quotation_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The client accepted: emitted → accepted. 409 `quotation_not_open` (a draft, decided, voided or expired one). */
+        post: operations["post_app_sales_ui_http_quotation_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The client declined: emitted → rejected. 409 `quotation_not_open`. */
+        post: operations["post_app_sales_ui_http_quotation_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Voids an emitted quotation: {reason}. No entry to reverse; the number is kept. 409 `quotation_not_open`. */
+        post: operations["post_app_sales_ui_http_quotation_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * "Convertir a factura" (§4.7): makes a draft sales invoice with the same client, contact, lines and taxes (dated
+         *     today, no formas de pago yet), once → the quotation, now `accepted`, whose `converted_invoice_id` is the draft
+         *     (its `quotation_id` is this quotation). 409 `quotation_already_converted`, `quotation_not_open`; 422
+         *     `validation_failed` when the invoice refuses what changed since (an inactive client, product or tax), by field path
+         *     (`tercero_id`, `lines.0.product_id`, `lines.1.charge_tax_id`): nothing is converted then.
+         */
+        post: operations["post_app_sales_ui_http_quotation_convert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A new draft, dated today, with the quotation's client, lines and texts (§4.15) → 201. */
+        post: operations["post_app_sales_ui_http_quotation_duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotations/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF (§4.7), ANULADA when voided, BORRADOR on a draft. */
+        get: operations["get_app_sales_ui_http_quotation_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sales-invoices": {
         parameters: {
             query?: never;
@@ -1796,24 +2002,23 @@ export interface components {
             code: string;
             name: string;
         };
-        SalesInvoiceSummaryOutput: {
+        QuotationSummaryOutput: {
             id: string;
-            /** draft, emitted, partially_paid, paid or voided */
+            /** draft, emitted, accepted, rejected, expired or voided: an emitted one past its vencimiento reads as expired */
             status: string;
             /** Null on a draft. */
             number?: string | null;
             issue_date: string;
-            /** The latest crédito due date, or null when nothing is on crédito. */
-            due_date?: string | null;
+            /** Fecha de vencimiento of the offer. */
+            expiry_date: string;
             tercero_id: string;
             tercero_name: string;
             subtotal: string;
             tax_total: string;
             withholding_total: string;
             net_total: string;
-            paid_amount: string;
-            /** What the client still owes: nothing on a draft or a voided invoice. */
-            balance: string;
+            /** The draft invoice it was converted into. */
+            converted_invoice_id?: string | null;
         };
         SalesInvoiceLineOutput: {
             id: string;
@@ -1840,6 +2045,65 @@ export interface components {
             tax_amount: string;
             withholding_amount: string;
             total_amount: string;
+        };
+        QuotationOutput: {
+            id: string;
+            /** draft, emitted, accepted, rejected, expired or voided: an emitted one past its vencimiento reads as expired */
+            status: string;
+            /** As printed (C-12); null on a draft. */
+            number?: string | null;
+            prefix?: string | null;
+            sequence?: number | null;
+            tercero_id: string;
+            tercero_name: string;
+            contact_id?: string | null;
+            /** Responsable (a tercero with role empleado). */
+            responsible_id?: string | null;
+            /** "Nombre" of the responsable, for the form; null when there is none or it no longer exists. */
+            responsible_name?: string | null;
+            issue_date: string;
+            /** Fecha de vencimiento of the offer. */
+            expiry_date: string;
+            /** Encabezado, plain text. */
+            header?: string | null;
+            /** Condiciones comerciales, plain text. */
+            terms?: string | null;
+            notes?: string | null;
+            gross_total: string;
+            discount_total: string;
+            subtotal: string;
+            tax_total: string;
+            withholding_total: string;
+            net_total: string;
+            lines: components["schemas"]["SalesInvoiceLineOutput"][];
+            /** The draft invoice it was converted into (§4.7). */
+            converted_invoice_id?: string | null;
+            created_by: string;
+            created_at: string;
+            emitted_by?: string | null;
+            emitted_at?: string | null;
+            voided_by?: string | null;
+            voided_at?: string | null;
+            void_reason?: string | null;
+        };
+        SalesInvoiceSummaryOutput: {
+            id: string;
+            /** draft, emitted, partially_paid, paid or voided */
+            status: string;
+            /** Null on a draft. */
+            number?: string | null;
+            issue_date: string;
+            /** The latest crédito due date, or null when nothing is on crédito. */
+            due_date?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            subtotal: string;
+            tax_total: string;
+            withholding_total: string;
+            net_total: string;
+            paid_amount: string;
+            /** What the client still owes: nothing on a draft or a voided invoice. */
+            balance: string;
         };
         SalesInvoicePaymentOutput: {
             id: string;
@@ -3599,6 +3863,287 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProductOutput"];
                 };
+            };
+        };
+    };
+    get_app_sales_ui_http_quotation_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["QuotationSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    get_app_sales_ui_http_quotation_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    put_app_sales_ui_http_quotation_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_emit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_emitandsend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_convert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_quotation_duplicate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationOutput"];
+                };
+            };
+        };
+    };
+    get_app_sales_ui_http_quotation_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

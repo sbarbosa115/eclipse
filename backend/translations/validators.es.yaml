@@ -92,3 +92,9 @@
 'The quantity is greater than zero, with at most four decimals.': 'La cantidad es mayor que cero, con máximo cuatro decimales.'
 'The discount is a percentage from 0 to 100.': 'El descuento es un porcentaje de 0 a 100.'
 'Choose the payment method.': 'Elige la forma de pago.'
+
+# Quotation (item 10)
+'The quotation date cannot be in the future.': 'La fecha de la cotización no puede ser futura.'
+'The offer cannot expire before the quotation date.': 'La oferta no puede vencer antes de la fecha de la cotización.'
+'The responsible is a tercero with the role empleado.': 'El responsable es un tercero con rol empleado.'
+'The text is too long (5000 characters at most).': 'El texto es demasiado largo (máximo 5000 caracteres).'
