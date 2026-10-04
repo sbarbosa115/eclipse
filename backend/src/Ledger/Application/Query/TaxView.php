@@ -25,4 +25,12 @@ final readonly class TaxView
         public bool $standard,
     ) {
     }
+
+    /** In force on a day: no date means unbounded on that side, both ends included (Tax::isValidOn). */
+    public function isValidOn(\DateTimeImmutable $day): bool
+    {
+        $date = $day->format('Y-m-d');
+
+        return (null === $this->validFrom || $this->validFrom <= $date) && (null === $this->validTo || $date <= $this->validTo);
+    }
 }

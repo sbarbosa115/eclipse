@@ -42,6 +42,20 @@ trait PurchasingFixtures
         throw new \LogicException("No tax $name.");
     }
 
+    /** Makes a tax in force only from a day on (Configuración › Impuestos), as the owner. */
+    protected function taxInForceFrom(string $taxId, string $from): void
+    {
+        foreach ($this->getJson('/api/v1/taxes?all=1')['items'] as $tax) {
+            if ($tax['id'] === $taxId) {
+                $this->sendJson('PUT', "/api/v1/taxes/$taxId", ['name' => $tax['name'], 'calculation' => $tax['calculation'], 'rate' => $tax['rate'], 'sales_account_id' => $tax['sales_account_id'], 'purchase_account_id' => $tax['purchase_account_id'], 'valid_from' => $from, 'valid_to' => null]);
+                self::assertResponseIsSuccessful('The tax now starts on '.$from);
+
+                return;
+            }
+        }
+        self::fail("No tax $taxId.");
+    }
+
     protected function methodId(string $name): string
     {
         foreach (static::getContainer()->get(LedgerCatalog::class)->paymentMethods($this->company, false) as $method) {

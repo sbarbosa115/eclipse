@@ -48,7 +48,7 @@ final class SalesInvoiceContent
         $this->violations = [];
         $name = $this->client($invoice, $data);
         $this->contactAndSeller($invoice->companyId(), $data);
-        $lines = $this->lines($invoice->companyId(), $invoice->lines(), $data->lines);
+        $lines = $this->lines($invoice->companyId(), $invoice->lines(), $data->lines, $data->issueDate);
         $payments = $this->payments($invoice, $data->payments);
 
         $invoice->revise($data->terceroId, $name ?? $invoice->terceroName(), $data->contactId, $data->sellerId, $data->issueDate, $data->notes);
@@ -122,10 +122,10 @@ final class SalesInvoiceContent
      *
      * @return array{list<InvoiceLineDraft>, list<array{field: string, message: string}>} the drafts and the violations
      */
-    public function resolveLines(Uuid $companyId, array $current, array $lines): array
+    public function resolveLines(Uuid $companyId, array $current, array $lines, \DateTimeImmutable $issueDate): array
     {
         $this->violations = [];
-        $drafts = $this->lines($companyId, $current, $lines);
+        $drafts = $this->lines($companyId, $current, $lines, $issueDate);
 
         return [$drafts, $this->violations];
     }
@@ -136,7 +136,7 @@ final class SalesInvoiceContent
      *
      * @return list<InvoiceLineDraft>
      */
-    private function lines(Uuid $companyId, array $current, array $lines): array
+    private function lines(Uuid $companyId, array $current, array $lines, \DateTimeImmutable $issueDate): array
     {
         $kept = [];
         $keptProducts = [];
@@ -169,8 +169,8 @@ final class SalesInvoiceContent
             if ('' === trim($line->description)) {
                 $this->violate("$at.description", 'Write the description.');
             }
-            $charge = $this->tax($companyId, $line->chargeTaxId, 'charge', "$at.charge_tax_id", $kept);
-            $withholding = $this->tax($companyId, $line->withholdingTaxId, 'withholding', "$at.withholding_tax_id", $kept);
+            $charge = $this->tax($companyId, $line->chargeTaxId, 'charge', "$at.charge_tax_id", $kept, $issueDate);
+            $withholding = $this->tax($companyId, $line->withholdingTaxId, 'withholding', "$at.withholding_tax_id", $kept, $issueDate);
             $quantity = Quantity::of($line->quantity);
             if (!$quantity->toBigDecimal()->isPositive()) {
                 $this->violate("$at.quantity", 'The quantity is greater than zero.');
@@ -185,9 +185,11 @@ final class SalesInvoiceContent
     }
 
     /**
+     * A tax newly chosen must be active and in force on the document's date (F5); one the draft already had is kept.
+     *
      * @param array<string, TaxSnapshot> $kept the taxes the draft already had, by id
      */
-    private function tax(Uuid $companyId, ?Uuid $taxId, string $class, string $field, array $kept): ?TaxSnapshot
+    private function tax(Uuid $companyId, ?Uuid $taxId, string $class, string $field, array $kept, \DateTimeImmutable $issueDate): ?TaxSnapshot
     {
         if (null === $taxId) {
             return TaxSnapshot::none();
@@ -201,6 +203,11 @@ final class SalesInvoiceContent
         }
         if ($tax->taxClass !== $class || (!$tax->active && !isset($kept[$tax->id]))) {
             $this->violate($field, 'charge' === $class ? 'Choose an active charge tax (IVA, impoconsumo).' : 'Choose an active withholding tax (retención).');
+
+            return null;
+        }
+        if (!isset($kept[$tax->id]) && !$tax->isValidOn($issueDate)) {
+            $this->violate($field, 'This tax is not in force on the document\'s date.');
 
             return null;
         }

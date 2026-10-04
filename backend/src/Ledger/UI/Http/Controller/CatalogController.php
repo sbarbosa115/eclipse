@@ -6,6 +6,7 @@ use App\Ledger\Application\Query\LedgerCatalog;
 use App\Ledger\UI\Http\Output\AccountOutput;
 use App\Ledger\UI\Http\Output\PaymentMethodOutput;
 use App\Ledger\UI\Http\Output\TaxOutput;
+use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -26,7 +27,8 @@ final class CatalogController extends AbstractController
     }
 
     /**
-     * The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones.
+     * The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones; ?on=YYYY-MM-DD only those in
+     * force that day (a document's date: no validity dates means always in force). 400 invalid_date for another format.
      */
     #[Route('/taxes', methods: ['GET'])]
     #[ApiResponse(TaxOutput::class, key: 'items', list: true)]
@@ -34,6 +36,10 @@ final class CatalogController extends AbstractController
     {
         $class = $request->query->getString('class');
         $views = $this->catalog->taxes($user->companyId(), \in_array($class, ['charge', 'withholding'], true) ? $class : null, !$request->query->getBoolean('all'));
+        $on = $this->day($request, 'on');
+        if (null !== $on) {
+            $views = array_values(array_filter($views, static fn ($tax): bool => $tax->isValidOn($on)));
+        }
 
         return $this->json(['items' => array_map(TaxOutput::of(...), $views)]);
     }
@@ -59,5 +65,19 @@ final class CatalogController extends AbstractController
         $views = $this->catalog->searchAccounts($user->companyId(), $request->query->getString('q'), $request->query->getBoolean('purchases'));
 
         return $this->json(['items' => array_map(AccountOutput::of(...), $views)]);
+    }
+
+    private function day(Request $request, string $name): ?\DateTimeImmutable
+    {
+        $value = $request->query->getString($name);
+        if ('' === $value) {
+            return null;
+        }
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        if (false === $date || $date->format('Y-m-d') !== $value) {
+            throw ApiException::badRequest('invalid_date', \sprintf('"%s" must be a date as YYYY-MM-DD.', $name));
+        }
+
+        return $date;
     }
 }

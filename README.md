@@ -103,7 +103,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/auth/password-reset/check` | public: `{token}` → 204 while the link works | 404 `link_invalid` |
 | POST | `/auth/password-reset/confirm` | public: `{token, password ≥ 10}` → `SessionOutput`, signed in; every other session of the person ends | 404 `link_invalid`; 422 |
 | any | `/api/v1/*` (signed in) | a session with no request for 2 hours ends: 401 `session_expired`, and the UI shows the sign-in page | 401 |
-| GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive | 401 |
+| GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive, `?on=YYYY-MM-DD` only those in force that day (no dates = always) | 401; 400 `invalid_date` |
 | GET | `/payment-methods` | `{items: PaymentMethodOutput[]}`; `?all=1` | 401 |
 | GET | `/accounts/search` | `{items: AccountOutput[]}` postable accounts, `?q=` code prefix or name, `?purchases=1` | 401 |
 | GET | `/settings/taxes`, `/settings/payment-methods` | `{items: TaxSettingOutput[]}` / `{items: PaymentMethodSettingOutput[]}`: every row, inactive too, with the accounts' codes and names and `in_use` (a document, product or company default points at it). Every role | 401 |
@@ -220,8 +220,11 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   deleted`, `payment_method.…`) through `Shared\Application\Audit\AuditTrail`.
 - **"In use" is a query** (`CatalogUsage`, DBAL) over the line/payment/receipt tables, products and the company's default
   taxes; a table that starts pointing at a tax or method must be added to `DbalCatalogUsage`.
-- **Validity dates** (`valid_from`, `valid_to`, both included, either open) are stored and shown; `Tax::isValidOn()` is
-  the rule. Nothing filters by them yet: document pickers will (see Known gaps).
+- **Validity dates** (`valid_from`, `valid_to`, both included, either open): `Tax::isValidOn()` / `TaxView::isValidOn()`
+  is the rule. `GET /taxes?on=` lists the taxes in force on a day and the document editor asks with the document's
+  date (a line keeps showing the tax it already has). Saving a factura de venta, cotización or factura de compra
+  refuses a **newly chosen** tax not in force on its date (422 on `lines.N.charge_tax_id`, "Este impuesto no está
+  vigente en la fecha del documento."); a tax the draft already had keeps its snapshot and is emitted as it is.
 - **Line amounts add up to the document totals to the cent** (largest remainder after one rounding per total), so a
   journal entry built from lines always balances.
 - **A product's price may include IVA.** `unit_price_net_of_tax` is the price divided by `1 + rate/100` (rounded half up
@@ -417,8 +420,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   never deleted, only deactivated (documents name who made them). Passwords have only a length rule (≥ 10).
 - Stage 1 is being built in parallel items; see the split in `docs/pdr/prd-accounting.md`. Until an item merges, its
   section shows "Esta sección se está construyendo." and its endpoints answer 501.
-- Taxes: validity dates do not yet filter `GET /taxes` or the document pickers (a document picks any active tax);
-  the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
+- Taxes: the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
   Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
 - Ledger: no ReteICA auxiliares per municipality yet (A.10: created when the company defines its municipalities);
   `app:ledger:demo-entries` posts sample entries for local review until the document items post real ones.
@@ -430,8 +432,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Purchase invoices: the supplier is any active tercero (the role Proveedor is not required, so the editor's search,
   which lists every role, never leads to a refusal). Retenciones are chosen per line by the user; nothing proposes them
   from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3), and ReteIVA is computed
-  on the line's base like every withholding (`DocumentTotals`), not on its IVA. Taxes are not filtered by their validity
-  dates (F5). No e-mail of a purchase invoice (it is the supplier's document).
+  on the line's base like every withholding (`DocumentTotals`), not on its IVA. No e-mail of a purchase invoice (it is the supplier's document).
 - Quotations: accepting and rejecting record no user or moment (only emission and void do); there is no partial acceptance (one conversion, §9 Q17); the editor has no attachments, and Encabezado sits in the form's footer (the shared form has no slot above the lines). The offer's validity is stored per quotation, not configurable per company (30 days default).
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several

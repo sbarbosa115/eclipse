@@ -20,6 +20,7 @@ import {
   type ComboOption,
 } from '@/shared/ui';
 import {setLineMode} from '../model/draft';
+import {offeredTaxes} from '../model/useEditorOptions';
 import type {LineAmounts} from '../model/totals';
 import type {DocumentKind, DraftLine, EditorErrors} from '../model/types';
 import {CellError, invalidProps} from './CellError';
@@ -59,6 +60,7 @@ export function LinesGrid({
   readOnly,
   chargeTaxes,
   withholdingTaxes,
+  knownTaxes,
   onChange,
   onAdd,
   onRemove,
@@ -72,8 +74,11 @@ export function LinesGrid({
   amounts: LineAmounts[];
   errors: EditorErrors;
   readOnly: boolean;
+  /** The taxes in force on the document's date: what may be newly chosen. */
   chargeTaxes: Tax[];
   withholdingTaxes: Tax[];
+  /** Every active tax, so a line keeps showing the one it already has. */
+  knownTaxes: Tax[];
   onChange: (index: number, change: Partial<DraftLine>) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
@@ -180,7 +185,7 @@ export function LinesGrid({
           {...invalidProps(errorId, message)}
         >
           <option value="">{t('documentEditor.lines.noTax')}</option>
-          {taxes.map((tax) => (
+          {offeredTaxes(taxes, knownTaxes, line[field]).map((tax) => (
             <option key={tax.id} value={tax.id}>
               {tax.name}
             </option>

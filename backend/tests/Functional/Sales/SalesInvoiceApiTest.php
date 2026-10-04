@@ -105,6 +105,28 @@ final class SalesInvoiceApiTest extends ApiTestCase
         self::assertSame(['lines.0.product_id'], array_column($body['violations'], 'field'));
     }
 
+    public function testATaxNotInForceOnTheInvoicesDateIsNotNewlyChosenButADraftKeepsItsOwn(): void
+    {
+        $client = $this->client();
+        $product = $this->service();
+        $five = $this->taxId('IVA 5 %');
+        $payload = $this->payload($client, $product, ['lines' => [$this->line($product, ['charge_tax_id' => $five])], 'payments' => [$this->cash('1050000.00')]]);
+        $kept = $this->draft($payload);
+        $this->taxInForceFrom($five, '2099-01-01');
+
+        $body = $this->sendJson('POST', '/api/v1/sales-invoices', $payload);
+
+        self::assertResponseStatusCodeSame(422, 'F5: a tax is chosen only on a date it is in force.');
+        self::assertSame(['lines.0.charge_tax_id'], array_column($body['violations'], 'field'));
+        self::assertSame('Este impuesto no está vigente en la fecha del documento.', $body['violations'][0]['message']);
+
+        $this->sendJson('PUT', '/api/v1/sales-invoices/'.$kept['id'], $payload);
+        self::assertResponseIsSuccessful('A draft that already had the tax keeps it.');
+        $emitted = $this->sendJson('POST', '/api/v1/sales-invoices/'.$kept['id'].'/emit', []);
+        self::assertResponseIsSuccessful('And it is emitted with its snapshot.');
+        self::assertSame('IVA 5 %', $emitted['lines'][0]['charge_tax_name']);
+    }
+
     public function testAnInactiveClientIsNotChosen(): void
     {
         $client = $this->client();

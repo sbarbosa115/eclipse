@@ -466,7 +466,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones. */
+        /**
+         * The company's taxes. ?class=charge|withholding; ?all=1 includes the inactive ones; ?on=YYYY-MM-DD only those in
+         *     force that day (a document's date: no validity dates means always in force). 400 invalid_date for another format.
+         */
         get: operations["get_app_ledger_ui_http_catalog_taxes"];
         put?: never;
         /** Adds a tax. Its class and kind (IVA, impoconsumo, retefuente, reteiva, reteica) are fixed from here on. */

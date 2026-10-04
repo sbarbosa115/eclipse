@@ -31,7 +31,7 @@ export function DocumentEditorDemo() {
   );
   const [errors, setErrors] = useState<EditorErrors | null>(null);
   const [readOnly, setReadOnly] = useState(false);
-  const options = useEditorOptions(kind);
+  const options = useEditorOptions(kind, draft.issue_date);
   const net = useMemo(
     () =>
       computeTotals(draft.lines, [

@@ -575,6 +575,83 @@ describe('the document form (§4.6)', () => {
     });
   });
 
+  describe('taxes in force (F5)', () => {
+    /** IVA 5 % is in force only from 2027: the server leaves it out of ?on= before then. */
+    function datedApi() {
+      return api({
+        'GET /taxes': (_body, url) => {
+          const items =
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING;
+          const on = url.searchParams.get('on');
+          return [
+            200,
+            {
+              items:
+                on !== null && on < '2027-01-01'
+                  ? items.filter((tx) => tx.id !== 'iva5')
+                  : items,
+            },
+          ];
+        },
+      });
+    }
+
+    it('offers the taxes in force on the fecha de elaboración and asks again when it changes', async () => {
+      const calls = datedApi();
+      renderEditor({value: draft({lines: [line({quantity: '1'})]})});
+
+      const select = screen.getByLabelText('Impuesto cargo, línea 1');
+      await waitFor(() =>
+        expect(
+          within(select).getByRole('option', {name: 'IVA 19 %'}),
+        ).toBeInTheDocument(),
+      );
+      expect(
+        within(select).queryByRole('option', {name: 'IVA 5 %'}),
+        'not in force on 03/10/2026',
+      ).not.toBeInTheDocument();
+      expect(
+        calls.calls.some(
+          (c) =>
+            c.path === '/taxes' &&
+            c.url.searchParams.get('on') === '2026-10-03',
+        ),
+        'the editor asks with the document’s date',
+      ).toBe(true);
+
+      const date = screen.getByLabelText('Fecha de elaboración');
+      await userEvent.clear(date);
+      await userEvent.type(date, '15/01/2027');
+
+      await waitFor(() =>
+        expect(
+          within(screen.getByLabelText('Impuesto cargo, línea 1')).getByRole(
+            'option',
+            {name: 'IVA 5 %'},
+          ),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it('keeps showing the tax a line already has, even when it is not in force that day', async () => {
+      datedApi();
+      renderEditor({
+        value: draft({
+          lines: [
+            line({quantity: '1', unit_price: '1000', charge_tax_id: 'iva5'}),
+          ],
+        }),
+      });
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Impuesto cargo, línea 1')).toHaveValue(
+          'iva5',
+        ),
+      );
+      expect(total('Impuestos')).toBe('$ 50,00');
+    });
+  });
+
   describe('formas de pago', () => {
     const priced = draft({
       lines: [
