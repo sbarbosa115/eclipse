@@ -4,8 +4,8 @@ namespace App\Reporting\Application\Export;
 
 use App\Company\Application\Query\Companies;
 use App\Company\Application\Query\LogoReader;
-use App\Shared\Domain\Error\NotFound;
 use App\Shared\Application\Port\PdfRenderer;
+use App\Shared\Domain\Error\NotFound;
 use Symfony\Component\Uid\Uuid;
 
 /** Any TabularReport as a PDF, in the company's frame (header, logo): one template for every report. */

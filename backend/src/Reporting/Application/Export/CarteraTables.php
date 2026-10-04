@@ -91,9 +91,11 @@ final class CarteraTables
     /** @return list<string> */
     private static function subtitle(\DateTimeImmutable $asOf, ?string $search): array
     {
-        return array_values(array_filter([
-            'Al '.$asOf->format('d/m/Y'),
-            null === $search || '' === trim($search) ? null : 'Búsqueda: '.trim($search),
-        ]));
+        $lines = ['Al '.$asOf->format('d/m/Y')];
+        if (null !== $search && '' !== trim($search)) {
+            $lines[] = 'Búsqueda: '.trim($search);
+        }
+
+        return $lines;
     }
 }

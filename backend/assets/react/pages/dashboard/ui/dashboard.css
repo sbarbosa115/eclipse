@@ -1,0 +1,37 @@
+.admin .dashboard-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-bottom: 16px;
+}
+
+.admin .dashboard-tile h2 {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.admin .dashboard-figure {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .dashboard-sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .dashboard-sub .is-overdue {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.admin .dashboard-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

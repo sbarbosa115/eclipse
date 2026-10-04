@@ -28,7 +28,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Every report as a file (§4.13, §9 Q26): ?format=csv (UTF-8 with BOM, `;` separated, decimal points; streamed) or
- * ?format=pdf (the company's frame). Cartera is for who reads documents; the libros for who may view the books. A
+ * ?format=pdf (the company's frame); ?check=1 only rehearses it (204, or the 422 below). Cartera is for who reads documents; the libros for who may view the books. A
  * report above the row cap (ExportLimits) is refused with 422 `export_too_large`, never cut short: narrow the filters.
  */
 #[Route('/api/v1/reports')]
@@ -67,7 +67,7 @@ final class ReportExportController extends AbstractController
             throw self::tooLarge($e);
         }
 
-        return $this->respond($user, $report, $format);
+        return $this->respond($request, $user, $report, $format);
     }
 
     /**
@@ -88,25 +88,44 @@ final class ReportExportController extends AbstractController
 
         try {
             $table = match ($report) {
-            'journal' => $this->ledger->journal($company, new JournalFilter(
-                $from,
-                $to,
-                1 === preg_match('/^\d{1,16}$/', $request->query->getString('account')) ? $request->query->getString('account') : null,
-                Uuid::isValid($request->query->getString('tercero_id')) ? Uuid::fromString($request->query->getString('tercero_id')) : null,
-            ), $limit),
-            'trial-balance' => $this->ledger->trialBalance($company, $from ?? $yearStart, $to ?? $today, $limit),
-            'income-statement' => $this->ledger->incomeStatement($company, $from ?? $yearStart, $to ?? $today, $limit),
-            default => $this->ledger->balanceSheet($company, self::date($request, 'date') ?? $today, $limit),
+                'journal' => $this->ledger->journal($company, new JournalFilter(
+                    $from,
+                    $to,
+                    1 === preg_match('/^\d{1,16}$/', $request->query->getString('account')) ? $request->query->getString('account') : null,
+                    Uuid::isValid($request->query->getString('tercero_id')) ? Uuid::fromString($request->query->getString('tercero_id')) : null,
+                ), $limit),
+                'trial-balance' => $this->ledger->trialBalance($company, $from ?? $yearStart, $to ?? $today, $limit),
+                'income-statement' => $this->ledger->incomeStatement($company, $from ?? $yearStart, $to ?? $today, $limit),
+                default => $this->ledger->balanceSheet($company, self::date($request, 'date') ?? $today, $limit),
             };
         } catch (ExportTooLarge $e) {
             throw self::tooLarge($e);
         }
 
-        return $this->respond($user, $table, $format);
+        return $this->respond($request, $user, $table, $format);
     }
 
-    private function respond(SignedInUser $user, TabularReport $report, ExportFormat $format): Response
+    private function respond(Request $request, SignedInUser $user, TabularReport $report, ExportFormat $format): Response
     {
+        if ($request->query->getBoolean('check')) {
+            // A rehearsal for the screen: refuses a report above the cap with the same 422, and answers 204 without
+            // building the file, so the person is told before the browser starts saving.
+            try {
+                if (ExportFormat::Pdf === $format) {
+                    $rows = 0;
+                    foreach ($report->rows as $_) {
+                        if (++$rows > ExportLimits::PDF_ROWS) {
+                            throw new ExportTooLarge($rows, ExportLimits::PDF_ROWS);
+                        }
+                    }
+                }
+            } catch (ExportTooLarge $e) {
+                throw self::tooLarge($e);
+            }
+
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        }
+
         if (ExportFormat::Pdf === $format) {
             try {
                 $bytes = $this->pdf->render($user->companyId(), $report);

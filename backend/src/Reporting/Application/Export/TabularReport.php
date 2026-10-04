@@ -10,10 +10,10 @@ namespace App\Reporting\Application\Export;
 final class TabularReport
 {
     /**
-     * @param list<ReportColumn>                    $columns
-     * @param iterable<list<string>>                $rows     one value per column, raw (decimal strings, Y-m-d dates)
-     * @param \Closure(): (list<string>|null)|null  $totals   the totals row, read after the rows
-     * @param list<string>                          $subtitle lines under the title (the period, the filter)
+     * @param list<ReportColumn>                   $columns
+     * @param iterable<list<string>>               $rows     one value per column, raw (decimal strings, Y-m-d dates)
+     * @param \Closure(): (list<string>|null)|null $totals   the totals row, read after the rows
+     * @param list<string>                         $subtitle lines under the title (the period, the filter)
      */
     public function __construct(
         public readonly string $title,

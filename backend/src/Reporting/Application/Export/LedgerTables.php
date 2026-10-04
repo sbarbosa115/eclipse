@@ -172,7 +172,7 @@ final class LedgerTables
         ], $entry->lines);
     }
 
-    private static function range(?\DateTimeImmutable $from, \DateTimeImmutable|null $to, bool $prefixed): string
+    private static function range(?\DateTimeImmutable $from, ?\DateTimeImmutable $to, bool $prefixed): string
     {
         $parts = array_filter([$from?->format('Y-m-d'), $to?->format('Y-m-d')]);
 

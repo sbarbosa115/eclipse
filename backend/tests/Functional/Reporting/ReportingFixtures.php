@@ -2,6 +2,7 @@
 
 namespace App\Tests\Functional\Reporting;
 
+use App\Shared\Domain\Money\Money;
 use App\Tests\Functional\Purchasing\SupplierPaymentFixtures;
 use Symfony\Component\Uid\Uuid;
 
@@ -61,7 +62,7 @@ trait ReportingFixtures
         ])['id'];
         $payments = [['payment_method_id' => $this->methodId('Crédito'), 'amount' => $credit, 'due_date' => self::today($due)]];
         if ('1190000.00' !== $credit) {
-            $payments[] = ['payment_method_id' => $this->methodId('Efectivo'), 'amount' => bcsub('1190000.00', $credit, 2), 'due_date' => null];
+            $payments[] = ['payment_method_id' => $this->methodId('Efectivo'), 'amount' => Money::of('1190000.00')->minus(Money::of($credit))->toString(), 'due_date' => null];
         }
         $draft = $this->sendJson('POST', '/api/v1/sales-invoices', [
             'tercero_id' => $client, 'contact_id' => null, 'seller_id' => null, 'issue_date' => self::today($issued), 'notes' => null,
@@ -118,6 +119,6 @@ trait ReportingFixtures
             [$this->company->toBinary(), $prefix.'%', $asOf ?? self::today()],
         );
 
-        return \App\Shared\Domain\Money\Money::of((string) $balance)->toString();
+        return Money::of((string) $balance)->toString();
     }
 }

@@ -49,7 +49,7 @@ final class DbalCarteraQueries implements CarteraQueries
 
         $rows = $this->db->fetchAllAssociative($sql, $this->bind($companyId, $asOf) + $params);
 
-        return array_map(fn (array $r): CarteraRow => new CarteraRow(
+        return array_map(static fn (array $r): CarteraRow => new CarteraRow(
             Uuid::fromBinary($r['id'])->toRfc4122(),
             (string) $r['display_name'],
             self::identification((string) $r['identification_type'], (string) $r['identification_number'], $r['check_digit']),

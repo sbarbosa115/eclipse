@@ -10,7 +10,7 @@ use Symfony\Component\Uid\Uuid;
  * §5 invariant 3 from the reporting side: cartera de clientes equals the 1305 balance of the books and cartera de
  * proveedores the 2205 balance, as of any date and for each tercero, after a story of invoices, receipts, payments and
  * voids of both. (The documents' side of the invariant is in Sales\ClientBalanceInvariantTest and
- * Purchasing\SupplierBalanceInvariantTest.)
+ * Purchasing\SupplierBalanceInvariantTest.).
  */
 final class CarteraInvariantTest extends ApiTestCase
 {

@@ -88,8 +88,10 @@ final class DashboardApiTest extends ApiTestCase
         $this->client->request('GET', '/api/v1/dashboard');
 
         self::assertResponseIsSuccessful();
+        $profile = $this->client->getProfile();
+        self::assertInstanceOf(\Symfony\Component\HttpKernel\Profiler\Profile::class, $profile);
         /** @var \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector $db */
-        $db = $this->client->getProfile()->getCollector('db');
+        $db = $profile->getCollector('db');
         self::assertLessThanOrEqual(12, $db->getQueryCount(), 'The session, the permission and five figures: not a query per tercero or document.');
     }
 }

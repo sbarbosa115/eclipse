@@ -33,7 +33,7 @@ final class ReportExportApiTest extends ApiTestCase
         $content = $this->client->getInternalResponse()->getContent();
         self::assertStringStartsWith("\xEF\xBB\xBF", $content, 'UTF-8 with a BOM.');
 
-        return array_map(static fn (string $line) => str_getcsv($line, ';', '"', ''), explode("\r\n", rtrim(substr($content, 3), "\r\n")));
+        return array_map(static fn (string $line) => array_map(static fn (?string $cell) => (string) $cell, str_getcsv($line, ';', '"', '')), explode("\r\n", rtrim(substr($content, 3), "\r\n")));
     }
 
     private function pdf(string $uri): string
@@ -99,10 +99,10 @@ final class ReportExportApiTest extends ApiTestCase
 
         $income = $this->csv('/api/v1/reports/ledger/income-statement/export');
         self::assertSame(['Cuenta', 'Nombre', 'Valor'], $income[0]);
-        self::assertSame('Resultado del período', end($income)[1]);
+        self::assertSame('Resultado del período', $income[\count($income) - 1][1]);
 
         $sheet = $this->csv('/api/v1/reports/ledger/balance-sheet/export?date='.self::today());
-        self::assertSame('Total pasivo y patrimonio', end($sheet)[1]);
+        self::assertSame('Total pasivo y patrimonio', $sheet[\count($sheet) - 1][1]);
     }
 
     public function testTheLedgerBooksExportToPdf(): void
@@ -185,7 +185,23 @@ final class ReportExportApiTest extends ApiTestCase
         self::assertSame('export_too_large', $this->body()['error']);
         self::assertStringContainsString('Narrow', $this->body()['message']);
 
+        $this->client->request('GET', '/api/v1/reports/ledger/journal/export?format=pdf&check=1');
+        self::assertResponseStatusCodeSame(422, 'The rehearsal the screen makes refuses it too.');
+
         $this->csv('/api/v1/reports/ledger/journal/export?from='.self::today());
         self::assertResponseIsSuccessful('A CSV of the same size streams: its cap is far higher.');
+    }
+
+    public function testACheckRehearsesTheExportWithoutBuildingIt(): void
+    {
+        $this->client->request('GET', '/api/v1/reports/cartera/clients/export?format=pdf&check=1');
+        self::assertResponseStatusCodeSame(204);
+        self::assertSame('', (string) $this->client->getResponse()->getContent());
+        $this->client->request('GET', '/api/v1/reports/ledger/journal/export?format=csv&check=1');
+        self::assertResponseStatusCodeSame(204);
+
+        $this->signInAs('billing');
+        $this->client->request('GET', '/api/v1/reports/ledger/journal/export?check=1');
+        self::assertResponseStatusCodeSame(403, 'A rehearsal is not a way around the permission.');
     }
 }

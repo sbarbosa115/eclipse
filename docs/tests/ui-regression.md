@@ -1425,3 +1425,135 @@ has no errors.
 ## 13. Cartera, reports and dashboard
 
 <!-- Owned by item 13 "reports" (REP-01 – 19). -->
+
+The dashboard at **`/`**, and **Reportes** at **`/reportes`** (tabs *Cartera de clientes*, *Cartera de proveedores*,
+*Exportar*). Every case runs as the owner of a company with an invoicing resolution, a client **Ana Ltda.** and
+facturas de venta of 1.190.000 on **Crédito** (section 8), and a supplier **Servicios Andinos S.A.S.** with facturas de
+compra on crédito (section 9: a payable of 1.150.000), unless it says otherwise. Ageing is by **vencimiento** against
+the *Al corte* date (today by default): al día (not yet due, or due that day), 1–30, 31–60, 61–90 and más de 90 días.
+CSV files use UTF-8 with a BOM, `;` between columns and a decimal **point** with no thousands separator.
+
+**REP-01 · A new company sees zeros, the quick links and the missing resolution**
+Smoke: `e2e/reports.spec.ts`.
+A brand-new company with no resolution › **Tablero**.
+**Expected:** every figure is $ 0,00; "Aún no has registrado tu resolución de facturación…" with **Ir a la resolución**
+(to Configuración › Resolución); **Crear factura de venta**, **Crear recibo de caja** and **Crear factura de compra**
+open their forms.
+
+**REP-02 · The dashboard shows cartera, the month and the cash**
+Smoke: `e2e/reports.spec.ts`; by hand: the same figures in the libro diario.
+An invoice on crédito due in 20 days, another issued 100 days ago and long overdue, a purchase on crédito › **Tablero**.
+**Expected:** cartera de clientes shows the total owed and, under it, what is vencido; cartera de proveedores likewise;
+*Ventas del mes* and *Compras del mes* count only invoices of this month, before IVA (the old one and voided ones
+count nothing); *Caja y bancos* is the 1105 + 1110 balance of the books; **Ver cartera** opens the report. No warning
+about the resolution while it is healthy.
+
+**REP-03 · Cartera de clientes by ageing bucket, with totals**
+Smoke: `e2e/reports.spec.ts`.
+Five invoices of 1.190.000 for Ana Ltda., due in 10 days and 5, 45, 75 and 120 days ago › **Reportes**.
+**Expected:** it opens on *Cartera de clientes*; the Ana Ltda. row (name and NIT) has $ 1.190.000,00 in each of *Al día*,
+*1–30*, *31–60*, *61–90* and *Más de 90 días* and $ 5.950.000,00 in *Total*; the last row, *Total*, repeats the sums.
+
+**REP-04 · The drill-down lists the documents and links to each invoice**
+Smoke: `e2e/reports.spec.ts`.
+A client with two open invoices (one 45 days late) › **Ver documentos de Ana Ltda.** › the invoice number.
+**Expected:** the client's name as the title; each document with fecha, vencimiento, "45 días vencida" (coloured, and
+"Al día" for the other), valor and saldo, the soonest due first, and a total; **Volver a la cartera** returns to the
+same date; the invoice number opens the factura de venta.
+
+**REP-05 · Search by tercero and the Al corte date**
+Smoke: `e2e/reports.spec.ts`; by hand: pagination (more than 25 clients).
+Two clients › search `beto`, then `zzz`, then clear it › **Al corte** `01/01/2020`.
+**Expected:** only matching terceros (name or NIT, matched literally: `%` finds nothing), the totals row follows the
+search; "Ningún tercero coincide con la búsqueda."; for a date before the invoices, "Ningún cliente te debe nada a esta
+fecha."; the date, the search and the page are in the address, so a reload keeps them. A date before an invoice's
+date shows what was owed then (a collection made later still counts as owed).
+
+**REP-06 · Cartera de proveedores**
+Smoke: `e2e/reports.spec.ts`.
+Two suppliers with payables due 5 days ago and in 20 days › **Cartera de proveedores**.
+**Expected:** the same layout for what the company owes; the payable is the net of retenciones ($ 1.150.000,00);
+**Ver documentos** opens the supplier's payables with a link to each factura de compra.
+
+**REP-07 · The cartera total is the 1305 balance of the books**
+Smoke: `e2e/reports.spec.ts` (against the balance de prueba's API); by hand: Contabilidad › Balance de prueba.
+Two invoices for a client and a partial receipt › the client's total in Reportes › Contabilidad › Balance de prueba
+(today) row 1305; the same with a supplier and 2205.
+**Expected:** both figures are equal; after voiding the receipt both grow by its amount; a client with its own
+receivable account (130510…) is still inside the 1305 total.
+
+**REP-08 · Cartera exports to CSV that Excel opens**
+Smoke: `e2e/reports.spec.ts`; by hand: open the file in Excel.
+A client named `Ñandú Ltda.` with an open invoice › **CSV** on *Cartera de clientes*.
+**Expected:** the file `cartera-clientes-resumen-<fecha>.csv` opens with the accents right (Ñandú, Identificación,
+Más de 90 días), in separate columns, amounts like `1190000.00` (decimal point, no thousands separator), a *Total* row
+last. With the search or date set on the screen, the file has the same filter. On Exportar, the "por documento" file has
+one row per open invoice with its días de vencida.
+
+**REP-09 · Cartera exports to a PDF with the company frame**
+Smoke: `e2e/reports.spec.ts`; by hand: read the PDF.
+**PDF** on *Cartera de clientes* and on *Cartera de proveedores*.
+**Expected:** the company's logo, razón social, NIT-DV and contact, the title, "Al <fecha>", the table with money as $
+1.190.000,00 and dates as DD/MM/AAAA, and the totals row; the browser downloads it as a file.
+
+**REP-10 · Exportar offers every report, with the chosen dates**
+Smoke: `e2e/reports.spec.ts`.
+**Reportes** › **Exportar**.
+**Expected:** CSV and PDF buttons for cartera de clientes and de proveedores (summary and por documento), Libro diario,
+Balance de prueba, Estado de resultados and Balance general; changing *Desde*, *Hasta* or *Fecha de corte* changes the
+buttons' addresses (`from=`, `to=`, `as_of=`, `date=`); the CSV note explains the format.
+
+**REP-11 · The ledger books download as CSV and PDF**
+Smoke: `e2e/reports.spec.ts` (the files); by hand: compare each with its screen in Contabilidad.
+An invoice, a receipt › Exportar › each of the four books, CSV and PDF.
+**Expected:** the libro diario has one row per entry line (fecha, asiento, documento, cuenta, tercero, descripción,
+débito, crédito) and equal totals; the balance de prueba, the estado de resultados and the balance general show the
+same figures as their screens; the PDFs carry the company's header.
+
+**REP-12 · A report with nothing to show says so**
+Smoke: `e2e/reports.spec.ts`.
+A company without invoices › both carteras.
+**Expected:** "Ningún cliente te debe nada a esta fecha." and "No le debes nada a ningún proveedor a esta fecha."
+
+**REP-13 · A tercero with nothing owed has no drill-down**
+Smoke: `e2e/reports.spec.ts`.
+Open `/reportes/clientes/<a tercero of another company, or one that owes nothing>`.
+**Expected:** "Este tercero no tiene saldos abiertos a esa fecha." with the way back; nothing of another company shows.
+
+**REP-14 · A billing user sees cartera but not the books**
+Signed in as a billing user (section 1).
+**Expected:** the dashboard shows cartera and the month's figures and the quick links, but no *Caja y bancos*; Reportes
+opens and both carteras export; **Exportar** lists only the carteras and says the books are for the administrator and
+the accountant; typing the libro diario export address answers 403.
+
+**REP-15 · The accountant sees the books' figures and exports them**
+Signed in as the accountant (section 1).
+**Expected:** the dashboard shows *Caja y bancos*; **Exportar** includes the four books; the accountant also has the
+quick links to create documents (decided 2026-10-04).
+
+**REP-16 · The dashboard warns when the resolution is running out**
+Configuración › Resolución with 12 numbers left (or a *hasta* date in 9 days) › **Tablero**; then an expired one.
+**Expected:** "Tu resolución de facturación se está agotando: te quedan 12 números y 9 días de vigencia." with **Ir a la
+resolución** (owner only); for an expired or exhausted one, the message says to register the new one; nothing for a user
+who cannot create invoices.
+
+**REP-17 · Receipts, payments and voids move cartera**
+A receipt for part of an invoice, then another for the rest, then void the first › Reportes after each step; the same
+for a supplier payment.
+**Expected:** the balance falls by each receipt, the invoice leaves cartera when paid in full, and a voided receipt
+puts its amount back; a voided invoice is not in cartera; the dashboard matches.
+
+**REP-18 · A report too big to export is refused, not cut short**
+With a company of more than 25.000 entries (or by the API tests): export the libro diario as CSV and as PDF.
+**Expected:** clicking the button shows, above the table, "… tiene demasiadas filas para una sola descarga (hasta
+50.000 en CSV y 1.500 en PDF). Acota las fechas o los filtros…" and downloads nothing (the screen first rehearses the
+export with `check=1`; the API answers 422 `export_too_large`); narrowing the dates downloads it. A CSV streams: the
+browser starts saving at once.
+
+**REP-19 · The screens on a tablet, in both themes**
+At 1366×768, 1024×768 and 768×1024, Tema Claro and Oscuro: the dashboard, both carteras with five buckets, the
+drill-down, Exportar.
+**Expected:** the tiles wrap; the cartera table scrolls inside its frame on a narrow screen with the totals row kept;
+the late colours (green, amber, red) read in both themes; the CSV and PDF buttons stay visible; the console has no
+errors.
+

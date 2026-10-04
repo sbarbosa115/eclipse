@@ -19,6 +19,7 @@ final class CarteraApiTest extends ApiTestCase
         $this->startReporting();
     }
 
+    /** @return array<string, mixed> */
     private function row(string $side, string $terceroId): array
     {
         $rows = array_values(array_filter($this->getJson("/api/v1/reports/cartera/$side")['items'], static fn (array $r) => $r['tercero_id'] === $terceroId));

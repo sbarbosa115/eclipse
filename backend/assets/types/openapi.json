@@ -3096,6 +3096,153 @@
                     }
                 }
             }
+        },
+        "/api/v1/reports/cartera/{side}": {
+            "get": {
+                "summary": "Open balances by tercero with al d\u00eda, 1-30, 31-60, 61-90 and m\u00e1s de 90 d\u00edas vencida (by due date), largest\nfirst: ?q= (part of the name or the identification, matched literally), ?page, ?per_page \u2264 100 (default 25).",
+                "description": "`totals` is the grand total of every tercero matching the search.",
+                "operationId": "get_app_reporting_ui_http_cartera_summary",
+                "parameters": [
+                    {
+                        "name": "side",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "clients|suppliers",
+                            "enum": [
+                                "clients",
+                                "suppliers"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CarteraOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/cartera/{side}/{terceroId}": {
+            "get": {
+                "summary": "One tercero's open documents, the soonest due first. 404 for a tercero without a balance.",
+                "operationId": "get_app_reporting_ui_http_cartera_documents",
+                "parameters": [
+                    {
+                        "name": "side",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "clients|suppliers",
+                            "enum": [
+                                "clients",
+                                "suppliers"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "terceroId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-fA-F-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CarteraDocumentsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard": {
+            "get": {
+                "operationId": "get_app_reporting_ui_http_dashboard_show",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DashboardOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/cartera/{side}/export": {
+            "get": {
+                "summary": "Cartera by tercero (default) or, with ?detail=1, document by document. ?as_of=, ?q= as the screen.",
+                "operationId": "get_app_reporting_ui_http_reportexport_cartera",
+                "parameters": [
+                    {
+                        "name": "side",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "clients|suppliers",
+                            "enum": [
+                                "clients",
+                                "suppliers"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/ledger/{report}/export": {
+            "get": {
+                "summary": "The ledger's books: journal (?from, ?to, ?account, ?tercero_id), trial-balance and income-statement (?from, ?to,\ndefault the year so far), balance-sheet (?date, default today).",
+                "operationId": "get_app_reporting_ui_http_reportexport_ledger",
+                "parameters": [
+                    {
+                        "name": "report",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "journal|trial-balance|income-statement|balance-sheet",
+                            "enum": [
+                                "journal",
+                                "trial-balance",
+                                "income-statement",
+                                "balance-sheet"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -5776,6 +5923,266 @@
                         "nullable": true
                     },
                     "void_reason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CarteraRowOutput": {
+                "required": [
+                    "tercero_id",
+                    "name",
+                    "identification",
+                    "current",
+                    "days1_to30",
+                    "days31_to60",
+                    "days61_to90",
+                    "over90",
+                    "total",
+                    "overdue",
+                    "documents"
+                ],
+                "properties": {
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "identification": {
+                        "title": "\"NIT 900123456-8\"",
+                        "type": "string"
+                    },
+                    "current": {
+                        "type": "string"
+                    },
+                    "days1_to30": {
+                        "type": "string"
+                    },
+                    "days31_to60": {
+                        "type": "string"
+                    },
+                    "days61_to90": {
+                        "type": "string"
+                    },
+                    "over90": {
+                        "type": "string"
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "overdue": {
+                        "title": "Everything past its due date.",
+                        "type": "string"
+                    },
+                    "documents": {
+                        "title": "Open receivables / payables behind the row.",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "CarteraTotalsOutput": {
+                "required": [
+                    "current",
+                    "days1_to30",
+                    "days31_to60",
+                    "days61_to90",
+                    "over90",
+                    "total",
+                    "overdue",
+                    "terceros",
+                    "documents"
+                ],
+                "properties": {
+                    "current": {
+                        "type": "string"
+                    },
+                    "days1_to30": {
+                        "type": "string"
+                    },
+                    "days31_to60": {
+                        "type": "string"
+                    },
+                    "days61_to90": {
+                        "type": "string"
+                    },
+                    "over90": {
+                        "type": "string"
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "overdue": {
+                        "type": "string"
+                    },
+                    "terceros": {
+                        "type": "integer"
+                    },
+                    "documents": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "CarteraOutput": {
+                "required": [
+                    "as_of",
+                    "items",
+                    "total",
+                    "page",
+                    "per_page",
+                    "totals"
+                ],
+                "properties": {
+                    "as_of": {
+                        "title": "YYYY-MM-DD",
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CarteraRowOutput"
+                        }
+                    },
+                    "total": {
+                        "title": "Terceros with a balance matching the search.",
+                        "type": "integer"
+                    },
+                    "page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "totals": {
+                        "$ref": "#/components/schemas/CarteraTotalsOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "CarteraDocumentOutput": {
+                "required": [
+                    "id",
+                    "invoice_id",
+                    "invoice_number",
+                    "issue_date",
+                    "due_date",
+                    "amount",
+                    "balance",
+                    "days_overdue",
+                    "bucket"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "title": "What the cr\u00e9dito line was for.",
+                        "type": "string"
+                    },
+                    "balance": {
+                        "title": "What is still owed as of the date.",
+                        "type": "string"
+                    },
+                    "days_overdue": {
+                        "title": "Whole days after the due date at the report's date; 0 or less while not yet due.",
+                        "type": "integer"
+                    },
+                    "bucket": {
+                        "title": "current, days1_to30, days31_to60, days61_to90 or over90",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CarteraDocumentsOutput": {
+                "required": [
+                    "as_of",
+                    "tercero_id",
+                    "tercero_name",
+                    "items",
+                    "total"
+                ],
+                "properties": {
+                    "as_of": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CarteraDocumentOutput"
+                        }
+                    },
+                    "total": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "DashboardOutput": {
+                "required": [
+                    "as_of",
+                    "clients_total",
+                    "clients_overdue",
+                    "suppliers_total",
+                    "suppliers_overdue",
+                    "sales_month",
+                    "sales_month_count",
+                    "purchases_month",
+                    "purchases_month_count"
+                ],
+                "properties": {
+                    "as_of": {
+                        "title": "YYYY-MM-DD, Colombia's today.",
+                        "type": "string"
+                    },
+                    "clients_total": {
+                        "type": "string"
+                    },
+                    "clients_overdue": {
+                        "type": "string"
+                    },
+                    "suppliers_total": {
+                        "type": "string"
+                    },
+                    "suppliers_overdue": {
+                        "type": "string"
+                    },
+                    "sales_month": {
+                        "title": "Invoiced so far this month, before taxes.",
+                        "type": "string"
+                    },
+                    "sales_month_count": {
+                        "type": "integer"
+                    },
+                    "purchases_month": {
+                        "type": "string"
+                    },
+                    "purchases_month_count": {
+                        "type": "integer"
+                    },
+                    "cash_and_banks": {
+                        "title": "Cajas y bancos (1105 + 1110); null for a person who may not see the books.",
                         "type": "string",
                         "nullable": true
                     }
