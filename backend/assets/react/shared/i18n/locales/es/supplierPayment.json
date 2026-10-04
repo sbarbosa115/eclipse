@@ -1,0 +1,130 @@
+{
+  "title": "Recibos de pago",
+  "subtitle": "Registra el dinero que pagas a tus proveedores y abónalo a sus facturas; se contabiliza solo.",
+  "new": "Nuevo recibo de pago",
+  "statuses": {
+    "emitted": "Emitido",
+    "voided": "Anulado"
+  },
+  "list": {
+    "searchPlaceholder": "Número o proveedor",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos los estados",
+    "from": "Desde",
+    "to": "Hasta",
+    "empty": "Aún no has registrado recibos de pago. Cuando pagues una factura de compra a crédito, regístralo aquí.",
+    "emptyAction": "Registrar el primer recibo de pago",
+    "filteredEmpty": "Ningún recibo coincide con estos filtros.",
+    "columns": {
+      "number": "Número",
+      "date": "Fecha",
+      "method": "De dónde salió",
+      "invoices": "Facturas",
+      "amount": "Valor",
+      "supplier": "Proveedor"
+    }
+  },
+  "actions": {
+    "open": "Ver",
+    "pdf": "PDF",
+    "downloadPdf": "Descargar PDF",
+    "send": "Enviar",
+    "void": "Anular",
+    "save": "Guardar",
+    "saveAndSend": "Guardar y enviar",
+    "back": "Volver a recibos de pago"
+  },
+  "notices": {
+    "saved": "Recibo de pago {{number}} guardado y contabilizado.",
+    "savedAndSent": "Recibo de pago {{number}} guardado; el correo con el PDF va en camino.",
+    "sent": "El correo con el PDF del recibo de pago {{number}} va en camino.",
+    "voided": "Recibo de pago {{number}} anulado."
+  },
+  "form": {
+    "title": "Nuevo recibo de pago",
+    "type": "Tipo",
+    "typeValue": "Recibo de pago",
+    "number": "Número",
+    "numberPending": "Se asigna al guardar",
+    "supplier": "Proveedor",
+    "date": "Fecha",
+    "method": "De dónde sale el dinero",
+    "chooseMethod": "Elige caja o banco",
+    "amount": "Valor pagado",
+    "amountPlaceholder": "0,00",
+    "notes": "Observaciones",
+    "chooseClientFirst": "Elige el proveedor para ver sus facturas pendientes.",
+    "saveHint": "Guardar emite el recibo: toma su número, abona las facturas de compra y se contabiliza. Después solo se puede anular.",
+    "required": {
+      "date": "Escribe la fecha como DD/MM/AAAA.",
+      "method": "Elige de dónde sale el dinero.",
+      "amount": "Escribe el valor pagado en pesos.",
+      "supplier": "Elige el proveedor."
+    },
+    "search": {
+      "minChars": "Escribe al menos {{count}} caracteres.",
+      "searching": "Buscando…",
+      "none": "Ningún proveedor coincide.",
+      "failed": "No pudimos buscar. Inténtalo de nuevo."
+    },
+    "supplierHint": "Escribe al menos 3 letras del nombre o el número de identificación.",
+    "supplierPlaceholder": "Buscar proveedor",
+    "chooseSupplierFirst": "Elige el proveedor para ver sus facturas pendientes de pago.",
+    "payables": "Facturas pendientes de pago al proveedor",
+    "loadingPayables": "Buscando facturas pendientes…",
+    "noPayables": "Este proveedor no tiene facturas pendientes de pago.",
+    "payablesFailed": "No pudimos cargar las facturas pendientes del proveedor."
+  },
+  "view": {
+    "title": "Recibo de pago {{number}}",
+    "loadFailed": "No pudimos cargar este recibo.",
+    "readOnly": "Este recibo de pago ya fue emitido y contabilizado: no se puede modificar, solo anular.",
+    "voidedInfo": "Anulado el {{date}}. Motivo: {{reason}}",
+    "allocations": "Facturas que paga",
+    "invoice": "Factura",
+    "applied": "Valor aplicado"
+  },
+  "allocate": {
+    "document": "Factura",
+    "issueDate": "Fecha",
+    "dueDate": "Vencimiento",
+    "amount": "Valor",
+    "balance": "Saldo",
+    "toApply": "Valor a aplicar",
+    "toApplyOf": "Valor a aplicar a {{document}}",
+    "payInFull": "Pagar todo",
+    "payInFullOf": "Pagar todo el saldo de {{document}}",
+    "received": "Valor pagado",
+    "allocated": "Aplicado",
+    "difference": "Diferencia",
+    "balanced": "Cuadra: el valor aplicado es igual al valor pagado.",
+    "missing": "Falta aplicar {{amount}}.",
+    "over": "Aplicaste {{amount}} de más.",
+    "pending": "Escribe el valor pagado y aplícalo a las facturas.",
+    "errors": {
+      "invalid": "Escribe un valor en pesos.",
+      "exceeds": "Supera el saldo de la factura."
+    }
+  },
+  "void": {
+    "title": "Anular el recibo de pago {{number}}",
+    "body": "Se registrará un comprobante de reversión con fecha de hoy y el recibo de pago conservará su número. Las facturas que pagaba vuelven a quedar pendientes.",
+    "reason": "Motivo de la anulación",
+    "reasonRequired": "Escribe el motivo de la anulación.",
+    "confirm": "Anular recibo de pago"
+  },
+  "errors": {
+    "allocation_exceeds_balance": "Un valor aplicado supera el saldo de su factura: revisa la tabla (otro recibo de pago pudo haberla abonado).",
+    "allocations_do_not_match_amount": "Lo aplicado suma {{allocated}} y el valor pagado es {{amount}}: deben ser iguales.",
+    "period_locked": "La fecha está en un periodo contable cerrado (fecha de bloqueo).",
+    "tercero_has_no_email": "El proveedor no tiene correo: agrégalo en su ficha o guarda sin enviar.",
+    "document_voided": "Este recibo de pago ya está anulado.",
+    "document_not_emitted": "Este recibo de pago está anulado: no se puede enviar.",
+    "not_found": "No encontramos lo que buscabas.",
+    "forbidden": "Tu rol no puede hacer esto con los recibos de pago.",
+    "validation_failed": "Revisa los campos marcados.",
+    "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "supplier_payment_not_found": "Este recibo de pago no existe."
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Configuración",
+  "tabs": {
+    "company": "Empresa",
+    "resolution": "Resolución y numeración",
+    "users": "Usuarios",
+    "taxes": "Impuestos",
+    "paymentMethods": "Formas de pago",
+    "chart": "Plan de cuentas",
+    "postingRules": "Reglas contables"
+  }
+}

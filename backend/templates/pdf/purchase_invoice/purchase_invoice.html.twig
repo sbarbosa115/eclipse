@@ -1,0 +1,83 @@
+{#
+    The internal record of a factura de compra / gasto (Purchasing). Context: company, logo_data_uri, title, number,
+    invoice (Purchasing\Application\Query\PurchaseInvoiceView), supplier (identification, address) and lines (printed as
+    on the sales invoice: quantity without trailing zeros, Valor total = subtotal + impuesto).
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% macro money(value) %}$ {{ value|number_format(2, ',', '.') }}{% endmacro %}
+{% macro date(value) %}{{ value ? value|date('d/m/Y') : '' }}{% endmacro %}
+{% import _self as f %}
+
+{% block watermark %}{% if invoice.status == 'voided' %}<div class="voided">ANULADA</div>{% elseif invoice.status == 'draft' %}<div class="voided">BORRADOR</div>{% endif %}{% endblock %}
+
+{% block body %}
+    <table style="width: 100%; margin-bottom: 8px;">
+        <tr>
+            <td style="width: 55%; vertical-align: top;">
+                <strong>Proveedor</strong><br>
+                {{ invoice.terceroName }}<br>
+                {{ supplier.identification }}<br>
+                {% if supplier.address %}{{ supplier.address }}<br>{% endif %}
+                <span class="muted">Factura del proveedor:</span> {{ invoice.supplierInvoiceNumber ?? '—' }}
+            </td>
+            <td style="vertical-align: top;">
+                <span class="muted">Fecha de la factura:</span> {{ f.date(invoice.issueDate) }}<br>
+                <span class="muted">Fecha de vencimiento:</span> {{ invoice.dueDate ? f.date(invoice.dueDate) : '—' }}<br>
+                <span class="muted">Estado:</span> {{ {draft: 'Borrador', emitted: 'Emitida', partially_paid: 'Pagada parcialmente', paid: 'Pagada', voided: 'Anulada'}[invoice.status] }}
+            </td>
+        </tr>
+    </table>
+
+    <table class="lines">
+        <thead>
+            <tr>
+                <th>Producto / cuenta</th>
+                <th>Descripción</th>
+                <th class="num">Cantidad</th>
+                <th class="num">Valor unitario</th>
+                <th class="num">% Desc.</th>
+                <th>Impuesto</th>
+                <th>Retención</th>
+                <th class="num">Valor total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+                <tr>
+                    <td>{{ line.label }}</td>
+                    <td>{{ line.description }}</td>
+                    <td class="num">{{ line.quantity }}</td>
+                    <td class="num">{{ f.money(line.unit_price) }}</td>
+                    <td class="num">{{ line.discount }}</td>
+                    <td>{{ line.charge_tax }}</td>
+                    <td>{{ line.withholding_tax }}</td>
+                    <td class="num">{{ f.money(line.total) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table style="width: 100%; margin-top: 10px;">
+        <tr>
+            <td style="width: 55%; vertical-align: top;">
+                <strong>Formas de pago</strong><br>
+                {% for payment in invoice.payments %}
+                    {{ payment.methodName }}: {{ f.money(payment.amount) }}{% if payment.dueDate %} · vence {{ f.date(payment.dueDate) }}{% endif %}<br>
+                {% endfor %}
+                {% if invoice.notes %}<br><strong>Observaciones</strong><br>{{ invoice.notes }}{% endif %}
+                {% if invoice.status == 'voided' %}<br><br><strong>Anulada:</strong> {{ invoice.voidReason }}{% endif %}
+            </td>
+            <td style="vertical-align: top;">
+                <table style="width: 100%;">
+                    <tr><td>Total bruto</td><td class="num">{{ f.money(invoice.grossTotal) }}</td></tr>
+                    <tr><td>Descuentos</td><td class="num">{{ f.money(invoice.discountTotal) }}</td></tr>
+                    <tr><td>Subtotal</td><td class="num">{{ f.money(invoice.subtotal) }}</td></tr>
+                    <tr><td>Impuestos</td><td class="num">{{ f.money(invoice.taxTotal) }}</td></tr>
+                    <tr><td>Retenciones</td><td class="num">{{ f.money(invoice.withholdingTotal) }}</td></tr>
+                    <tr><td><strong>Total neto</strong></td><td class="num"><strong>{{ f.money(invoice.netTotal) }}</strong></td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

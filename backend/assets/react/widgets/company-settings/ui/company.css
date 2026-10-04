@@ -1,0 +1,39 @@
+/* Configuración › Empresa. Scoped under .admin like the kit. */
+.admin .company-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.admin .company-fieldset .card + .card {
+  margin-top: 16px;
+}
+
+.admin .company-responsibilities {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin .company-logo {
+  max-width: 240px;
+  max-height: 120px;
+  object-fit: contain;
+  align-self: flex-start;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--color-surface);
+}
+
+.admin .company-logo-actions {
+  justify-content: flex-start;
+  margin-top: 0;
+}
+
+.admin form + .card {
+  margin-top: 16px;
+}

@@ -1,0 +1,217 @@
+/* The document form (item 7, document-editor). Scoped under .admin like the kit; colours from the kit's tokens, so
+   both themes work. */
+.admin .doc-editor {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin .doc-header {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.admin .doc-section-title {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+/* The grid: the cells are controls that fill their column. On a laptop (1366 px) every column, through Valor total
+   and the actions, fits without scrolling (F8, DOC-10): fixed widths for the numbers, taxes and actions; Descripción
+   takes what is left, at least 116 px (M2). Below the table's min-width (a tablet in portrait) it scrolls inside its
+   box. */
+.admin .doc-lines .table {
+  table-layout: fixed;
+  min-width: 960px;
+}
+
+.admin .doc-lines .table th,
+.admin .doc-lines .table td {
+  padding: 8px 5px;
+}
+
+.admin .doc-lines .table th:first-child,
+.admin .doc-lines .table td:first-child {
+  padding-left: 10px;
+}
+
+.admin .doc-lines .table th {
+  white-space: normal;
+  vertical-align: bottom;
+  font-size: 0.72rem;
+}
+
+.admin .doc-lines .table th:nth-child(1) {
+  width: 132px;
+}
+
+.admin .doc-lines .table th:nth-child(3) {
+  width: 64px;
+}
+
+/* "% DESCUENTO" needs its word on one line. */
+.admin .doc-lines .table th:nth-child(5) {
+  width: 80px;
+}
+
+.admin .doc-lines .table th:nth-child(4) {
+  width: 112px;
+}
+
+.admin .doc-lines .table th:nth-child(6),
+.admin .doc-lines .table th:nth-child(7) {
+  width: 128px;
+}
+
+.admin .doc-lines .table th:nth-child(8) {
+  width: 116px;
+}
+
+.admin .doc-lines .table th.col-actions {
+  width: 84px;
+}
+
+.admin .doc-lines .doc-line-mode {
+  margin-bottom: 6px;
+}
+
+.admin .doc-editor .doc-line-number {
+  width: 9em;
+  text-align: right;
+}
+
+.admin .doc-lines .doc-line-number,
+.admin .doc-lines .doc-line-text,
+.admin .doc-lines select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* "Sin impuesto" and the tax names read whole in their 128 px column (M2). */
+.admin .doc-lines td select {
+  font-size: 0.85rem;
+  padding-left: 5px;
+  padding-right: 2px;
+}
+
+.admin .doc-lines input,
+.admin .doc-lines select {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* Taxes, up, down and remove: two by two, so the column stays narrow. */
+.admin .doc-lines .row-actions {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px;
+}
+
+.admin .doc-editor .doc-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .doc-lines td.doc-amount {
+  padding-top: 18px;
+}
+
+.admin .doc-lines-footer,
+.admin .doc-payments-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 10px;
+}
+
+/* Payments, footer and totals: the totals sit on the right on a wide screen, below on a narrow one. */
+.admin .doc-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 20px;
+  align-items: start;
+}
+
+.admin .doc-bottom-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .admin .doc-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.admin .doc-totals .definitions > div {
+  grid-template-columns: 1fr auto;
+}
+
+.admin .doc-totals-net {
+  border-top: 1px solid var(--color-border);
+  padding-top: 8px;
+  font-size: 1.1rem;
+}
+
+.admin .doc-totals-net dt {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.admin .doc-due {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.admin .doc-payments-total {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.admin .doc-match {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.admin .doc-match.is-ok {
+  color: var(--color-success);
+}
+
+.admin .doc-match.is-off {
+  color: var(--color-warning);
+}
+
+.admin .doc-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin .doc-attachments {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin .doc-attachments li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

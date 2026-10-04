@@ -1,0 +1,67 @@
+{#
+    The recibo de pago (§4.11), from Purchasing\Application\Document\SupplierPaymentPdf::context(): every value arrives already
+    printed ($ 1.190.000,00, DD/MM/YYYY).
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% block watermark %}
+    {% if voided %}<div class="voided">ANULADA</div>{% endif %}
+{% endblock %}
+
+{% block body %}
+    <style>
+        .parties { width: 100%; margin-bottom: 10px; }
+        .parties td { vertical-align: top; width: 50%; padding-right: 8px; }
+        .label { color: #616e7c; font-size: 7.5pt; text-transform: uppercase; }
+        .totals { width: 45%; margin-left: 55%; margin-top: 8px; border-collapse: collapse; }
+        .totals td { padding: 2px 4px; font-weight: bold; border-top: 1px solid #1f2933; }
+        .section { margin-top: 10px; }
+        .void-note { color: #b42318; font-weight: bold; margin-bottom: 8px; }
+        .signature { margin-top: 40px; width: 45%; border-top: 1px solid #1f2933; padding-top: 4px; }
+    </style>
+
+    {% if voided %}
+        <div class="void-note">ANULADO el {{ payment.voided_at }}. Motivo: {{ payment.void_reason }}</div>
+    {% endif %}
+
+    <table class="parties">
+        <tr>
+            <td>
+                <div class="label">Pagamos a</div>
+                <strong>{{ supplier.name }}</strong><br>
+                {{ supplier.identification }}<br>
+                {% if supplier.address %}{{ supplier.address }}<br>{% endif %}
+                {% if supplier.email %}{{ supplier.email }}{% endif %}
+            </td>
+            <td>
+                <div class="label">Pago</div>
+                Fecha: {{ payment.date }}<br>
+                De dónde sale el dinero: {{ payment.method }}<br>
+                Valor pagado: <strong>{{ payment.amount }}</strong>
+            </td>
+        </tr>
+    </table>
+
+    <div class="label">Facturas que paga</div>
+    <table class="lines">
+        <thead><tr><th>Factura</th><th class="num">Valor aplicado</th></tr></thead>
+        <tbody>
+            {% for a in allocations %}
+                <tr><td>{{ a.invoice }}</td><td class="num">{{ a.amount }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr><td>Total pagado</td><td class="num">{{ payment.amount }}</td></tr>
+    </table>
+
+    {% if payment.notes %}
+        <div class="section">
+            <div class="label">Observaciones</div>
+            {{ payment.notes|nl2br }}
+        </div>
+    {% endif %}
+
+    <div class="signature">Firma y sello</div>
+{% endblock %}

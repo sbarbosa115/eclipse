@@ -1,0 +1,8 @@
+_security_logout:
+  resource: security.route_loader.logout
+  type: service
+
+# The firewall answers these itself (security.yaml: json_login, logout); the routes only make the paths exist.
+api_sign_in:
+  path: /api/v1/auth/sign-in
+  methods: [POST]

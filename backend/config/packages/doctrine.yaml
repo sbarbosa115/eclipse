@@ -1,0 +1,98 @@
+doctrine:
+  dbal:
+    url: '%env(resolve:DATABASE_URL)%'
+    # utf8mb4 everywhere, utf8mb4_unicode_ci: the same schema on MariaDB (cPanel) and MySQL.
+    charset: utf8mb4
+    default_table_options:
+      charset: utf8mb4
+      collation: utf8mb4_unicode_ci
+    profiling_collect_backtrace: '%kernel.debug%'
+    types:
+      # Money as decimal strings, never floats (Shared\Domain\Money).
+      money: App\Shared\Infrastructure\Doctrine\MoneyType
+      rate: App\Shared\Infrastructure\Doctrine\RateType
+      quantity: App\Shared\Infrastructure\Doctrine\QuantityType
+      unit_price: App\Shared\Infrastructure\Doctrine\UnitPriceType
+  orm:
+    validate_xml_mapping: true
+    naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+    auto_mapping: true
+    # Every owned row belongs to one company: switched on for each signed-in request (Shared\UI\Http\Tenancy).
+    filters:
+      company:
+        class: App\Shared\Infrastructure\Doctrine\CompanyFilter
+        enabled: false
+    mappings:
+      # One mapping per bounded context, each in src/<Context>/Domain/Model.
+      Shared:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Shared/Domain/Model'
+        prefix: 'App\Shared\Domain\Model'
+        alias: Shared
+      Access:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Access/Domain/Model'
+        prefix: 'App\Access\Domain\Model'
+        alias: Access
+      Company:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Company/Domain/Model'
+        prefix: 'App\Company\Domain\Model'
+        alias: Company
+      Ledger:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Ledger/Domain/Model'
+        prefix: 'App\Ledger\Domain\Model'
+        alias: Ledger
+      Party:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Party/Domain/Model'
+        prefix: 'App\Party\Domain\Model'
+        alias: Party
+      Catalog:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Catalog/Domain/Model'
+        prefix: 'App\Catalog\Domain\Model'
+        alias: Catalog
+      Sales:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Sales/Domain/Model'
+        prefix: 'App\Sales\Domain\Model'
+        alias: Sales
+      Purchasing:
+        type: attribute
+        is_bundle: false
+        dir: '%kernel.project_dir%/src/Purchasing/Domain/Model'
+        prefix: 'App\Purchasing\Domain\Model'
+        alias: Purchasing
+
+when@test:
+  doctrine:
+    dbal:
+      # "TEST_TOKEN" is typically set by ParaTest
+      dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+  doctrine:
+    orm:
+      query_cache_driver:
+        type: pool
+        pool: doctrine.system_cache_pool
+      result_cache_driver:
+        type: pool
+        pool: doctrine.result_cache_pool
+
+  framework:
+    cache:
+      pools:
+        doctrine.result_cache_pool:
+          adapter: cache.app
+        doctrine.system_cache_pool:
+          adapter: cache.system

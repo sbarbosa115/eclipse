@@ -1,0 +1,44 @@
+/* Item 11 (cash-receipt): the recibos de caja pages. */
+.admin .cash-receipt-date input {
+  width: 9.5rem;
+}
+
+.admin .cash-receipt-list td.num,
+.admin .cash-receipt-view td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin .cash-receipt-form .field-wide {
+  grid-column: 1 / -1;
+}
+
+.admin .cash-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.admin .cash-receipt-actions .small {
+  margin-right: auto;
+  max-width: 36rem;
+}
+
+.admin .cash-receipt-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.admin .cash-receipt-details dt {
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
+
+.admin .cash-receipt-details dd {
+  margin: 2px 0 0;
+}

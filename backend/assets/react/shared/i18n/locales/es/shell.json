@@ -1,0 +1,40 @@
+{
+  "navLabel": "Menú principal",
+  "sections": {
+    "start": "Inicio",
+    "sales": "Ventas",
+    "purchases": "Compras",
+    "books": "Contabilidad",
+    "masters": "Maestros",
+    "settings": "Configuración"
+  },
+  "nav": {
+    "dashboard": "Tablero",
+    "quotations": "Cotizaciones",
+    "salesInvoices": "Facturas de venta",
+    "cashReceipts": "Recibos de caja",
+    "purchaseInvoices": "Facturas de compra",
+    "supplierPayments": "Recibos de pago",
+    "ledger": "Libros contables",
+    "reports": "Reportes",
+    "terceros": "Terceros",
+    "products": "Productos y servicios",
+    "settings": "Configuración"
+  },
+  "roles": {
+    "owner": "Administrador",
+    "billing": "Facturación",
+    "accountant": "Contador"
+  },
+  "theme": {
+    "label": "Tema",
+    "system": "Del dispositivo",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "La dirección no existe o no tienes acceso.",
+    "back": "Ir al tablero"
+  }
+}

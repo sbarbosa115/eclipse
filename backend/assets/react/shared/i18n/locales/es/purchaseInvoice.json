@@ -1,0 +1,99 @@
+{
+  "title": "Facturas de compra",
+  "subtitle": "Las facturas y gastos de tus proveedores: lo que contabilizan y lo que les debes.",
+  "new": "Nueva factura de compra",
+  "typeLabel": "FC · Factura de compra",
+  "status": {
+    "draft": "Borrador",
+    "emitted": "Emitida",
+    "partially_paid": "Pagada parcialmente",
+    "paid": "Pagada",
+    "voided": "Anulada"
+  },
+  "list": {
+    "searchPlaceholder": "Número, número del proveedor o proveedor",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos",
+    "from": "Desde",
+    "to": "Hasta",
+    "empty": "Aún no has registrado facturas de compra. Registra aquí las facturas y gastos de tus proveedores.",
+    "emptyAction": "Registrar la primera factura de compra",
+    "filteredEmpty": "Ninguna factura de compra coincide con lo que buscas.",
+    "draftNumber": "Borrador",
+    "columns": {
+      "number": "Número",
+      "supplier": "Proveedor",
+      "supplierNumber": "Nº del proveedor",
+      "date": "Fecha",
+      "dueDate": "Vencimiento",
+      "total": "Total neto",
+      "balance": "Saldo"
+    }
+  },
+  "actions": {
+    "open": "Abrir",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "pdf": "PDF",
+    "void": "Anular",
+    "save": "Guardar borrador",
+    "emit": "Emitir",
+    "cancel": "Volver",
+    "delete": "Eliminar borrador",
+    "download": "Descargar {{name}}"
+  },
+  "editor": {
+    "newTitle": "Nueva factura de compra",
+    "draftTitle": "Factura de compra (borrador)",
+    "title": "Factura de compra {{number}}",
+    "supplierNumber": "Número de factura del proveedor",
+    "supplierNumberHint": "El número que trae la factura del proveedor; necesario para emitir.",
+    "dueDate": "Fecha de vencimiento",
+    "statusLine": "Estado: {{status}}",
+    "readOnly": "Esta factura ya fue emitida: no se puede modificar. Para corregirla, anúlala y registra una nueva.",
+    "voidedBecause": "Anulada: {{reason}}",
+    "paid": "Pagado {{paid}} de {{total}}; saldo {{balance}}.",
+    "downloads": "Archivos del proveedor",
+    "loadFailed": "No pudimos cargar la factura de compra."
+  },
+  "notices": {
+    "saved": "Borrador guardado.",
+    "emitted": "Factura {{number}} emitida y contabilizada.",
+    "voided": "Factura {{number}} anulada.",
+    "duplicated": "Se creó un borrador igual. Escribe el número de factura del proveedor.",
+    "deleted": "Borrador eliminado.",
+    "attached": "Archivo adjunto.",
+    "check": "Revisa los campos marcados."
+  },
+  "void": {
+    "title": "Anular la factura {{number}}",
+    "body": "Se registra un comprobante de reversión con fecha de hoy y la cuenta por pagar queda anulada. El número no se vuelve a usar.",
+    "reason": "Motivo de la anulación",
+    "confirm": "Anular factura",
+    "reasonRequired": "Escribe por qué se anula la factura."
+  },
+  "delete": {
+    "title": "Eliminar el borrador",
+    "body": "El borrador y sus archivos se eliminan. No hay asiento contable que revertir.",
+    "confirm": "Eliminar"
+  },
+  "errors": {
+    "document_not_draft": "La factura ya fue emitida: no se puede modificar.",
+    "document_not_emitted": "Solo se anula una factura emitida.",
+    "document_voided": "La factura ya está anulada.",
+    "document_has_allocations": "La factura tiene pagos aplicados: anula primero los recibos de pago.",
+    "document_has_no_lines": "Agrega al menos una línea para emitir.",
+    "payments_do_not_match_total": "El total de las formas de pago debe ser igual al total neto.",
+    "issue_date_in_future": "La fecha de la factura no puede ser futura.",
+    "period_locked": "La contabilidad está cerrada hasta el {{date}}: usa una fecha posterior.",
+    "supplier_inactive": "El proveedor está inactivo: reactívalo para emitir.",
+    "duplicate_supplier_invoice_number": "Ya registraste una factura de este proveedor con este número.",
+    "attachment_too_large": "El archivo pesa más de 10 MB.",
+    "attachment_unsupported": "Adjunta la factura del proveedor en PDF o XML.",
+    "purchase_invoice_not_found": "No encontramos esta factura de compra.",
+    "attachment_not_found": "No encontramos este archivo.",
+    "forbidden": "Tu rol no puede modificar facturas de compra.",
+    "validation_failed": "Revisa los campos marcados.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  }
+}

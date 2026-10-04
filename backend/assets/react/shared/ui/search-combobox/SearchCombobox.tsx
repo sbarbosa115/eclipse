@@ -1,0 +1,292 @@
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from 'react';
+import {useTranslation} from '@/shared/i18n';
+
+export interface ComboOption<T> {
+  id: string;
+  label: string;
+  detail?: string;
+  value: T;
+}
+
+type Status = 'idle' | 'short' | 'loading' | 'ready' | 'failed';
+
+/** The words of the list; each one the caller leaves out is the kit's (`common.combo.*`). */
+export interface ComboMessages {
+  /** "Escribe al menos 3 caracteres." */
+  minChars: (count: number) => string;
+  searching: string;
+  none: string;
+  failed: string;
+  /** "+ Crear nuevo" */
+  create: string;
+}
+
+interface Props<T> {
+  /** The label of what is chosen; '' while nothing is. */
+  'selectedLabel': string;
+  /** Characters typed before it searches (§4.6: 3 for a tercero). */
+  'minChars': number;
+  'search': (term: string) => Promise<ComboOption<T>[]>;
+  'onSelect': (option: ComboOption<T>) => void;
+  /** Typing over a choice drops it. */
+  'onClear': () => void;
+  /** "+ Crear nuevo", with what was typed. */
+  'onCreate'?: (text: string) => void;
+  'placeholder'?: string;
+  'messages'?: Partial<ComboMessages>;
+  'disabled'?: boolean;
+  'id'?: string;
+  'aria-label'?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
+}
+
+const DEBOUNCE_MS = 250;
+
+/**
+ * A search box with a list of matches (the ARIA combobox pattern), for products in the document editor's lines and
+ * for terceros everywhere (through `entities/tercero`'s TerceroPicker): ↓ and ↑ walk the list, Enter chooses, Escape
+ * closes. The last option is "+ Crear nuevo" when the form can create what is missing. The list floats over the page
+ * (position: fixed), so a table that scrolls sideways does not cut it.
+ */
+export function SearchCombobox<T>({
+  selectedLabel,
+  minChars,
+  search,
+  onSelect,
+  onClear,
+  onCreate,
+  placeholder,
+  messages,
+  disabled = false,
+  ...aria
+}: Props<T>) {
+  const {t} = useTranslation();
+  const words: ComboMessages = {
+    minChars: (count) => t('common.combo.minChars', {count}),
+    searching: t('common.combo.searching'),
+    none: t('common.combo.none'),
+    failed: t('common.combo.failed'),
+    create: t('common.combo.create'),
+    ...messages,
+  };
+  const listId = `${useId()}-list`;
+  const input = useRef<HTMLInputElement>(null);
+  const [text, setText] = useState(selectedLabel);
+  const [shown, setShown] = useState(selectedLabel);
+  const [open, setOpen] = useState(false);
+  // The last answer, for the term it answers: status and options are derived from it while rendering.
+  const [result, setResult] = useState<{
+    term: string;
+    status: 'ready' | 'failed';
+    options: ComboOption<T>[];
+  } | null>(null);
+  const [active, setActive] = useState(-1);
+  const [position, setPosition] = useState<CSSProperties>({});
+  const latest = useRef(search);
+  useEffect(() => {
+    latest.current = search;
+  });
+
+  // A choice made (here or by the form, e.g. a product created in a modal) shows its label. Adjusted while rendering.
+  if (selectedLabel !== shown) {
+    setShown(selectedLabel);
+    if (selectedLabel !== '') {
+      setText(selectedLabel);
+      setOpen(false);
+    }
+  }
+
+  const term = text.trim();
+  const searchable = term.length >= minChars;
+  useEffect(() => {
+    if (!open || !searchable) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      latest
+        .current(term)
+        .then((found) => {
+          if (cancelled) return;
+          setResult({term, status: 'ready', options: found});
+          setActive(found.length > 0 ? 0 : -1);
+        })
+        .catch(() => {
+          if (!cancelled) setResult({term, status: 'failed', options: []});
+        });
+    }, DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [term, open, searchable]);
+
+  const answered = searchable && result?.term === term ? result : null;
+  const status: Status = !searchable
+    ? term === ''
+      ? 'idle'
+      : 'short'
+    : (answered?.status ?? 'loading');
+  const options = answered?.options ?? [];
+
+  const canCreate =
+    onCreate !== undefined && (status === 'ready' || status === 'failed');
+  const count = options.length + (canCreate ? 1 : 0);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const box = input.current?.getBoundingClientRect();
+      if (!box) return;
+      setPosition({
+        top: box.bottom + 4,
+        left: box.left,
+        minWidth: Math.max(box.width, 260),
+      });
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
+
+  const choose = (index: number) => {
+    const option = options[index];
+    if (option) {
+      setText(option.label);
+      setOpen(false);
+      onSelect(option);
+    } else if (canCreate && index === options.length) {
+      setOpen(false);
+      onCreate?.(term);
+    }
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.altKey) return;
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (!open) setOpen(true);
+        else if (count > 0) setActive((i) => (i + 1) % count);
+        break;
+      case 'ArrowUp':
+        if (!open) return;
+        event.preventDefault();
+        if (count > 0) setActive((i) => (i <= 0 ? count - 1 : i - 1));
+        break;
+      case 'Enter':
+        if (open && active >= 0 && active < count) {
+          event.preventDefault();
+          choose(active);
+        }
+        break;
+      case 'Escape':
+        if (open) {
+          event.preventDefault();
+          setOpen(false);
+        }
+        break;
+    }
+  };
+
+  const message =
+    status === 'short'
+      ? words.minChars(minChars)
+      : status === 'loading'
+        ? words.searching
+        : status === 'failed'
+          ? words.failed
+          : status === 'ready' && options.length === 0
+            ? words.none
+            : null;
+  const expanded = open && (message !== null || count > 0);
+  const optionId = (i: number) => `${listId}-${i}`;
+
+  return (
+    <div className="combo">
+      <input
+        {...aria}
+        ref={input}
+        type="text"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={expanded}
+        aria-controls={listId}
+        aria-activedescendant={
+          expanded && active >= 0 && active < count
+            ? optionId(active)
+            : undefined
+        }
+        autoComplete="off"
+        value={text}
+        placeholder={placeholder}
+        disabled={disabled}
+        onChange={(event) => {
+          setText(event.target.value);
+          setOpen(true);
+          if (selectedLabel !== '') onClear();
+        }}
+        onKeyDown={onKeyDown}
+        onBlur={() => setOpen(false)}
+      />
+      {expanded && (
+        <div
+          className="combo-popup"
+          style={position}
+          // Choosing with the mouse must not blur the box first (that would close the list).
+          onMouseDown={(event) => event.preventDefault()}
+        >
+          {message && (
+            <p className="combo-status small muted" role="status">
+              {message}
+            </p>
+          )}
+          {count > 0 && (
+            <ul id={listId} role="listbox" className="combo-list">
+              {options.map((option, i) => (
+                <li
+                  key={option.id}
+                  id={optionId(i)}
+                  role="option"
+                  aria-selected={i === active}
+                  className={i === active ? 'is-active' : undefined}
+                  onClick={() => choose(i)}
+                >
+                  <span className="combo-label">{option.label}</span>
+                  {option.detail && (
+                    <span className="combo-detail small muted">
+                      {' '}
+                      {option.detail}
+                    </span>
+                  )}
+                </li>
+              ))}
+              {canCreate && (
+                <li
+                  id={optionId(options.length)}
+                  role="option"
+                  aria-selected={active === options.length}
+                  className={`combo-create${active === options.length ? ' is-active' : ''}`}
+                  onClick={() => choose(options.length)}
+                >
+                  {words.create}
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

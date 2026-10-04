@@ -1,0 +1,123 @@
+{
+  "title": "Cotizaciones",
+  "subtitle": "Ofrece precios a tus clientes con vigencia; al aceptarla la conviertes en factura. Una cotización no genera movimientos contables.",
+  "new": "Nueva cotización",
+  "typeLabel": "Cotización",
+  "statuses": {
+    "draft": "Borrador",
+    "emitted": "Emitida",
+    "accepted": "Aceptada",
+    "rejected": "Rechazada",
+    "expired": "Vencida",
+    "voided": "Anulada"
+  },
+  "list": {
+    "searchPlaceholder": "Número o cliente",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos los estados",
+    "from": "Desde",
+    "to": "Hasta",
+    "empty": "Aún no has hecho cotizaciones. Crea la primera para tu cliente.",
+    "emptyAction": "Crear la primera cotización",
+    "filteredEmpty": "Ninguna cotización coincide con estos filtros.",
+    "draftNumber": "Borrador",
+    "columns": {
+      "number": "Número",
+      "client": "Cliente",
+      "date": "Fecha",
+      "expiry": "Vence",
+      "total": "Total"
+    }
+  },
+  "actions": {
+    "open": "Abrir",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "pdf": "PDF",
+    "downloadPdf": "Descargar PDF",
+    "send": "Enviar",
+    "void": "Anular",
+    "save": "Guardar",
+    "back": "Volver a cotizaciones",
+    "emit": "Emitir",
+    "emitAndSend": "Emitir y enviar",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "convert": "Convertir a factura",
+    "viewInvoice": "Ver la factura"
+  },
+  "notices": {
+    "saved": "Borrador guardado.",
+    "emitted": "Cotización {{number}} emitida.",
+    "emittedAndSent": "Cotización {{number}} emitida; el correo con el PDF va en camino.",
+    "sent": "El correo con el PDF de la cotización {{number}} va en camino.",
+    "accepted": "Cotización {{number}} aceptada.",
+    "rejected": "Cotización {{number}} rechazada.",
+    "voided": "Cotización {{number}} anulada.",
+    "duplicated": "Se creó un borrador nuevo a partir de la cotización.",
+    "converted": "Se creó este borrador de factura a partir de la cotización {{number}}."
+  },
+  "emit": {
+    "title": "¿Emitir la cotización?",
+    "body": "Tomará el siguiente número de tus cotizaciones y ya no se podrá modificar. No genera ningún movimiento contable.",
+    "sendNote": "Después de emitirla, enviaremos el PDF al correo del cliente."
+  },
+  "void": {
+    "title": "Anular la cotización {{number}}",
+    "body": "La cotización conservará su número y quedará anulada. No hay movimientos contables que reversar.",
+    "reason": "Motivo de la anulación",
+    "reasonRequired": "Escribe el motivo de la anulación.",
+    "confirm": "Anular cotización"
+  },
+  "decide": {
+    "acceptTitle": "¿La cotización fue aceptada?",
+    "acceptBody": "Quedará marcada como aceptada. Después puedes convertirla en factura.",
+    "rejectTitle": "¿El cliente rechazó la cotización?",
+    "rejectBody": "Quedará marcada como rechazada y ya no se podrá convertir en factura."
+  },
+  "convert": {
+    "title": "Convertir en factura de venta",
+    "body": "Crearemos un borrador de factura con el mismo cliente, contacto, líneas e impuestos, y la cotización quedará aceptada. Una cotización se convierte una sola vez.",
+    "confirm": "Convertir a factura",
+    "refusedTitle": "No se pudo convertir la cotización",
+    "refusedBody": "La factura no acepta algo que cambió desde que hiciste la cotización. Duplícala, corrige lo indicado y vuelve a emitirla.",
+    "line": "Línea {{line}}: {{message}}",
+    "converted": "Esta cotización ya se convirtió en factura."
+  },
+  "editor": {
+    "newTitle": "Nueva cotización",
+    "draftTitle": "Cotización · borrador",
+    "title": "Cotización {{number}}",
+    "loadFailed": "No pudimos cargar esta cotización.",
+    "readOnly": "Esta cotización ya fue emitida: no se puede modificar, solo anular.",
+    "voidedInfo": "Anulada el {{date}}. Motivo: {{reason}}",
+    "expiredInfo": "La oferta venció el {{date}}. Si el cliente la acepta tarde, aún puedes aceptarla o convertirla en factura; para cambiar precios o fechas, duplícala.",
+    "acceptedInfo": "La cotización fue aceptada.",
+    "rejectedInfo": "La cotización fue rechazada."
+  },
+  "fields": {
+    "responsible": "Responsable de la cotización",
+    "noResponsible": "Sin responsable",
+    "expiry": "Válida hasta",
+    "header": "Encabezado",
+    "headerHint": "Texto simple: se imprime como párrafos en el PDF.",
+    "terms": "Condiciones comerciales",
+    "termsHint": "Forma de pago, tiempos de entrega, garantías… Texto simple."
+  },
+  "validation": {
+    "expiry": "Escribe una fecha de vencimiento válida.",
+    "expiryBeforeIssue": "La oferta no puede vencer antes de la fecha de la cotización."
+  },
+  "errors": {
+    "document_not_draft": "Esta cotización ya fue emitida: no se puede modificar.",
+    "quotation_not_open": "La cotización no está abierta: debe estar emitida y sin responder (para enviarla, además, con la oferta sin vencer).",
+    "quotation_already_converted": "Esta cotización ya se convirtió en factura: solo se convierte una vez.",
+    "tercero_inactive": "El cliente está inactivo: actívalo para cotizarle.",
+    "tercero_has_no_email": "El cliente no tiene correo: agrégalo en su ficha o emite sin enviar.",
+    "quotation_not_found": "Esta cotización no existe.",
+    "forbidden": "Tu rol no puede hacer esto con las cotizaciones.",
+    "validation_failed": "Revisa los campos marcados.",
+    "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  }
+}

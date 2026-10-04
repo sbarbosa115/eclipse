@@ -1,0 +1,463 @@
+# Eclipse — Mustang
+
+Mustang is a cloud business-management app for small and medium companies in Colombia, starting from accounting (the
+PUC, double-entry journal, terceros, IVA and withholdings). Eclipse is its Symfony + React codebase, hosted on a
+cPanel account.
+
+- **What it does:** [`docs/pdr/prd-mustang.md`](docs/pdr/prd-mustang.md) (roadmap) and
+  [`docs/pdr/prd-accounting.md`](docs/pdr/prd-accounting.md) (stage 1, with its technical plan and parallel split).
+
+## Running it locally
+
+Everything runs in Docker; nothing is installed on the host.
+
+```bash
+docker compose up -d
+docker compose exec php composer install
+docker compose exec php php bin/console doctrine:migrations:migrate -n
+docker compose exec php php bin/console doctrine:database:create --env=test --if-not-exists
+docker compose exec php php bin/console doctrine:migrations:migrate --env=test -n
+docker compose exec php php bin/console app:demo:seed
+```
+
+| What | Where |
+|---|---|
+| The app | http://localhost:8090 (`demo@mustang.test` / `mustang-demo-123`, development only) |
+| E-mails (Mailpit) | http://localhost:8035 |
+| MariaDB | `localhost:3316`, user `app` / `app` |
+
+A second checkout (a git worktree for a feature) picks other host ports in its own gitignored `.env`
+(`HTTP_PORT`, `DB_PORT`, `MAILPIT_PORT`); `split.py start` writes it.
+
+The `node` service rebuilds the UI on every save: read `docker compose logs node` instead of running a build.
+
+### Tests and checks
+
+```bash
+docker compose exec php php bin/phpunit                        # PHP: unit + functional (database app_test)
+docker compose exec node npm test                              # Vitest + Testing Library
+backend/e2e/smoke.sh                                           # Playwright smoke suite (resets the dev database)
+~/.claude/skills/symfony-react-app/scripts/gate.sh --fix       # PHP-CS-Fixer, PHPStan, Deptrac, Prettier, ESLint, tsc
+```
+
+The same gate runs in CI (`.github/workflows/ci.yml`). The regression suite is
+[`docs/tests/ui-regression.md`](docs/tests/ui-regression.md); each run is recorded in `docs/tests/runs/`. Security
+audits are in [`docs/security/`](docs/security/README.md).
+
+After changing a controller or an Output DTO, regenerate the API types the UI imports:
+
+```bash
+docker compose exec php php bin/console nelmio:apidoc:dump --format=json > backend/assets/types/openapi.json
+docker compose exec node npm run -s api:types
+```
+
+## Architecture
+
+**Backend** (`backend/src/`): DDD and hexagonal layers, one folder per bounded context, each with
+`Domain / Application / Infrastructure / UI`. Deptrac enforces the direction (`deptrac.yaml`) and which contexts may
+talk to each other (`deptrac.contexts.yaml`).
+
+| Context | Owns |
+|---|---|
+| `Shared` | money (`Money`, `Rate`, `Quantity`, `UnitPrice` on brick/math), document totals (§4.6), the DV algorithm, fiscal enums, posting concepts, error kinds → JSON, command and event buses, **tenancy** (`CompanyOwned` + the Doctrine `company` filter), the shared document shapes (lines, payment lines, open items, allocations), audit log, attachments |
+| `Access` | users, sign-up (creates the company), sign-in (json_login + session), roles |
+| `Company` | the company, its invoicing resolution, numbering series (`Numbering`, row-locked) |
+| `Ledger` | chart of accounts (PUC), posting rules, taxes, payment methods, journal entries, `JournalPoster` (the one way into the books), lock date, ledger reports |
+| `Party` | terceros and their contacts |
+| `Catalog` | products, services, categories |
+| `Sales` | cotización, factura de venta, receivables, recibo de caja |
+| `Purchasing` | factura de compra / gasto, payables, recibo de pago |
+| `Reporting` | cartera with ageing, exports, the dashboard (read side) |
+
+A new company is provisioned inside the sign-up transaction by every context's `CompanyProvisioner` (chart, posting
+rules, taxes, payment methods, numbering series). Every owned row has `company_id`; repositories load by
+`(company, id)` and the `company` filter is the second lock. Foreign keys between contexts are declared with
+`#[References('table')]` on the id column (`Shared\Infrastructure\Doctrine\ForeignKeys` adds them to the schema).
+
+**Frontend** (`backend/assets/react/`): React 19 + TypeScript (strict), Webpack Encore, Feature-Sliced Design:
+`app → pages → widgets → features → entities → shared`. ESLint fails an import that goes up a layer or skips a
+slice's `index.ts`. Types come from the OpenAPI schema (`Schema<'TaxOutput'>`). Every string goes through
+`useTranslation()`; the Spanish catalog is one file per namespace (`shared/i18n/locales/es/`). The UI kit is
+`@/shared/ui` (tables, filters, fields, modals, the theme).
+
+## API reference
+
+All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (`"1190000.00"`, `"19.0000"`). Errors are
+`{"error": "<code>", "message": "…", "detail"?: {…}, "violations"?: [{field, message}]}`; another company's id is
+404. Writes must come from the app's own origin (403 otherwise). Every call that e-mails (`send`, `emit-and-send`,
+`send: true` on a receipt or payment, an invitation or its resend) counts against the company's hourly e-mail quota:
+429 `too_many_emails` once it is spent, and nothing is emitted or sent.
+
+| Method | Path | Answers | Errors |
+|---|---|---|---|
+| POST | `/auth/sign-up` | `{company_name, nit, owner_name, email, password ≥ 10}` → 201 `SessionOutput`, signed in. Provisions the company | 422 `validation_failed` (`email` taken, `identification_number` taken); 429 (5 per hour per IP) |
+| POST | `/auth/sign-in` | `{email, password}` → `SessionOutput` and a session cookie | 401 `invalid_credentials`; 429 (5 per minute per e-mail and IP) |
+| POST | `/auth/sign-out` | ends the session → 204 | 405 for another method |
+| GET | `/me` | `SessionOutput {user_id, email, name, role, company_id, company_name, company_nit, company_check_digit}` | 401 |
+| GET | `/users` | `{items: UserOutput[]}` every user of the company (invited and deactivated too) by name: `{id, email, name, role, status: invited\|active\|deactivated, is_you, created_at, last_sign_in_at, invitation_expires_at}`. Owner only | 403 |
+| POST | `/users/invitations` | `{email, role: billing\|accountant}` → 201 `UserOutput` (status `invited`); e-mails a one-use link valid 7 days | 403; 422 on `email` (registered in any company), `role` |
+| POST | `/users/{id}/invitation` | resends the invitation with a new link; the earlier one stops working → `UserOutput` | 403; 404; 409 `not_an_invitation` |
+| PUT | `/users/{id}/role` | `{role: owner\|billing\|accountant}` → `UserOutput`; the person's open session ends | 403; 404; 409 `last_owner`; 422 `role` |
+| POST | `/users/{id}/deactivate`, `/reactivate` | → `UserOutput`; a deactivated user's session ends on its next request; reactivated = active again (or invited, if they never accepted) | 403; 404; 409 `last_owner`, `cannot_deactivate_yourself` |
+| POST | `/auth/invitations/lookup` | public: `{token}` → `InvitationOutput {email, company_name, role}` | 404 `link_invalid` (unknown, used, replaced, expired, or not an invitation) |
+| POST | `/auth/invitations/accept` | public: `{token, name, password ≥ 10}` → `SessionOutput`, signed in | 404 `link_invalid`; 422 |
+| POST | `/auth/password-reset` | public: `{email}` → 202, no body, whoever asks; e-mails a one-use link valid 1 hour to someone who can sign in | 422 `email`; 429 (5 per 10 min per address; one person gets at most 5 e-mails in 10 min, silently) |
+| POST | `/auth/password-reset/check` | public: `{token}` → 204 while the link works | 404 `link_invalid` |
+| POST | `/auth/password-reset/confirm` | public: `{token, password ≥ 10}` → `SessionOutput`, signed in; every other session of the person ends | 404 `link_invalid`; 422 |
+| any | `/api/v1/*` (signed in) | a session with no request for 2 hours ends: 401 `session_expired`, and the UI shows the sign-in page | 401 |
+| GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive, `?on=YYYY-MM-DD` only those in force that day (no dates = always) | 401; 400 `invalid_date` |
+| GET | `/payment-methods` | `{items: PaymentMethodOutput[]}`; `?all=1` | 401 |
+| GET | `/accounts/search` | `{items: AccountOutput[]}` postable accounts, `?q=` code prefix or name, `?purchases=1` | 401 |
+| GET | `/settings/taxes`, `/settings/payment-methods` | `{items: TaxSettingOutput[]}` / `{items: PaymentMethodSettingOutput[]}`: every row, inactive too, with the accounts' codes and names and `in_use` (a document, product or company default points at it). Every role | 401 |
+| POST | `/taxes` | `{name, tax_class, kind, calculation, rate, sales_account_id?, purchase_account_id?, valid_from?, valid_to?}` → 201 `TaxSettingOutput`. Owner and accountant | 403; 422 `validation_failed` on `name` (taken), `kind`, `calculation`, `rate` (0–100, four decimals), `valid_to` (before `valid_from`), `*_account_id` |
+| PUT | `/taxes/{id}` | `{name, calculation, rate, sales_account_id, purchase_account_id, valid_from, valid_to}` → `TaxSettingOutput`; class and kind never change | 403; 404; 422 as above, `tax_not_editable` (Ninguno) |
+| POST | `/taxes/{id}/deactivate`, `/activate` | → `TaxSettingOutput` | 403; 404; 422 `tax_not_editable` |
+| DELETE | `/taxes/{id}` | → 204; a tax no document uses | 403; 404; 409 `tax_in_use`; 422 `tax_not_editable` |
+| POST | `/payment-methods` | `{name, kind: cash\|credit, account_id?}` → 201 `PaymentMethodSettingOutput`; contado needs a postable account, crédito none. Owner and accountant | 403; 422 on `name` (taken), `kind`, `account_id` |
+| PUT | `/payment-methods/{id}` | `{name, account_id}` → `PaymentMethodSettingOutput`; the kind never changes | 403; 404; 422 |
+| POST | `/payment-methods/{id}/deactivate`, `/activate` | → `PaymentMethodSettingOutput` | 403; 404 |
+| DELETE | `/payment-methods/{id}` | → 204; a method no document uses | 403; 404; 409 `payment_method_in_use` |
+| GET | `/terceros` | `{items: TerceroSummaryOutput[], total, page, per_page}`; `?q=` part of the name, trade name or identification (`%`/`_` literal), `?role=cliente\|proveedor\|empleado\|otro`, `?active=1\|0`, `?page`, `?per_page ≤ 100` | 401 |
+| POST | `/terceros` | full `TerceroInput` → 201 `TerceroOutput` (phones, billing data, responsabilidades, roles, contacts, account overrides). DV computed for a NIT when `check_digit` is empty | 422 `validation_failed` (field), 422 `duplicate_identification` (violation on `identification_number`), 403 without WRITE_DOCUMENTS |
+| POST | `/terceros/quick` | `{person_type, identification_type, identification_number, check_digit?, first_names?, last_names?, business_name?, email, roles}` → 201 `TerceroSummaryOutput` | 422 as above, 403 |
+| GET, PUT | `/terceros/{id}` | `TerceroOutput`; PUT replaces the whole record (contacts with an `id` are kept, the rest removed) | 404 other company, 422 `tercero_erased`, 403 (PUT, without WRITE_DOCUMENTS) |
+| DELETE | `/terceros/{id}` | 204 when no document names it | 409 `tercero_in_use`, 403 |
+| POST | `/terceros/{id}/deactivate`, `/reactivate` | `TerceroOutput` | 404, 403, 422 `tercero_erased` (reactivate) |
+| GET | `/terceros/{id}/contacts` | `{items: ContactOutput[]}` | 404 |
+| GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (WRITE_DOCUMENTS: every role today) |
+| POST | `/terceros/{id}/erase` | Ley 1581: blanks the personal fields and contacts, deactivates, sets `erased_at`; keeps the row and the identification; audited | 404, 403 |
+| GET | `/accounts` | page of `AccountOutput` (the chart in code order): `?q=` digits a code prefix, words the name; `?class=1…9`; `?page`, `?per_page` ≤ 100 | 401 |
+| POST | `/accounts` | `{parent_code, code (parent + 2 digits), name, usable_on_purchases?}` → 201 `AccountOutput`; owner and accountant | 403; 409 `account_code_taken`; 422 `account_code_invalid`, `parent_account_not_found` |
+| PUT | `/accounts/{id}` | `{name, active, usable_on_purchases}` → `AccountOutput`; owner and accountant; audited | 403; 404; 409 `account_standard` (PUC names are fixed), `account_in_posting_rule` |
+| GET | `/posting-rules` | `{items: PostingRuleOutput[]}` (concept, account, `allowed_prefixes`) in the order of §5 | 401 |
+| PUT | `/posting-rules/{concept}` | `{account_id}` → `PostingRuleOutput`; owner and accountant; audited (`posting_rule.changed`) | 403; 404; 409 `account_not_postable`; 422 `account_not_allowed_for_concept` |
+| GET, PUT | `/ledger/lock-date` | `LockDateOutput {locked_until}`; PUT `{locked_until: YYYY-MM-DD}` by owner and accountant, audited | 403; 422 `lock_date_in_future` |
+| GET | `/ledger/journal` | page of `JournalEntryOutput` (with lines, account and tercero names): `?from`, `?to`, `?account` (code and children), `?tercero_id`, `?page`, `?per_page` ≤ 100; owner and accountant | 400 `invalid_date`; 403 |
+| GET | `/ledger/trial-balance` | `TrialBalanceOutput`: per account and parent, opening/débito/crédito/closing (débito − crédito), totals, `balanced`; `?from`, `?to` (default the year so far) | 400; 403 |
+| GET | `/ledger/income-statement` | `IncomeStatementOutput` (classes 4, 6, 7, 5 by group and cuenta; net income) for `?from`–`?to` | 400; 403 |
+| GET | `/ledger/balance-sheet` | `BalanceSheetOutput` (classes 1–3, current earnings, `balanced`) at `?date` | 400; 403 |
+| GET | `/reports/cartera/{clients\|suppliers}` | `CarteraOutput {as_of, items: CarteraRowOutput[], total, page, per_page, totals}`: open receivables / payables by tercero, largest first, split `current` (al día), `days1_to30`, `days31_to60`, `days61_to90`, `over90` by due date against `?as_of=` (default today in Colombia; a past date rebuilds what was owed then), plus `total`, `overdue`, `documents`; `?q=` (name or identification, literal), `?page`, `?per_page` ≤ 100. `totals` covers every tercero matching `q`, not just the page. READ_DOCUMENTS | 400 `invalid_date`; 401; 403 |
+| GET | `/reports/cartera/{clients\|suppliers}/{terceroId}` | `CarteraDocumentsOutput {as_of, tercero_id, tercero_name, items: CarteraDocumentOutput[], total}`: the tercero's open documents, the soonest due first (`invoice_id`, `invoice_number`, dates, `amount`, `balance`, `days_overdue`, `bucket`); `?as_of=`. READ_DOCUMENTS | 400; 404 (nothing owed at that date, or another company's tercero) |
+| GET | `/reports/cartera/{clients\|suppliers}/export` | the cartera as a file: `?format=csv\|pdf` (default csv), `?as_of=`, `?q=`, `?detail=1` for one row per open document instead of per tercero. READ_DOCUMENTS | 400 `invalid_format`, `invalid_date`; 422 `export_too_large` |
+| GET | `/reports/ledger/{journal\|trial-balance\|income-statement\|balance-sheet}/export` | the ledger's book as a file, from the ledger's own query services: `?format=`, then the screen's filters (`journal`: `?from`, `?to`, `?account`, `?tercero_id`; `trial-balance`, `income-statement`: `?from`, `?to`, default the year so far; `balance-sheet`: `?date`). VIEW_BOOKS | 400; 403; 422 `export_too_large` |
+| GET | `/dashboard` | `DashboardOutput {as_of, clients_total, clients_overdue, suppliers_total, suppliers_overdue, sales_month, sales_month_count, purchases_month, purchases_month_count, cash_and_banks}`: five queries, whatever the size of the company. Sales and purchases are this month's emitted invoices before taxes; `cash_and_banks` (1105 + 1110) is `null` without VIEW_BOOKS. READ_DOCUMENTS | 401; 403 |
+| GET, POST | `/terceros`, `/terceros/quick`, `/terceros/{id}/contacts` | contract only: 501 until the "terceros" item | 501 |
+| GET | `/products` | `{items: ProductOutput[], total, page, per_page}` by name; `?q=` (código or name, matched literally), `?type=producto\|servicio`, `?active=1` only active / `0` only inactive, `?page`, `?per_page` ≤ 100. Every role | 401 |
+| GET | `/products/units` | `{items: {code, name}[]}`: the short DIAN list (94, KGM, MTR, HUR, ZZ) | 401 |
+| GET | `/products/{id}` | `ProductOutput` (`unit_price_net_of_tax` is the value a line starts from; `*_account_label` is "code · name") | 404 |
+| POST | `/products` | full form `{type, code, name, description?, category_id?, unit_code?, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?, revenue_account_id?, expense_account_id?}` → 201. Taxes missing = the company's defaults; unit missing = 94 (producto) / ZZ (servicio) | 422 on `code` (taken in this company), on a tax (not an active tax of that class), an account (not postable), `category_id`, `sale_price` (under a per-unit tax it includes); 403 without WRITE_DOCUMENTS |
+| POST | `/products/quick` | `{type, code, name, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?}` → 201 `ProductOutput` | as above |
+| PUT | `/products/{id}` | the full form again; what is missing is **none** (no default is filled) | 404, 422, 403 |
+| PUT | `/products/{id}/taxes` | `{charge_tax_id, withholding_tax_id}`, null = no tax ("use these taxes from now on") | 404, 422, 403 |
+| POST | `/products/{id}/deactivate`, `/reactivate` | `ProductOutput`; inactive products leave new documents' pickers (`?active=1`) | 404, 403 |
+| DELETE | `/products/{id}` | 204 when no document line uses it | 409 `product_in_use` (deactivate instead), 404, 403 |
+| GET, POST, PUT | `/product-categories`, `/product-categories/{id}` | flat list by name `{items: {id, name, product_count}[]}`; create `{name}` → 201; rename `{name}` | 422 on `name` (repeated), 404, 403 |
+| GET, PUT | `/company` | `CompanyOutput {id, legal_name, trade_name, identification_type, identification_number, check_digit, address, city, phone, email, logo_id, vat_regime, fiscal_responsibilities, default_charge_tax_id, default_withholding_tax_id}`. PUT replaces the profile (owner); the DV is computed for a NIT when `check_digit` is empty, and kept when given; dots in a NIT are dropped. Every role reads | 403 (PUT, not owner); 422 on `identification_number` (another company's), `identification_type`, `check_digit`, `email`, `vat_regime`, `fiscal_responsibilities[i]`, `default_charge_tax_id` / `default_withholding_tax_id` (not an active tax of that class) |
+| POST | `/company/logo` | multipart field `file`: PNG or JPEG judged by content, ≤ 2 MB (owner) → `CompanyOutput`. Replaces the previous logo (its file is deleted); audited | 403; 413 `logo_too_large`; 415 `logo_unsupported` (also a missing file) |
+| GET, DELETE | `/company/logo` | GET: the image (every role). DELETE: removes it (owner) → 204; audited | 404 `logo_not_found` |
+| GET | `/company/resolution` | `ResolutionSettingsOutput {resolution: ResolutionOutput\|null, status: ResolutionStatusOutput, manual_invoicing_confirmed_at}`; `resolution` carries `next_number` (consecutivo actual) and `has_issued_numbers`. Every role | 401 |
+| GET | `/company/resolution/status` | `{status: missing\|not_yet_valid\|active\|expired\|exhausted, numbers_left, days_left, warning, warning_numbers, warning_days}`; `warning` is true only while active and under either threshold. Every role | 401 |
+| POST, PUT | `/company/resolution` | `{resolution_number, prefix, range_from, range_to, valid_from, valid_to, mode: electronic\|manual}` → `ResolutionSettingsOutput` (201 on POST). Owner. One per company; once invoices were numbered, desde and the prefix cannot change and hasta cannot go below the last number used | 403; 409 `resolution_exists` (POST); 404 `resolution_not_found` (PUT); 422 on `range_to` (below desde / the last used), `valid_to`, `range_from`, `prefix`, `mode` (manual before the confirmation) |
+| PUT | `/company/resolution/warnings` | `{warning_numbers, warning_days}` → `ResolutionSettingsOutput`; audited. Owner | 403; 422 |
+| POST | `/company/manual-invoicing-confirmation` | the owner confirms the company holds the DIAN permission → `ResolutionSettingsOutput`; stored on the company (`manualInvoicingConfirmedBy/At`) and audited; unlocks `mode: manual` | 403 |
+| GET | `/company/numbering` | `{items: {kind, prefix, next_number}[]}`: quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal (not the journal's). Every role | 401 |
+| PUT | `/company/numbering/{kind}` | `{prefix (≤ 10 letters/digits, kept in capitals), next_number}` → the series; audited. Owner | 403; 404 `numbering_series_not_found` (journal_entry, unknown); 422 on `next_number` (below the current one), `prefix` |
+| GET | `/purchase-invoices` | `{items: PurchaseInvoiceSummaryOutput[], total, page, per_page}`, newest first; `?q=` part of the internal number, the supplier's number or the supplier's name (`%`/`_` literal), `?status=draft\|emitted\|partially_paid\|paid\|voided`, `?from`, `?to` (invoice date, both included), `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/purchase-invoices/{id}` | `PurchaseInvoiceOutput` (lines with product/account labels and tax copies, payments, payables, attachments, totals, `balance`, void reason) | 404 |
+| POST, PUT | `/purchase-invoices`, `/purchase-invoices/{id}` | a draft `{tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id \| account_id, description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id, amount, due_date?}]}` → `PurchaseInvoiceOutput` (201 on POST). Owner, billing and accountant | 403; 404; 409 `document_not_draft`; 422 `validation_failed` by field (`tercero_id`, `lines[0].account_id` — product xor account, an account usable on purchases —, `lines[0].charge_tax_id`, `payments[0].due_date`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`) |
+| DELETE | `/purchase-invoices/{id}` | deletes a draft and its files → 204 | 403; 404; 409 `document_not_draft` |
+| POST | `/purchase-invoices/{id}/emit` | internal number (FC), one payable per crédito line, the entry of Appendix A.3, in one transaction → `PurchaseInvoiceOutput` | 403; 404; 409 `document_not_draft`, `period_locked`; 422 `payments_do_not_match_total`, `document_has_no_lines`, `issue_date_in_future`, `supplier_inactive`, `validation_failed` on `supplier_invoice_number` |
+| POST | `/purchase-invoices/{id}/void` | `{reason}`: reversing entry dated today, payables voided, number kept → `PurchaseInvoiceOutput` | 403; 404; 409 `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason` |
+| POST | `/purchase-invoices/{id}/duplicate` | a new draft dated today with the same supplier, lines and formas de pago (due dates keep their term), no supplier number → 201 | 403; 404 |
+| GET | `/purchase-invoices/{id}/pdf` | the company's record of the purchase (PDF; ANULADA / BORRADOR across) | 404 |
+| POST | `/purchase-invoices/{id}/attachments` | multipart `file`: the supplier's PDF or XML judged by content, ≤ 10 MB, on a draft → 201 `PurchaseInvoiceAttachmentOutput` | 403; 404; 409 `document_not_draft`; 413 `attachment_too_large`; 415 `attachment_unsupported` |
+| GET, DELETE | `/purchase-invoices/{id}/attachments/{attachmentId}` | GET downloads the file (every role); DELETE removes it from a draft → 204 | 403; 404 `attachment_not_found`; 409 `document_not_draft` |
+| GET | `/sales-invoices` | page of `SalesInvoiceSummaryOutput` (number, client, date, latest due date, subtotal, taxes, retenciones, total neto, paid, `balance`), newest first: `?q=` part of the number or the client's name (literal), `?status=draft\|emitted\|partially_paid\|paid\|voided`, `?from`, `?to` (YYYY-MM-DD, both included), `?tercero_id`, `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/sales-invoices/{id}` | `SalesInvoiceOutput`: header, numbers (`number`, `authorised_number`, `internal_number`), lines with their copied taxes and amounts, payments, totals, `paid_amount`, `balance`, `receivables`, entry ids, audit (created/emitted/voided by and at, `void_reason`) | 404 |
+| POST, PUT | `/sales-invoices`, `/sales-invoices/{id}` | a whole draft `{tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}], payments: [{payment_method_id, amount, due_date?}]}` → 201 / 200 `SalesInvoiceOutput`. Taxes and methods are copied; a new choice must be active. Payments need not add up on a draft. Owner, billing and accountant | 403; 404; 409 `document_not_draft`; 422 `validation_failed` by path (`lines.0.product_id`, `payments.1.due_date`, `tercero_id`…) |
+| POST | `/sales-invoices/{id}/emit`, `/emit-and-send` | emits the draft: the resolution's next number and the internal consecutive, a receivable per crédito line, the A.1 entry; `emit-and-send` then queues the e-mail with the PDF to the client → `SalesInvoiceOutput`. Owner, billing and accountant | 403; 404; 409 `document_not_draft`, `period_locked`; 422 `validation_failed` (`lines`, `issue_date` in the future, a crédito's due date), `payments_do_not_match_total` (`detail`: both sums), `tercero_inactive`, `tercero_has_no_email`, `resolution_missing\|inactive\|exhausted` |
+| POST | `/sales-invoices/{id}/void` | `{reason}` → `SalesInvoiceOutput` voided today: reversing entry, receivables voided, number kept. Owner, billing and accountant | 403; 404; 409 `document_not_emitted`, `document_has_allocations`, `period_locked`; 422 on `reason` |
+| POST | `/sales-invoices/{id}/duplicate` | → 201 a new draft dated today with the same client, lines (taxes as copied) and payments (a crédito keeps its term). Owner, billing and accountant | 403; 404 |
+| POST | `/sales-invoices/{id}/send` | queues the e-mail with the PDF to the client's billing e-mail → 202. Owner, billing and accountant | 403; 404; 409 `document_not_emitted`; 422 `tercero_has_no_email` |
+| GET | `/sales-invoices/{id}/pdf` | the invoice's PDF (inline; *ANULADA* when voided, *BORRADOR* on a draft). Every role | 404 |
+| GET | `/quotations` | page of `QuotationSummaryOutput` (number, client, dates, `expiry_date`, totals, `converted_invoice_id`), newest first: `?q=` part of the number or client's name (literal), `?status=draft\|emitted\|accepted\|rejected\|expired\|voided` (`expired` = emitted past its vencimiento), `?from=`, `?to=` (fecha de elaboración, YYYY-MM-DD), `?tercero_id=`, `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/quotations/{id}` | `QuotationOutput`: header, `responsible_id`/`responsible_name`, `expiry_date`, `header` and `terms` (plain text), lines (as an invoice's), totals, `converted_invoice_id`, audit. `status` is the effective one (an emitted quotation past its vencimiento reads `expired`). Every role | 404 |
+| POST, PUT | `/quotations`, `/quotations/{id}` | a whole draft `{tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?, notes?, lines: [...as an invoice's]}` → 201 / 200 `QuotationOutput`; no formas de pago. Owner, billing and accountant | 403; 404; 409 `document_not_draft`; 422 `validation_failed` by field path (`responsible_id`, `expiry_date`, `lines.0.product_id`…) |
+| POST | `/quotations/{id}/emit`, `/emit-and-send` | emits the draft: the next number of series C (`C-1`), frozen; **no journal entry**; `emit-and-send` also queues the PDF to the client's e-mail. Owner, billing and accountant | 403; 404; 409 `document_not_draft`; 422 `validation_failed` (`lines`, `issue_date` in the future), `tercero_inactive`, `tercero_has_no_email` |
+| POST | `/quotations/{id}/accept`, `/reject` | the client's answer, from emitted and not expired → `QuotationOutput`. Owner, billing and accountant | 403; 404; 409 `quotation_not_open` |
+| POST | `/quotations/{id}/void` | `{reason}` → voided (from emitted, expired or not), number kept, nothing to reverse. Owner, billing and accountant | 403; 404; 409 `quotation_not_open`; 422 |
+| POST | `/quotations/{id}/convert` | makes a draft sales invoice (same client, contact, lines and taxes, dated today, no formas de pago; the invoice's `quotation_id` is this quotation) → the quotation, now `accepted`, with `converted_invoice_id`. Once. Owner, billing and accountant | 403; 404; 409 `quotation_already_converted`, `quotation_not_open`; 422 `validation_failed` when the invoice refuses an inactive client, product or tax (`tercero_id`, `lines.0.product_id`, `lines.1.charge_tax_id`): nothing is converted |
+| POST | `/quotations/{id}/duplicate` | → 201 a new draft dated today with the same client, lines and texts; the offer keeps its number of days of validity. Owner, billing and accountant | 403; 404 |
+| POST | `/quotations/{id}/send` | queues the e-mail with the PDF → 202. Owner, billing and accountant | 403; 404; 409 `quotation_not_open`; 422 `tercero_has_no_email` |
+| GET | `/quotations/{id}/pdf` | the quotation's PDF (inline; *ANULADA* when voided, *BORRADOR* on a draft). Every role | 404 |
+| GET | `/cash-receipts` | page of `CashReceiptSummaryOutput` (number, date, client, method, amount, `invoice_numbers`), newest first: `?q=` part of the number or the client's name (literal), `?status=emitted\|voided`, `?from`, `?to` (receipt date, both included), `?tercero_id`, `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/cash-receipts/open-receivables` | `?tercero_id=` (required) → `{items: OpenReceivableOutput[]}`: the client's receivables with a balance, of invoices not voided, the soonest due first (`invoice_number`, `issue_date`, `due_date`, `amount`, `balance`). Every role | 400 `tercero_id_required`; 404 (a client the company does not have) |
+| GET | `/cash-receipts/{id}` | `CashReceiptOutput`: header, method, amount, allocations (receivable, invoice, amount), entry ids, created/voided by and at, `void_reason` | 404 |
+| POST | `/cash-receipts` | `{tercero_id, receipt_date, payment_method_id, amount, notes?, allocations: [{receivable_id, amount}], send?}` → 201 `CashReceiptOutput`, emitted: the RC number, each invoice collected (`partially_paid`/`paid`), the A.2 entry; `send: true` (*Guardar y enviar*) then queues the e-mail with the PDF. Owner, billing and accountant | 403; 409 `period_locked`; 422 `validation_failed` (`tercero_id`, `receipt_date` in the future, `payment_method_id` not an active contado method, `amount`, `allocations.N.receivable_id` unknown/another client's/twice, `allocations[N].amount`), `allocation_exceeds_balance`, `allocations_do_not_match_amount` (`detail`: `allocated_total`, `amount`), `tercero_has_no_email` |
+| POST | `/cash-receipts/{id}/void` | `{reason}` → `CashReceiptOutput` voided today: each allocation given back, reversing entry, number kept. Owner, billing and accountant | 403; 404; 409 `document_voided`, `period_locked`; 422 on `reason` |
+| POST | `/cash-receipts/{id}/send` | queues the e-mail with the PDF to the client's billing e-mail → 202. Owner, billing and accountant | 403; 404; 409 `document_not_emitted` (voided); 422 `tercero_has_no_email` |
+| GET | `/cash-receipts/{id}/pdf` | the receipt's PDF (inline; *ANULADA* when voided). Every role | 404 |
+| GET | `/supplier-payments` | page of `SupplierPaymentSummaryOutput` (number, date, supplier, method, amount, `invoice_numbers`), newest first: `?q=` part of the number or the supplier's name (literal), `?status=emitted\|voided`, `?from`, `?to` (payment date, both included), `?tercero_id`, `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/supplier-payments/open-payables` | `?tercero_id=` (required) → `{items: OpenPayableOutput[]}`: the supplier's payables with a balance (`PayableQueries::openFor`), the soonest due first (`invoice_number`, `issue_date`, `due_date`, `amount`, `balance`). Every role | 400 `tercero_id_required`; 404 (a supplier the company does not have) |
+| GET | `/supplier-payments/{id}` | `SupplierPaymentOutput`: header, method, amount, allocations (payable, invoice, amount), entry ids, created/voided by and at, `void_reason` | 404 |
+| POST | `/supplier-payments` | `{tercero_id, receipt_date, payment_method_id, amount, notes?, allocations: [{payable_id, amount}], send?}` → 201 `SupplierPaymentOutput`, emitted: the RP number, each purchase invoice paid (`partially_paid`/`paid`), the A.4 entry; `send: true` (*Guardar y enviar*) then queues the e-mail with the PDF. Owner, billing and accountant | 403; 409 `period_locked`; 422 `validation_failed` (`tercero_id`, `receipt_date` in the future, `payment_method_id` not an active contado method, `amount`, `allocations.N.payable_id` unknown/another supplier's/another company's/voided/twice, `allocations[N].amount`), `allocation_exceeds_balance`, `allocations_do_not_match_amount` (`detail`: `allocated_total`, `amount`), `tercero_has_no_email` |
+| POST | `/supplier-payments/{id}/void` | `{reason}` → `SupplierPaymentOutput` voided today: each allocation given back, reversing entry, number kept. Owner, billing and accountant | 403; 404; 409 `document_voided`, `period_locked`; 422 on `reason` |
+| POST | `/supplier-payments/{id}/send` | queues the e-mail with the PDF to the supplier's e-mail → 202. Owner, billing and accountant | 403; 404; 409 `document_not_emitted` (voided); 422 `tercero_has_no_email` |
+| GET | `/supplier-payments/{id}/pdf` | the payment's PDF (inline; *ANULADA* when voided). Every role | 404 |
+
+## Data model decisions
+
+- **One permission matrix.** `Shared\UI\Http\Security\Permission::MATRIX` says who may do what (§8: the owner everything; billing and accountant every document; the accountant also the books; users and company settings the owner's). The voter, every controller check and the session (`SessionOutput.permissions`) read it; the UI shows or hides actions with `can(session, 'WRITE_DOCUMENTS')`, never by role name.
+
+- **Ids are UUID v7, stored BINARY(16).** The tenancy filter compares `company_id` to `UNHEX(...)`.
+- **Terceros:** tipo + número (+ código de sucursal) is unique per company; dots and dashes are not part of the number. Roles are four flags (any combination). A tercero a document names (any table with `tercero_id`, found in the schema) is deactivated, never deleted. Erasing (Ley 1581) keeps the row and the identification (invoices carry it) and blanks everything else; an erased tercero cannot be edited or reactivated. Writes: WRITE_DOCUMENTS (owner, billing and, since 2026-10-04, the accountant).
+- **Documents copy what they used** (tax name, rate, accounts; tercero name) so an edit never changes an emitted
+  document.
+- **Taxes and payment methods are seeded by a `CompanyProvisioner` (priority 50)** that looks accounts up with
+  `LedgerCatalog::accountIdByCode()`; a code the chart lacks leaves the account null and posting falls back to the
+  kind's posting rule (Impoconsumo 249505, ReteIVA practicada 236701 and the purchase side of Impoconsumo are null until
+  the chart has them). "Ninguno" is seeded once per class and is fixed: not editable, deactivated or deleted.
+- **A tax's class and kind, and a payment method's kind, never change** after creation (they decide how documents post
+  them); the rest is editable and every change is written to `audit_log` (`tax.created|updated|activated|deactivated|
+  deleted`, `payment_method.…`) through `Shared\Application\Audit\AuditTrail`.
+- **"In use" is a query** (`CatalogUsage`, DBAL) over the line/payment/receipt tables, products and the company's default
+  taxes; a table that starts pointing at a tax or method must be added to `DbalCatalogUsage`.
+- **Validity dates** (`valid_from`, `valid_to`, both included, either open): `Tax::isValidOn()` / `TaxView::isValidOn()`
+  is the rule. `GET /taxes?on=` lists the taxes in force on a day and the document editor asks with the document's
+  date (a line keeps showing the tax it already has). Saving a factura de venta, cotización or factura de compra
+  refuses a **newly chosen** tax not in force on its date (422 on `lines.N.charge_tax_id`, "Este impuesto no está
+  vigente en la fecha del documento."); a tax the draft already had keeps its snapshot and is emitted as it is.
+- **Line amounts add up to the document totals to the cent** (largest remainder after one rounding per total), so a
+  journal entry built from lines always balances.
+- **A product's price may include IVA.** `unit_price_net_of_tax` is the price divided by `1 + rate/100` (rounded half up
+  to four decimals), or minus the value for a per-unit tax (`Catalog\Domain\Pricing\PriceNetOfTax`): a line of one unit
+  then totals the list price after the document's single rounding. The list price itself is kept as typed.
+- **The unidad de medida list lives in one place** (`Catalog\Domain\Model\UnitOfMeasure`): 94 unidad, KGM kilogramo, MTR
+  metro, HUR hora and ZZ servicio (DIAN's "mutuamente definido"); the full DIAN list arrives with stage 4.
+- **A product used by a document line is never deleted**, only deactivated (`Catalog\Application\Port\ProductUsage`
+  asks the line tables by SQL, so Catalog names no Sales or Purchasing class). Catalog reads the company's default taxes
+  from `Company\Application\Query\Companies` (a CompanyApi dependency in `deptrac.contexts.yaml`).
+- **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): WRITE_DOCUMENTS (owner, billing,
+  accountant). The "access" item's voters may replace it.
+- **The PUC seed** (`Ledger/Infrastructure/Seed/puc.csv`, 2 519 accounts to subcuenta) was extracted from the Decreto's
+  PDF (`docs/references/extract-puc.py`; corrections where the PDF is incomplete are listed in its docstring). Every
+  company gets it in one batch of multi-row INSERTs inside the sign-up (≈70–170 ms), plus Mustang's accounts under
+  their official parents: the auxiliares 11050501, 11100501, 13050501, 13051001, 22050501 and the first subcuenta of
+  each free range a concept needs (220505, 236701, 236801, 240805, 240810, 249505, 417501, 620501).
+- **Posting rules point at postable accounts**, so §5's 4-digit defaults resolve to: ingreso 413595 (4135, goods),
+  descuento 417501, impoconsumo 249505, retefuente practicada 236570 (the fallback: taxes carry their own subcuenta
+  by concept), reteIVA/reteICA practicada 236701/236801, gasto por defecto 519595, compra de mercancías 620501. A rule
+  may only move within its concept's part of the PUC (`ConceptAccounts`: ingreso 41, clientes 13, proveedores 22/23…).
+- **Balances are débito − crédito** in the balance de prueba (a crédito balance is negative). The balance general
+  shows the unclosed result of classes 4–7 as *resultado del ejercicio* inside patrimonio: stage 1 has no closing
+  entries.
+- **Company settings are the owner's** (`Company\UI\Http\Controller\EditsCompany`); accountant and billing read. Every change is written to `audit_log` through `Company\Application\Port\CompanyAudit` (`company.updated|logo_changed|logo_removed|manual_invoicing_confirmed|resolution_warnings_updated`, `resolution.created|updated`, `numbering_series.updated`), with from/to.
+- **The logo is a Shared `Attachment`** (owner type `company_logo`, owner id the company) stored under `UPLOADS_DIR/<company>/<attachment id>` by `Company\Infrastructure\Storage\FilesystemCompanyLogos`; the controller checks it by content (`finfo` + `getimagesize`: PNG/JPEG only, never SVG) and size (≤ 2 MB) and hands the handler a path. Replacing or removing deletes the old file and row.
+- **One calendar on the server:** `Shared\Domain\Calendar` (from the Clock) gives today and a moment's day in
+  `America/Bogota`; documents, the resolution's status, reports and e-mails date things with it, and no other class
+  names the time zone.
+- **The invoicing resolution's status is computed on Colombian calendar days** (`America/Bogota`, both ends included): not yet valid, active, expired (after `valid_to`) or exhausted (`next_number > range_to`), in that order. `warning` = active and fewer numbers than `resolution_warning_numbers` (default 100) or fewer days than `resolution_warning_days` (default 30) remain; days left is 0 on the last valid day.
+- **`SalesInvoiceNumbering`** (`ResolutionSalesInvoiceNumbering`) locks the resolution row (`SELECT … FOR UPDATE`), refuses with `resolution_missing`, `resolution_inactive` (the *invoice's* date is outside the dates) or `resolution_exhausted` (all `Refused`, 422), and takes the internal consecutive in the same transaction: a rollback gives both numbers back. It needs an open transaction (the command bus opens it) or Doctrine throws.
+- **A resolution's hasta may equal the last number used** (it is then exhausted); it cannot go below it. A resolution that has numbered invoices cannot change desde or prefix, so renewing under a new range/prefix is not possible with the single resolution of §9 Q12 (see Known gaps).
+- **Manual mode** is rejected on a resolution until the owner confirms the DIAN permission (`POST /company/manual-invoicing-confirmation`); the confirmation is permanent and audited, and going back to electronic is always allowed.
+- **The internal series are edited under the same row lock a document takes**; the next number never goes below the current one and the journal's own series (`journal_entry`) is not editable.
+- **The document form is one widget** (`widgets/document-editor`), controlled: a page keeps a `DocumentDraft` (decimal
+  strings, never floats) and saves it; `validateDraft()` names problems by field path (`lines.0.quantity`), the same
+  paths the page maps the API's violations to. Its totals are a preview computed with exact decimals (BigInt, one
+  half-up rounding per total, line shares by largest remainder) and match `DocumentTotals` case for case; the server's
+  numbers are what is saved. A line's *Valor total* is its base plus its impuesto cargo (an IVA-included price is the
+  line total, §4.3); retenciones show only in the totals. On a purchase the product's sale price is not copied to the
+  line (it is not a cost).
+- **A factura de venta** (`Sales\Domain\Model\SalesInvoice`) is a draft until emitted: header, lines and formas de pago are rewritten whole (`PUT`), taxes copied as `TaxSnapshot`s and methods with their kind and account; a tax or method deactivated after a draft chose it is kept, a new choice must be active. Emission (`EmitSalesInvoiceHandler`, one transaction) checks a line, a date not in the future (Colombian calendar day, §9 Q11), formas de pago = Total neto, an active client, an open period (`JournalPoster::isOpen`), then takes `SalesInvoiceNumbering::next()` and posts A.1 through `JournalPoster` (`Sales\Application\Posting\SalesInvoicePosting`): contado lines to the method's account, one 1305 `clientes` movement per crédito line (the tercero's own account when it has one), revenue **gross** to the product's revenue account else `ingreso`, discounts Dr `descuento_ventas`, each impuesto cargo to the copied tax account else its kind's concept (IVA → `iva_generado`, impoconsumo → `impoconsumo`), each retención suffered Dr to the copied tax account else its kind's concept (retefuente/reteiva/reteica → 135515/135517/135518, §9 Q4, at emission), grouped by account. A refusal rolls everything back, the numbers included.
+- **An invoice with nothing on crédito is `paid` when emitted**; otherwise `emitted`, then `partially_paid` / `paid` as receipts collect its crédito part. `balance` = crédito total − `paid_amount` (0 on a draft or voided invoice). One `Receivable` per crédito line (§9 Q9), due on its date.
+- **Collection is the cash-receipt item's door, not an edit of the invoice:** `Sales\Application\Collection\InvoiceCollections::apply()` / `unapply()` (call them inside the receipt's handler) move the receivable's balance and the invoice's `paid_amount` and status; more than the balance is `allocation_exceeds_balance`.
+- **A cotización converts by dispatching `CreateDraftSalesInvoice`** with the quotation's id, stored as the invoice's `quotation_id`.
+- **A cotización** (`Sales\Domain\Model\Quotation`) is a draft until emitted: the same lines and totals as an invoice (`SalesInvoiceContent::resolveLines` checks them against the catalogs, a new choice must be active), no formas de pago, plus `responsible_id` (a tercero with role empleado), `header` and `terms` (plain text) and `expiry_date` (default issue date + 30 days, §9 Q17). Emission takes `Numbering::quotation()` (series C), freezes it and posts **nothing**: `EmitQuotationHandler` does not know the `JournalPoster`.
+- **Expiry is computed on read, not by a job:** `Quotation::statusOn(today)` reads an emitted quotation whose `expiry_date` is before today (Colombia's calendar, `Shared\Domain\Calendar`) as `expired`; the stored status stays `emitted`, and the list's `?status=expired` / `emitted` filters apply the same date. So no cron line is needed (nothing is added to `deploy/cpanel-update.sh`) and a status can never be stale. An expired offer cannot be accepted, rejected, converted or sent (`quotation_not_open`); it can still be voided or duplicated.
+- **Convert** (`ConvertQuotationHandler`): once (`quotation_already_converted`), from an emitted, unexpired quotation or one accepted by hand that has no invoice yet. It dispatches `CreateDraftSalesInvoice` through the command bus (same transaction), so an inactive client, product or tax is refused there with the invoice's own violations (422, by field path), which the quotation page lists; nothing is changed then. The invoice is dated today, its *vendedor* is the quotation's *responsable*, and it has no formas de pago yet. The quotation becomes `accepted` and keeps `converted_invoice_id`.
+- **Plain text, never HTML:** `header`, `terms` and `notes` are stored as typed (trimmed). The UI shows them in a textarea (React escapes), the PDF splits them into paragraphs (`QuotationPdf::paragraphs`) and Twig escapes each one (`nl2br` escapes first).
+- **Quotation writes use the voter:** `#[IsGranted(Permission::READ_DOCUMENTS)]` on the controller and `WRITE_DOCUMENTS` on every action that changes anything.
+- **Void** (`VoidSalesInvoiceHandler`): only an emitted invoice with `paid_amount` 0 and no allocation of a receipt that is not voided (`document_has_allocations`), dated today and after the lock date; the reversing entry (`JournalPoster::reverse`), the receivables voided, the number kept, reason and user recorded.
+- **E-mail** (`emit-and-send`, `send`): the command publishes `SalesInvoiceEmailRequested`; after the commit `MailSalesInvoice` renders the PDF and `QueuedSalesInvoiceMailer` puts it on the `async` queue (from `MAILER_FROM`, to the client's billing e-mail).
+- **Sales invoice writes are checked in the controller** (`Sales\UI\Http\SalesInvoiceAccess`): WRITE_DOCUMENTS writes, emits, sends and voids (owner, billing, accountant: §8 as changed 2026-10-04). The "access" item's voters may replace it.
+- **A recibo de caja is emitted when saved** (`ReceiveCashHandler`, one transaction): a client of the company, an active
+  contado method with its account (copied with its name), a date not in the future (Colombian day) and after the lock
+  date, then `CashReceipt::issue()` checks the allocations (each positive, to an open receivable of *this* client, once,
+  ≤ its balance → `allocation_exceeds_balance`; Σ = Valor recibido → `allocations_do_not_match_amount`, §9 Q16: no
+  anticipos, no over-payment), takes `Numbering::cashReceipt()` and applies each allocation through
+  `InvoiceCollections::apply()`. A refusal rolls everything back, the number included.
+- **Two receipts never both pass the balance check.** Before checking, the handler locks the receivables it allocates
+  to and their invoices (`ReceivableLocks`, `SELECT … FOR UPDATE` in id order, re-read with Doctrine's refresh hint): a
+  second receipt for the same receivable waits for the first to commit and then sees the balance it left; two receipts
+  on different receivables of one invoice never overwrite its paid amount. `ReceivableLocksTest` proves it with two real
+  connections outside the test transaction (one waits, `innodb_lock_wait_timeout`), with a control that a plain read
+  does not wait. A void locks the receipt first, so it is given back once.
+- **Posting a receipt (A.2)** is `Sales\Application\Posting\CashReceiptPosting`: Dr the method's account for the amount;
+  Cr `clientes` with the client as tercero, one line per allocation described by the invoice number (so the client's
+  own receivable account applies, as on the invoice). A void (`VoidCashReceiptHandler`) is dated today, gives each
+  allocation back through `InvoiceCollections::unapply()` and posts `JournalPoster::reverse()`; the number is kept.
+- **Receipt e-mail** (`send: true`, `/send`): `CashReceiptEmailRequested` after the commit; `MailCashReceipt` renders the
+  PDF (`templates/pdf/cash_receipt/`) and `QueuedCashReceiptMailer` queues it.
+- **Receipt permissions are the voter's** (`#[IsGranted(Permission::READ_DOCUMENTS)]` on the controller,
+  `WRITE_DOCUMENTS` on create, void and send).
+- **The allocation table is generic** (`features/allocate-payment`): it takes open items (`OpenItem`: id, document,
+  dates, amount, balance) and the amounts as typed, and shows the running difference in exact cents; the recibo de
+  pago (item 12) passes payables. Amounts may be typed `1.190.000,50`, `595000,5` or `595000.50`.
+- **A recibo de pago is the mirror of the recibo de caja** (`Purchasing\Application\Command\PaySupplierHandler`, one
+  transaction): a supplier of the company, an active contado method (*De dónde sale el dinero*), `SupplierPayment::issue()`
+  (same rules: each allocation positive, to an open payable of *this* supplier, once, ≤ its balance, Σ = Valor pagado),
+  the RP number (`Numbering::supplierPayment()`), each allocation applied through `PayableAllocations::apply()` and the
+  A.4 entry (`SupplierPaymentPosting`: Dr `proveedores` with the supplier as tercero, one line per allocation, so its own
+  payable account applies; Cr the method's account). The lock date is the poster's (`period_locked`); a void
+  (`VoidSupplierPaymentHandler`) locks the payment, gives each allocation back through `PayableAllocations::unapply()`
+  and posts the reversal. `PayableLocks` (`DoctrinePayableLocks`) locks the payables **and** their purchase invoices
+  `FOR UPDATE` in id order, as `PurchaseInvoiceRepository::lock()` does for a void of the invoice; `PayableLocksTest`
+  proves it with two real connections. The PDF is `templates/pdf/supplier_payment/`, the e-mail
+  `SupplierPaymentEmailRequested` → `MailSupplierPayment` → `QueuedSupplierPaymentMailer`. Permissions are the voter's.
+  Purchasing has no `Printed` helper of its own (Sales' is not Purchasing's to import): `SupplierPaymentPdf` prints
+  pesos and dates itself.
+- **The allocation table takes its words from a namespace** (`AllocatePayment`'s optional `labels`, default
+  `cashReceipt.allocate`; the recibo de pago passes `supplierPayment.allocate`). Every tercero search is
+  `entities/tercero`'s `TerceroPicker` (role, `activeOnly` and an optional "+ Crear nuevo" as props, words as props),
+  built on the kit's `SearchCombobox` (`@/shared/ui`, which the editor's product search also uses): recibos de caja and
+  de pago search every role or `proveedor`, inactive ones included; the document editor searches active terceros and
+  offers the quick-create. Every account search is `features/pick-account` (product accounts, taxes, payment methods,
+  purchase lines).
+- **Document statuses have their own tones in the kit** (`toneFor`, badges and row tints): `draft` warning,
+  `emitted` info, `partially_paid` accent, `paid` and `accepted` success, `rejected`, `expired` and `voided`
+  neutral; every document list (facturas, cotizaciones, recibos) passes its status as it is.
+- **Amounts are typed the Colombian way, everywhere:** `MoneyInput` (`@/shared/ui`) accepts `1.190.000,50`,
+  `595000,5` or `595000.50` and hands its form a decimal string with a point (`places` 2 for money, 4 for unit prices
+  and tax rates; `parseDecimal`/`parseAmount` in `@/shared/lib`). A dot followed by groups of three digits is a
+  thousands separator (`1.190` is 1190, `0.966` is 0,966). Product prices, the editor's unit prices and payments, tax
+  rates, recibos de caja/pago and their allocations use it.
+
+- **Users, invitations and resets (Access).** An e-mail is unique across the whole app (§9 Q22): inviting one
+  registered in any company is refused. The owner invites billing users and accountants; an owner may then make
+  someone else an owner, and the last *active* owner is never demoted or deactivated (`last_owner`). Invitation and
+  reset links are `access_token` rows holding only the token's SHA-256; a new link of the same kind replaces the
+  person's earlier unused one, deactivation revokes them, and every refusal of a link answers the same 404
+  `link_invalid`. The token travels after the `#` of the e-mailed URL (`/invitacion#…`, `/restablecer-contrasena#…`),
+  so no server or proxy log ever holds it, and the page takes it out of the address bar.
+- **Sessions end by themselves.** The user provider reloads the user on every request: a deactivated user, a changed
+  role or a changed password (a reset elsewhere) signs the session out at its next request. `InactivityExpiry`
+  keeps the time of the last request in the session and ends one idle for 2 hours (401 `session_expired`); any 401
+  from the API (outside `/me` and `/auth/*`) tells the UI's session provider, which shows the sign-in page.
+- **Who may do what (§8) is a voter.** `Access\UI\Http\Security\RoleMatrixVoter` grants the named permissions of
+  `Shared\UI\Http\Security\Permission` (`MANAGE_USERS`, `MANAGE_SETTINGS`, `MANAGE_BOOKS`, `VIEW_BOOKS`,
+  `WRITE_DOCUMENTS`, `READ_DOCUMENTS`); `tests/Unit/Access/RoleMatrixTest.php` is the matrix in words. Controllers
+  ask `#[IsGranted(Permission::…)]`. The checks items wrote before it (`CatalogAccess::mayWrite`, Ledger's
+  `EditsCatalogs`, `TerceroController`'s role check) say the same thing and can move to it.
+- **One audit port for every context:** `Shared\Application\Audit\AuditTrail` (adapter `DoctrineAuditTrail`) writes
+  `audit_log` in the command's transaction. Access records `user.invited`, `user.invitation_resent`,
+  `user.invitation_accepted`, `user.role_changed {from, to}`, `user.deactivated`, `user.reactivated`,
+  `user.password_reset` (never anything about the password). It is the only writer: Ledger (taxes, payment methods,
+  accounts, posting rules, the lock date), Company (profile, logo, resolution, numbering series) and Party (a
+  tercero's personal data exported or erased, subject `tercero`) record through it too, with the same actions and
+  data as before (their tests assert the rows).
+- **Refusals are logged** (`Access\UI\Http\Security\SecurityLog`): a refused sign-in (the e-mail typed, the address) and
+  a refused action (403: user, company, role, request) are warnings on the `security` channel, which production writes
+  to stderr (the cPanel error log) on their own; never a password.
+- **Security headers on every answer** (`Shared\UI\Http\Security\SecurityHeaders`): `nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy`, HSTS over HTTPS, and on the HTML page a Content-Security-Policy that runs only the app's own built
+  files (`script-src 'self'`, no inline script or style: `spa.html.twig` must stay that way). The dev toolbar adds its
+  nonces in development only.
+- **A company's e-mails are bounded** (`Shared\UI\Http\Security\EmailQuota`, `config/packages/rate_limiter.yaml`):
+  200 document e-mails and 20 invitations an hour per company, asked in the controller before anything changes. Anyone
+  can sign up and a tercero's e-mail is whatever is typed, so without it the app would relay mail under its sender
+  (security audit 2026-10-04).
+- **E-mails leave through the queue.** Command handlers publish an event (`InvitationIssued`,
+  `PasswordResetRequested`, handled after the commit); the handler renders Twig templates (`templates/emails/access/`)
+  and `QueuedMailer` puts them on Messenger's `async` transport, which the worker (a cron line on cPanel) sends.
+- **Purchase invoices** (`Purchasing`): a draft may be saved without the supplier's number (the column is nullable
+  since `Version20261003231059`, so a duplicate needs none); emission needs it, unique per supplier (letter case
+  aside). Lines copy their taxes with the tax's **purchase** account; a tax, product or payment method must be active
+  to be newly chosen, and one the draft already had stays allowed. A line by account takes only a postable, active
+  account marked usable on purchases (classes 5–7 by default, §9 Q14).
+- **Posting a purchase (A.3)** is `Purchasing\Application\Posting\PurchaseInvoiceEntry`, built from the line amounts:
+  Dr each line's subtotal (discount netted) + its impoconsumo to the chosen account, else the product's expense account,
+  else `compra_mercancias` (producto) / `gasto_por_defecto` (servicio); Dr IVA to the tax's purchase account, else
+  `iva_descontable`; Cr each retención to its purchase account, else its kind's `*_practicada` concept (with the
+  supplier as tercero); Cr `proveedores` (the supplier's own payable account if set) per crédito payment and the
+  method's account per contado payment. Debits and retenciones to the same account are merged; payments stay one line
+  each. The product's accounts are read at emission, not when the line was written.
+- **Payables**: one per crédito payment line, due on that line's date (the invoice's when it had none). Item 12 pays
+  them through `Purchasing\Application\Payables\PayableAllocations::apply()/unapply()` inside its own transaction (the
+  payable's balance and the invoice's `partially_paid`/`paid`/`emitted` follow); open payables of a supplier are
+  `PayableQueries::openFor()`.
+- **Supplier's files** are Shared `Attachment`s (owner type `purchase_invoice`) under `UPLOADS_DIR/<company>/<id>`
+  (`FilesystemSupplierFiles`), PDF or XML by `finfo`, ≤ 10 MB; added and removed only while the invoice is a draft.
+- **Purchase roles** are checked in `Purchasing\UI\Http\PurchasingAccess` (WRITE_DOCUMENTS writes, emits and voids: owner, billing
+  and accountant) until the "access" item's voters replace it (F4). Dates are Colombian calendar days
+  (`America/Bogota`): "not in the future" and the void date.
+
+- **Reporting reads, owns nothing.** `Reporting` has no aggregates and no migration: `DbalCarteraQueries` and
+  `DbalDashboardQueries` read the `receivable`/`payable`, invoice, receipt/payment, `journal_*` and `tercero` tables
+  with DBAL in its own Infrastructure; the ledger's books are exported through `Ledger\Application` services
+  (`JournalQueries`, `LedgerReports`), never by SQL of ours.
+- **Cartera "as of" a date is rebuilt from the documents' dates**: an open item exists from the invoice's issue date
+  until the date of its voiding entry, and each receipt/payment counts from its own date until its reversing entry's
+  date, so any past date answers what the books showed then; for today it is the receivable's own balance. Ageing is
+  `due date` against the date: not yet due or due that day = *al día*, then 1–30, 31–60, 61–90 and > 90 days late
+  (`AgeingBucket`, unit-tested at each edge). Invariant 3 is asserted from this side (`CarteraInvariantTest`): the
+  cartera total, per tercero and as of eight past dates, equals the 1305 / 2205 balance and the balance de prueba's.
+  The equality holds for accounts under 1305 / 2205 (a client's own receivable account such as 130510 included); a
+  supplier whose own payable account is outside 2205 (say 2335) is in cartera de proveedores but not in 2205.
+- **Exports** (`Reporting\Application\Export`): every report becomes a `TabularReport` (columns, rows, a totals row)
+  and `CsvEncoder` / `ReportPdf` write it, so the formats cannot drift. **CSV** is UTF-8 with a BOM, `;` between
+  columns, CRLF, and **machine-readable numbers**: a decimal point and no thousands separator (`1190000.50`), dates as
+  `YYYY-MM-DD` (Colombian Excel opens it in columns with accents right; the PDF shows `$ 1.190.000,00` and
+  `DD/MM/AAAA`). A text that would run as a formula (`=`, `+`, `@`, a leading `-` that is not a number) is prefixed with
+  `'`. The CSV streams page by page (the libro diario reads 200 entries at a time). **Row cap**
+  (`ExportLimits`): 50 000 rows in a CSV, 1 500 in a PDF (dompdf builds it in memory); above it the answer is 422
+  `export_too_large`, never a file cut short. A libro diario counts entries up front (cap ÷ 2: an entry has at least two
+  lines) so a stream never fails halfway. `?check=1` rehearses an export (204 or 422) so the screen can explain a too
+  big report before the browser saves anything.
+- **Dashboard**: one request, five queries. *Ventas / Compras del mes* are the month's emitted, partially paid and paid
+  invoices (not drafts or voided) by issue date, **before taxes** (`subtotal`); the books' figure (cash and banks) is
+  `null` unless the person may VIEW_BOOKS. The resolution warning is the existing `GET /company/resolution/status`,
+  read only by whoever writes documents.
+- **Report permissions**: carteras, the dashboard and their exports are READ_DOCUMENTS; the four ledger exports are
+  VIEW_BOOKS, as the books themselves (`#[IsGranted]`).
+
+## Known gaps
+
+- **Renewing the invoicing resolution** with a new range or prefix is not possible in stage 1 (one resolution per company, its desde and prefijo locked once used): a renewal can only extend hasta and the dates. Several resolutions come in stage 4 (decided 2026-10-04).
+
+- **Recibo de pago: the supplier search lists terceros with the *proveedor* role** (inactive ones too); a tercero
+  that only has another role cannot be paid from the screen until it is given the role. No anticipos to suppliers, as
+  for clients (§9 Q16).
+- Terceros: *Autocompletar datos* from RUES/DIAN is out of scope (Q19). The per-tercero account pickers offer the accounts the chart search returns for 1305 / 2205 / 2335 (at most 20 each).
+- Security (audit 2026-10-04, open, low): an e-mail is unique across the app (§9 Q22), so sign-up and inviting answer
+  that an address is already registered: whoever signs up (5 an hour per IP) or an owner inviting learns that the
+  address has a Mustang account somewhere. Hiding it needs a product decision (e.g. sign-up confirmed by e-mail). The
+  e-mail quotas (200 document e-mails, 20 invitations an hour per company) are first guesses to tune with real use.
+- Access: a person belongs to one company (§9 Q22); there is no "leave this company" and no e-mail change. The
+  last-owner check is not row-locked: two owners demoting each other at the same instant could both succeed. A user is
+  never deleted, only deactivated (documents name who made them). Passwords have only a length rule (≥ 10).
+- Stage 1 is being built in parallel items; see the split in `docs/pdr/prd-accounting.md`. Until an item merges, its
+  section shows "Esta sección se está construyendo." and its endpoints answer 501.
+- Taxes: the rate is one per tax, so a change of rate is an edit (documents keep their copy), not a second dated rate.
+  Impoconsumo and ReteICA have no seeded account (no standard sub-account in the PUC).
+- Ledger: no ReteICA auxiliares per municipality yet (A.10: created when the company defines its municipalities);
+  `app:ledger:demo-entries` posts sample entries for local review until the document items post real ones.
+- Company: only one invoicing resolution per company (Q12). Once invoices were numbered from it, desde and the prefix are locked, so a renewal whose range restarts or whose prefix changes cannot be entered yet (it would need a second resolution); extending hasta and the dates works. The logo is not yet printed on PDFs (the document items read `GET /company/logo` / `Companies::view()->logoId`).
+- Document form: until the document pages exist it is tried on a development-only page, `/dev/editor-documento` (not
+  routed in a production build). Its tercero search lists every active tercero, whatever its role. A line whose tax
+  was deactivated after it was chosen previews that tax as 0 (the select lists active taxes only). The form must not be
+  placed inside a `<form>`: its quick-create dialogs are forms of their own.
+- Purchase invoices: the supplier is any active tercero (the role Proveedor is not required, so the editor's search,
+  which lists every role, never leads to a refusal). Retenciones are chosen per line by the user; nothing proposes them
+  from the supplier's responsabilidades fiscales or the company's agent status yet (§4.10, Q3). (ReteIVA is a percentage of
+  the line's IVA: `TaxBase::ChargeTax`, F12.) No e-mail of a purchase invoice (it is the supplier's document).
+- Quotations: accepting and rejecting record no user or moment (only emission and void do); there is no partial acceptance (one conversion, §9 Q17); the editor has no attachments, and Encabezado sits in the form's footer (the shared form has no slot above the lines). The offer's validity is stored per quotation, not configurable per company (30 days default).
+- Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
+  transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
+  resolutions, RUES autocomplete, Excel export, multi-company users.
+- Recibos de caja: no attachments yet (the PRD lists them; the form offers none). A receipt's client is any tercero (role Cliente not required, as on invoices).
+  `VoidSalesInvoiceHandler` reads the invoice without a row lock, so a receipt committing at the same instant as the
+  invoice's void is not excluded by a lock (the invoice item's to tighten).
+- Sales invoices: no *Vendedor* field in the form yet (the API takes `seller_id`, an empleado); no attachments on invoices (the form lists none and offers no upload); the read-only form previews a tax deactivated since as 0 (the saved totals are right, from the server); the PDF prints the DIAN fields stage 1 stores, no CUFE/QR (stage 4).
+- Reports: no Excel (.xlsx; Q26 decided CSV and PDF). Each ledger page (`pages/ledger`) has its CSV and PDF buttons
+  (`widgets/report-table`'s `ExportLinks`, with the filters on screen); its table is still its own, not `ReportTable`. The dashboard has no chart. Cartera is by tercero and due date, with no per-sales-person or
+  per-product cut, and a cartera "as of" a past date ignores later changes to a tercero's name.

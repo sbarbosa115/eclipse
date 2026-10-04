@@ -1,0 +1,41 @@
+.admin .ledger-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .ledger-entry-head td {
+  border-top: 2px solid var(--color-border, #d0d5dd);
+  font-weight: 600;
+}
+
+.admin .ledger-subtotal td,
+.admin .ledger-section td {
+  font-weight: 600;
+}
+
+.admin .ledger-indent-1 {
+  padding-left: 24px;
+}
+
+.admin .ledger-indent-2 {
+  padding-left: 40px;
+}
+
+.admin .ledger-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin .ledger-period input[type='date'],
+.admin .ledger-period input[type='text'] {
+  min-height: 40px;
+}
+
+/* A book's CSV and PDF buttons, under its filters on the right. */
+.admin .ledger-exports {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 12px;
+}

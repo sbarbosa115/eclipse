@@ -1,0 +1,12 @@
+public/build/
+vendor/
+var/
+node_modules/
+assets/types/api.d.ts
+assets/types/openapi.json
+*.min.js
+composer.lock
+package-lock.json
+config/reference.php
+fixtures/
+e2e/.results/

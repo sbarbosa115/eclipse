@@ -1,0 +1,68 @@
+monolog:
+  channels: # To see all channels, run bin/console debug:autowiring logger
+    - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+
+when@dev:
+  monolog:
+    handlers:
+      main:
+        type: stream
+        path: '%kernel.logs_dir%/%kernel.environment%.log'
+        level: debug
+        channels: ['!event']
+      console:
+        type: console
+        process_psr_3_messages: false
+        channels: ['!event', '!doctrine', '!console']
+
+when@test:
+  monolog:
+    handlers:
+      # What the security channel warns about (tests/Functional/Security/SecurityLogTest.php).
+      security_test:
+        type: test
+        level: warning
+        channels: [security]
+      main:
+        type: fingers_crossed
+        action_level: error
+        handler: nested
+        excluded_http_codes: [404, 405]
+        channels: ['!event']
+      nested:
+        type: stream
+        path: '%kernel.logs_dir%/%kernel.environment%.log'
+        level: debug
+
+when@prod:
+  monolog:
+    handlers:
+      # Refused sign-ins and refused actions (Access\UI\Http\Security\SecurityLog), kept whether or not an error
+      # follows: on cPanel, stderr is the site's error log.
+      security:
+        type: stream
+        path: php://stderr
+        level: warning
+        channels: [security]
+        formatter: monolog.formatter.json
+      main:
+        type: fingers_crossed
+        action_level: error
+        handler: nested
+        excluded_http_codes: [404, 405]
+        channels: ['!deprecation']
+        buffer_size: 50 # How many messages should be saved? Prevent memory leaks
+      nested:
+        type: stream
+        path: php://stderr
+        level: debug
+        formatter: monolog.formatter.json
+      console:
+        type: console
+        process_psr_3_messages: false
+        channels: ['!event', '!doctrine']
+      deprecation:
+        type: stream
+        channels: [deprecation]
+        path: php://stderr
+        formatter: monolog.formatter.json

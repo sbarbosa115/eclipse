@@ -1,0 +1,88 @@
+{
+  "intro": "Los impuestos y retenciones que puedes elegir en tus documentos. Cambiar una tarifa no modifica los documentos ya emitidos: cada uno conserva la tarifa con la que se hizo.",
+  "new": "Nuevo impuesto",
+  "empty": "No hay impuestos para mostrar.",
+  "filters": {
+    "class": "Clase",
+    "all": "Todos",
+    "charge": "Impuestos",
+    "withholding": "Retenciones"
+  },
+  "columns": {
+    "name": "Nombre",
+    "type": "Tipo",
+    "rate": "Tarifa",
+    "validity": "Vigencia",
+    "salesAccount": "Cuenta de ventas",
+    "purchaseAccount": "Cuenta de compras"
+  },
+  "class": {
+    "charge": "Impuesto",
+    "withholding": "Retención"
+  },
+  "kind": {
+    "none": "Ninguno",
+    "iva": "IVA",
+    "impoconsumo": "Impoconsumo",
+    "retefuente": "ReteFuente",
+    "reteiva": "ReteIVA",
+    "reteica": "ReteICA"
+  },
+  "calculation": {
+    "percentage": "Porcentaje",
+    "per_unit": "Valor por unidad"
+  },
+  "validity": {
+    "always": "Siempre",
+    "from": "Desde {{date}}",
+    "until": "Hasta {{date}}",
+    "range": "{{from}} a {{to}}"
+  },
+  "status": {
+    "inactive": "Inactivo"
+  },
+  "actions": {
+    "edit": "Editar",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "delete": "Eliminar"
+  },
+  "form": {
+    "newTitle": "Nuevo impuesto",
+    "editTitle": "Editar impuesto",
+    "name": "Nombre",
+    "class": "Clase",
+    "kind": "Tipo",
+    "calculation": "Cálculo",
+    "rate": "Tarifa (%)",
+    "valuePerUnit": "Valor por unidad ($)",
+    "rateHint": "Hasta cuatro decimales, por ejemplo 2,5.",
+    "valueHint": "Lo que se cobra por cada unidad.",
+    "validFrom": "Vigente desde",
+    "validTo": "Vigente hasta",
+    "salesAccount": "Cuenta en ventas",
+    "purchaseAccount": "Cuenta en compras",
+    "accountHint": "Busca por código o nombre. Sin cuenta, se usa la regla contable.",
+    "required": "Este campo es obligatorio.",
+    "rateInvalid": "Escribe un número, con hasta cuatro decimales.",
+    "pickAccount": "Elige una cuenta de la lista.",
+    "endBeforeStart": "La fecha final no puede ser anterior a la inicial."
+  },
+  "confirmDelete": {
+    "title": "Eliminar impuesto",
+    "body": "¿Eliminar «{{name}}»? Ningún documento lo ha usado, así que no deja rastro."
+  },
+  "notice": {
+    "created": "Impuesto creado.",
+    "updated": "Impuesto actualizado.",
+    "deactivated": "«{{name}}» ya no se ofrece en los documentos.",
+    "activated": "«{{name}}» se ofrece de nuevo en los documentos.",
+    "deleted": "«{{name}}» eliminado."
+  },
+  "errors": {
+    "tax_in_use": "Un documento ya usa este impuesto: desactívalo en lugar de eliminarlo.",
+    "tax_not_editable": "«Ninguno» es fijo: no se edita, desactiva ni elimina.",
+    "forbidden": "Solo el administrador y el contador pueden cambiar los impuestos.",
+    "tax_not_found": "Este impuesto ya no existe."
+  }
+}

@@ -1,0 +1,26 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+  secret: '%env(APP_SECRET)%'
+
+  # The proxies in front of the site (a CDN), so the visitor's own IP (which rate limits count by) is read from
+  # X-Forwarded-For. Empty when Apache faces the visitors directly; the smoke suite sets it (e2e/prepare.sh).
+  trusted_proxies: '%env(TRUSTED_PROXIES)%'
+  trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']
+
+  # The session holds who is signed in. Files in var/, not PHP's shared temp folder a cPanel host may clean on its own
+  # schedule; the cookie is Secure on HTTPS, not readable by scripts, and SameSite=Lax so another site's requests do
+  # not carry it. A session left alone for 2 hours ends (§4.14: expiry on inactivity).
+  session:
+    gc_maxlifetime: 7200
+    cookie_lifetime: 0
+    handler_id: 'session.handler.native_file'
+    save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+    cookie_secure: auto
+    cookie_httponly: true
+    cookie_samesite: lax
+
+when@test:
+  framework:
+    test: true
+    session:
+      storage_factory_id: session.storage.factory.mock_file

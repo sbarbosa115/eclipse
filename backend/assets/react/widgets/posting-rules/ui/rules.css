@@ -1,0 +1,10 @@
+.admin .lock-date-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.admin .posting-rules-table {
+  margin-top: 16px;
+}

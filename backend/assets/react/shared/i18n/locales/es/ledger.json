@@ -1,0 +1,169 @@
+{
+  "title": "Libros contables",
+  "subtitle": "Lo que tus documentos registran en el PUC: libro diario, balance de prueba y estados financieros.",
+  "noAccess": "Los libros contables son del administrador y del contador.",
+  "tabs": {
+    "label": "Libros",
+    "journal": "Libro diario",
+    "trialBalance": "Balance de prueba",
+    "incomeStatement": "Estado de resultados",
+    "balanceSheet": "Balance general"
+  },
+  "period": {
+    "from": "Desde",
+    "to": "Hasta",
+    "date": "Fecha de corte"
+  },
+  "amounts": {
+    "debit": "Débito",
+    "credit": "Crédito",
+    "opening": "Saldo anterior",
+    "closing": "Nuevo saldo",
+    "total": "Totales"
+  },
+  "natures": {
+    "debit": "Débito",
+    "credit": "Crédito"
+  },
+  "levels": {
+    "class": "Clase",
+    "group": "Grupo",
+    "account": "Cuenta",
+    "subaccount": "Subcuenta",
+    "auxiliary": "Auxiliar"
+  },
+  "sources": {
+    "sales_invoice": "Factura de venta",
+    "cash_receipt": "Recibo de caja",
+    "purchase_invoice": "Factura de compra",
+    "supplier_payment": "Recibo de pago",
+    "demo": "Comprobante de prueba"
+  },
+  "journal": {
+    "intro": "Cada documento emitido deja aquí su asiento, con sus débitos y créditos.",
+    "number": "Asiento",
+    "date": "Fecha",
+    "document": "Documento",
+    "account": "Cuenta",
+    "accountFilter": "Cuenta (código)",
+    "accountPlaceholder": "Ej. 1305",
+    "tercero": "Tercero",
+    "terceroFilter": "Tercero: {{name}}",
+    "clearTercero": "Quitar el filtro de tercero",
+    "filterByTercero": "Ver solo los asientos de {{name}}",
+    "reverses": "Anula otro asiento",
+    "empty": "Aún no hay asientos. Aparecen cuando emites facturas, recibos y pagos.",
+    "filteredEmpty": "Ningún asiento coincide con estos filtros."
+  },
+  "trialBalance": {
+    "intro": "Saldos y movimientos de cada cuenta en el periodo. Los saldos crédito se muestran en negativo.",
+    "level": "Nivel de detalle",
+    "drillDown": "Ver asientos de {{code}}",
+    "balanced": "Débitos y créditos cuadran.",
+    "unbalanced": "Débitos y créditos no cuadran: revisa los asientos.",
+    "empty": "No hay movimientos en este periodo."
+  },
+  "incomeStatement": {
+    "intro": "Ingresos, costos y gastos del periodo, tomados del balance de prueba.",
+    "revenue": "Ingresos",
+    "costs": "Costos",
+    "expenses": "Gastos",
+    "grossProfit": "Utilidad bruta",
+    "netIncome": "Utilidad (pérdida) del periodo"
+  },
+  "balanceSheet": {
+    "intro": "Activo, pasivo y patrimonio a la fecha de corte, tomados del balance de prueba.",
+    "assets": "Total activo",
+    "liabilities": "Total pasivo",
+    "currentEarnings": "Resultado del ejercicio",
+    "equity": "Total patrimonio",
+    "liabilitiesAndEquity": "Pasivo + patrimonio",
+    "balanced": "Activo = pasivo + patrimonio.",
+    "unbalanced": "El balance no cuadra: revisa los asientos."
+  },
+  "statement": {
+    "concept": "Concepto",
+    "amount": "Valor",
+    "empty": "Sin saldos."
+  },
+  "chart": {
+    "intro": "El Plan Único de Cuentas (Decreto 2650 de 1993) con las subcuentas y auxiliares de tu empresa.",
+    "searchPlaceholder": "Código o nombre",
+    "class": "Clase",
+    "allClasses": "Todas",
+    "code": "Código",
+    "name": "Nombre",
+    "nature": "Naturaleza",
+    "level": "Nivel",
+    "inactive": "Inactiva",
+    "own": "Propia",
+    "usableOnPurchases": "Se puede usar en compras",
+    "addUnder": "Agregar subcuenta bajo {{code}}",
+    "addTitle": "Nueva cuenta bajo {{code}}",
+    "parent": "Cuenta madre",
+    "codeHint": "El código de la cuenta madre ({{code}}) más dos dígitos.",
+    "edit": "Editar la cuenta {{code}}",
+    "editTitle": "Editar la cuenta {{code}}",
+    "standardName": "El nombre de las cuentas del PUC no se cambia.",
+    "activeLabel": "Cuenta activa",
+    "created": "Cuenta {{code}} creada.",
+    "saved": "Cuenta {{code}} guardada.",
+    "empty": "No hay cuentas.",
+    "filteredEmpty": "Ninguna cuenta coincide con la búsqueda.",
+    "readOnly": "Solo el administrador y el contador pueden modificar el plan de cuentas."
+  },
+  "rules": {
+    "intro": "A qué cuenta del PUC va cada concepto cuando se emite un documento.",
+    "concept": "Concepto",
+    "account": "Cuenta",
+    "change": "Cambiar la cuenta de {{concept}}",
+    "changeTitle": "Cuenta para {{concept}}",
+    "allowed": "Solo cuentas que empiezan por {{prefixes}}.",
+    "searchAccount": "Buscar cuenta",
+    "searchPlaceholder": "Código o nombre",
+    "pickAccount": "Cuenta",
+    "choose": "Elige una cuenta",
+    "noMatches": "No hay cuentas que coincidan.",
+    "saved": "{{concept}} ahora va a la cuenta {{code}}.",
+    "readOnly": "Solo el administrador y el contador pueden cambiar las reglas contables.",
+    "concepts": {
+      "ingreso": "Ingresos por ventas",
+      "descuento_ventas": "Descuentos en ventas",
+      "iva_generado": "IVA generado",
+      "iva_descontable": "IVA descontable",
+      "impoconsumo": "Impuesto al consumo",
+      "retefuente_sufrida": "Retención en la fuente que nos practican",
+      "reteiva_sufrida": "ReteIVA que nos practican",
+      "reteica_sufrida": "ReteICA que nos practican",
+      "clientes": "Clientes (cuentas por cobrar)",
+      "proveedores": "Proveedores (cuentas por pagar)",
+      "retefuente_practicada": "Retención en la fuente que practicamos",
+      "reteiva_practicada": "ReteIVA que practicamos",
+      "reteica_practicada": "ReteICA que practicamos",
+      "gasto_por_defecto": "Gasto por defecto en compras",
+      "compra_mercancias": "Compras de mercancías"
+    }
+  },
+  "lockDate": {
+    "title": "Fecha de bloqueo contable",
+    "intro": "Ningún documento puede emitirse ni anularse con fecha igual o anterior a esta.",
+    "open": "Los libros están abiertos: no hay fecha de bloqueo.",
+    "current": "Bloqueado hasta el {{date}}.",
+    "label": "Bloquear hasta",
+    "save": "Guardar fecha",
+    "saved": "Libros bloqueados hasta el {{date}}."
+  },
+  "errors": {
+    "account_code_taken": "Ya existe una cuenta con ese código.",
+    "account_code_invalid": "El código debe ser el de la cuenta madre más dos dígitos.",
+    "parent_account_not_found": "La cuenta madre no existe.",
+    "account_standard": "El nombre de las cuentas del PUC no se cambia.",
+    "account_in_posting_rule": "Una regla contable usa esta cuenta: cambia la regla antes de inactivarla.",
+    "account_not_postable": "Esa cuenta agrupa otras o está inactiva: elige una subcuenta o auxiliar activa.",
+    "account_not_allowed_for_concept": "Esa cuenta no corresponde a este concepto.",
+    "lock_date_in_future": "La fecha de bloqueo no puede ser posterior a hoy.",
+    "invalid_date": "Revisa las fechas del periodo.",
+    "forbidden": "No tienes permiso para hacer esto.",
+    "validation_failed": "Revisa los datos marcados."
+  }
+}

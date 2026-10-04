@@ -1,0 +1,36 @@
+framework:
+  rate_limiter:
+    # Sign-ups: a person registers one company; a script creating companies is refused.
+    sign_up:
+      policy: sliding_window
+      limit: 5
+      interval: '1 hour'
+    # Password-reset e-mails: each is an e-mail to someone; a script mailing users is refused.
+    password_reset:
+      policy: sliding_window
+      limit: 5
+      interval: '10 minutes'
+    # E-mails a company has the app send to its terceros (documents) and to new users (invitations), per company:
+    # without a bound, anyone who signs up could relay mail to any address under the app's sender
+    # (Shared\UI\Http\Security\EmailQuota; security audit 2026-10-04).
+    document_email:
+      policy: sliding_window
+      limit: 200
+      interval: '1 hour'
+    invitation_email:
+      policy: sliding_window
+      limit: 20
+      interval: '1 hour'
+
+when@test:
+  framework:
+    rate_limiter:
+      # Small enough for a test to reach (tests/Functional/Security/EmailQuotaTest.php).
+      document_email:
+        policy: sliding_window
+        limit: 10
+        interval: '1 hour'
+      invitation_email:
+        policy: sliding_window
+        limit: 10
+        interval: '1 hour'

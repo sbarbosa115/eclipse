@@ -1,0 +1,94 @@
+/* Item 11 (supplier-payment): the recibos de caja pages. */
+.admin .supplier-payment-date input {
+  width: 9.5rem;
+}
+
+.admin .supplier-payment-list td.num,
+.admin .supplier-payment-view td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The client search and its list of matches, under the box. */
+.admin .supplier-payment-client {
+  position: relative;
+}
+
+.admin .supplier-payment-client input {
+  width: 100%;
+}
+
+.admin .supplier-payment-client-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 100%;
+  max-width: min(480px, calc(100vw - 32px));
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin .supplier-payment-client-popup .combo-status {
+  margin: 0;
+  padding: 8px 12px;
+}
+
+.admin .supplier-payment-client-popup .combo-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.admin .supplier-payment-client-popup .combo-list li {
+  padding: 8px 12px;
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.admin .supplier-payment-client-popup .combo-list li.is-active,
+.admin .supplier-payment-client-popup .combo-list li:hover {
+  background: var(--color-primary-soft);
+}
+
+.admin .supplier-payment-form .field-wide {
+  grid-column: 1 / -1;
+}
+
+.admin .supplier-payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.admin .supplier-payment-actions .small {
+  margin-right: auto;
+  max-width: 36rem;
+}
+
+.admin .supplier-payment-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.admin .supplier-payment-details dt {
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
+
+.admin .supplier-payment-details dd {
+  margin: 2px 0 0;
+}

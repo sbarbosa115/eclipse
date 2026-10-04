@@ -1,0 +1,129 @@
+{
+  "title": "Recibos de caja",
+  "subtitle": "Registra el dinero que te pagan tus clientes y abónalo a sus facturas; se contabiliza solo.",
+  "new": "Nuevo recibo",
+  "statuses": {
+    "emitted": "Emitido",
+    "voided": "Anulado"
+  },
+  "list": {
+    "searchPlaceholder": "Número o cliente",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos los estados",
+    "from": "Desde",
+    "to": "Hasta",
+    "empty": "Aún no has registrado recibos de caja. Cuando un cliente te pague una factura a crédito, regístralo aquí.",
+    "emptyAction": "Registrar el primer recibo",
+    "filteredEmpty": "Ningún recibo coincide con estos filtros.",
+    "columns": {
+      "number": "Número",
+      "client": "Cliente",
+      "date": "Fecha",
+      "method": "Dónde ingresó",
+      "invoices": "Facturas",
+      "amount": "Valor"
+    }
+  },
+  "actions": {
+    "open": "Ver",
+    "pdf": "PDF",
+    "downloadPdf": "Descargar PDF",
+    "send": "Enviar",
+    "void": "Anular",
+    "save": "Guardar",
+    "saveAndSend": "Guardar y enviar",
+    "back": "Volver a recibos"
+  },
+  "notices": {
+    "saved": "Recibo {{number}} guardado y contabilizado.",
+    "savedAndSent": "Recibo {{number}} guardado; el correo con el PDF va en camino.",
+    "sent": "El correo con el PDF del recibo {{number}} va en camino.",
+    "voided": "Recibo {{number}} anulado."
+  },
+  "form": {
+    "title": "Nuevo recibo de caja",
+    "type": "Tipo",
+    "typeValue": "Recibo de caja",
+    "number": "Número",
+    "numberPending": "Se asigna al guardar",
+    "client": "Cliente",
+    "clientHint": "Escribe al menos 3 letras del nombre o el número de identificación.",
+    "clientPlaceholder": "Buscar cliente",
+    "date": "Fecha",
+    "method": "Dónde ingresa el dinero",
+    "chooseMethod": "Elige caja o banco",
+    "amount": "Valor recibido",
+    "amountPlaceholder": "0,00",
+    "notes": "Observaciones",
+    "receivables": "Facturas pendientes del cliente",
+    "chooseClientFirst": "Elige el cliente para ver sus facturas pendientes.",
+    "loadingReceivables": "Buscando facturas pendientes…",
+    "noReceivables": "Este cliente no tiene facturas pendientes por cobrar.",
+    "receivablesFailed": "No pudimos cargar las facturas pendientes del cliente.",
+    "saveHint": "Guardar emite el recibo: toma su número, abona las facturas y se contabiliza. Después solo se puede anular.",
+    "required": {
+      "client": "Elige el cliente.",
+      "date": "Escribe la fecha como DD/MM/AAAA.",
+      "method": "Elige dónde ingresa el dinero.",
+      "amount": "Escribe el valor recibido en pesos."
+    },
+    "search": {
+      "minChars": "Escribe al menos {{count}} caracteres.",
+      "searching": "Buscando…",
+      "none": "Ningún cliente coincide.",
+      "failed": "No pudimos buscar. Inténtalo de nuevo."
+    }
+  },
+  "view": {
+    "title": "Recibo de caja {{number}}",
+    "loadFailed": "No pudimos cargar este recibo.",
+    "readOnly": "Este recibo ya fue emitido y contabilizado: no se puede modificar, solo anular.",
+    "voidedInfo": "Anulado el {{date}}. Motivo: {{reason}}",
+    "allocations": "Facturas que paga",
+    "invoice": "Factura",
+    "applied": "Valor aplicado"
+  },
+  "allocate": {
+    "document": "Factura",
+    "issueDate": "Fecha",
+    "dueDate": "Vencimiento",
+    "amount": "Valor",
+    "balance": "Saldo",
+    "toApply": "Valor a aplicar",
+    "toApplyOf": "Valor a aplicar a {{document}}",
+    "payInFull": "Pagar todo",
+    "payInFullOf": "Pagar todo el saldo de {{document}}",
+    "received": "Valor recibido",
+    "allocated": "Aplicado",
+    "difference": "Diferencia",
+    "balanced": "Cuadra: el valor aplicado es igual al valor recibido.",
+    "missing": "Falta aplicar {{amount}}.",
+    "over": "Aplicaste {{amount}} de más.",
+    "pending": "Escribe el valor recibido y aplícalo a las facturas.",
+    "errors": {
+      "invalid": "Escribe un valor en pesos.",
+      "exceeds": "Supera el saldo de la factura."
+    }
+  },
+  "void": {
+    "title": "Anular el recibo {{number}}",
+    "body": "Se registrará un comprobante de reversión con fecha de hoy y el recibo conservará su número. Las facturas que pagaba vuelven a quedar pendientes.",
+    "reason": "Motivo de la anulación",
+    "reasonRequired": "Escribe el motivo de la anulación.",
+    "confirm": "Anular recibo"
+  },
+  "errors": {
+    "allocation_exceeds_balance": "Un valor aplicado supera el saldo de su factura: revisa la tabla (otro recibo pudo haberla abonado).",
+    "allocations_do_not_match_amount": "Lo aplicado suma {{allocated}} y el valor recibido es {{amount}}: deben ser iguales.",
+    "period_locked": "La fecha está en un periodo contable cerrado (fecha de bloqueo).",
+    "tercero_has_no_email": "El cliente no tiene correo de facturación: agrégalo en su ficha o guarda sin enviar.",
+    "document_voided": "Este recibo ya está anulado.",
+    "document_not_emitted": "Este recibo está anulado: no se puede enviar.",
+    "cash_receipt_not_found": "Este recibo no existe.",
+    "not_found": "No encontramos lo que buscabas.",
+    "forbidden": "Tu rol no puede hacer esto con los recibos de caja.",
+    "validation_failed": "Revisa los campos marcados.",
+    "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  }
+}

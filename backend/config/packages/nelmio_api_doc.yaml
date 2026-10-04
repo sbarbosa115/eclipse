@@ -1,0 +1,20 @@
+# The OpenAPI schema of /api, generated from the controllers and the DTOs they declare, and turned into the
+# TypeScript types the React side imports (assets/types/api.d.ts), so a change to a response is a type error
+# in the UI instead of a blank field in production:
+#
+#     docker compose exec php php bin/console nelmio:apidoc:dump --format=json > backend/assets/types/openapi.json
+#     docker compose exec node npm run api:types
+#
+# Dev and test only: nothing is served and production does not load the bundle.
+when@dev: &nelmio
+  nelmio_api_doc:
+    documentation:
+      info:
+        title: Mustang API
+        description: The JSON API behind the React UI.
+        version: 1.0.0
+    areas:
+      default:
+        path_patterns: ['^/api/']
+
+when@test: *nelmio

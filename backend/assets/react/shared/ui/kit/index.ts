@@ -1,0 +1,43 @@
+// The app's design: import the kit from here (`@/shared/ui`). Importing it loads admin.css, scoped under `.admin`.
+import './admin.css';
+
+export {
+  ACTIONS,
+  ActionButton,
+  Actions,
+  actionClass,
+  Alert,
+  Badge,
+  Button,
+  Card,
+  ComingSoon,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  Field,
+  FilterBar,
+  FormModal,
+  FullPageLoading,
+  IconButton,
+  Loading,
+  Modal,
+  PageHeader,
+  Pager,
+  Row,
+  RowLegend,
+  SearchInput,
+  TabIntro,
+  TabPanel,
+  Tabs,
+  toneFor,
+  type Action,
+  type Filter,
+  type PageInfo,
+  type SelectOption,
+} from './kit';
+export {
+  AdminRoot as ThemedRoot,
+  THEME_CHOICES,
+  useAdminTheme as useTheme,
+  type ThemeChoice,
+} from './theme';

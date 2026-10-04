@@ -1,0 +1,30 @@
+/* The chart's tree: each level indented under its parent. */
+.admin .chart-code {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin .chart-level-group .chart-code {
+  padding-left: 8px;
+}
+
+.admin .chart-level-account .chart-code {
+  padding-left: 16px;
+}
+
+.admin .chart-level-subaccount .chart-code {
+  padding-left: 24px;
+}
+
+.admin .chart-level-auxiliary .chart-code {
+  padding-left: 32px;
+}
+
+.admin .chart-level-class td,
+.admin .chart-level-group td {
+  font-weight: 600;
+}
+
+.admin .chart-name .badge {
+  margin-left: 8px;
+}

@@ -1,0 +1,24 @@
+.admin .report-export {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.admin .report-export .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.admin .report-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .report-total td {
+  font-weight: 600;
+  border-top: 2px solid var(--color-border);
+}

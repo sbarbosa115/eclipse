@@ -1,0 +1,35 @@
+{
+  "actions": "Acciones",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "loading": "Cargando…",
+  "next": "Siguiente",
+  "optional": "opcional",
+  "pageOf": "Página {{page}} de {{pages}}",
+  "pages": "Páginas",
+  "previous": "Anterior",
+  "retry": "Reintentar",
+  "rowLegend": "Leyenda",
+  "save": "Guardar",
+  "search": "Buscar",
+  "searchLabel": "Buscar",
+  "working": "Procesando…",
+  "loadFailed": "No pudimos cargar esta información.",
+  "menu": "Menú",
+  "closeMenu": "Cerrar menú",
+  "signOut": "Cerrar sesión",
+  "comingSoon": "Esta sección se está construyendo.",
+  "showAll": "Ver todo",
+  "errors": {
+    "network": "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "tooManyRequests": "Demasiados intentos. Espera un momento e inténtalo de nuevo."
+  },
+  "combo": {
+    "minChars": "Escribe al menos {{count}} caracteres.",
+    "searching": "Buscando…",
+    "none": "Sin resultados.",
+    "create": "+ Crear nuevo",
+    "failed": "No pudimos buscar. Inténtalo de nuevo."
+  }
+}

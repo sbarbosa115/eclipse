@@ -1,0 +1,133 @@
+{
+  "title": "Reportes",
+  "subtitle": "Cartera de clientes y de proveedores, y la descarga de todos los informes.",
+  "tabs": {
+    "label": "Reportes",
+    "clients": "Cartera de clientes",
+    "suppliers": "Cartera de proveedores",
+    "export": "Exportar"
+  },
+  "table": {
+    "empty": "No hay datos para este reporte."
+  },
+  "export": {
+    "label": "Descargar {{name}}",
+    "csv": "CSV",
+    "pdf": "PDF",
+    "csvOf": "Descargar {{name}} en CSV",
+    "pdfOf": "Descargar {{name}} en PDF",
+    "tooLarge": "{{name}} tiene demasiadas filas para una sola descarga (hasta 50.000 en CSV y 1.500 en PDF). Acota las fechas o los filtros e inténtalo de nuevo.",
+    "forbidden": "No tienes permiso para descargar este informe.",
+    "failed": "No pudimos preparar la descarga. Inténtalo de nuevo."
+  },
+  "cartera": {
+    "asOf": "Al corte",
+    "total": "Total",
+    "noMatches": "Ningún tercero coincide con la búsqueda.",
+    "viewDocuments": "Ver documentos de {{name}}",
+    "buckets": {
+      "current": "Al día",
+      "days1_to30": "1–30 días",
+      "days31_to60": "31–60 días",
+      "days61_to90": "61–90 días",
+      "over90": "Más de 90 días",
+      "total": "Total"
+    },
+    "clients": {
+      "title": "Cartera de clientes",
+      "intro": "Lo que te deben tus clientes por facturas a crédito, según los días que lleva vencido cada saldo a la fecha de corte. El total coincide con la cuenta 1305 de los libros.",
+      "tercero": "Cliente",
+      "searchPlaceholder": "Buscar por nombre o identificación del cliente",
+      "empty": "Ningún cliente te debe nada a esta fecha."
+    },
+    "suppliers": {
+      "title": "Cartera de proveedores",
+      "intro": "Lo que le debes a tus proveedores por facturas de compra a crédito, según los días que lleva vencido cada saldo a la fecha de corte. El total coincide con la cuenta 2205 de los libros.",
+      "tercero": "Proveedor",
+      "searchPlaceholder": "Buscar por nombre o identificación del proveedor",
+      "empty": "No le debes nada a ningún proveedor a esta fecha."
+    }
+  },
+  "documents": {
+    "subtitle": "Saldos abiertos al {{date}}",
+    "back": "Volver a la cartera",
+    "notFound": "Este tercero no tiene saldos abiertos a esa fecha.",
+    "invoice": "Factura",
+    "issued": "Fecha",
+    "due": "Vencimiento",
+    "status": "Estado",
+    "amount": "Valor",
+    "balance": "Saldo",
+    "daysLate": "{{days}} días vencida"
+  },
+  "exportPanel": {
+    "intro": "Descarga cualquier informe en CSV (para Excel) o en PDF con el encabezado de tu empresa.",
+    "asOf": "Fecha de corte (cartera y balance general)",
+    "from": "Desde (libros contables)",
+    "to": "Hasta (libros contables)",
+    "format": "El CSV usa codificación UTF-8, punto y coma entre columnas y punto decimal sin separador de miles (por ejemplo 1190000.50), para que Excel y otras herramientas lo lean sin conversiones. Un informe de más de 50.000 filas en CSV o 1.500 en PDF no se descarga: acota las fechas.",
+    "noBooks": "Los libros contables (diario, balance de prueba, estado de resultados y balance general) los descargan el administrador y el contador.",
+    "reports": {
+      "carteraClients": "Cartera de clientes",
+      "carteraClientsDetail": "Cartera de clientes por documento",
+      "carteraSuppliers": "Cartera de proveedores",
+      "carteraSuppliersDetail": "Cartera de proveedores por documento",
+      "journal": "Libro diario",
+      "trialBalance": "Balance de prueba",
+      "incomeStatement": "Estado de resultados",
+      "balanceSheet": "Balance general"
+    },
+    "hints": {
+      "carteraClients": "Saldo por cliente en cada rango de vencimiento.",
+      "carteraClientsDetail": "Una fila por factura abierta, con sus días de vencida.",
+      "carteraSuppliers": "Saldo por proveedor en cada rango de vencimiento.",
+      "carteraSuppliersDetail": "Una fila por factura abierta, con sus días de vencida.",
+      "journal": "Todos los asientos del período, una fila por línea.",
+      "trialBalance": "Saldo anterior, débitos, créditos y nuevo saldo por cuenta.",
+      "incomeStatement": "Ingresos, costos y gastos del período y su resultado.",
+      "balanceSheet": "Activo, pasivo y patrimonio a la fecha de corte."
+    }
+  },
+  "dashboard": {
+    "title": "Tablero",
+    "subtitle": "Cómo va tu negocio hoy, {{date}}",
+    "loadFailed": "No pudimos cargar las cifras del tablero.",
+    "clients": {
+      "title": "Cartera de clientes",
+      "overdue": "De los cuales vencidos"
+    },
+    "suppliers": {
+      "title": "Cartera de proveedores",
+      "overdue": "De los cuales vencidos"
+    },
+    "sales": {
+      "title": "Ventas del mes",
+      "hint": "Antes de IVA, facturas emitidas del mes",
+      "count": "Facturas: {{count}}"
+    },
+    "purchases": {
+      "title": "Compras del mes",
+      "hint": "Antes de IVA, facturas emitidas del mes",
+      "count": "Facturas: {{count}}"
+    },
+    "cash": {
+      "title": "Caja y bancos",
+      "hint": "Saldo de las cuentas 1105 y 1110 en los libros"
+    },
+    "viewReport": "Ver cartera",
+    "resolution": {
+      "warning": "Tu resolución de facturación se está agotando: te quedan {{numbers}} números y {{days}} días de vigencia.",
+      "missing": "Aún no has registrado tu resolución de facturación: la necesitas para emitir facturas de venta.",
+      "expired": "Tu resolución de facturación venció. Registra la nueva para seguir facturando.",
+      "exhausted": "Se acabaron los números de tu resolución de facturación. Registra una nueva para seguir facturando.",
+      "notYetValid": "Tu resolución de facturación aún no está vigente.",
+      "fix": "Ir a la resolución"
+    },
+    "quick": {
+      "title": "Accesos rápidos",
+      "invoice": "Crear factura de venta",
+      "receipt": "Crear recibo de caja",
+      "purchase": "Crear factura de compra"
+    }
+  }
+}

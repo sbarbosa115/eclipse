@@ -1,0 +1,77 @@
+# Layers: dependencies only point inward — UI → Application → Domain, Infrastructure → Application | Domain.
+#
+# Every bounded context (and Shared) has the same four folders, src/<Context>/{Domain,Application,Infrastructure,UI},
+# so one regex per layer covers them all. Which contexts may talk to each other is deptrac.contexts.yaml.
+#
+#   docker compose exec php composer deptrac
+deptrac:
+  paths:
+    - ./src
+
+  layers:
+    - name: Domain
+      collectors:
+        - {type: classNameRegex, value: '#^App\\[A-Za-z]+\\Domain\\#'}
+
+    - name: Application
+      collectors:
+        - {type: classNameRegex, value: '#^App\\[A-Za-z]+\\Application\\#'}
+
+    - name: Infrastructure
+      collectors:
+        - {type: classNameRegex, value: '#^App\\[A-Za-z]+\\Infrastructure\\#'}
+
+    - name: UI
+      collectors:
+        - {type: classNameRegex, value: '#^App\\[A-Za-z]+\\UI\\#'}
+
+    - name: Kernel
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Kernel$#'}
+
+    # The only outside code a domain model may name: its Doctrine mapping attributes, collections for its
+    # children, the DBAL type names, UUIDs for its identity, and brick/math for decimal money (never a float).
+    # Never the EntityManager or a query builder.
+    - name: DomainVendor
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^(Doctrine\\ORM\\Mapping\\|Doctrine\\Common\\Collections\\|Doctrine\\DBAL\\Types\\Types$|Symfony\\Component\\Uid\\|Brick\\Math\\)#',
+          }
+
+    # PHP-FIG interfaces (a logger): standards, not a framework, so a use case may log what it swallows.
+    - name: Standards
+      collectors:
+        - {type: classNameRegex, value: '#^Psr\\Log\\#'}
+
+    # Every other namespaced class outside App (Symfony, Doctrine ORM, Twig, Flysystem…). PHP's own classes have no
+    # namespace, so \DateTimeImmutable and friends stay free for everyone.
+    - name: Vendor
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^(?!App\\|Doctrine\\ORM\\Mapping\\|Doctrine\\Common\\Collections\\|Doctrine\\DBAL\\Types\\Types$|Symfony\\Component\\Uid\\|Brick\\Math\\|Psr\\Log\\)[A-Za-z0-9_]+\\#',
+          }
+
+  ruleset:
+    Domain:
+      - DomainVendor
+    Application:
+      - Domain
+      - DomainVendor
+      - Standards
+    Infrastructure:
+      - Domain
+      - Application
+      - DomainVendor
+      - Standards
+      - Vendor
+    # The Symfony kernel itself.
+    Kernel:
+      - Vendor
+    UI:
+      - Application
+      - Domain
+      - DomainVendor
+      - Standards
+      - Vendor
