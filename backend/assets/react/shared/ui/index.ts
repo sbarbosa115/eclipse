@@ -2,3 +2,4 @@
 export * from './kit';
 export {Icon} from './Icon';
 export {DateInput, parseDayFirst} from './date-input';
+export {MoneyInput} from './money-input';

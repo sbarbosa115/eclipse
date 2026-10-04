@@ -3,7 +3,6 @@
 export {AllocatePayment, type AllocatePaymentProps} from './ui/AllocatePayment';
 export {
   allocationsOf,
-  parseAmount,
   summarize,
   type AllocationSummary,
   type OpenItem,

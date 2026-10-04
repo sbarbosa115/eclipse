@@ -20,7 +20,7 @@ import {
 } from '@/entities/product';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {Button, Field, FormModal, Modal} from '@/shared/ui';
+import {Button, Field, FormModal, Modal, MoneyInput} from '@/shared/ui';
 
 /**
  * The full form of a product or service (§4.3): creating, editing, or — for the accountant, who only reads — viewing
@@ -163,10 +163,10 @@ export function ProductFormModal({
           hint={t('catalog.form.salePriceHint')}
           error={errors.sale_price}
         >
-          <input
-            inputMode="decimal"
+          <MoneyInput
+            places={4}
             value={data.sale_price}
-            onChange={(e) => set('sale_price', e.target.value)}
+            onChange={(price) => set('sale_price', price)}
           />
         </Field>
         <IncludesTaxCheckbox

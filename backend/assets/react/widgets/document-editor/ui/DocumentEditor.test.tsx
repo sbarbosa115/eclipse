@@ -310,8 +310,8 @@ describe('the document form (§4.6)', () => {
       expect(screen.getByLabelText('Cantidad, línea 1')).toHaveValue('1');
       expect(
         screen.getByLabelText('Valor unitario, línea 1'),
-        'the price net of IVA',
-      ).toHaveValue('100000');
+        'the price net of IVA, as a Colombian writes it',
+      ).toHaveValue('100.000');
       expect(screen.getByLabelText('Impuesto cargo, línea 1')).toHaveValue(
         'iva19',
       );
@@ -543,6 +543,35 @@ describe('the document form (§4.6)', () => {
       await userEvent.type(screen.getByLabelText('Cantidad, línea 1'), '3');
       expect(total('Total neto')).toBe('$ 4.501,50');
     });
+
+    it('reads a unit price and a payment typed the Colombian way', async () => {
+      api();
+      const {latest} = renderEditor({
+        value: draft({lines: [line({quantity: '1'})]}),
+      });
+
+      await userEvent.type(
+        screen.getByLabelText('Valor unitario, línea 1'),
+        '1.190.000,5',
+      );
+      await userEvent.click(
+        screen.getByRole('button', {name: 'Agregar forma de pago'}),
+      );
+      await userEvent.clear(
+        screen.getByLabelText('Valor de la forma de pago 1'),
+      );
+      await userEvent.type(
+        screen.getByLabelText('Valor de la forma de pago 1'),
+        '1.000.000,25',
+      );
+
+      expect(
+        latest()?.lines[0]?.unit_price,
+        'the draft holds a decimal with a point, never what was typed',
+      ).toBe('1190000.5');
+      expect(latest()?.payments[0]?.amount).toBe('1000000.25');
+      expect(total('Total neto')).toBe('$ 1.190.000,50');
+    });
   });
 
   describe('formas de pago', () => {
@@ -561,8 +590,8 @@ describe('the document form (§4.6)', () => {
       );
       expect(
         screen.getByLabelText('Valor de la forma de pago 1'),
-        'the row offers what is left',
-      ).toHaveValue('1190.00');
+        'the row offers what is left, as a Colombian writes it',
+      ).toHaveValue('1.190');
       expect(
         screen.getByText('Coincide con el total neto'),
       ).toBeInTheDocument();
@@ -585,7 +614,7 @@ describe('the document form (§4.6)', () => {
         screen.getByRole('button', {name: 'Agregar forma de pago'}),
       );
       expect(screen.getByLabelText('Valor de la forma de pago 2')).toHaveValue(
-        '190.00',
+        '190',
       );
       expect(
         screen.getByText('Coincide con el total neto'),

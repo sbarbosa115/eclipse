@@ -312,6 +312,11 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   `cashReceipt.allocate`; the recibo de pago passes `supplierPayment.allocate`). The supplier search is the generic
   `entities/tercero` `TerceroPicker` (role as a prop, words as props), since `pages/cash-receipts`' `ClientPicker` is a
   page's and FSD forbids importing it.
+- **Amounts are typed the Colombian way, everywhere:** `MoneyInput` (`@/shared/ui`) accepts `1.190.000,50`,
+  `595000,5` or `595000.50` and hands its form a decimal string with a point (`places` 2 for money, 4 for unit prices
+  and tax rates; `parseDecimal`/`parseAmount` in `@/shared/lib`). A dot followed by groups of three digits is a
+  thousands separator (`1.190` is 1190, `0.966` is 0,966). Product prices, the editor's unit prices and payments, tax
+  rates, recibos de caja/pago and their allocations use it.
 
 - **Users, invitations and resets (Access).** An e-mail is unique across the whole app (§9 Q22): inviting one
   registered in any company is refused. The owner invites billing users and accountants; an owner may then make

@@ -1,9 +1,6 @@
 import type {Translate} from '@/shared/i18n';
-import {
-  allocationsOf,
-  parseAmount,
-  type OpenItem,
-} from '@/features/allocate-payment';
+import {allocationsOf, type OpenItem} from '@/features/allocate-payment';
+import {parseAmount} from '@/shared/lib';
 import type {
   SupplierPaymentRequest,
   OpenPayable,

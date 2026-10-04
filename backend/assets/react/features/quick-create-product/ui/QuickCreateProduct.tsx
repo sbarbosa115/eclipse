@@ -15,7 +15,7 @@ import {
 } from '@/entities/product';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {Field, FormModal} from '@/shared/ui';
+import {Field, FormModal, MoneyInput} from '@/shared/ui';
 
 /**
  * The modal a document line opens to create a product or service without leaving the document (§4.3): type, código,
@@ -100,10 +100,10 @@ export function QuickCreateProduct({
         hint={t('catalog.form.salePriceHint')}
         error={errors.sale_price}
       >
-        <input
-          inputMode="decimal"
+        <MoneyInput
+          places={4}
           value={data.sale_price}
-          onChange={(e) => set('sale_price', e.target.value)}
+          onChange={(price) => set('sale_price', price)}
         />
       </Field>
       <IncludesTaxCheckbox

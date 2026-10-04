@@ -15,6 +15,7 @@ import {
   Button,
   DataTable,
   IconButton,
+  MoneyInput,
 } from '@/shared/ui';
 import {setLineMode} from '../model/draft';
 import type {LineAmounts} from '../model/totals';
@@ -199,16 +200,27 @@ export function LinesGrid({
     const message = errors[`lines.${index}.${col}`];
     return (
       <td data-col={col}>
-        <input
-          aria-label={label(column, index)}
-          className={
-            col === 'description' ? 'doc-line-text' : 'doc-line-number'
-          }
-          inputMode={col === 'description' ? undefined : 'decimal'}
-          value={line[col]}
-          onChange={(e) => onChange(index, {[col]: e.target.value})}
-          {...invalidProps(errorId, message)}
-        />
+        {col === 'unit_price' ? (
+          <MoneyInput
+            aria-label={label(column, index)}
+            className="doc-line-number"
+            places={4}
+            value={line.unit_price}
+            onChange={(unitPrice) => onChange(index, {unit_price: unitPrice})}
+            {...invalidProps(errorId, message)}
+          />
+        ) : (
+          <input
+            aria-label={label(column, index)}
+            className={
+              col === 'description' ? 'doc-line-text' : 'doc-line-number'
+            }
+            inputMode={col === 'description' ? undefined : 'decimal'}
+            value={line[col]}
+            onChange={(e) => onChange(index, {[col]: e.target.value})}
+            {...invalidProps(errorId, message)}
+          />
+        )}
         <CellError id={errorId} message={message} />
       </td>
     );

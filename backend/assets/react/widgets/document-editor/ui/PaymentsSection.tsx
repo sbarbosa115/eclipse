@@ -1,7 +1,14 @@
 import {useId} from 'react';
 import {useTranslation} from '@/shared/i18n';
 import {formatDate, formatMoney} from '@/shared/lib';
-import {Actions, Button, DataTable, Icon, IconButton} from '@/shared/ui';
+import {
+  Actions,
+  Button,
+  DataTable,
+  Icon,
+  IconButton,
+  MoneyInput,
+} from '@/shared/ui';
 import type {PaymentMethod} from '../api/documentEditorApi';
 import {paymentBalance} from '../model/draft';
 import type {CreditTerm, DraftPayment, EditorErrors} from '../model/types';
@@ -94,12 +101,11 @@ export function PaymentsSection({
                   />
                 </td>
                 <td>
-                  <input
+                  <MoneyInput
                     className="doc-line-number"
-                    inputMode="decimal"
                     aria-label={t('documentEditor.payments.amountOf', {n})}
                     value={payment.amount}
-                    onChange={(e) => onUpdate(index, {amount: e.target.value})}
+                    onChange={(amount) => onUpdate(index, {amount})}
                     {...invalidProps(ids.amount, errors[`${at}.amount`])}
                   />
                   <CellError id={ids.amount} message={errors[`${at}.amount`]} />

@@ -136,7 +136,7 @@ test('PRD-04 · the form explains what is missing or wrong', async ({
 
   await form.getByLabel('Código').fill('X');
   await form.getByLabel('Nombre').fill('X');
-  await form.getByLabel('Precio de venta (COP)').fill('12,5');
+  await form.getByLabel('Precio de venta (COP)').fill('12,34567');
   await form.getByRole('button', {name: 'Guardar'}).click();
   await expect(
     form.getByText('Escribe el precio en pesos, con máximo cuatro decimales.'),
@@ -181,9 +181,9 @@ test('PRD-06 · editing a product changes it', async ({page, newCompany}) => {
     .click();
   const form = page.getByRole('dialog');
   await expect(form.getByLabel('Nombre')).toHaveValue('Antes');
-  await expect(form.getByLabel('Precio de venta (COP)')).toHaveValue('10000');
+  await expect(form.getByLabel('Precio de venta (COP)')).toHaveValue('10.000');
   await form.getByLabel('Nombre').fill('Después');
-  await form.getByLabel('Precio de venta (COP)').fill('12500.5');
+  await form.getByLabel('Precio de venta (COP)').fill('12.500,5');
   await form.getByRole('button', {name: 'Guardar'}).click();
 
   await expect(page.getByText('Producto guardado.')).toBeVisible();

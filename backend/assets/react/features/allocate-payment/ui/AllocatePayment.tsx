@@ -1,8 +1,8 @@
 import {useId} from 'react';
 import {useTranslation} from '@/shared/i18n';
-import {formatDate, formatMoney} from '@/shared/lib';
-import {ActionButton, Actions, DataTable} from '@/shared/ui';
-import {parseAmount, summarize, type OpenItem} from '../model/allocation';
+import {formatDate, formatMoney, parseAmount} from '@/shared/lib';
+import {ActionButton, Actions, DataTable, MoneyInput} from '@/shared/ui';
+import {summarize, type OpenItem} from '../model/allocation';
 import './allocatePayment.css';
 
 export interface AllocatePaymentProps {
@@ -81,9 +81,7 @@ export function AllocatePayment({
               <td className="num">{formatMoney(item.amount)}</td>
               <td className="num">{formatMoney(item.balance)}</td>
               <td className="allocate-payment-input">
-                <input
-                  type="text"
-                  inputMode="decimal"
+                <MoneyInput
                   value={amounts[item.id] ?? ''}
                   disabled={disabled}
                   aria-label={t(`${labels}.toApplyOf`, {
@@ -91,7 +89,7 @@ export function AllocatePayment({
                   })}
                   aria-invalid={message ? true : undefined}
                   aria-describedby={message ? errorId : undefined}
-                  onChange={(event) => set(item.id, event.target.value)}
+                  onChange={(value) => set(item.id, value)}
                 />
                 {message && (
                   <span id={errorId} className="field-error">

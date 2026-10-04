@@ -49,7 +49,7 @@
     "noCategory": "Sin categoría",
     "unit": "Unidad de medida DIAN",
     "salePrice": "Precio de venta (COP)",
-    "salePriceHint": "Solo números; decimales con punto, por ejemplo 49999.90.",
+    "salePriceHint": "Hasta cuatro decimales, por ejemplo 49.999,90.",
     "includesTax": "Incluir IVA en el precio",
     "includesTaxHint": "El precio ya trae el impuesto: en la línea del documento el valor unitario queda sin él.",
     "chargeTax": "Impuesto cargo",
