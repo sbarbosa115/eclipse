@@ -1,0 +1,67 @@
+{#
+    The recibo de caja (§4.9), from Sales\Application\Document\CashReceiptPdf::context(): every value arrives already
+    printed ($ 1.190.000,00, DD/MM/YYYY).
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% block watermark %}
+    {% if voided %}<div class="voided">ANULADA</div>{% endif %}
+{% endblock %}
+
+{% block body %}
+    <style>
+        .parties { width: 100%; margin-bottom: 10px; }
+        .parties td { vertical-align: top; width: 50%; padding-right: 8px; }
+        .label { color: #616e7c; font-size: 7.5pt; text-transform: uppercase; }
+        .totals { width: 45%; margin-left: 55%; margin-top: 8px; border-collapse: collapse; }
+        .totals td { padding: 2px 4px; font-weight: bold; border-top: 1px solid #1f2933; }
+        .section { margin-top: 10px; }
+        .void-note { color: #b42318; font-weight: bold; margin-bottom: 8px; }
+        .signature { margin-top: 40px; width: 45%; border-top: 1px solid #1f2933; padding-top: 4px; }
+    </style>
+
+    {% if voided %}
+        <div class="void-note">ANULADO el {{ receipt.voided_at }}. Motivo: {{ receipt.void_reason }}</div>
+    {% endif %}
+
+    <table class="parties">
+        <tr>
+            <td>
+                <div class="label">Recibimos de</div>
+                <strong>{{ client.name }}</strong><br>
+                {{ client.identification }}<br>
+                {% if client.address %}{{ client.address }}<br>{% endif %}
+                {% if client.email %}{{ client.email }}{% endif %}
+            </td>
+            <td>
+                <div class="label">Recibo</div>
+                Fecha: {{ receipt.date }}<br>
+                Dónde ingresa el dinero: {{ receipt.method }}<br>
+                Valor recibido: <strong>{{ receipt.amount }}</strong>
+            </td>
+        </tr>
+    </table>
+
+    <div class="label">Facturas que paga</div>
+    <table class="lines">
+        <thead><tr><th>Factura</th><th class="num">Valor aplicado</th></tr></thead>
+        <tbody>
+            {% for a in allocations %}
+                <tr><td>{{ a.invoice }}</td><td class="num">{{ a.amount }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr><td>Total recibido</td><td class="num">{{ receipt.amount }}</td></tr>
+    </table>
+
+    {% if receipt.notes %}
+        <div class="section">
+            <div class="label">Observaciones</div>
+            {{ receipt.notes|nl2br }}
+        </div>
+    {% endif %}
+
+    <div class="signature">Firma y sello</div>
+{% endblock %}

@@ -1793,10 +1793,10 @@
                 }
             }
         },
-        "/api/v1/quotations": {
+        "/api/v1/cash-receipts": {
             "get": {
-                "summary": "The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=draft|emitted|\naccepted|rejected|expired|voided (an emitted quotation past its vencimiento is `expired`), ?from=, ?to= (fecha de\nelaboraci\u00f3n, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page \u2264 100.",
-                "operationId": "get_app_sales_ui_http_quotation_list",
+                "summary": "The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=emitted|voided,\n?from=, ?to= (the receipt's date, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page \u2264 100.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_list",
                 "responses": {
                     "200": {
                         "description": "OK.",
@@ -1813,7 +1813,7 @@
                                         "items": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/QuotationSummaryOutput"
+                                                "$ref": "#/components/schemas/CashReceiptSummaryOutput"
                                             }
                                         },
                                         "total": {
@@ -1834,16 +1834,15 @@
                 }
             },
             "post": {
-                "summary": "A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,\nnotes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}]} \u2192 201.",
-                "description": "422 `validation_failed` by field path (`lines.0.product_id`, `expiry_date`\u2026).",
-                "operationId": "post_app_sales_ui_http_quotation_create",
+                "summary": "Saves and so emits a receipt (\u00a74.9): {tercero_id, receipt_date, payment_method_id (an active contado method),\namount, notes?, allocations: [{receivable_id, amount}], send?} \u2192 201. The RC number, each invoice collected, the\nA.2 entry; with `send: true` (*Guardar y enviar por mail*) the PDF is then e-mailed to the client. 422\n`validation_failed` by field (`allocations.0.receivable_id` for an unknown or another client's receivable),\n`allocation_exceeds_balance`, `allocations_do_not_match_amount` (detail: both sums), `tercero_has_no_email`;\n409 `period_locked`.",
+                "operationId": "post_app_sales_ui_http_cashreceipt_create",
                 "responses": {
                     "201": {
                         "description": "Created.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
+                                    "$ref": "#/components/schemas/CashReceiptOutput"
                                 }
                             }
                         }
@@ -1851,53 +1850,28 @@
                 }
             }
         },
-        "/api/v1/quotations/{id}": {
+        "/api/v1/cash-receipts/open-receivables": {
             "get": {
-                "summary": "One quotation, whole.",
-                "operationId": "get_app_sales_ui_http_quotation_show",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
+                "summary": "What a client still owes (\u00a74.9), to allocate a receipt: ?tercero_id= (required). Its receivables with a balance,\nthe oldest due first. 404 for a client the company does not have.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_openreceivables",
                 "responses": {
                     "200": {
                         "description": "OK.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "summary": "Rewrites a draft with the same body as create. 409 `document_not_draft` once emitted.",
-                "operationId": "put_app_sales_ui_http_quotation_update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OpenReceivableOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1905,10 +1879,10 @@
                 }
             }
         },
-        "/api/v1/quotations/{id}/emit": {
-            "post": {
-                "summary": "Emits the draft (\u00a74.7): the next number of series C, frozen; no journal entry. 422 `validation_failed` (`lines`,\n`issue_date` in the future), `tercero_inactive`; 409 `document_not_draft`.",
-                "operationId": "post_app_sales_ui_http_quotation_emit",
+        "/api/v1/cash-receipts/{id}": {
+            "get": {
+                "summary": "One receipt, whole.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_show",
                 "parameters": [
                     {
                         "name": "id",
@@ -1925,7 +1899,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
+                                    "$ref": "#/components/schemas/CashReceiptOutput"
                                 }
                             }
                         }
@@ -1933,10 +1907,10 @@
                 }
             }
         },
-        "/api/v1/quotations/{id}/emit-and-send": {
+        "/api/v1/cash-receipts/{id}/void": {
             "post": {
-                "summary": "\"Emitir y enviar\": emits, then e-mails the PDF to the client through the queue. Also 422 `tercero_has_no_email`.",
-                "operationId": "post_app_sales_ui_http_quotation_emitandsend",
+                "summary": "Voids the receipt today (\u00a74.12): {reason}. Each invoice is owed again, the reversing entry is posted, the number\nis kept. 409 `document_voided`, `period_locked`.",
+                "operationId": "post_app_sales_ui_http_cashreceipt_void",
                 "parameters": [
                     {
                         "name": "id",
@@ -1953,7 +1927,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
+                                    "$ref": "#/components/schemas/CashReceiptOutput"
                                 }
                             }
                         }
@@ -1961,10 +1935,10 @@
                 }
             }
         },
-        "/api/v1/quotations/{id}/send": {
+        "/api/v1/cash-receipts/{id}/send": {
             "post": {
-                "summary": "E-mails an emitted quotation's PDF again \u2192 202. 409 `quotation_not_open`; 422 `tercero_has_no_email`.",
-                "operationId": "post_app_sales_ui_http_quotation_send",
+                "summary": "E-mails the receipt's PDF to the client again \u2192 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`.",
+                "operationId": "post_app_sales_ui_http_cashreceipt_send",
                 "parameters": [
                     {
                         "name": "id",
@@ -1982,150 +1956,10 @@
                 }
             }
         },
-        "/api/v1/quotations/{id}/accept": {
-            "post": {
-                "summary": "The client accepted: emitted \u2192 accepted. 409 `quotation_not_open` (a draft, decided, voided or expired one).",
-                "operationId": "post_app_sales_ui_http_quotation_accept",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/quotations/{id}/reject": {
-            "post": {
-                "summary": "The client declined: emitted \u2192 rejected. 409 `quotation_not_open`.",
-                "operationId": "post_app_sales_ui_http_quotation_reject",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/quotations/{id}/void": {
-            "post": {
-                "summary": "Voids an emitted quotation: {reason}. No entry to reverse; the number is kept. 409 `quotation_not_open`.",
-                "operationId": "post_app_sales_ui_http_quotation_void",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/quotations/{id}/convert": {
-            "post": {
-                "summary": "\"Convertir a factura\" (\u00a74.7): makes a draft sales invoice with the same client, contact, lines and taxes (dated\ntoday, no formas de pago yet), once \u2192 the quotation, now `accepted`, whose `converted_invoice_id` is the draft\n(its `quotation_id` is this quotation). 409 `quotation_already_converted`, `quotation_not_open`; 422\n`validation_failed` when the invoice refuses what changed since (an inactive client, product or tax), by field path\n(`tercero_id`, `lines.0.product_id`, `lines.1.charge_tax_id`): nothing is converted then.",
-                "operationId": "post_app_sales_ui_http_quotation_convert",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/quotations/{id}/duplicate": {
-            "post": {
-                "summary": "A new draft, dated today, with the quotation's client, lines and texts (\u00a74.15) \u2192 201.",
-                "operationId": "post_app_sales_ui_http_quotation_duplicate",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuotationOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/quotations/{id}/pdf": {
+        "/api/v1/cash-receipts/{id}/pdf": {
             "get": {
-                "summary": "The PDF (\u00a74.7), ANULADA when voided, BORRADOR on a draft.",
-                "operationId": "get_app_sales_ui_http_quotation_pdf",
+                "summary": "The PDF (\u00a74.9), ANULADA when voided.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_pdf",
                 "parameters": [
                     {
                         "name": "id",
@@ -4067,25 +3901,221 @@
                 },
                 "type": "object"
             },
-            "QuotationSummaryOutput": {
+            "CashReceiptSummaryOutput": {
                 "required": [
                     "id",
                     "status",
-                    "issue_date",
-                    "expiry_date",
+                    "number",
+                    "receipt_date",
                     "tercero_id",
                     "tercero_name",
-                    "subtotal",
-                    "tax_total",
-                    "withholding_total",
-                    "net_total"
+                    "method_name",
+                    "amount",
+                    "invoice_numbers"
                 ],
                 "properties": {
                     "id": {
                         "type": "string"
                     },
                     "status": {
-                        "title": "draft, emitted, accepted, rejected, expired or voided: an emitted one past its vencimiento reads as expired",
+                        "title": "emitted or voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "receipt_date": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "invoice_numbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "OpenReceivableOutput": {
+                "required": [
+                    "id",
+                    "invoice_id",
+                    "invoice_number",
+                    "issue_date",
+                    "due_date",
+                    "amount",
+                    "balance"
+                ],
+                "properties": {
+                    "id": {
+                        "title": "The receivable: what an allocation names.",
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "title": "What the cr\u00e9dito line was for.",
+                        "type": "string"
+                    },
+                    "balance": {
+                        "title": "What is still owed.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CashReceiptAllocationOutput": {
+                "required": [
+                    "id",
+                    "receivable_id",
+                    "invoice_id",
+                    "invoice_number",
+                    "amount"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "receivable_id": {
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CashReceiptOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "number",
+                    "tercero_id",
+                    "tercero_name",
+                    "receipt_date",
+                    "payment_method_id",
+                    "method_name",
+                    "amount",
+                    "allocations",
+                    "created_by",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "emitted or voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "receipt_date": {
+                        "type": "string"
+                    },
+                    "payment_method_id": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "allocations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CashReceiptAllocationOutput"
+                        }
+                    },
+                    "journal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reversal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "voided_by": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "voided_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "void_reason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SalesInvoiceSummaryOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "issue_date",
+                    "tercero_id",
+                    "tercero_name",
+                    "subtotal",
+                    "tax_total",
+                    "withholding_total",
+                    "net_total",
+                    "paid_amount",
+                    "balance"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "draft, emitted, partially_paid, paid or voided",
                         "type": "string"
                     },
                     "number": {
@@ -4096,9 +4126,10 @@
                     "issue_date": {
                         "type": "string"
                     },
-                    "expiry_date": {
-                        "title": "Fecha de vencimiento of the offer.",
-                        "type": "string"
+                    "due_date": {
+                        "title": "The latest cr\u00e9dito due date, or null when nothing is on cr\u00e9dito.",
+                        "type": "string",
+                        "nullable": true
                     },
                     "tercero_id": {
                         "type": "string"
@@ -4118,10 +4149,12 @@
                     "net_total": {
                         "type": "string"
                     },
-                    "converted_invoice_id": {
-                        "title": "The draft invoice it was converted into.",
-                        "type": "string",
-                        "nullable": true
+                    "paid_amount": {
+                        "type": "string"
+                    },
+                    "balance": {
+                        "title": "What the client still owes: nothing on a draft or a voided invoice.",
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -4215,207 +4248,6 @@
                         "type": "string"
                     },
                     "total_amount": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "QuotationOutput": {
-                "required": [
-                    "id",
-                    "status",
-                    "tercero_id",
-                    "tercero_name",
-                    "issue_date",
-                    "expiry_date",
-                    "gross_total",
-                    "discount_total",
-                    "subtotal",
-                    "tax_total",
-                    "withholding_total",
-                    "net_total",
-                    "lines",
-                    "created_by",
-                    "created_at"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "title": "draft, emitted, accepted, rejected, expired or voided: an emitted one past its vencimiento reads as expired",
-                        "type": "string"
-                    },
-                    "number": {
-                        "title": "As printed (C-12); null on a draft.",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "prefix": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "sequence": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "tercero_id": {
-                        "type": "string"
-                    },
-                    "tercero_name": {
-                        "type": "string"
-                    },
-                    "contact_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "responsible_id": {
-                        "title": "Responsable (a tercero with role empleado).",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "responsible_name": {
-                        "title": "\"Nombre\" of the responsable, for the form; null when there is none or it no longer exists.",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "issue_date": {
-                        "type": "string"
-                    },
-                    "expiry_date": {
-                        "title": "Fecha de vencimiento of the offer.",
-                        "type": "string"
-                    },
-                    "header": {
-                        "title": "Encabezado, plain text.",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "terms": {
-                        "title": "Condiciones comerciales, plain text.",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "notes": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "gross_total": {
-                        "type": "string"
-                    },
-                    "discount_total": {
-                        "type": "string"
-                    },
-                    "subtotal": {
-                        "type": "string"
-                    },
-                    "tax_total": {
-                        "type": "string"
-                    },
-                    "withholding_total": {
-                        "type": "string"
-                    },
-                    "net_total": {
-                        "type": "string"
-                    },
-                    "lines": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/SalesInvoiceLineOutput"
-                        }
-                    },
-                    "converted_invoice_id": {
-                        "title": "The draft invoice it was converted into (\u00a74.7).",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "created_by": {
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "type": "string"
-                    },
-                    "emitted_by": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "emitted_at": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "voided_by": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "voided_at": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "void_reason": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "SalesInvoiceSummaryOutput": {
-                "required": [
-                    "id",
-                    "status",
-                    "issue_date",
-                    "tercero_id",
-                    "tercero_name",
-                    "subtotal",
-                    "tax_total",
-                    "withholding_total",
-                    "net_total",
-                    "paid_amount",
-                    "balance"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "title": "draft, emitted, partially_paid, paid or voided",
-                        "type": "string"
-                    },
-                    "number": {
-                        "title": "Null on a draft.",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "issue_date": {
-                        "type": "string"
-                    },
-                    "due_date": {
-                        "title": "The latest cr\u00e9dito due date, or null when nothing is on cr\u00e9dito.",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "tercero_id": {
-                        "type": "string"
-                    },
-                    "tercero_name": {
-                        "type": "string"
-                    },
-                    "subtotal": {
-                        "type": "string"
-                    },
-                    "tax_total": {
-                        "type": "string"
-                    },
-                    "withholding_total": {
-                        "type": "string"
-                    },
-                    "net_total": {
-                        "type": "string"
-                    },
-                    "paid_amount": {
-                        "type": "string"
-                    },
-                    "balance": {
-                        "title": "What the client still owes: nothing on a draft or a voided invoice.",
                         "type": "string"
                     }
                 },
