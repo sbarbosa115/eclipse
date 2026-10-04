@@ -1088,6 +1088,97 @@ header fields; money and dates in Colombian format; the console has no errors.
 
 <!-- Owned by item 11 "cash-receipt" (RC-01 – 19). -->
 
+Recibos de caja at **`/recibos-caja`**. Every case runs as the owner of a company with its invoicing resolution (prefix
+`FE`), a client **Distribuciones Andina S.A.S.** with a billing e-mail, and emitted facturas de venta for it with a part
+on **Crédito** (section 8), unless it says otherwise. A receipt has no draft: **Guardar** emits it.
+
+**RC-01 · A company without receipts is told what the section is for**
+Smoke: `e2e/cashReceipt.spec.ts`.
+A brand-new company › **Recibos de caja** › **Registrar el primer recibo**.
+**Expected:** the list says "Aún no has registrado recibos de caja…"; the new receipt says "Elige el cliente para ver
+sus facturas pendientes.", *Dónde ingresa el dinero* lists Efectivo, Tarjeta débito, Tarjeta crédito and Transferencia
+but not Crédito, Fecha is today as DD/MM/AAAA, and **Guardar** is disabled.
+
+**RC-02 · A receipt for the 30-day receivable pays the invoice (AC-4)**
+Smoke: `e2e/cashReceipt.spec.ts`; by hand: the libro diario.
+The invoice of SAL-02 (595.000 cash, 595.000 at 30 days) › **Nuevo recibo** › Cliente `Dis…` › Distribuciones Andina ›
+Transferencia › Valor recibido `595.000` › **Pagar todo** on FE-1 › **Guardar**.
+**Expected:** the table shows FE-1 with fecha, vencimiento (30 days on), valor and saldo $ 595.000,00; "✓ Cuadra…" once
+the row is paid; "Recibo RC-1 guardado y contabilizado." on the receipt, read-only. FE-1 is **Pagada**. Libro diario:
+one entry RC-1, Dr 11100501 595.000, Cr 13050501 595.000 (the client); the client's 1305 balance is zero.
+
+**RC-03 · The running difference holds Guardar until it is zero**
+Smoke: `e2e/cashReceipt.spec.ts`.
+Two invoices on crédito › Valor recibido `700000` › `595000` on the first › `200000` on the second › `595000,01` on the
+first › `500000` on the first.
+**Expected:** "Falta aplicar $ 105.000,00.", then "Aplicaste $ 95.000,00 de más.", then "Supera el saldo de la
+factura." under the row, each with Guardar disabled; then "✓ Cuadra…" and Guardar enabled. Amounts may be typed as
+`595.000`, `595000,5` or `595000.50`.
+
+**RC-04 · A receipt is voided with a reason and the invoice is owed again**
+Smoke: `e2e/cashReceipt.spec.ts`; by hand: the libro diario.
+A receipt paying FE-1 in full › open it › **Anular** › **Anular recibo** with no reason › `Cheque devuelto` › **Anular
+recibo**.
+**Expected:** without a reason "Escribe el motivo de la anulación."; then "Recibo RC-1 anulado.", "Anulado el … Motivo:
+Cheque devuelto", no Anular; FE-1 is **Emitida** with its saldo again; the libro diario shows the reversing entry
+dated today; the next receipt is RC-2.
+
+**RC-05 · The list searches, filters and offers a way back**
+Smoke: `e2e/cashReceipt.spec.ts` (status, search); by hand: Desde / Hasta.
+Two receipts › **Estado** Anulado › **Ver todo** › search `RC-1`, then `andina`; **Desde** / **Hasta** around a date.
+**Expected:** newest first, each row with its number and badge, cliente, fecha, dónde ingresó, the invoices it paid and
+the valor (right-aligned), tinted by status with the legend; Anulado with none says "Ningún recibo coincide con estos
+filtros." and **Ver todo** clears every filter.
+
+**RC-06 · Guardar y enviar mails the PDF to the client**
+Smoke: `e2e/cashReceipt.spec.ts`; by hand: open the attachment.
+A receipt filled in › **Guardar y enviar**.
+**Expected:** "Recibo RC-1 guardado; el correo con el PDF va en camino."; in Mailpit "Recibo de caja RC-1 de …" to the
+client's billing e-mail with `recibo-de-caja-RC-1.pdf` attached. **Enviar** in the list or on the receipt sends it again.
+
+**RC-07 · A receipt that does not exist, or another company's, says so**
+Smoke: `e2e/cashReceipt.spec.ts`.
+Open `/recibos-caja/<an id of another company>`.
+**Expected:** "Este recibo no existe." with **Volver a recibos**.
+
+**RC-08 · The PDF reads as a recibo de caja, and ANULADA once voided**
+Open a receipt › **Descargar PDF**; then void it and download again.
+**Expected:** the company's header and logo, "Recibo de caja", "No. RC-1", the client with its NIT, the date, where the
+money came in, each invoice with the amount applied, "Total recibido", the observaciones and a signature line; after
+the void *ANULADA* across the page and "ANULADO el … Motivo: …".
+
+**RC-09 · A client with nothing owed, and a refusal from the server**
+A client whose invoices are all cash › **Nuevo recibo** › choose it. Then, in two tabs, the same receivable paid in full
+in each › **Guardar** in the first, then in the second.
+**Expected:** "Este cliente no tiene facturas pendientes por cobrar."; the second tab is refused with "Un valor aplicado
+supera el saldo de su factura…" and the table reloads with the saldo now left (zero rows if paid).
+
+**RC-10 · Nothing is received on or before the lock date (AC-9)**
+Contabilidad › fecha de bloqueo yesterday › a receipt dated yesterday › **Guardar**.
+**Expected:** "La fecha está en un periodo contable cerrado (fecha de bloqueo)." and nothing is numbered or applied; a
+receipt dated today saves. With the lock date today, **Anular** is refused the same way.
+
+**RC-11 · An invoice with a receipt applied is voided only after the receipt**
+FE-1 on crédito with a partial receipt (RC-04 without the void) › FE-1 in Facturas de venta.
+**Expected:** FE-1 is Pagada parcialmente without Anular; after voiding the receipt, FE-1 is Emitida and can be voided
+(SAL-24).
+
+**RC-12 · The accountant reads receipts and cannot change them**
+Signed in as the accountant (section 1).
+**Expected:** the list and every receipt open and the PDF downloads; no Nuevo recibo, Enviar or Anular anywhere;
+`/recibos-caja/nuevo` says "Tu rol no puede hacer esto con los recibos de caja."
+
+**RC-13 · A billing user receives**
+Signed in as a billing user: create, send and void a receipt.
+**Expected:** everything works as for the owner.
+
+**RC-14 · The screens on a tablet, in both themes**
+At 1366×768, 1024×768 and 768×1024, Tema Claro and Oscuro: the list with filters, a new receipt with three invoices,
+a receipt and a voided one, the void dialog.
+**Expected:** the client search list opens under its box; the allocation table's amount inputs and Pagar todo stay
+visible (the table scrolls inside its frame on a narrow screen); the difference line reads in both themes; the console
+has no errors.
+
 ## 12. Recibos de pago / egreso
 
 <!-- Owned by item 12 "supplier-payment" (PAY-01 – 19). -->

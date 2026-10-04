@@ -173,6 +173,13 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/sales-invoices/{id}/duplicate` | → 201 a new draft dated today with the same client, lines (taxes as copied) and payments (a crédito keeps its term). Owner and billing | 403; 404 |
 | POST | `/sales-invoices/{id}/send` | queues the e-mail with the PDF to the client's billing e-mail → 202. Owner and billing | 403; 404; 409 `document_not_emitted`; 422 `tercero_has_no_email` |
 | GET | `/sales-invoices/{id}/pdf` | the invoice's PDF (inline; *ANULADA* when voided, *BORRADOR* on a draft). Every role | 404 |
+| GET | `/cash-receipts` | page of `CashReceiptSummaryOutput` (number, date, client, method, amount, `invoice_numbers`), newest first: `?q=` part of the number or the client's name (literal), `?status=emitted\|voided`, `?from`, `?to` (receipt date, both included), `?tercero_id`, `?page`, `?per_page` ≤ 100. Every role | 400 `invalid_date` |
+| GET | `/cash-receipts/open-receivables` | `?tercero_id=` (required) → `{items: OpenReceivableOutput[]}`: the client's receivables with a balance, of invoices not voided, the soonest due first (`invoice_number`, `issue_date`, `due_date`, `amount`, `balance`). Every role | 400 `tercero_id_required`; 404 (a client the company does not have) |
+| GET | `/cash-receipts/{id}` | `CashReceiptOutput`: header, method, amount, allocations (receivable, invoice, amount), entry ids, created/voided by and at, `void_reason` | 404 |
+| POST | `/cash-receipts` | `{tercero_id, receipt_date, payment_method_id, amount, notes?, allocations: [{receivable_id, amount}], send?}` → 201 `CashReceiptOutput`, emitted: the RC number, each invoice collected (`partially_paid`/`paid`), the A.2 entry; `send: true` (*Guardar y enviar*) then queues the e-mail with the PDF. Owner and billing | 403; 409 `period_locked`; 422 `validation_failed` (`tercero_id`, `receipt_date` in the future, `payment_method_id` not an active contado method, `amount`, `allocations.N.receivable_id` unknown/another client's/twice, `allocations[N].amount`), `allocation_exceeds_balance`, `allocations_do_not_match_amount` (`detail`: `allocated_total`, `amount`), `tercero_has_no_email` |
+| POST | `/cash-receipts/{id}/void` | `{reason}` → `CashReceiptOutput` voided today: each allocation given back, reversing entry, number kept. Owner and billing | 403; 404; 409 `document_voided`, `period_locked`; 422 on `reason` |
+| POST | `/cash-receipts/{id}/send` | queues the e-mail with the PDF to the client's billing e-mail → 202. Owner and billing | 403; 404; 409 `document_not_emitted` (voided); 422 `tercero_has_no_email` |
+| GET | `/cash-receipts/{id}/pdf` | the receipt's PDF (inline; *ANULADA* when voided). Every role | 404 |
 
 ## Data model decisions
 
@@ -236,6 +243,29 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **Void** (`VoidSalesInvoiceHandler`): only an emitted invoice with `paid_amount` 0 and no allocation of a receipt that is not voided (`document_has_allocations`), dated today and after the lock date; the reversing entry (`JournalPoster::reverse`), the receivables voided, the number kept, reason and user recorded.
 - **E-mail** (`emit-and-send`, `send`): the command publishes `SalesInvoiceEmailRequested`; after the commit `MailSalesInvoice` renders the PDF and `QueuedSalesInvoiceMailer` puts it on the `async` queue (from `MAILER_FROM`, to the client's billing e-mail).
 - **Sales invoice writes are checked in the controller** (`Sales\UI\Http\SalesInvoiceAccess`): owner and billing write, emit, send and void; the accountant reads and downloads PDFs (§8). The "access" item's voters may replace it.
+- **A recibo de caja is emitted when saved** (`ReceiveCashHandler`, one transaction): a client of the company, an active
+  contado method with its account (copied with its name), a date not in the future (Colombian day) and after the lock
+  date, then `CashReceipt::issue()` checks the allocations (each positive, to an open receivable of *this* client, once,
+  ≤ its balance → `allocation_exceeds_balance`; Σ = Valor recibido → `allocations_do_not_match_amount`, §9 Q16: no
+  anticipos, no over-payment), takes `Numbering::cashReceipt()` and applies each allocation through
+  `InvoiceCollections::apply()`. A refusal rolls everything back, the number included.
+- **Two receipts never both pass the balance check.** Before checking, the handler locks the receivables it allocates
+  to and their invoices (`ReceivableLocks`, `SELECT … FOR UPDATE` in id order, re-read with Doctrine's refresh hint): a
+  second receipt for the same receivable waits for the first to commit and then sees the balance it left; two receipts
+  on different receivables of one invoice never overwrite its paid amount. `ReceivableLocksTest` proves it with two real
+  connections outside the test transaction (one waits, `innodb_lock_wait_timeout`), with a control that a plain read
+  does not wait. A void locks the receipt first, so it is given back once.
+- **Posting a receipt (A.2)** is `Sales\Application\Posting\CashReceiptPosting`: Dr the method's account for the amount;
+  Cr `clientes` with the client as tercero, one line per allocation described by the invoice number (so the client's
+  own receivable account applies, as on the invoice). A void (`VoidCashReceiptHandler`) is dated today, gives each
+  allocation back through `InvoiceCollections::unapply()` and posts `JournalPoster::reverse()`; the number is kept.
+- **Receipt e-mail** (`send: true`, `/send`): `CashReceiptEmailRequested` after the commit; `MailCashReceipt` renders the
+  PDF (`templates/pdf/cash_receipt/`) and `QueuedCashReceiptMailer` queues it.
+- **Receipt permissions are the voter's** (`#[IsGranted(Permission::READ_DOCUMENTS)]` on the controller,
+  `WRITE_DOCUMENTS` on create, void and send).
+- **The allocation table is generic** (`features/allocate-payment`): it takes open items (`OpenItem`: id, document,
+  dates, amount, balance) and the amounts as typed, and shows the running difference in exact cents; the recibo de
+  pago (item 12) passes payables. Amounts may be typed `1.190.000,50`, `595000,5` or `595000.50`.
 
 - **Users, invitations and resets (Access).** An e-mail is unique across the whole app (§9 Q22): inviting one
   registered in any company is refused. The owner invites billing users and accountants; an owner may then make
@@ -309,4 +339,9 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - Out of scope for stage 1 (PRD §2 and the technical plan): inventory, remissions, credit/debit notes, DIAN
   transmission, manual vouchers, saldos iniciales, régimen simple behaviour, UVT thresholds, cuotas, several
   resolutions, RUES autocomplete, Excel export, multi-company users.
+- Recibos de caja: no attachments yet (the PRD lists them; the form offers none); the client search is the page's own
+  combobox (the document editor's `SearchCombobox` is not exported from its widget): one shared combobox in
+  `shared/ui` would serve both. A receipt's client is any tercero (role Cliente not required, as on invoices).
+  `VoidSalesInvoiceHandler` reads the invoice without a row lock, so a receipt committing at the same instant as the
+  invoice's void is not excluded by a lock (the invoice item's to tighten).
 - Sales invoices: no *Vendedor* field in the form yet (the API takes `seller_id`, an empleado); no attachments on invoices (the form lists none and offers no upload); the read-only form previews a tax deactivated since as 0 (the saved totals are right, from the server); the PDF prints the DIAN fields stage 1 stores, no CUFE/QR (stage 4).
