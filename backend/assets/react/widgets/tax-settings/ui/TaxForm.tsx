@@ -219,7 +219,13 @@ export function TaxForm({tax, onClose, onSave}: Props) {
         error={errors.sales_account_id}
         optional
       >
-        <AccountPicker value={sales} onChange={setSales} />
+        <AccountPicker
+          value={sales}
+          onChange={(choice) => {
+            setSales(choice);
+            setErrors(({sales_account_id: _answered, ...rest}) => rest);
+          }}
+        />
       </Field>
       <Field
         label={t('taxes.form.purchaseAccount')}
@@ -227,7 +233,13 @@ export function TaxForm({tax, onClose, onSave}: Props) {
         error={errors.purchase_account_id}
         optional
       >
-        <AccountPicker value={purchases} onChange={setPurchases} />
+        <AccountPicker
+          value={purchases}
+          onChange={(choice) => {
+            setPurchases(choice);
+            setErrors(({purchase_account_id: _answered, ...rest}) => rest);
+          }}
+        />
       </Field>
     </FormModal>
   );

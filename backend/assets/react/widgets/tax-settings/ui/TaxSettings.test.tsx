@@ -200,6 +200,42 @@ describe('Configuración › Impuestos', () => {
     expect(await screen.findByText('Impuesto creado.')).toBeInTheDocument();
   });
 
+  it('drops the account message once a valid account is typed (M6)', async () => {
+    fakeApi({
+      'GET /me': [200, sessionOf('accountant')],
+      'GET /settings/taxes': [200, {items: []}],
+      'GET /accounts/search': [
+        200,
+        {
+          items: [
+            {id: 'a1', code: '240805', name: 'IVA generado', postable: true},
+          ],
+        },
+      ],
+    });
+    renderTab();
+    await userEvent.click(
+      await screen.findByRole('button', {name: 'Nuevo impuesto'}),
+    );
+    const dialog = screen.getByRole('dialog', {name: 'Nuevo impuesto'});
+    const account = within(dialog).getByLabelText(/Cuenta en ventas/);
+    await userEvent.type(account, 'no es una cuenta');
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Guardar'}),
+    );
+    expect(
+      await within(dialog).findByText('Elige una cuenta de la lista.'),
+    ).toBeInTheDocument();
+
+    await userEvent.clear(account);
+    await userEvent.type(account, '240805');
+
+    await waitFor(() => expect(account).toHaveValue('240805 · IVA generado'));
+    expect(
+      within(dialog).queryByText('Elige una cuenta de la lista.'),
+    ).toBeNull();
+  });
+
   it('accepts a decimal comma and sends a decimal point', async () => {
     const api = fakeApi({
       'GET /me': [200, sessionOf('owner')],

@@ -122,7 +122,13 @@ export function PaymentMethodForm({method, onClose, onSave}: Props) {
           error={errors.account_id}
           className={editing ? 'span-2' : undefined}
         >
-          <AccountPicker value={account} onChange={setAccount} />
+          <AccountPicker
+            value={account}
+            onChange={(choice) => {
+              setAccount(choice);
+              setErrors(({account_id: _answered, ...rest}) => rest);
+            }}
+          />
         </Field>
       ) : (
         <p className="span-2 muted small">

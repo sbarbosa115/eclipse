@@ -25,6 +25,17 @@ import {PaymentsSection} from './PaymentsSection';
 import {TotalsPanel} from './TotalsPanel';
 import './documentEditor.css';
 
+const NO_ERRORS: EditorErrors = {};
+
+/** The error keys a change to a line answers: editing a cell clears the message under it until the next check. */
+function answeredKeys(index: number, change: object): string[] {
+  return Object.keys(change).flatMap((field) =>
+    field === 'kind' || field === 'product' || field === 'account'
+      ? [`lines.${index}.product`, `lines.${index}.account`]
+      : [`lines.${index}.${field}`],
+  );
+}
+
 export interface DocumentEditorProps {
   kind: DocumentKind;
   value: DocumentDraft;
@@ -52,7 +63,7 @@ export function DocumentEditor({
   value,
   onChange,
   readOnly = false,
-  errors = {},
+  errors: given = NO_ERRORS,
   headerExtra,
   footerExtra,
   onAttach,
@@ -65,6 +76,22 @@ export function DocumentEditor({
     text: string;
   } | null>(null);
   const [taxesFor, setTaxesFor] = useState<string | null>(null);
+  // Messages the person has since answered by editing their cell: hidden until the page checks again (new errors).
+  const [answered, setAnswered] = useState<{
+    of: EditorErrors;
+    keys: string[];
+  }>({of: given, keys: []});
+  const errors = useMemo(() => {
+    if (answered.of !== given || answered.keys.length === 0) return given;
+    return Object.fromEntries(
+      Object.entries(given).filter(([key]) => !answered.keys.includes(key)),
+    ) as EditorErrors;
+  }, [answered, given]);
+  const answer = (index: number, change: object) =>
+    setAnswered((a) => ({
+      of: given,
+      keys: [...(a.of === given ? a.keys : []), ...answeredKeys(index, change)],
+    }));
 
   const totals = useMemo(
     () =>
@@ -106,9 +133,10 @@ export function DocumentEditor({
           chargeTaxes={options.inForce.charge}
           withholdingTaxes={options.inForce.withholding}
           knownTaxes={[...options.chargeTaxes, ...options.withholdingTaxes]}
-          onChange={(index, change) =>
-            onChange(updateLine(value, index, change))
-          }
+          onChange={(index, change) => {
+            answer(index, change);
+            onChange(updateLine(value, index, change));
+          }}
           onAdd={() => onChange(addLine(value))}
           onRemove={(index) => onChange(removeLine(value, index))}
           onMove={(from, to) => onChange(moveLine(value, from, to))}

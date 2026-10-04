@@ -789,6 +789,29 @@ describe('the document form (§4.6)', () => {
       ).toBeInTheDocument();
     });
 
+    it('hides a line’s message once its cell is edited, until the next check (M6)', async () => {
+      api();
+      const user = userEvent.setup();
+      renderEditor({
+        value: draft({lines: [line({quantity: '0'})]}),
+        errors: {
+          'tercero': 'Elige el tercero.',
+          'lines.0.quantity': 'La cantidad debe ser mayor que cero.',
+        },
+      });
+
+      await user.type(screen.getByLabelText('Cantidad, línea 1'), '2');
+
+      expect(screen.getByLabelText('Cantidad, línea 1')).not.toBeInvalid();
+      expect(
+        screen.queryByText('La cantidad debe ser mayor que cero.'),
+      ).toBeNull();
+      expect(
+        screen.getByRole('combobox', {name: 'Cliente'}),
+        'a message the person has not answered stays',
+      ).toHaveAccessibleDescription('Elige el tercero.');
+    });
+
     it('only shows a document that cannot be edited', async () => {
       api();
       renderEditor({

@@ -205,7 +205,10 @@ export function ProductFormModal({
         >
           <AccountPicker
             value={data.revenue_account}
-            onChange={(choice) => set('revenue_account', choice)}
+            onChange={(choice) => {
+              set('revenue_account', choice);
+              setErrors(({revenue_account_id: _answered, ...rest}) => rest);
+            }}
           />
         </Field>
         <Field
@@ -216,7 +219,10 @@ export function ProductFormModal({
         >
           <AccountPicker
             value={data.expense_account}
-            onChange={(choice) => set('expense_account', choice)}
+            onChange={(choice) => {
+              set('expense_account', choice);
+              setErrors(({expense_account_id: _answered, ...rest}) => rest);
+            }}
           />
         </Field>
       </div>
