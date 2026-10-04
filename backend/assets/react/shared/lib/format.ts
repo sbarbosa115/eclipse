@@ -12,10 +12,22 @@ export function formatMoney(amount: string | null | undefined): string {
   return COP.format(Number(amount)).replace(/\u00a0/g, ' ');
 }
 
-/** "2026-10-03" → "03/10/2026". */
+const BOGOTA_DAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Bogota',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/**
+ * "2026-10-03" → "03/10/2026". A moment ("2026-10-04T02:00:00+00:00", when something was emitted or voided) is shown
+ * on Colombia's calendar: 9 p.m. in Bogotá is still the 3rd, whatever UTC says.
+ */
 export function formatDate(isoDate: string | null | undefined): string {
   if (!isoDate) return '';
-  const [y, m, d] = isoDate.slice(0, 10).split('-');
+  const day =
+    isoDate.length > 10 ? BOGOTA_DAY.format(new Date(isoDate)) : isoDate;
+  const [y, m, d] = day.slice(0, 10).split('-');
   return `${d}/${m}/${y}`;
 }
 

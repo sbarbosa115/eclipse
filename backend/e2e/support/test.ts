@@ -12,7 +12,10 @@ export const DEMO = {
 /** The password of every company a test signs up. */
 export const PASSWORD = 'smoke-password-123';
 
-let addresses = 0;
+// Playwright starts a new worker process after a failed test, and module state starts over with it: a counter from 0
+// would hand the next tests addresses that already used up their sign-ups, and one failure would turn every later
+// test into a 429. Each process starts at its own random offset instead.
+let addresses = Math.floor(Math.random() * 60_000);
 let companies = 0;
 
 /**

@@ -167,6 +167,10 @@ test('PUR-02 · a service bought on credit is saved as a draft from the form', a
   await page.getByLabel('Número de factura del proveedor').fill('FAC-881');
   await page.getByLabel('Tipo de línea 1').selectOption('account');
   await page.getByLabel('Producto/Servicio o cuenta, línea 1').fill('513595');
+  // The picker looks the code up (after a short pause) and shows the account it chose, as a person would wait for.
+  await expect(
+    page.getByLabel('Producto/Servicio o cuenta, línea 1'),
+  ).toHaveValue(/^513595 · /);
   await page
     .getByLabel('Descripción, línea 1')
     .fill('Mantenimiento de equipos');

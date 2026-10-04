@@ -1,8 +1,8 @@
-/** Today as YYYY-MM-DD, in the browser's time zone. */
+import {todayInColombia} from '@/shared/lib';
+
+/** Today as YYYY-MM-DD in Colombia's calendar (the server's). */
 export function today(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return todayInColombia();
 }
 
 /** The first day of this year: reports default to the year so far. */

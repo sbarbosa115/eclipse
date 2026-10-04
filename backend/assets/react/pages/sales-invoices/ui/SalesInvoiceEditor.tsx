@@ -411,7 +411,7 @@ export function SalesInvoiceEditor() {
       {invoice?.status === 'voided' && (
         <Alert kind="info">
           {t('salesInvoice.editor.voidedInfo', {
-            date: formatDate(invoice.voided_at?.slice(0, 10)),
+            date: formatDate(invoice.voided_at),
             reason: invoice.void_reason ?? '',
           })}
         </Alert>

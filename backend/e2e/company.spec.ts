@@ -28,8 +28,13 @@ const openResolution = async (page: Page) => {
   await expect(page.getByLabel('Número de resolución')).toBeVisible();
 };
 
+/** A day in Colombia's calendar (the server's), `offsetDays` from today. */
 const isoDay = (offsetDays: number): string => {
-  const d = new Date(Date.now() + offsetDays * 86_400_000);
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+  }).format(new Date());
+  const d = new Date(`${today}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + offsetDays);
   return d.toISOString().slice(0, 10);
 };
 

@@ -1,3 +1,4 @@
+import {todayInColombia} from '@/shared/lib';
 import type {Translate} from '@/shared/i18n';
 import {formatMoney} from '@/shared/lib';
 import {Decimal} from '../lib/decimal';
@@ -20,10 +21,9 @@ function newKey(prefix: string): string {
   return `${prefix}${counter}`;
 }
 
-/** Today in the browser's calendar, as the API writes dates (YYYY-MM-DD). */
+/** Today in Colombia's calendar (the server's), as the API writes dates (YYYY-MM-DD). */
 export function todayIso(now: Date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return todayInColombia(now);
 }
 
 export function emptyLine(): DraftLine {
