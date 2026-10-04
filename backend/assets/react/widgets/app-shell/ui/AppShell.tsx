@@ -1,6 +1,11 @@
 import {Suspense, useEffect, useState} from 'react';
 import {Navigate, NavLink, Outlet, useLocation} from 'react-router-dom';
-import {useSession, type Role, type Session} from '@/entities/session';
+import {
+  can,
+  useSession,
+  type Permission,
+  type Session,
+} from '@/entities/session';
 import {useTranslation} from '@/shared/i18n';
 import {formatNit} from '@/shared/lib';
 import {
@@ -18,8 +23,8 @@ interface NavItem {
   label: string;
   icon: string;
   end?: boolean;
-  /** Who sees it; everyone when absent. */
-  roles?: Role[];
+  /** Who sees it: anyone with one of these permissions (everyone when absent). */
+  anyOf?: Permission[];
 }
 
 interface NavSection {
@@ -77,7 +82,7 @@ const MENU: NavSection[] = [
         to: '/configuracion',
         label: 'shell.nav.settings',
         icon: 'store',
-        roles: ['owner', 'accountant'],
+        anyOf: ['MANAGE_SETTINGS', 'MANAGE_BOOKS'],
       },
     ],
   },
@@ -87,7 +92,7 @@ function menuFor(session: Session): NavSection[] {
   return MENU.map((section) => ({
     ...section,
     items: section.items.filter(
-      (item) => !item.roles || item.roles.includes(session.role as Role),
+      (item) => !item.anyOf || item.anyOf.some((p) => can(session, p)),
     ),
   })).filter((section) => section.items.length > 0);
 }

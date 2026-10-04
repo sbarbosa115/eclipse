@@ -37,7 +37,7 @@ export function CashReceiptView() {
   const location = useLocation();
   const {id = ''} = useParams();
   const {session} = useSession();
-  const writer = canWriteCashReceipts(session?.role);
+  const writer = canWriteCashReceipts(session);
   const [load, setLoad] = useState<Load>({status: 'loading'});
   const [notice, setNotice] = useState<string | null>(
     (location.state as {notice?: string} | null)?.notice ?? null,

@@ -4,6 +4,7 @@ namespace App\Sales\UI\Http;
 
 use App\Sales\Domain\Error\SalesInvoiceNotFound;
 use App\Sales\Domain\Error\SalesInvoicesAreReadOnly;
+use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Component\Uid\Uuid;
 
@@ -13,10 +14,10 @@ use Symfony\Component\Uid\Uuid;
  */
 final class SalesInvoiceAccess
 {
-    /** The owner and billing users write; the accountant reads (§8, §9 Q23). */
+    /** Who may write sales invoices: Permission::WRITE_DOCUMENTS (§8). */
     public function mayWrite(SignedInUser $user): void
     {
-        if (!\in_array($user->role(), ['owner', 'billing'], true)) {
+        if (!Permission::granted($user->role(), Permission::WRITE_DOCUMENTS)) {
             throw new SalesInvoicesAreReadOnly();
         }
     }

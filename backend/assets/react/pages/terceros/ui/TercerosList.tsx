@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {Link, useLocation, useSearchParams} from 'react-router-dom';
-import {useSession} from '@/entities/session';
+import {useSession, can, type Session} from '@/entities/session';
 import {
   deactivateTercero,
   deleteTercero,
@@ -40,15 +40,15 @@ type Result =
 
 type Pending = {kind: 'delete' | 'deactivate'; tercero: TerceroSummary};
 
-/** Who may create, edit, deactivate and delete: the owner and billing users (the accountant reads). */
-export const canWriteTerceros = (role: string | undefined) =>
-  role === 'owner' || role === 'billing';
+/** Who may create, edit, deactivate and delete: whoever the server grants WRITE_DOCUMENTS (§8). */
+export const canWriteTerceros = (session: Session | null | undefined) =>
+  can(session, 'WRITE_DOCUMENTS');
 
 export function TercerosList() {
   const {t} = useTranslation();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWriteTerceros(session?.role);
+  const writer = canWriteTerceros(session);
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const role = (params.get('role') ?? '') as Role | '';

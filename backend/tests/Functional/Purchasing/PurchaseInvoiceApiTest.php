@@ -288,22 +288,21 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         self::assertStringContainsString('FC-1', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
     }
 
-    public function testTheAccountantReadsButDoesNotWrite(): void
+    public function testTheAccountantReadsAndWrites(): void
     {
         $draft = $this->createDraft();
         $this->signInAs('accountant');
 
         self::assertSame(1, $this->getJson('/api/v1/purchase-invoices')['total']);
-        $this->getJson("/api/v1/purchase-invoices/{$draft['id']}");
-        self::assertResponseIsSuccessful();
+        // §8 as changed on 2026-10-04: the accountant writes every document.
         $this->sendJson('POST', '/api/v1/purchase-invoices', $this->payload(['supplier_invoice_number' => 'X-1']));
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseStatusCodeSame(201);
         $this->sendJson('PUT', "/api/v1/purchase-invoices/{$draft['id']}", $this->payload());
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseIsSuccessful();
         $this->sendJson('POST', "/api/v1/purchase-invoices/{$draft['id']}/duplicate", []);
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseIsSuccessful();
         $this->upload($draft['id'], 'factura.pdf', self::pdfBytes());
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseIsSuccessful();
     }
 
     public function testAnotherCompanysInvoiceIsNotFound(): void

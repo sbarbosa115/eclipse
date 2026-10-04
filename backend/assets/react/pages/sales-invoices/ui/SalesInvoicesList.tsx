@@ -10,7 +10,7 @@ export function SalesInvoicesList() {
   const {t} = useTranslation();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWriteSalesInvoices(session?.role);
+  const writer = canWriteSalesInvoices(session);
 
   return (
     <>

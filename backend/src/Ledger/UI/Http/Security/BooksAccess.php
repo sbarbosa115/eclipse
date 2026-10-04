@@ -3,6 +3,7 @@
 namespace App\Ledger\UI\Http\Security;
 
 use App\Shared\UI\Http\ApiException;
+use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 
 /**
@@ -12,11 +13,9 @@ use App\Shared\UI\Http\Security\SignedInUser;
  */
 final class BooksAccess
 {
-    private const KEEPERS = ['owner', 'accountant'];
-
     public static function mayKeepTheBooks(SignedInUser $user): bool
     {
-        return \in_array($user->role(), self::KEEPERS, true);
+        return Permission::granted($user->role(), Permission::MANAGE_BOOKS);
     }
 
     /** @throws ApiException 403 */

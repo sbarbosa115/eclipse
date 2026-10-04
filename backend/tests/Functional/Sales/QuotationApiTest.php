@@ -308,34 +308,19 @@ final class QuotationApiTest extends ApiTestCase
         self::assertSame('ANULADA', $document['banner']);
     }
 
-    public function testTheAccountantReadsButDoesNotWrite(): void
+    public function testTheAccountantWritesQuotations(): void
     {
         $client = $this->client();
         $product = $this->service();
-        $draft = $this->quotationDraft($this->quotationPayload($client, $product));
         $this->signInAs(Role::Accountant);
 
-        self::assertSame(1, $this->getJson('/api/v1/quotations')['total']);
-        $this->getJson('/api/v1/quotations/'.$draft['id']);
-        self::assertResponseIsSuccessful();
-        $this->client->request('GET', '/api/v1/quotations/'.$draft['id'].'/pdf');
-        self::assertResponseIsSuccessful();
-
-        foreach ([
-            ['POST', '/api/v1/quotations', $this->quotationPayload($client, $product)],
-            ['PUT', '/api/v1/quotations/'.$draft['id'], $this->quotationPayload($client, $product)],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/emit', []],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/emit-and-send', []],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/send', []],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/accept', []],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/reject', []],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/void', ['reason' => 'x']],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/convert', []],
-            ['POST', '/api/v1/quotations/'.$draft['id'].'/duplicate', []],
-        ] as [$method, $uri, $payload]) {
-            $this->sendJson($method, $uri, $payload);
-            self::assertResponseStatusCodeSame(403, "§8: the accountant may not $method $uri.");
-        }
+        // §8 as changed on 2026-10-04: the accountant writes every document.
+        $draft = $this->sendJson('POST', '/api/v1/quotations', $this->quotationPayload($client, $product));
+        self::assertResponseStatusCodeSame(201);
+        $this->sendJson('POST', '/api/v1/quotations/'.$draft['id'].'/emit', []);
+        self::assertResponseIsSuccessful('The accountant emits a quotation.');
+        $this->sendJson('POST', '/api/v1/quotations/'.$draft['id'].'/convert', []);
+        self::assertResponseIsSuccessful('and converts it.');
     }
 
     public function testABillingUserWrites(): void

@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {
@@ -41,7 +41,7 @@ const KNOWN_ERRORS = [
 export function PaymentMethodSettings() {
   const {t} = useTranslation();
   const {session} = useSession();
-  const canEdit = session?.role === 'owner' || session?.role === 'accountant';
+  const canEdit = can(session, 'MANAGE_BOOKS');
   const [methods, setMethods] = useState<PaymentMethod[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [filter, setFilter] = useState('all');

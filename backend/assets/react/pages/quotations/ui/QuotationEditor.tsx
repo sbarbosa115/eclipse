@@ -82,7 +82,7 @@ export function QuotationEditor() {
   const location = useLocation();
   const {id: routeId} = useParams();
   const {session} = useSession();
-  const writer = canWriteQuotations(session?.role);
+  const writer = canWriteQuotations(session);
 
   const [id, setId] = useState<string | null>(routeId ?? null);
   const [quotation, setQuotation] = useState<Quotation | null>(null);

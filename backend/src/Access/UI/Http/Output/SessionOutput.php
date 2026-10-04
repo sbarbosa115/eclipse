@@ -17,6 +17,13 @@ final readonly class SessionOutput
         public string $companyName,
         public string $companyNit,
         public ?string $companyCheckDigit,
+        /**
+         * What this person may do (Shared\UI\Http\Security\Permission names): the UI shows or hides actions by it,
+         * never by the role's name.
+         *
+         * @var list<string>
+         */
+        public array $permissions = [],
     ) {
     }
 }

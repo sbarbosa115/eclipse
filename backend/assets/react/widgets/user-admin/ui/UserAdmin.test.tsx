@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {SessionProvider} from '@/entities/session';
@@ -9,6 +10,7 @@ const sessionOf = (role: string) => ({
   email: 'ana@acme.co',
   name: 'Ana Pérez',
   role,
+  permissions: permissionsOf(role),
   company_id: 'c1',
   company_name: 'Acme',
   company_nit: '900123456',
@@ -20,6 +22,14 @@ const user = (over: Record<string, unknown> = {}) => ({
   email: 'ana@acme.co',
   name: 'Ana Pérez',
   role: 'owner',
+  permissions: [
+    'MANAGE_USERS',
+    'MANAGE_SETTINGS',
+    'MANAGE_BOOKS',
+    'VIEW_BOOKS',
+    'WRITE_DOCUMENTS',
+    'READ_DOCUMENTS',
+  ],
   status: 'active',
   is_you: true,
   created_at: '2026-10-01T10:00:00+00:00',

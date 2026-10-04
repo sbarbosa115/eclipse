@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
@@ -10,6 +11,7 @@ const session = (role: string) => ({
   email: 'ana@acme.co',
   name: 'Ana',
   role,
+  permissions: permissionsOf(role),
   company_id: 'c1',
   company_name: 'Acme',
   company_nit: '900123456',
@@ -221,8 +223,8 @@ describe('the recibos de caja list', () => {
     });
   });
 
-  it('lets the accountant read and download, nothing more', async () => {
-    api('accountant', {'GET /cash-receipts': [200, page([summary()])]});
+  it('lets someone who may only read read and download, nothing more', async () => {
+    api('reader', {'GET /cash-receipts': [200, page([summary()])]});
     renderAt('');
 
     const row = (await screen.findByText('Cliente Uno S.A.S.')).closest('tr')!;

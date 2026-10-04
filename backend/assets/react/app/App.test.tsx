@@ -8,6 +8,7 @@ const ANA = {
   email: 'ana@acme.co',
   name: 'Ana Pérez',
   role: 'billing',
+  permissions: ['WRITE_DOCUMENTS', 'READ_DOCUMENTS'],
   company_id: 'c1',
   company_name: 'Acme S.A.S.',
   company_nit: '900123456',

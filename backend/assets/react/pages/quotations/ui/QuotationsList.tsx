@@ -10,7 +10,7 @@ export function QuotationsList() {
   const {t} = useTranslation();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWriteQuotations(session?.role);
+  const writer = canWriteQuotations(session);
   return (
     <>
       <PageHeader

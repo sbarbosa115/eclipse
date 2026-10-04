@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {useTranslation} from '@/shared/i18n';
 import {
   Actions,
@@ -22,7 +22,7 @@ import './rules.css';
 export function PostingRules() {
   const {t} = useTranslation();
   const {session} = useSession();
-  const keeper = session?.role === 'owner' || session?.role === 'accountant';
+  const keeper = can(session, 'MANAGE_BOOKS');
   const [rules, setRules] = useState<PostingRule[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);

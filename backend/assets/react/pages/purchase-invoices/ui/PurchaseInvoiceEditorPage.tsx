@@ -64,7 +64,7 @@ export function PurchaseInvoiceEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWritePurchases(session?.role);
+  const writer = canWritePurchases(session);
   const typeLabel = t('purchaseInvoice.typeLabel');
   const arrival = location.state as Arrival;
 

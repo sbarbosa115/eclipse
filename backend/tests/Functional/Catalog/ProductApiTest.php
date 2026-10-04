@@ -512,41 +512,30 @@ final class ProductApiTest extends ApiTestCase
         self::assertSame(['Unidad', 'Kilogramo', 'Metro', 'Hora', 'Servicio'], array_column($units, 'name'));
     }
 
-    public function testBillingWritesAndTheAccountantOnlyReads(): void
+    public function testBillingAndTheAccountantBothWriteTheCatalog(): void
     {
         $this->startCompany();
         $product = $this->createProduct('A', 'Uno');
-        $category = $this->sendJson('POST', '/api/v1/product-categories', ['name' => 'Aseo']);
 
+        // §8 as changed on 2026-10-04: the accountant writes every document and master, like the billing user.
         $this->signInAs(Role::Accountant);
         self::assertSame(1, $this->getJson('/api/v1/products')['total'], 'The accountant reads products.');
-        $this->getJson('/api/v1/products/'.$product['id']);
-        self::assertResponseIsSuccessful();
-        self::assertCount(1, $this->getJson('/api/v1/product-categories')['items']);
-        self::assertCount(5, $this->getJson('/api/v1/products/units')['items']);
-
         $payload = ['type' => 'producto', 'code' => 'N', 'name' => 'N', 'sale_price' => '1'];
         foreach ([
             ['POST', '/api/v1/products', $payload],
-            ['POST', '/api/v1/products/quick', $payload],
-            ['PUT', '/api/v1/products/'.$product['id'], $payload],
+            ['PUT', '/api/v1/products/'.$product['id'], ['type' => 'producto', 'code' => 'A', 'name' => 'Uno bis', 'sale_price' => '2']],
             ['PUT', '/api/v1/products/'.$product['id'].'/taxes', ['charge_tax_id' => null, 'withholding_tax_id' => null]],
             ['POST', '/api/v1/products/'.$product['id'].'/deactivate', []],
             ['POST', '/api/v1/products/'.$product['id'].'/reactivate', []],
             ['POST', '/api/v1/product-categories', ['name' => 'Nueva']],
-            ['PUT', '/api/v1/product-categories/'.$category['id'], ['name' => 'Otra']],
         ] as [$method, $uri, $body]) {
             $this->sendJson($method, $uri, $body);
-            self::assertResponseStatusCodeSame(403, "The accountant cannot $method $uri.");
+            self::assertResponseIsSuccessful("The accountant may $method $uri.");
         }
-        $this->client->request('DELETE', '/api/v1/products/'.$product['id']);
-        self::assertResponseStatusCodeSame(403);
 
         $this->signInAs(Role::Billing);
-        $this->createProduct('N', 'Nuevo');
+        $this->createProduct('B', 'Otro');
         self::assertResponseStatusCodeSame(201, 'A billing user writes the catalog.');
-        $this->sendJson('POST', '/api/v1/product-categories', ['name' => 'Nueva']);
-        self::assertResponseStatusCodeSame(201);
     }
 
     public function testSignedOutIsRefused(): void

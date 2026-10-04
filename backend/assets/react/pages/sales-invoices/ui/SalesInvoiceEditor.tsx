@@ -69,7 +69,7 @@ export function SalesInvoiceEditor() {
   const location = useLocation();
   const {id: routeId} = useParams();
   const {session} = useSession();
-  const writer = canWriteSalesInvoices(session?.role);
+  const writer = canWriteSalesInvoices(session);
 
   const [id, setId] = useState<string | null>(routeId ?? null);
   const [invoice, setInvoice] = useState<SalesInvoice | null>(null);

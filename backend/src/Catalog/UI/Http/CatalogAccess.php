@@ -5,16 +5,17 @@ namespace App\Catalog\UI\Http;
 use App\Catalog\Domain\Error\CatalogIsReadOnly;
 use App\Catalog\Domain\Error\CategoryNotFound;
 use App\Catalog\Domain\Error\ProductNotFound;
+use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Component\Uid\Uuid;
 
 /** What both catalog controllers check before they act: who may write, and that an id in the URL is one. */
 final class CatalogAccess
 {
-    /** The owner and billing users write the catalog; the accountant reads it (§8). */
+    /** Who may write the catalog: Permission::WRITE_DOCUMENTS (§8). */
     public function mayWrite(SignedInUser $user): void
     {
-        if (!\in_array($user->role(), ['owner', 'billing'], true)) {
+        if (!Permission::granted($user->role(), Permission::WRITE_DOCUMENTS)) {
             throw new CatalogIsReadOnly();
         }
     }

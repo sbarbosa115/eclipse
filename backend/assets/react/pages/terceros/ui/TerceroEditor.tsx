@@ -46,7 +46,7 @@ export function TerceroEditor() {
     };
   }, [id, attempt]);
 
-  const writer = canWriteTerceros(session?.role);
+  const writer = canWriteTerceros(session);
   const back = (
     <Link to="/terceros" className="btn btn-ghost">
       {t('terceros.form.back')}

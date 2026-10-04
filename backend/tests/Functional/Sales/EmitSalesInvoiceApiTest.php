@@ -230,17 +230,13 @@ final class EmitSalesInvoiceApiTest extends ApiTestCase
         self::assertSame('document_not_emitted', $this->body()['error']);
     }
 
-    public function testTheAccountantCannotEmit(): void
+    public function testTheAccountantEmits(): void
     {
         $draft = $this->draft($this->payload($this->client(), $this->service()));
         $this->signInAs(Role::Accountant);
 
         $this->sendJson('POST', '/api/v1/sales-invoices/'.$draft['id'].'/emit', []);
-        self::assertResponseStatusCodeSame(403, '§8: the accountant cannot emit commercial documents.');
-
-        $this->signInAs(Role::Billing);
-        $this->sendJson('POST', '/api/v1/sales-invoices/'.$draft['id'].'/emit', []);
-        self::assertResponseIsSuccessful('A billing user emits.');
+        self::assertResponseIsSuccessful('§8 as changed on 2026-10-04: the accountant emits commercial documents.');
     }
 
     public function testAnotherCompanysInvoiceIsNotFound(): void

@@ -324,27 +324,17 @@ final class CashReceiptApiTest extends ApiTestCase
         self::assertStringContainsString('Motivo: Consignación rechazada', $html);
     }
 
-    public function testTheAccountantReadsButDoesNotReceiveOrVoid(): void
+    public function testTheAccountantReceivesAndVoids(): void
     {
         $invoice = $this->onCredit($this->cliente);
-        $receipt = $this->receive($this->cliente, '100.00', [[$invoice['receivables'][0]['id'], '100.00']]);
         $payload = $this->receiptPayload($this->cliente, '100.00', [[$invoice['receivables'][0]['id'], '100.00']]);
         $this->signInAs(Role::Accountant);
 
-        self::assertCount(1, $this->getJson('/api/v1/cash-receipts')['items'], '§8: the accountant reads.');
-        $this->getJson('/api/v1/cash-receipts/'.$receipt['id']);
-        self::assertResponseIsSuccessful();
-        $this->getJson('/api/v1/cash-receipts/open-receivables?tercero_id='.$this->cliente);
-        self::assertResponseIsSuccessful();
-        $this->client->request('GET', '/api/v1/cash-receipts/'.$receipt['id'].'/pdf');
-        self::assertResponseIsSuccessful();
-
-        $this->sendJson('POST', '/api/v1/cash-receipts', $payload);
-        self::assertResponseStatusCodeSame(403, 'Cannot emit commercial documents.');
-        $this->sendJson('POST', '/api/v1/cash-receipts/'.$receipt['id'].'/void', ['reason' => 'x']);
-        self::assertResponseStatusCodeSame(403);
-        $this->sendJson('POST', '/api/v1/cash-receipts/'.$receipt['id'].'/send', []);
-        self::assertResponseStatusCodeSame(403);
+        // §8 as changed on 2026-10-04: the accountant writes every document.
+        $receipt = $this->sendJson('POST', '/api/v1/cash-receipts', $payload);
+        self::assertResponseStatusCodeSame(201, 'The accountant receives money.');
+        $this->sendJson('POST', '/api/v1/cash-receipts/'.$receipt['id'].'/void', ['reason' => 'Valor equivocado']);
+        self::assertResponseIsSuccessful('and voids a receipt.');
     }
 
     public function testABillingUserReceives(): void

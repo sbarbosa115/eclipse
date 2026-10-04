@@ -182,29 +182,20 @@ final class SalesInvoiceApiTest extends ApiTestCase
         self::assertStringStartsWith('%PDF-', (string) $this->client->getResponse()->getContent());
     }
 
-    public function testTheAccountantReadsButDoesNotWrite(): void
+    public function testTheAccountantWritesSalesInvoices(): void
     {
         $client = $this->client();
         $product = $this->service();
         $draft = $this->draft($this->payload($client, $product));
         $this->signInAs(Role::Accountant);
 
-        self::assertSame(1, $this->getJson('/api/v1/sales-invoices')['total'], 'The accountant reads the list.');
-        $this->getJson('/api/v1/sales-invoices/'.$draft['id']);
+        // §8 as changed on 2026-10-04: the accountant writes every document.
+        $this->sendJson('POST', '/api/v1/sales-invoices', $this->payload($client, $product));
+        self::assertResponseStatusCodeSame(201);
+        $this->sendJson('PUT', '/api/v1/sales-invoices/'.$draft['id'], $this->payload($client, $product));
         self::assertResponseIsSuccessful();
-        $this->client->request('GET', '/api/v1/sales-invoices/'.$draft['id'].'/pdf');
-        self::assertResponseIsSuccessful('and the PDF.');
-
-        foreach ([
-            ['POST', '/api/v1/sales-invoices', $this->payload($client, $product)],
-            ['PUT', '/api/v1/sales-invoices/'.$draft['id'], $this->payload($client, $product)],
-            ['POST', '/api/v1/sales-invoices/'.$draft['id'].'/duplicate', []],
-            ['POST', '/api/v1/sales-invoices/'.$draft['id'].'/void', ['reason' => 'x']],
-            ['POST', '/api/v1/sales-invoices/'.$draft['id'].'/send', []],
-        ] as [$method, $uri, $payload]) {
-            $this->sendJson($method, $uri, $payload);
-            self::assertResponseStatusCodeSame(403, "§8: the accountant may not $method $uri.");
-        }
+        $this->sendJson('POST', '/api/v1/sales-invoices/'.$draft['id'].'/duplicate', []);
+        self::assertResponseIsSuccessful();
     }
 
     public function testAnotherCompanySeesNothing(): void

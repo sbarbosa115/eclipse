@@ -343,7 +343,7 @@ digits and creates the auxiliares above as company accounts under their official
 |---|---|
 | Owner / administrator | Everything, including company settings, users, posting rules |
 | Billing user | Terceros, products, sales and purchase documents, receipts and payments, lists and PDFs |
-| Accountant | Everything the billing user can read; edit chart of accounts, taxes, posting rules, fecha de bloqueo; view ledger and reports; cannot emit commercial documents |
+| Accountant | Everything the billing user can do (create, emit and void every commercial document, terceros, products); edit chart of accounts, taxes, payment methods, posting rules, fecha de bloqueo; view ledger and reports. Not users, nor the company profile and resolution (owner only). *Changed 2026-10-04 by the user's decision: the accountant was read-only on documents* |
 
 ## 9. Open questions for this stage
 
@@ -391,7 +391,7 @@ posting rules and should be answered before implementation starts; the others ca
 | # | Question | Default assumed | Blocking |
 |---|---|---|---|
 | Q22 | One company per user, or may an accountant log into several companies? | One company per user; the model keeps user and company separate so this can change | Yes |
-| Q23 | Are three roles (owner, billing user, accountant) enough? May the accountant void documents or edit terceros? | Three roles; accountant is read-only on documents and terceros | No |
+| Q23 | Are three roles (owner, billing user, accountant) enough? May the accountant void documents or edit terceros? | Three roles. **Decided 2026-10-04: the accountant may do every document and books action**; users and company settings stay the owner's | No |
 | Q24 | Onboarding: self-signup that creates a company, or invitation only? | Self-signup creates the company and its owner | No |
 | Q25 | Reports: are libro diario, balance de prueba and cartera enough, or do you want a basic estado de resultados and balance general in stage 1? | Add the two basic statements; they derive from the balance de prueba | No |
 | Q26 | Export formats: CSV and PDF only, or also Excel (.xlsx)? | CSV and PDF | No |

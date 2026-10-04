@@ -10,3 +10,4 @@ export {
   useSession,
   type SessionState,
 } from './model/SessionContext';
+export {can, type Permission} from './model/permissions';

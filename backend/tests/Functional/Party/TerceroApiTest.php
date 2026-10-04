@@ -405,7 +405,7 @@ final class TerceroApiTest extends ApiTestCase
         self::assertNotNull($log, 'An erasure leaves a trace.');
     }
 
-    public function testBillingUsersWriteAndAccountantsOnlyRead(): void
+    public function testBillingUsersAndAccountantsBothWriteTerceros(): void
     {
         $session = $this->signUp();
         $company = $this->companyId($session);
@@ -414,31 +414,21 @@ final class TerceroApiTest extends ApiTestCase
         $this->signInAs(Role::Billing, $company);
         $second = $this->create(['identification_number' => '890903938', 'business_name' => 'Hecho por facturación']);
         self::assertNotEmpty($second['id'], 'A billing user creates terceros.');
-        $this->sendJson('PUT', '/api/v1/terceros/'.$second['id'], $this->payload(['identification_number' => '890903938']));
-        self::assertResponseIsSuccessful('and edits them.');
 
+        // §8 as changed on 2026-10-04: the accountant writes terceros too.
         $this->signInAs(Role::Accountant, $company);
-        self::assertSame(2, $this->getJson('/api/v1/terceros')['total'], 'The accountant reads the list.');
-        $this->getJson('/api/v1/terceros/'.$t['id']);
-        self::assertResponseIsSuccessful('and one tercero.');
-        $this->getJson('/api/v1/terceros/'.$t['id'].'/contacts');
-        self::assertResponseIsSuccessful();
-
-        $write = [
-            ['POST', '/api/v1/terceros', $this->payload(['identification_number' => '899999068'])],
-            ['POST', '/api/v1/terceros/quick', ['identification_number' => '899999068', 'business_name' => 'X', 'email' => 'x@x.co', 'roles' => ['cliente']]],
-            ['PUT', '/api/v1/terceros/'.$t['id'], $this->payload()],
+        $third = $this->create(['identification_number' => '899999068', 'business_name' => 'Hecho por el contador']);
+        self::assertNotEmpty($third['id'], 'The accountant creates terceros.');
+        foreach ([
+            ['PUT', '/api/v1/terceros/'.$t['id'], $this->payload(['city' => 'Cali'])],
             ['POST', '/api/v1/terceros/'.$t['id'].'/deactivate', []],
             ['POST', '/api/v1/terceros/'.$t['id'].'/reactivate', []],
-            ['POST', '/api/v1/terceros/'.$t['id'].'/erase', []],
-            ['DELETE', '/api/v1/terceros/'.$t['id'], []],
-        ];
-        foreach ($write as [$method, $uri, $payload]) {
+        ] as [$method, $uri, $payload]) {
             $this->sendJson($method, $uri, $payload);
-            self::assertResponseStatusCodeSame(403, "The accountant may not $method $uri.");
+            self::assertResponseIsSuccessful("The accountant may $method $uri.");
         }
         $this->getJson('/api/v1/terceros/'.$t['id'].'/export');
-        self::assertResponseStatusCodeSame(403, 'Exporting personal data is not a read for the accountant.');
+        self::assertResponseIsSuccessful('and export personal data on request.');
     }
 
     public function testSignedOutIsRefused(): void

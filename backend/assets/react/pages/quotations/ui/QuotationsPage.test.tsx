@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes, useLocation} from 'react-router-dom';
@@ -10,6 +11,7 @@ const session = (role: string) => ({
   email: 'ana@acme.co',
   name: 'Ana',
   role,
+  permissions: permissionsOf(role),
   company_id: 'c1',
   company_name: 'Acme',
   company_nit: '900123456',
@@ -185,8 +187,8 @@ describe('the quotations list', () => {
     ).toBeInTheDocument();
   });
 
-  it('offers nothing to write to the accountant', async () => {
-    api('accountant', {'GET /quotations': [200, page([summary()])]});
+  it('offers nothing to write to someone who may only read', async () => {
+    api('reader', {'GET /quotations': [200, page([summary()])]});
     renderAt('');
 
     const row = (await screen.findByText('Cliente Uno S.A.S.')).closest('tr')!;
@@ -625,8 +627,8 @@ describe('the quotation editor', () => {
     );
   });
 
-  it('gives the accountant a read-only view', async () => {
-    api('accountant', {'GET /quotations/q1': [200, quotation()]});
+  it('gives someone who may only read a read-only view', async () => {
+    api('reader', {'GET /quotations/q1': [200, quotation()]});
     renderAt('/q1');
 
     await screen.findByRole('heading', {name: 'Cotización C-7'});

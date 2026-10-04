@@ -14,6 +14,7 @@ final class SignUpApiTest extends ApiTestCase
         $session = $this->signUp();
 
         self::assertSame('owner', $session['role'], 'Whoever signs a company up is its owner.');
+        self::assertSame(['MANAGE_USERS', 'MANAGE_SETTINGS', 'MANAGE_BOOKS', 'VIEW_BOOKS', 'WRITE_DOCUMENTS', 'READ_DOCUMENTS'], $session['permissions'], 'The session carries what the person may do, so the UI follows the same matrix as the server.');
         self::assertSame('Acme S.A.S.', $session['company_name']);
         self::assertSame('900123456', $session['company_nit']);
         self::assertSame('8', $session['company_check_digit'], 'The DV is computed from the NIT.');

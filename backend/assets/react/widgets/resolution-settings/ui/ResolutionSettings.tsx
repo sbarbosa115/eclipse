@@ -1,6 +1,6 @@
 import './resolution.css';
 import {useCallback, useEffect, useState} from 'react';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {
@@ -38,7 +38,7 @@ type Notice = {kind: 'success' | 'error'; text: string} | null;
 export function ResolutionSettings() {
   const {t} = useTranslation();
   const {session} = useSession();
-  const canEdit = session?.role === 'owner';
+  const canEdit = can(session, 'MANAGE_SETTINGS');
   const [settings, setSettings] = useState<Settings | null>(null);
   const [series, setSeries] = useState<NumberingSeries[]>([]);
   const [failed, setFailed] = useState(false);

@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes, useLocation} from 'react-router-dom';
@@ -10,6 +11,7 @@ const session = (role: string) => ({
   email: 'ana@acme.co',
   name: 'Ana',
   role,
+  permissions: permissionsOf(role),
   company_id: 'c1',
   company_name: 'Acme',
   company_nit: '900123456',
@@ -393,9 +395,9 @@ describe('the purchase invoice pages', () => {
     ).toHaveValue('');
   });
 
-  it('lets the accountant read a draft but not change it', async () => {
+  it('lets someone who may only read read a draft but not change it', async () => {
     fakeApi({
-      'GET /me': [200, session('accountant')],
+      'GET /me': [200, session('reader')],
       'GET /purchase-invoices/i1': [200, invoice()],
       ...OPTIONS,
     });

@@ -13,7 +13,8 @@ use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The role matrix of §8 (and §9 Q23), as the voter grants it. This table is the documentation: a change of who may do
+ * The role matrix of §8 as changed on 2026-10-04 (the accountant may do every document and books action; users and
+ * the company settings stay the owner's), as the voter grants it. This table is the documentation: a change of who may do
  * what is a change here first.
  *
  * | Permission      | owner | billing | accountant | What it covers                                                        |
@@ -22,7 +23,7 @@ use Symfony\Component\Uid\Uuid;
  * | MANAGE_SETTINGS | yes   | no      | no         | company profile, invoicing resolution, numbering                      |
  * | MANAGE_BOOKS    | yes   | no      | yes        | chart of accounts, posting rules, taxes, payment methods, lock date   |
  * | VIEW_BOOKS      | yes   | no      | yes        | libro diario, balance de prueba, statements                           |
- * | WRITE_DOCUMENTS | yes   | yes     | no         | terceros, products, quotations, invoices, receipts, payments, voids   |
+ * | WRITE_DOCUMENTS | yes   | yes     | yes        | terceros, products, quotations, invoices, receipts, payments, voids   |
  * | READ_DOCUMENTS  | yes   | yes     | yes        | every list, document and PDF                                          |
  */
 final class RoleMatrixTest extends TestCase
@@ -32,7 +33,7 @@ final class RoleMatrixTest extends TestCase
         Permission::MANAGE_SETTINGS => ['owner'],
         Permission::MANAGE_BOOKS => ['owner', 'accountant'],
         Permission::VIEW_BOOKS => ['owner', 'accountant'],
-        Permission::WRITE_DOCUMENTS => ['owner', 'billing'],
+        Permission::WRITE_DOCUMENTS => ['owner', 'billing', 'accountant'],
         Permission::READ_DOCUMENTS => ['owner', 'billing', 'accountant'],
     ];
 

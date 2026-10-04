@@ -49,7 +49,7 @@ export function CashReceiptsList() {
   const {t} = useTranslation();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWriteCashReceipts(session?.role);
+  const writer = canWriteCashReceipts(session);
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const status = params.get('status') ?? '';

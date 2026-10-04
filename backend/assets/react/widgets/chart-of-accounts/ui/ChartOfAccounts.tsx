@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {useTranslation} from '@/shared/i18n';
 import {
   Actions,
@@ -30,7 +30,7 @@ type Open = {kind: 'add'; parent: Account} | {kind: 'edit'; account: Account};
 export function ChartOfAccounts() {
   const {t} = useTranslation();
   const {session} = useSession();
-  const keeper = session?.role === 'owner' || session?.role === 'accountant';
+  const keeper = can(session, 'MANAGE_BOOKS');
   const [q, setQ] = useState('');
   const [accountClass, setAccountClass] = useState('');
   const [page, setPage] = useState(1);

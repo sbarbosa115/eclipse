@@ -1,6 +1,6 @@
 import './company.css';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {
@@ -40,7 +40,7 @@ type Notice = {kind: 'success' | 'error'; text: string} | null;
 export function CompanySettings() {
   const {t} = useTranslation();
   const {session} = useSession();
-  const canEdit = session?.role === 'owner';
+  const canEdit = can(session, 'MANAGE_SETTINGS');
   const [company, setCompany] = useState<Company | null>(null);
   const [taxes, setTaxes] = useState<TaxChoice[]>([]);
   const [form, setForm] = useState<CompanyForm | null>(null);

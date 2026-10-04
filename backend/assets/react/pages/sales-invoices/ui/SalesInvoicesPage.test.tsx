@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
@@ -10,6 +11,7 @@ const session = (role: string) => ({
   email: 'ana@acme.co',
   name: 'Ana',
   role,
+  permissions: permissionsOf(role),
   company_id: 'c1',
   company_name: 'Acme',
   company_nit: '900123456',
@@ -189,8 +191,8 @@ describe('the sales invoices list', () => {
     }
   });
 
-  it('offers no void once money was collected, and nothing to write to the accountant', async () => {
-    api('accountant', {
+  it('offers no void once money was collected, and nothing to write to someone who may only read', async () => {
+    api('reader', {
       'GET /sales-invoices': [
         200,
         page([summary({status: 'partially_paid', paid_amount: '10.00'})]),

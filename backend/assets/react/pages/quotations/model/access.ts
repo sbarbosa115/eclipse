@@ -1,3 +1,6 @@
-/** Who writes, emits, sends, answers and voids quotations: the owner and billing users; the accountant reads (§8). */
-export const canWriteQuotations = (role: string | undefined) =>
-  role === 'owner' || role === 'billing';
+import {can, type Session} from '@/entities/session';
+
+/** Who writes, emits, sends and voids quotations: whoever the server grants WRITE_DOCUMENTS (§8). */
+export const canWriteQuotations = (
+  session: Session | null | undefined,
+): boolean => can(session, 'WRITE_DOCUMENTS');

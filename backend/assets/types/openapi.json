@@ -2972,6 +2972,14 @@
                     "company_check_digit": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "permissions": {
+                        "title": "What this person may do (Shared\\UI\\Http\\Security\\Permission names): the UI shows or hides actions by it,\nnever by the role's name.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": []
                     }
                 },
                 "type": "object"

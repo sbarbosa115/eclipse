@@ -1756,6 +1756,12 @@ export interface components {
             company_name: string;
             company_nit: string;
             company_check_digit?: string | null;
+            /**
+             * What this person may do (Shared\UI\Http\Security\Permission names): the UI shows or hides actions by it,
+             *     never by the role's name.
+             * @default []
+             */
+            permissions: string[];
         };
         UserOutput: {
             id: string;

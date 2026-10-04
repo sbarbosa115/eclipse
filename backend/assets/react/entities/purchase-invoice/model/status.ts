@@ -34,9 +34,11 @@ export function canVoid(invoice: {
   return invoice.status === 'emitted' && Number(invoice.paid_amount) === 0;
 }
 
-/** Who creates, emits and voids purchase documents: the owner and billing users (the accountant reads, §8). */
-export const canWritePurchases = (role: string | undefined): boolean =>
-  role === 'owner' || role === 'billing';
+/** Who creates, emits and voids purchase documents: whoever the server grants WRITE_DOCUMENTS (§8). */
+// (A session's shape, not the session entity: entities do not import each other.)
+export const canWritePurchases = (
+  session: {permissions?: string[]} | null | undefined,
+): boolean => session?.permissions?.includes('WRITE_DOCUMENTS') ?? false;
 
 /** What went wrong, in words: by the API's error code, never by its (developer) message. */
 export function purchaseErrorMessage(error: unknown, t: Translate): string {

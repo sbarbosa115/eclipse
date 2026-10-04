@@ -94,7 +94,7 @@ export function NewCashReceipt() {
   const ready =
     Object.keys(validateForm(form, t)).length === 0 && summary.balanced;
 
-  if (!canWriteCashReceipts(session?.role)) {
+  if (!canWriteCashReceipts(session)) {
     return (
       <>
         <PageHeader title={t('cashReceipt.form.title')} />

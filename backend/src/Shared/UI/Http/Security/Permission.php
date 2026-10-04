@@ -27,6 +27,35 @@ final class Permission
     /** Every list, document and PDF. */
     public const READ_DOCUMENTS = 'READ_DOCUMENTS';
 
+    /**
+     * Who may do what (§8, changed 2026-10-04: the accountant also writes every document). The one copy of the
+     * matrix: the voter (Access\UI\Http\Security\RoleMatrixVoter), the local checks and the session the UI reads
+     * (SessionOutput::permissions) all ask it. tests/Unit/Access/RoleMatrixTest.php is the table in words.
+     */
+    public const MATRIX = [
+        self::MANAGE_USERS => ['owner'],
+        self::MANAGE_SETTINGS => ['owner'],
+        self::MANAGE_BOOKS => ['owner', 'accountant'],
+        self::VIEW_BOOKS => ['owner', 'accountant'],
+        self::WRITE_DOCUMENTS => ['owner', 'billing', 'accountant'],
+        self::READ_DOCUMENTS => ['owner', 'billing', 'accountant'],
+    ];
+
+    public static function granted(string $role, string $permission): bool
+    {
+        return \in_array($role, self::MATRIX[$permission] ?? [], true);
+    }
+
+    /**
+     * Everything this role may do, for the UI.
+     *
+     * @return list<string>
+     */
+    public static function of(string $role): array
+    {
+        return array_values(array_filter(self::ALL, static fn (string $p) => self::granted($role, $p)));
+    }
+
     public const ALL = [
         self::MANAGE_USERS,
         self::MANAGE_SETTINGS,

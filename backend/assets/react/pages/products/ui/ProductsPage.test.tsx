@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
@@ -34,7 +35,14 @@ const page = (items: unknown[], total = items.length): [number, unknown] => [
 
 const session = (role: string) => [
   200,
-  {user_id: 'u', email: 'a@b.co', name: 'Ana', role, company_id: 'c'},
+  {
+    user_id: 'u',
+    email: 'a@b.co',
+    name: 'Ana',
+    role,
+    company_id: 'c',
+    permissions: permissionsOf(role),
+  },
 ];
 
 function routes(role: string, products: [number, unknown]) {
@@ -163,8 +171,8 @@ describe('Productos y servicios', () => {
     ).toBe('2');
   });
 
-  it('shows the accountant the catalog without anything to change', async () => {
-    fakeApi(routes('accountant', page([product()])));
+  it('shows someone who may only read the catalog without anything to change', async () => {
+    fakeApi(routes('reader', page([product()])));
     renderPage();
 
     await screen.findByText('A-1');

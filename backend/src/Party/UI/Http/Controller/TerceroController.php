@@ -26,6 +26,7 @@ use App\Shared\Domain\Clock;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -37,7 +38,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Terceros (§4.2). The owner and the billing users write; the accountant reads (§8, Q23). Another company's id is
+ * Terceros (§4.2). Writing them is Permission::WRITE_DOCUMENTS (§8). Another company's id is
  * a 404.
  */
 #[Route('/api/v1/terceros')]
@@ -213,7 +214,7 @@ final class TerceroController extends AbstractController
 
     private function requireWriter(SignedInUser $user): void
     {
-        if (!\in_array($user->role(), ['owner', 'billing'], true)) {
+        if (!Permission::granted($user->role(), Permission::WRITE_DOCUMENTS)) {
             throw new AccessDeniedHttpException();
         }
     }

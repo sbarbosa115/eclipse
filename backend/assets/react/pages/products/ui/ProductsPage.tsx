@@ -9,7 +9,7 @@ import {
   type Product,
   type ProductPage,
 } from '@/entities/product';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {formatMoney} from '@/shared/lib';
@@ -50,7 +50,7 @@ type Dialog =
 export function ProductsPage() {
   const {t} = useTranslation();
   const {session} = useSession();
-  const canWrite = session?.role === 'owner' || session?.role === 'billing';
+  const canWrite = can(session, 'WRITE_DOCUMENTS');
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const type = params.get('type') ?? '';

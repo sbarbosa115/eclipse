@@ -1,3 +1,6 @@
-/** Who writes, emits, sends and voids sales invoices: the owner and billing users; the accountant reads (§8). */
-export const canWriteSalesInvoices = (role: string | undefined) =>
-  role === 'owner' || role === 'billing';
+import {can, type Session} from '@/entities/session';
+
+/** Who writes, emits, sends and voids sales invoices: whoever the server grants WRITE_DOCUMENTS (§8). */
+export const canWriteSalesInvoices = (
+  session: Session | null | undefined,
+): boolean => can(session, 'WRITE_DOCUMENTS');

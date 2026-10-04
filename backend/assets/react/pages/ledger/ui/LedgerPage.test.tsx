@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
@@ -6,10 +7,16 @@ import {fakeApi} from '@/shared/test/fakeApi';
 import {LedgerPage} from './LedgerPage';
 
 const me = (role: string) =>
-  [200, {user_id: 'u', email: 'a@b.co', name: 'Ana', role}] as [
-    number,
-    unknown,
-  ];
+  [
+    200,
+    {
+      user_id: 'u',
+      email: 'a@b.co',
+      name: 'Ana',
+      role,
+      permissions: permissionsOf(role),
+    },
+  ] as [number, unknown];
 
 const renderAt = (path: string) =>
   render(

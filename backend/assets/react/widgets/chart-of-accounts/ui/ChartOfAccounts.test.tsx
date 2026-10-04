@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {SessionProvider} from '@/entities/session';
@@ -35,10 +36,16 @@ const page = (items: unknown[]) => ({
 });
 
 const me = (role: string) =>
-  [200, {user_id: 'u', email: 'a@b.co', name: 'Ana', role}] as [
-    number,
-    unknown,
-  ];
+  [
+    200,
+    {
+      user_id: 'u',
+      email: 'a@b.co',
+      name: 'Ana',
+      role,
+      permissions: permissionsOf(role),
+    },
+  ] as [number, unknown];
 
 const renderChart = () =>
   render(

@@ -193,6 +193,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 
 ## Data model decisions
 
+- **One permission matrix.** `Shared\UI\Http\Security\Permission::MATRIX` says who may do what (§8: the owner everything; billing and accountant every document; the accountant also the books; users and company settings the owner's). The voter, every controller check and the session (`SessionOutput.permissions`) read it; the UI shows or hides actions with `can(session, 'WRITE_DOCUMENTS')`, never by role name.
+
 - **Ids are UUID v7, stored BINARY(16).** The tenancy filter compares `company_id` to `UNHEX(...)`.
 - **Terceros:** tipo + número (+ código de sucursal) is unique per company; dots and dashes are not part of the number. Roles are four flags (any combination). A tercero a document names (any table with `tercero_id`, found in the schema) is deactivated, never deleted. Erasing (Ley 1581) keeps the row and the identification (invoices carry it) and blanks everything else; an erased tercero cannot be edited or reactivated. Writes: owner and billing; the accountant reads (§9 Q23).
 - **Documents copy what they used** (tax name, rate, accounts; tercero name) so an edit never changes an emitted

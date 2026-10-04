@@ -1,3 +1,4 @@
+import {permissionsOf} from '@/shared/test/permissions';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
@@ -10,6 +11,7 @@ const session = (role: string) => ({
   email: 'ana@acme.co',
   name: 'Ana',
   role,
+  permissions: permissionsOf(role),
   company_id: 'c1',
   company_name: 'Acme',
   company_nit: '900123456',
@@ -203,9 +205,9 @@ describe('the terceros list', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the accountant the list without any way to change it', async () => {
+  it('shows someone who may only read the list without any way to change it', async () => {
     fakeApi({
-      'GET /me': [200, session('accountant')],
+      'GET /me': [200, session('reader')],
       'GET /terceros': [200, page([summary()])],
     });
     renderAt('/');
@@ -408,9 +410,9 @@ describe('the tercero form page', () => {
     expect(body.contacts[0]?.id).toBe('c1');
   });
 
-  it('lets the accountant read a tercero but not change it', async () => {
+  it('lets someone who may only read read a tercero but not change it', async () => {
     fakeApi({
-      'GET /me': [200, session('accountant')],
+      'GET /me': [200, session('reader')],
       'GET /accounts/search': ACCOUNTS,
       'GET /terceros/t1': [200, full()],
     });

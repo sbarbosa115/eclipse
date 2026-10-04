@@ -10,7 +10,7 @@ export function PurchaseInvoiceListPage() {
   const {t} = useTranslation();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWritePurchases(session?.role);
+  const writer = canWritePurchases(session);
   const [notice, setNotice] = useState<string | null>(
     (location.state as {notice?: string} | null)?.notice ?? null,
   );

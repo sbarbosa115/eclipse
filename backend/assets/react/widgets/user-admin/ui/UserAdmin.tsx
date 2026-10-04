@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {InviteUserModal, type InvitableRole} from '@/features/invite-user';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
@@ -52,7 +52,7 @@ type Notice = {kind: 'success' | 'error'; text: string} | null;
 export function UserAdmin() {
   const {t} = useTranslation();
   const {session} = useSession();
-  if (session?.role !== 'owner') {
+  if (!can(session, 'MANAGE_USERS')) {
     return <EmptyState>{t('access.users.ownerOnly')}</EmptyState>;
   }
   return <UserList />;

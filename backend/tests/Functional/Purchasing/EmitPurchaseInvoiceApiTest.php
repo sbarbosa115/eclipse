@@ -209,15 +209,15 @@ final class EmitPurchaseInvoiceApiTest extends ApiTestCase
         self::assertCount(1, $this->entries(), 'No reversing entry.');
     }
 
-    public function testTheAccountantCannotEmitOrVoid(): void
+    public function testTheAccountantEmitsAndVoids(): void
     {
         $draft = $this->createDraft();
         $this->signInAs('accountant');
 
         $this->sendJson('POST', "/api/v1/purchase-invoices/{$draft['id']}/emit", []);
-        self::assertResponseStatusCodeSame(403, 'The accountant cannot emit commercial documents (§8).');
-        $this->sendJson('POST', "/api/v1/purchase-invoices/{$draft['id']}/void", ['reason' => 'x']);
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseIsSuccessful('§8 as changed on 2026-10-04: the accountant emits commercial documents.');
+        $this->sendJson('POST', "/api/v1/purchase-invoices/{$draft['id']}/void", ['reason' => 'Registrada por error']);
+        self::assertResponseIsSuccessful('and voids them.');
     }
 
     public function testTheBillingUserEmits(): void

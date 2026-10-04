@@ -10,6 +10,7 @@ const ANA = {
   company_name: 'Acme',
   company_nit: '900123456',
   company_check_digit: '8',
+  permissions: ['READ_DOCUMENTS'],
 };
 
 function Probe() {

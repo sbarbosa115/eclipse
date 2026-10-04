@@ -5,7 +5,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
-import {useSession} from '@/entities/session';
+import {can, useSession} from '@/entities/session';
 import {useTranslation} from '@/shared/i18n';
 import {EmptyState, PageHeader, TabPanel, Tabs} from '@/shared/ui';
 import {BalanceSheetView} from './BalanceSheetView';
@@ -35,7 +35,7 @@ export function LedgerPage() {
   const {session} = useSession();
   const navigate = useNavigate();
   const {pathname} = useLocation();
-  const keeper = session?.role === 'owner' || session?.role === 'accountant';
+  const keeper = can(session, 'VIEW_BOOKS');
   const current: View =
     VIEWS.find((v) => pathname.split('/').includes(v.path))?.value ?? 'journal';
 
