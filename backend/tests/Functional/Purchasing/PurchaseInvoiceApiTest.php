@@ -5,9 +5,9 @@ namespace App\Tests\Functional\Purchasing;
 use App\Purchasing\Application\Query\PurchaseInvoicePdf;
 use App\Purchasing\Domain\Model\PurchaseInvoice;
 use App\Tests\Support\ApiTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
 use Twig\Environment;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * §4.10, §4.15 and §6: drafts of facturas de compra (lines by product or by expense account), the list, duplicate, the
