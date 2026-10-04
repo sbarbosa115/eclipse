@@ -35,6 +35,7 @@ import {
 import {
   computeTotals,
   DocumentEditor,
+  editorErrorsFrom,
   emptyDraft,
   hasErrors,
   validateDraft,
@@ -42,11 +43,7 @@ import {
   type EditorErrors,
 } from '@/widgets/document-editor';
 import {listPaymentMethods, type PaymentMethod} from '../api/options';
-import {
-  draftFromInvoice,
-  editorErrorsFrom,
-  requestFromDraft,
-} from '../model/draftMapping';
+import {draftFromInvoice, requestFromDraft} from '../model/draftMapping';
 import {canWriteSalesInvoices} from '../model/access';
 
 /** Tipo (§4.6): the invoice's numbering series, the resolution's prefix. */

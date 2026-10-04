@@ -1,7 +1,7 @@
 import {todayInColombia} from '@/shared/lib';
 import type {Translate} from '@/shared/i18n';
 import {formatMoney} from '@/shared/lib';
-import {Decimal} from '../lib/decimal';
+import {Decimal, trimDecimal} from '../lib/decimal';
 import type {
   CreditTerm,
   DocumentDraft,
@@ -174,11 +174,6 @@ export interface ProductForLine {
   withholding_tax_id?: string | null;
 }
 
-/** "100000.0000" → "100000", "49999.9000" → "49999.9": how a person writes it. */
-function trimZeros(value: string): string {
-  return value.includes('.') ? value.replace(/\.?0+$/, '') : value;
-}
-
 /**
  * Fills a line from the product chosen: its name, its taxes and, on a sale or a quotation, its price net of IVA
  * (§4.3: with an IVA-included price the line total is the list price). A purchase keeps the price typed: the
@@ -198,7 +193,7 @@ export function applyProduct(
     unit_price:
       kind === 'purchase_invoice'
         ? line.unit_price
-        : trimZeros(product.unit_price_net_of_tax),
+        : trimDecimal(product.unit_price_net_of_tax),
     charge_tax_id: product.charge_tax_id ?? null,
     withholding_tax_id: product.withholding_tax_id ?? null,
   };

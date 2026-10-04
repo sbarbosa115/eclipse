@@ -1,9 +1,7 @@
-import {ApiError} from '@/shared/api';
 import {emptyDraft, emptyLine} from '@/widgets/document-editor';
 import type {Quotation} from '@/entities/quotation';
 import {
   draftFromQuotation,
-  editorErrorsFrom,
   emptyExtras,
   extrasFromQuotation,
   requestFromDraft,
@@ -136,25 +134,5 @@ describe('the quotation draft and the API', () => {
         message,
       ),
     ).toEqual({expiry_date: 'expiryBeforeIssue'});
-  });
-
-  it('puts the API violations on the form rows they belong to', () => {
-    const error = new ApiError(422, 'validation_failed', '', {
-      violations: [
-        {field: 'tercero_id', message: 'Elige el cliente.'},
-        {field: 'lines.1.product_id', message: 'Producto.'},
-        {field: 'expiry_date', message: 'Vence antes.'},
-        {field: 'responsible_id', message: 'Empleado.'},
-      ],
-    });
-    expect(editorErrorsFrom(error, [2, 4])).toEqual({
-      'tercero': 'Elige el cliente.',
-      'lines.4.product': 'Producto.',
-      'expiry_date': 'Vence antes.',
-      'responsible_id': 'Empleado.',
-    });
-    expect(
-      editorErrorsFrom(new ApiError(409, 'quotation_not_open', '', null), []),
-    ).toBeNull();
   });
 });

@@ -40,6 +40,7 @@ import {
 import {
   computeTotals,
   DocumentEditor,
+  editorErrorsFrom,
   emptyDraft,
   hasErrors,
   validateDraft,
@@ -48,7 +49,6 @@ import {
 } from '@/widgets/document-editor';
 import {
   draftFromQuotation,
-  editorErrorsFrom,
   emptyExtras,
   extrasFromQuotation,
   requestFromDraft,

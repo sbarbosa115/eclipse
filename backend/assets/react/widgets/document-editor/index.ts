@@ -41,5 +41,11 @@ export type {
   PartyRef,
   ProductRef,
 } from './model/types';
-export {Decimal} from './lib/decimal';
+export {Decimal, trimDecimal} from './lib/decimal';
+export {
+  draftLineFrom,
+  editorErrorsFrom,
+  linesToSend,
+  type SavedLine,
+} from './lib/mapping';
 export {DocumentEditorDemo} from './ui/DocumentEditorDemo';

@@ -1,19 +1,13 @@
 import type {SalesInvoice, SalesInvoiceRequest} from '@/entities/sales-invoice';
-import {ApiError} from '@/shared/api';
 import {
+  draftLineFrom,
   emptyLine,
-  isBlankLine,
+  linesToSend,
   type CreditTerm,
   type DocumentDraft,
-  type EditorErrors,
 } from '@/widgets/document-editor';
 
 // The factura de venta between the document form (DocumentDraft) and the API (SalesInvoiceRequest/Output).
-
-/** "1000000.0000" → "1000000", "2.5000" → "2.5": how a person writes it. */
-export function trimDecimal(value: string): string {
-  return value.includes('.') ? value.replace(/\.?0+$/, '') : value;
-}
 
 function daysBetween(from: string, to: string): number {
   const ms = Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`);
@@ -45,22 +39,7 @@ export function draftFromInvoice(
     lines:
       invoice.lines.length === 0
         ? [emptyLine()]
-        : invoice.lines.map((line) => ({
-            ...emptyLine(),
-            product: line.product_id
-              ? {
-                  id: line.product_id,
-                  label: line.product_label ?? line.description,
-                }
-              : null,
-            description: line.description,
-            quantity: trimDecimal(line.quantity),
-            unit_price: trimDecimal(line.unit_price),
-            discount:
-              Number(line.discount) === 0 ? '' : trimDecimal(line.discount),
-            charge_tax_id: line.charge_tax_id ?? null,
-            withholding_tax_id: line.withholding_tax_id ?? null,
-          })),
+        : invoice.lines.map(draftLineFrom),
     payments: invoice.payments.map((payment) => ({
       key: `payment-${payment.id}`,
       payment_method_id: payment.payment_method_id,
@@ -81,22 +60,17 @@ export function requestFromDraft(
   draft: DocumentDraft,
   sellerId: string | null = null,
 ): {body: SalesInvoiceRequest; lineIndexes: number[]} {
-  const lineIndexes: number[] = [];
-  const lines = draft.lines.flatMap((line, index) => {
-    if (isBlankLine(line)) return [];
-    lineIndexes.push(index);
-    return [
-      {
-        product_id: line.product?.id ?? null,
-        description: line.description.trim(),
-        quantity: line.quantity.trim(),
-        unit_price: line.unit_price.trim(),
-        discount: line.discount.trim(),
-        charge_tax_id: line.charge_tax_id,
-        withholding_tax_id: line.withholding_tax_id,
-      },
-    ];
-  });
+  const sent = linesToSend(draft);
+  const lines = sent.lines.map((line) => ({
+    product_id: line.product?.id ?? null,
+    description: line.description.trim(),
+    quantity: line.quantity.trim(),
+    unit_price: line.unit_price.trim(),
+    discount: line.discount.trim(),
+    charge_tax_id: line.charge_tax_id,
+    withholding_tax_id: line.withholding_tax_id,
+  }));
+  const {lineIndexes} = sent;
   return {
     body: {
       tercero_id: draft.tercero?.id ?? '',
@@ -113,37 +87,4 @@ export function requestFromDraft(
     },
     lineIndexes,
   };
-}
-
-const FIELD_ALIASES: Record<string, string> = {
-  tercero_id: 'tercero',
-  product_id: 'product',
-};
-
-/**
- * The API's violations as the form's field paths: "lines[0].quantity" and "lines.0.quantity" → the form's row,
- * "tercero_id" → "tercero", "lines.0.product_id" → "lines.N.product". Null when the error is not a validation one.
- */
-export function editorErrorsFrom(
-  error: unknown,
-  lineIndexes: number[],
-): EditorErrors | null {
-  if (!(error instanceof ApiError) || error.code !== 'validation_failed') {
-    return null;
-  }
-  const violations =
-    (error.body as {violations?: {field: string; message: string}[]})
-      ?.violations ?? [];
-  const errors: EditorErrors = {};
-  for (const {field, message} of violations) {
-    const parts = field.replace(/\[(\d+)\]/g, '.$1').split('.');
-    if (parts[0] === 'lines' && parts[1] !== undefined) {
-      parts[1] = String(lineIndexes[Number(parts[1])] ?? parts[1]);
-    }
-    const last = parts.length - 1;
-    parts[last] = FIELD_ALIASES[parts[last] ?? ''] ?? parts[last] ?? '';
-    const path = parts.join('.');
-    errors[path] ??= message;
-  }
-  return errors;
 }
