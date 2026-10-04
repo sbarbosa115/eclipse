@@ -1736,6 +1736,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/supplier-payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The list, newest first: ?q= (part of the number or the supplier's name, matched literally), ?status=emitted|voided,
+         *     ?from=, ?to= (the payment's date, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page ≤ 100.
+         */
+        get: operations["get_app_purchasing_ui_http_supplierpayment_list"];
+        put?: never;
+        /**
+         * Saves and so emits a payment (§4.11): {tercero_id, receipt_date, payment_method_id (an active contado method),
+         *     amount, notes?, allocations: [{payable_id, amount}], send?} → 201. The RP number, each invoice paid, the
+         *     A.4 entry; with `send: true` (*Guardar y enviar*) the PDF is then e-mailed to the supplier. 422
+         *     `validation_failed` by field (`allocations.0.payable_id` for an unknown or another supplier's payable),
+         *     `allocation_exceeds_balance`, `allocations_do_not_match_amount` (detail: both sums), `tercero_has_no_email`;
+         *     409 `period_locked`.
+         */
+        post: operations["post_app_purchasing_ui_http_supplierpayment_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-payments/open-payables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What a supplier still owes (§4.11), to allocate a payment: ?tercero_id= (required). Its payables with a balance,
+         *     the oldest due first. 404 for a supplier the company does not have.
+         */
+        get: operations["get_app_purchasing_ui_http_supplierpayment_openpayables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One payment, whole. */
+        get: operations["get_app_purchasing_ui_http_supplierpayment_show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-payments/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voids the payment today (§4.12): {reason}. Each invoice is owed again, the reversing entry is posted, the number
+         *     is kept. 409 `document_voided`, `period_locked`.
+         */
+        post: operations["post_app_purchasing_ui_http_supplierpayment_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-payments/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** E-mails the payment's PDF to the supplier again → 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`. */
+        post: operations["post_app_purchasing_ui_http_supplierpayment_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/supplier-payments/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF (§4.11), ANULADA when voided. */
+        get: operations["get_app_purchasing_ui_http_supplierpayment_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2433,6 +2552,58 @@ export interface components {
             reversal_entry_id?: string | null;
             created_at: string;
             emitted_at?: string | null;
+            voided_at?: string | null;
+            void_reason?: string | null;
+        };
+        SupplierPaymentSummaryOutput: {
+            id: string;
+            /** emitted or voided */
+            status: string;
+            number: string;
+            receipt_date: string;
+            tercero_id: string;
+            tercero_name: string;
+            method_name: string;
+            amount: string;
+            invoice_numbers: string[];
+        };
+        OpenPayableOutput: {
+            /** The payable: what an allocation names. */
+            id: string;
+            invoice_id: string;
+            invoice_number: string;
+            issue_date: string;
+            due_date: string;
+            /** What the crédito line was for. */
+            amount: string;
+            /** What is still owed. */
+            balance: string;
+        };
+        SupplierPaymentAllocationOutput: {
+            id: string;
+            payable_id: string;
+            invoice_id: string;
+            invoice_number: string;
+            amount: string;
+        };
+        SupplierPaymentOutput: {
+            id: string;
+            /** emitted or voided */
+            status: string;
+            number: string;
+            tercero_id: string;
+            tercero_name: string;
+            receipt_date: string;
+            payment_method_id: string;
+            method_name: string;
+            amount: string;
+            notes?: string | null;
+            allocations: components["schemas"]["SupplierPaymentAllocationOutput"][];
+            journal_entry_id?: string | null;
+            reversal_entry_id?: string | null;
+            created_by: string;
+            created_at: string;
+            voided_by?: string | null;
             voided_at?: string | null;
             void_reason?: string | null;
         };
@@ -4930,6 +5101,155 @@ export interface operations {
             path: {
                 id: string;
                 attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_purchasing_ui_http_supplierpayment_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["SupplierPaymentSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_supplierpayment_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierPaymentOutput"];
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_supplierpayment_openpayables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["OpenPayableOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_supplierpayment_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierPaymentOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_supplierpayment_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierPaymentOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_supplierpayment_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_purchasing_ui_http_supplierpayment_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
             };
             cookie?: never;
         };

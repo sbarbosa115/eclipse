@@ -2912,6 +2912,190 @@
                     }
                 }
             }
+        },
+        "/api/v1/supplier-payments": {
+            "get": {
+                "summary": "The list, newest first: ?q= (part of the number or the supplier's name, matched literally), ?status=emitted|voided,\n?from=, ?to= (the payment's date, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page \u2264 100.",
+                "operationId": "get_app_purchasing_ui_http_supplierpayment_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SupplierPaymentSummaryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Saves and so emits a payment (\u00a74.11): {tercero_id, receipt_date, payment_method_id (an active contado method),\namount, notes?, allocations: [{payable_id, amount}], send?} \u2192 201. The RP number, each invoice paid, the\nA.4 entry; with `send: true` (*Guardar y enviar*) the PDF is then e-mailed to the supplier. 422\n`validation_failed` by field (`allocations.0.payable_id` for an unknown or another supplier's payable),\n`allocation_exceeds_balance`, `allocations_do_not_match_amount` (detail: both sums), `tercero_has_no_email`;\n409 `period_locked`.",
+                "operationId": "post_app_purchasing_ui_http_supplierpayment_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SupplierPaymentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/supplier-payments/open-payables": {
+            "get": {
+                "summary": "What a supplier still owes (\u00a74.11), to allocate a payment: ?tercero_id= (required). Its payables with a balance,\nthe oldest due first. 404 for a supplier the company does not have.",
+                "operationId": "get_app_purchasing_ui_http_supplierpayment_openpayables",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OpenPayableOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/supplier-payments/{id}": {
+            "get": {
+                "summary": "One payment, whole.",
+                "operationId": "get_app_purchasing_ui_http_supplierpayment_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SupplierPaymentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/supplier-payments/{id}/void": {
+            "post": {
+                "summary": "Voids the payment today (\u00a74.12): {reason}. Each invoice is owed again, the reversing entry is posted, the number\nis kept. 409 `document_voided`, `period_locked`.",
+                "operationId": "post_app_purchasing_ui_http_supplierpayment_void",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SupplierPaymentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/supplier-payments/{id}/send": {
+            "post": {
+                "summary": "E-mails the payment's PDF to the supplier again \u2192 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`.",
+                "operationId": "post_app_purchasing_ui_http_supplierpayment_send",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/supplier-payments/{id}/pdf": {
+            "get": {
+                "summary": "The PDF (\u00a74.11), ANULADA when voided.",
+                "operationId": "get_app_purchasing_ui_http_supplierpayment_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -5389,6 +5573,201 @@
                         "type": "string"
                     },
                     "emitted_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "voided_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "void_reason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierPaymentSummaryOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "number",
+                    "receipt_date",
+                    "tercero_id",
+                    "tercero_name",
+                    "method_name",
+                    "amount",
+                    "invoice_numbers"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "emitted or voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "receipt_date": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "invoice_numbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "OpenPayableOutput": {
+                "required": [
+                    "id",
+                    "invoice_id",
+                    "invoice_number",
+                    "issue_date",
+                    "due_date",
+                    "amount",
+                    "balance"
+                ],
+                "properties": {
+                    "id": {
+                        "title": "The payable: what an allocation names.",
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "title": "What the cr\u00e9dito line was for.",
+                        "type": "string"
+                    },
+                    "balance": {
+                        "title": "What is still owed.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierPaymentAllocationOutput": {
+                "required": [
+                    "id",
+                    "payable_id",
+                    "invoice_id",
+                    "invoice_number",
+                    "amount"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "payable_id": {
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierPaymentOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "number",
+                    "tercero_id",
+                    "tercero_name",
+                    "receipt_date",
+                    "payment_method_id",
+                    "method_name",
+                    "amount",
+                    "allocations",
+                    "created_by",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "emitted or voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "receipt_date": {
+                        "type": "string"
+                    },
+                    "payment_method_id": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "allocations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SupplierPaymentAllocationOutput"
+                        }
+                    },
+                    "journal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reversal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "voided_by": {
                         "type": "string",
                         "nullable": true
                     },

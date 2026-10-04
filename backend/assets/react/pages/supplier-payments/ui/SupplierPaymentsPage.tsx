@@ -1,13 +1,16 @@
-import {useTranslation} from '@/shared/i18n';
-import {ComingSoon, PageHeader} from '@/shared/ui';
+import {Route, Routes} from 'react-router-dom';
+import {SupplierPaymentsList} from './SupplierPaymentsList';
+import {SupplierPaymentView} from './SupplierPaymentView';
+import {NewSupplierPayment} from './NewSupplierPayment';
+import './supplierPayments.css';
 
-/** Owned by item 12 supplier-payment of the accounting split, which replaces this placeholder. */
+/** Recibos de pago: the list at /recibos-pago, a new one at /recibos-pago/nuevo, one payment at /recibos-pago/:id. */
 export function SupplierPaymentsPage() {
-  const {t} = useTranslation();
   return (
-    <>
-      <PageHeader title={t('shell.nav.supplierPayments')} />
-      <ComingSoon />
-    </>
+    <Routes>
+      <Route index element={<SupplierPaymentsList />} />
+      <Route path="nuevo" element={<NewSupplierPayment />} />
+      <Route path=":id" element={<SupplierPaymentView />} />
+    </Routes>
   );
 }

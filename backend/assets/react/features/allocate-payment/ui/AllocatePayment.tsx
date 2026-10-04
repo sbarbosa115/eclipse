@@ -16,6 +16,8 @@ export interface AllocatePaymentProps {
   /** Messages from the server, by item id. */
   errors?: Readonly<Record<string, string | undefined>>;
   disabled?: boolean;
+  /** The i18n namespace the words are read from (document, balance, errors.exceeds…): the cash receipt's by default. */
+  labels?: string;
 }
 
 /**
@@ -30,6 +32,7 @@ export function AllocatePayment({
   total,
   errors = {},
   disabled = false,
+  labels = 'cashReceipt.allocate',
 }: AllocatePaymentProps) {
   const {t} = useTranslation();
   const baseId = useId();
@@ -38,37 +41,37 @@ export function AllocatePayment({
     onChange({...amounts, [id]: value});
   const difference = summary.difference;
   const statusText = () => {
-    if (summary.balanced) return `✓ ${t('cashReceipt.allocate.balanced')}`;
+    if (summary.balanced) return `✓ ${t(`${labels}.balanced`)}`;
     if (difference.startsWith('-')) {
-      return t('cashReceipt.allocate.over', {
+      return t(`${labels}.over`, {
         amount: formatMoney(difference.slice(1)),
       });
     }
     if (difference !== '0.00') {
-      return t('cashReceipt.allocate.missing', {
+      return t(`${labels}.missing`, {
         amount: formatMoney(difference),
       });
     }
-    return t('cashReceipt.allocate.pending');
+    return t(`${labels}.pending`);
   };
 
   return (
     <div className="allocate-payment">
       <DataTable
         columns={[
-          t('cashReceipt.allocate.document'),
-          t('cashReceipt.allocate.issueDate'),
-          t('cashReceipt.allocate.dueDate'),
-          t('cashReceipt.allocate.amount'),
-          t('cashReceipt.allocate.balance'),
-          t('cashReceipt.allocate.toApply'),
+          t(`${labels}.document`),
+          t(`${labels}.issueDate`),
+          t(`${labels}.dueDate`),
+          t(`${labels}.amount`),
+          t(`${labels}.balance`),
+          t(`${labels}.toApply`),
         ]}
         rows={items}
         renderRow={(item) => {
           const rowError = summary.errors[item.id];
           const message =
             errors[item.id] ??
-            (rowError ? t(`cashReceipt.allocate.errors.${rowError}`) : null);
+            (rowError ? t(`${labels}.errors.${rowError}`) : null);
           const errorId = `${baseId}-${item.id}-error`;
           return (
             <tr key={item.id}>
@@ -83,7 +86,7 @@ export function AllocatePayment({
                   inputMode="decimal"
                   value={amounts[item.id] ?? ''}
                   disabled={disabled}
-                  aria-label={t('cashReceipt.allocate.toApplyOf', {
+                  aria-label={t(`${labels}.toApplyOf`, {
                     document: item.document,
                   })}
                   aria-invalid={message ? true : undefined}
@@ -100,12 +103,12 @@ export function AllocatePayment({
                 <ActionButton
                   action="setup"
                   disabled={disabled}
-                  aria-label={t('cashReceipt.allocate.payInFullOf', {
+                  aria-label={t(`${labels}.payInFullOf`, {
                     document: item.document,
                   })}
                   onClick={() => set(item.id, item.balance)}
                 >
-                  {t('cashReceipt.allocate.payInFull')}
+                  {t(`${labels}.payInFull`)}
                 </ActionButton>
               </Actions>
             </tr>
@@ -114,15 +117,15 @@ export function AllocatePayment({
       />
       <dl className="allocate-payment-summary">
         <div>
-          <dt>{t('cashReceipt.allocate.received')}</dt>
+          <dt>{t(`${labels}.received`)}</dt>
           <dd>{formatMoney(parseAmount(total) ?? '0')}</dd>
         </div>
         <div>
-          <dt>{t('cashReceipt.allocate.allocated')}</dt>
+          <dt>{t(`${labels}.allocated`)}</dt>
           <dd>{formatMoney(summary.allocated)}</dd>
         </div>
         <div>
-          <dt>{t('cashReceipt.allocate.difference')}</dt>
+          <dt>{t(`${labels}.difference`)}</dt>
           <dd>{formatMoney(difference)}</dd>
         </div>
       </dl>
