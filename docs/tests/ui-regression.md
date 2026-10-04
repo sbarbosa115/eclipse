@@ -1438,7 +1438,7 @@ has no errors.
 
 ## 13. Cartera, reports and dashboard
 
-<!-- Owned by item 13 "reports" (REP-01 – 19). -->
+<!-- Owned by item 13 "reports" (REP-01 – 20). -->
 
 The dashboard at **`/`**, and **Reportes** at **`/reportes`** (tabs *Cartera de clientes*, *Cartera de proveedores*,
 *Exportar*). Every case runs as the owner of a company with an invoicing resolution, a client **Ana Ltda.** and
@@ -1571,3 +1571,7 @@ drill-down, Exportar.
 the late colours (green, amber, red) read in both themes; the CSV and PDF buttons stay visible; the console has no
 errors.
 
+**REP-20 · The dashboard tiles of a row share their top edge and height**
+Smoke: `e2e/reports.spec.ts` (screenshots in `e2e/.results/dashboard-1366.png` and `-768.png`).
+At 1366×768 and 768×1024, **Tablero**. **Expected:** the tiles of each row start at the same height and are as tall;
+each reads title, figure, detail line and, at its foot, its link (*Ver cartera*).

@@ -239,6 +239,48 @@ test('REP-02 · the dashboard shows cartera, the month and the cash', async ({
   expect(errors).toEqual([]);
 });
 
+test('REP-20 · the dashboard tiles of a row share their top edge and height', async ({
+  newCompany,
+}) => {
+  const {page} = await newCompany();
+  await resolution(page);
+
+  for (const width of [1366, 768]) {
+    await page.setViewportSize({width, height: width === 1366 ? 768 : 1024});
+    await page.goto('/');
+    const tiles = page.locator('.dashboard-grid > .card');
+    await expect(tiles.first()).toBeVisible();
+    await page.screenshot({
+      path: `e2e/.results/dashboard-${width}.png`,
+      fullPage: true,
+    });
+    const boxes = [];
+    for (const tile of await tiles.all()) {
+      const box = await tile.boundingBox();
+      expect(box).not.toBeNull();
+      boxes.push(box!);
+    }
+    const rows = new Map<number, typeof boxes>();
+    for (const box of boxes) {
+      const row = [...rows.keys()].find((top) => Math.abs(top - box.y) < 40);
+      rows.set(row ?? box.y, [...(rows.get(row ?? box.y) ?? []), box]);
+    }
+    for (const row of rows.values()) {
+      const [first] = row;
+      for (const box of row) {
+        expect(
+          box.y,
+          `at ${width} px the tiles of a row start together`,
+        ).toBeCloseTo(first!.y, 0);
+        expect(
+          box.height,
+          `at ${width} px the tiles of a row are as tall`,
+        ).toBeCloseTo(first!.height, 0);
+      }
+    }
+  }
+});
+
 test('REP-03 · cartera de clientes by ageing bucket, with totals', async ({
   newCompany,
 }) => {
