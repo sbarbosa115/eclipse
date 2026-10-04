@@ -15,7 +15,7 @@
 | Manual: pass | 97 (none needed a fix during the run) |
 | Manual: fail | 0 |
 | Manual: not run by hand | 2: ACC-18 (two idle hours) and REP-18 (over 1.500 rows), both covered by automated tests |
-| Findings | 9 (M1–M9): 7 Low, M8 a product decision, M6 seen again in DOC-06; none blocks the release |
+| Findings | 9 (M1–M9), all fixed after the run (see each); smoke attempt 2 green on the fixes |
 
 ## Smoke suite
 
@@ -26,6 +26,7 @@ the last row is green.
 | # | When | Commit | Result | Failed |
 |---|---|---|---|---|
 | 1 | 2026-10-04 01:56 | `a271dac` | Green: 142 passed, 0 failed | — |
+| 2 | 2026-10-04 07:41 | `ce95ecd` | Green: 142 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
@@ -144,12 +145,15 @@ passes into ranges (`AREA-01 – 05`) once done.
 M1 · Low · RC-14 (and the other lists with many columns): at 1024×768 the receipts list's Acciones column is past the
 table's edge; the table scrolls sideways inside its box (nothing is lost), but a tablet in landscape should see every
 column. Fix: compact the columns or wrap Acciones, as the document editor did (F8).
+**Fixed** in `03f0ead`: up to 1100 px the menu is a drawer; on laptops row actions go two by two and headers wrap. Measured headless: every list fits at 1024, 1280, 1366 and 1440.
 
 M2 · Low · DOC-09/SAL-25: at 768×1024 the document editor's line headers "Descripción" and "Cantidad" run together and
 the tax selects are cut ("Sin impues…"); the grid scrolls inside its box below 960 px by design (F8).
+**Fixed** in `03f0ead`: Descripción keeps at least 116 px, "% DESCUENTO" its own line, the tax selects read "Sin impuesto" whole; below 960 px the grid still scrolls inside its box.
 
 M3 · Low · ACC-12/LED-10: the Configuración tab bar scrolls sideways with its scrollbar hidden, so at 768 nothing says
 more tabs exist ("Plan de cuent…" is cut). Fix: a fade or a visible scroll cue at the edge.
+**Fixed** in `03f0ead`: the tabs wrap onto a second row up to 1100 px.
 
 
 <!-- Numbered: what happened, which case, the cause, and the fix (commit) or why it was left. -->
@@ -157,24 +161,36 @@ more tabs exist ("Plan de cuent…" is cut). Fix: a fade or a visible scroll cue
 M4 · Low · The browser tab's title stays from the previous page on screens without their own (the dashboard after
 the invitation page read "Aceptar invitación · Mustang"; Terceros after sign-in read "Ingresar · Mustang"). Fix: every
 page sets its title, or the shell resets it to the section's name.
+**Fixed** in `3bb5b87`: the shell names the tab after the current section ("Terceros · Mustang").
 
 M5 · Low · ACC-17: in the HTML part of the invitation and reset e-mails, "copia este enlace en tu navegador:" runs into
 the link with no space.
+**Fixed** in `7de9822`: the fallback link is an <a> on its own line.
 
 M6 · Low · TAX-16 (account picker): after a refused value, typing a valid code completes the label but the old error
 "Elige una cuenta de la lista." stays under the field until the next save. Seen again in DOC-06: switching a purchase line
 to Producto and back empties the account but keeps the error.
+**Fixed** in `74f4415`: the account pickers and the editor's line cells drop their message once edited, until the next check.
 
 M7 · Low · TAX: "Impoconsumo por valor" is seeded at $ 0,00 per unit; a company that sells under it must first set
 the value (the accountant edits it). Worth a note in the tab's intro, or seeding it inactive.
+**Fixed** in `7de9822`: seeded inactive until the company sets its value.
 
 M8 · Product decision · SAL-09: the sales invoice PDF is titled "Factura electrónica de venta" while stage 1 transmits
 nothing to the DIAN (no CUFE, no XML, no validation). A client could take the PDF for a valid electronic invoice. Options:
 title it "Factura de venta" until stage 4, or print a line saying it is not yet a DIAN-validated electronic invoice.
+**Fixed** in `7de9822`: decided with the user: "Factura de venta" until DIAN transmission exists (stage 4).
 
 M9 · Low · PUR-11 and the receipt PDFs: the purchase PDF omits the supplier's NIT; its line "Valor total" subtracts the
 retención (sales shows subtotal + IVA) and prints quantities as "1,00" (sales "1"); in the receipt and payment PDFs the
 "Valor aplicado" header is left-aligned over right-aligned amounts.
+**Fixed** in `70837aa`: the supplier's NIT and address print; Valor total = subtotal + impuesto; "1" not "1,00"; amount headers right-aligned in every PDF.
+
+### After the run
+
+- 2026-10-04, decided with the user: a client may accept a quotation late. A vencida quotation is accepted, rejected or
+  converted like an emitida one, and only no longer sent (`ce1fb5a`). COT-08 in the suite and its smoke test were
+  rewritten for it; the smoke run (attempt 2) covers it.
 
 ## Conditions
 
