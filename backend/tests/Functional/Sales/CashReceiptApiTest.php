@@ -67,13 +67,12 @@ final class CashReceiptApiTest extends ApiTestCase
         $partly = $this->getJson('/api/v1/sales-invoices/'.$second['id']);
         self::assertSame(['partially_paid', '880000.00'], [$partly['status'], $partly['balance']]);
 
-        $entries = $this->entries();
         self::assertSame([
             ['11100501', '1500000.00', '0.00'],
             ['13050501', '0.00', '1190000.00'],
             ['13050501', '0.00', '310000.00'],
-        ], self::movements(end($entries)), 'A.2: Dr the method’s account; Cr 1305 per allocation.');
-        self::assertSame('cash_receipt', end($entries)->sourceType());
+        ], self::movements($this->lastEntry()), 'A.2: Dr the method’s account; Cr 1305 per allocation.');
+        self::assertSame('cash_receipt', $this->lastEntry()->sourceType());
     }
 
     public function testTheClientsOwnReceivableAccountIsCredited(): void
@@ -84,8 +83,7 @@ final class CashReceiptApiTest extends ApiTestCase
 
         $this->receive($this->cliente, '1190000.00', [[$invoice['receivables'][0]['id'], '1190000.00']]);
 
-        $entries = $this->entries();
-        self::assertSame(['13051001', '0.00', '1190000.00'], self::movements(end($entries))[1], '§4.2: the tercero’s override applies to the receipt as to the invoice.');
+        self::assertSame(['13051001', '0.00', '1190000.00'], self::movements($this->lastEntry())[1], '§4.2: the tercero’s override applies to the receipt as to the invoice.');
     }
 
     public function testTheAllocationsMustMatchTheAmountAndTheBalances(): void
@@ -104,7 +102,8 @@ final class CashReceiptApiTest extends ApiTestCase
 
         self::assertSame([], $this->getJson('/api/v1/cash-receipts')['items'], 'Nothing was emitted…');
         $this->receive($this->cliente, '1190000.00', [[$receivable, '1190000.00']]);
-        self::assertSame('RC-1', $this->getJson('/api/v1/cash-receipts')['items'][0]['number'], '…and no number was spent by the refusals.');
+        $after = $this->getJson('/api/v1/cash-receipts?status=emitted');
+        self::assertSame(['RC-1'], array_column($after['items'], 'number'), '…and no number was spent by the refusals.');
     }
 
     public function testShapeRefusalsByField(): void
@@ -182,12 +181,11 @@ final class CashReceiptApiTest extends ApiTestCase
         $back = $this->getJson('/api/v1/sales-invoices/'.$invoice['id']);
         self::assertSame(['emitted', '1190000.00'], [$back['status'], $back['balance']], 'The invoice is owed again.');
 
-        $entries = $this->entries();
         self::assertSame([
             ['11050501', '0.00', '1190000.00'],
             ['13050501', '1190000.00', '0.00'],
-        ], self::movements(end($entries)), 'The reversing entry is the mirror.');
-        self::assertSame(self::today(), end($entries)->entryDate()->format('Y-m-d'), 'Dated the void date, today.');
+        ], self::movements($this->lastEntry()), 'The reversing entry is the mirror.');
+        self::assertSame(self::today(), $this->lastEntry()->entryDate()->format('Y-m-d'), 'Dated the void date, today.');
 
         $this->sendJson('POST', '/api/v1/sales-invoices/'.$invoice['id'].'/void', ['reason' => 'Ya sin recibos']);
         self::assertResponseIsSuccessful('A voided receipt no longer holds the invoice (§4.12).');
@@ -258,7 +256,7 @@ final class CashReceiptApiTest extends ApiTestCase
             $this->client->enableProfiler();
             $this->getJson('/api/v1/cash-receipts');
             $profile = $this->client->getProfile();
-            self::assertNotFalse($profile);
+            self::assertInstanceOf(\Symfony\Component\HttpKernel\Profiler\Profile::class, $profile, 'The profiler is on in the test environment.');
             $collector = $profile->getCollector('db');
             \assert($collector instanceof \Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector);
 

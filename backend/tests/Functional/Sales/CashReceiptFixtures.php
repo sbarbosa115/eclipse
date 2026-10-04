@@ -2,6 +2,7 @@
 
 namespace App\Tests\Functional\Sales;
 
+use App\Ledger\Domain\Model\JournalEntry;
 use App\Shared\Domain\Money\Money;
 use App\Tests\Support\ApiTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -58,6 +59,16 @@ trait CashReceiptFixtures
         self::assertResponseStatusCodeSame(201, 'The receipt is emitted: '.json_encode($receipt));
 
         return $receipt;
+    }
+
+    /** The newest entry of the books. */
+    protected function lastEntry(): JournalEntry
+    {
+        $entries = $this->entries();
+        $last = end($entries);
+        self::assertInstanceOf(JournalEntry::class, $last, 'The books have an entry.');
+
+        return $last;
     }
 
     /**

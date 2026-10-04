@@ -30,8 +30,7 @@ final class AC04CashReceiptPaysTheInvoiceTest extends ApiTestCase
         $receipt = $this->receive($client, '595000.00', [[$open[0]['id'], $open[0]['balance']]]);
 
         self::assertSame('paid', $this->getJson('/api/v1/sales-invoices/'.$invoice['id'])['status'], 'The invoice is pagado.');
-        $entries = $this->entries();
-        $entry = end($entries);
+        $entry = $this->lastEntry();
         self::assertSame('cash_receipt', $entry->sourceType());
         self::assertSame($receipt['number'], $entry->sourceNumber());
         $clientes = array_values(array_filter(self::movements($entry), static fn (array $m) => str_starts_with($m[0], '1305')));

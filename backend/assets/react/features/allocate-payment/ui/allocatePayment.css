@@ -1,0 +1,47 @@
+/* Item 11 (cash-receipt): the allocation table, shared by recibos de caja and (item 12) recibos de pago. */
+.admin .allocate-payment td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin .allocate-payment-input input {
+  width: 9rem;
+  text-align: right;
+}
+
+.admin .allocate-payment-input .field-error {
+  display: block;
+}
+
+.admin .allocate-payment-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 1.5rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.admin .allocate-payment-summary div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin .allocate-payment-summary dt {
+  color: var(--color-muted);
+}
+
+.admin .allocate-payment-summary dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .allocate-payment-status {
+  text-align: right;
+  margin: 0;
+}
+
+.admin .allocate-payment-status.is-balanced {
+  color: var(--color-success);
+  font-weight: 600;
+}

@@ -1,13 +1,16 @@
-import {useTranslation} from '@/shared/i18n';
-import {ComingSoon, PageHeader} from '@/shared/ui';
+import {Route, Routes} from 'react-router-dom';
+import {CashReceiptsList} from './CashReceiptsList';
+import {CashReceiptView} from './CashReceiptView';
+import {NewCashReceipt} from './NewCashReceipt';
+import './cashReceipts.css';
 
-/** Owned by item 11 cash-receipt of the accounting split, which replaces this placeholder. */
+/** Recibos de caja: the list at /recibos-caja, a new one at /recibos-caja/nuevo, one receipt at /recibos-caja/:id. */
 export function CashReceiptsPage() {
-  const {t} = useTranslation();
   return (
-    <>
-      <PageHeader title={t('shell.nav.cashReceipts')} />
-      <ComingSoon />
-    </>
+    <Routes>
+      <Route index element={<CashReceiptsList />} />
+      <Route path="nuevo" element={<NewCashReceipt />} />
+      <Route path=":id" element={<CashReceiptView />} />
+    </Routes>
   );
 }

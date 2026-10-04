@@ -125,7 +125,7 @@ final class CashReceiptController extends AbstractController
             Uuid::fromString($in->paymentMethodId),
             $in->amount,
             $in->notes,
-            array_map(static fn (CashReceiptAllocationInput $a) => new CashReceiptAllocationData(Uuid::fromString($a->receivableId), $a->amount), array_values($in->allocations)),
+            array_map(static fn (CashReceiptAllocationInput $a) => new CashReceiptAllocationData(Uuid::fromString($a->receivableId), $a->amount), $in->allocations),
             $in->send,
         ));
         \assert($id instanceof Uuid);
