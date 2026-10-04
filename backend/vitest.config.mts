@@ -14,5 +14,8 @@ export default defineConfig({
     // userEvent-driven tests take seconds when the machine is busy (several stacks building at once): a slow run is
     // not a failing one.
     testTimeout: 15_000,
+    // A few workers, not one per core: form tests that type a lot starve each other (and the stacks beside them) when
+    // every core runs one, and a 2 s test then takes 15.
+    maxWorkers: 4,
   },
 });

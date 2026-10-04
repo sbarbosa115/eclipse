@@ -13,7 +13,7 @@ use Brick\Math\RoundingMode;
  *     Descuentos   = Σ cantidad × valor unitario × % descuento
  *     Subtotal     = Total bruto − Descuentos
  *     Impuestos    = Σ impuesto cargo de cada línea, sobre la base con descuento
- *     Retenciones  = Σ impuesto retención de cada línea
+ *     Retenciones  = Σ impuesto retención de cada línea (ReteIVA sobre el IVA de la línea)
  *     Total neto   = Subtotal + Impuestos − Retenciones
  *
  * Every line is computed exactly and each sum is rounded once, at document level. Each line then gets its share of
@@ -49,8 +49,9 @@ final readonly class DocumentTotals
             $base = $lineGross->minus($lineDiscount);
             $gross[] = $lineGross;
             $discount[] = $lineDiscount;
-            $tax[] = $line->charge->on($base, $quantity);
-            $withholding[] = $line->withholding->on($base, $quantity);
+            $lineTax = $line->charge->on($base, $quantity);
+            $tax[] = $lineTax;
+            $withholding[] = $line->withholding->on($base, $quantity, $lineTax);
         }
 
         $grossShares = self::shares($gross);

@@ -62,6 +62,18 @@ final class DocumentTotalsTest extends TestCase
         self::assertSame('31500.00', $totals->net->toString());
     }
 
+    public function testReteIvaIsAPercentageOfTheLinesIvaNotOfItsBase(): void
+    {
+        // Base 1 000 000, IVA 19 % = 190 000; ReteIVA 15 % is withheld on the IVA: 28 500.
+        $totals = DocumentTotals::of([
+            new LineInput(Quantity::of('1'), UnitPrice::of('1000000'), Rate::zero(), TaxRate::percentage('19'), TaxRate::percentageOfTax('15')),
+        ]);
+
+        self::assertSame('190000.00', $totals->taxes->toString());
+        self::assertSame('28500.00', $totals->withholdings->toString(), 'ReteIVA applies to the IVA (Art. 437-1 ET), never to the base.');
+        self::assertSame('1161500.00', $totals->net->toString());
+    }
+
     public function testAnEmptyDocumentIsAllZeros(): void
     {
         $totals = DocumentTotals::of([]);

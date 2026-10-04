@@ -41,7 +41,8 @@ final class TaxSnapshot
     public function rate(): TaxRate
     {
         return match ($this->calculation) {
-            TaxCalculation::Percentage => TaxRate::percentage($this->value),
+            // ReteIVA is a percentage of the line's IVA, whichever document holds it.
+            TaxCalculation::Percentage => 'reteiva' === $this->kind ? TaxRate::percentageOfTax($this->value) : TaxRate::percentage($this->value),
             TaxCalculation::PerUnit => TaxRate::perUnit($this->value),
         };
     }

@@ -195,18 +195,20 @@ final class PurchaseInvoicePostingTest extends TestCase
         $fees = $this->account('511025 Asesoría jurídica');
         $draft = $this->post(
             [
-                self::line(null, $fees, '1', '1000000', withholding: self::tax('reteiva', '15.0000')),
+                // ReteIVA is 15 % of the line's IVA (190 000): 28 500.
+                self::line(null, $fees, '1', '1000000', charge: self::tax('iva', '19.0000'), withholding: self::tax('reteiva', '15.0000')),
                 self::line(null, $fees, '1', '1000000', withholding: self::tax('reteica', '0.9660')),
             ],
-            [$this->credit('1840340.00')],
+            [$this->credit('2151840.00')],
         );
 
         self::assertSame([
             ['debit', '511025 Asesoría jurídica', '2000000.00', false],
-            ['credit', C::VatWithholdingPracticed->value, '150000.00', true],
+            ['debit', C::VatDeductible->value, '190000.00', false],
+            ['credit', C::VatWithholdingPracticed->value, '28500.00', true],
             ['credit', C::IcaWithholdingPracticed->value, '9660.00', true],
-            ['credit', C::Payables->value, '1840340.00', true],
-        ], $this->movements($draft), 'Lines on the same account are posted together; ReteIVA → 2367, ReteICA → 2368.');
+            ['credit', C::Payables->value, '2151840.00', true],
+        ], $this->movements($draft), 'Lines on the same account are posted together; ReteIVA (on the IVA) → 2367, ReteICA → 2368.');
         self::assertBalanced($draft);
     }
 

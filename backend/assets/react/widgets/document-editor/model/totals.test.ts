@@ -7,6 +7,12 @@ const TAXES: TaxRateInfo[] = [
   {id: 'rete4', calculation: 'percentage', rate: '4.0000'},
   {id: 'none', calculation: 'percentage', rate: '0.0000'},
   {id: 'impo500', calculation: 'per_unit', rate: '500.0000'},
+  {
+    id: 'reteiva15',
+    calculation: 'percentage',
+    rate: '15.0000',
+    kind: 'reteiva',
+  },
 ];
 
 function line(change: Partial<DraftLine>): DraftLine {
@@ -90,6 +96,24 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
 
     expect(totals.taxes).toBe('1500.00');
     expect(totals.net).toBe('31500.00');
+  });
+
+  it('takes ReteIVA as a percentage of the line’s IVA, not of its base', () => {
+    // Base 1 000 000, IVA 19 % = 190 000; ReteIVA 15 % = 28 500 (as on the server).
+    const totals = computeTotals(
+      [
+        line({
+          quantity: '1',
+          unit_price: '1000000',
+          charge_tax_id: 'iva19',
+          withholding_tax_id: 'reteiva15',
+        }),
+      ],
+      TAXES,
+    );
+
+    expect(totals.withholdings).toBe('28500.00');
+    expect(totals.net).toBe('1161500.00');
   });
 
   it('is all zeros for an empty document', () => {

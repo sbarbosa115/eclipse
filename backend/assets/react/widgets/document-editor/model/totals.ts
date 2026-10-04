@@ -6,6 +6,8 @@ export interface TaxRateInfo {
   id: string;
   calculation: string;
   rate: string;
+  /** The tax's kind (`reteiva`…): a ReteIVA is a percentage of the line's IVA, not of its base. */
+  kind?: string;
 }
 
 /** One line's share of the totals, in pesos with two decimals. */
@@ -43,12 +45,13 @@ function taxOn(
   tax: TaxRateInfo | undefined,
   base: Decimal,
   quantity: Decimal,
+  chargeTax: Decimal = Decimal.ZERO,
 ): Decimal {
   if (!tax) return Decimal.ZERO;
   const rate = read(tax.rate);
-  return tax.calculation === 'per_unit'
-    ? quantity.times(rate)
-    : base.times(rate).percent();
+  if (tax.calculation === 'per_unit') return quantity.times(rate);
+  // ReteIVA: a percentage of the line's IVA (TaxBase::ChargeTax on the server).
+  return (tax.kind === 'reteiva' ? chargeTax : base).times(rate).percent();
 }
 
 /**
@@ -82,7 +85,7 @@ function shares(exact: Decimal[]): Decimal[] {
  *     Descuentos   = Σ cantidad × valor unitario × % descuento
  *     Subtotal     = Total bruto − Descuentos
  *     Impuestos    = Σ impuesto cargo de cada línea, sobre la base con descuento
- *     Retenciones  = Σ impuesto retención de cada línea
+ *     Retenciones  = Σ impuesto retención de cada línea (ReteIVA sobre el IVA de la línea)
  *     Total neto   = Subtotal + Impuestos − Retenciones
  */
 export function computeTotals(
@@ -102,9 +105,10 @@ export function computeTotals(
     const base = lineGross.minus(lineDiscount);
     gross.push(lineGross);
     discount.push(lineDiscount);
-    tax.push(taxOn(byId.get(line.charge_tax_id ?? ''), base, quantity));
+    const lineTax = taxOn(byId.get(line.charge_tax_id ?? ''), base, quantity);
+    tax.push(lineTax);
     withholding.push(
-      taxOn(byId.get(line.withholding_tax_id ?? ''), base, quantity),
+      taxOn(byId.get(line.withholding_tax_id ?? ''), base, quantity, lineTax),
     );
   }
 
