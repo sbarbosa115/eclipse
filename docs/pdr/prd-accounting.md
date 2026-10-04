@@ -673,6 +673,9 @@ second one; it may only extend it through props.
 | F6 | item 0 | Sign-in dropped the query string of the address it came from | fixed (`2e15736`) |
 | F7 | company, ledger, document-editor | Native `<input type="date">` shows the browser's format (`mm/dd/yyyy` in an English browser; the balance de prueba showed `10/03/2026` for 3 October). §5 NFR: `DD/MM/YYYY` | `DateInput` added to `@/shared/ui` (item 0); new forms use it, existing ones (company, ledger, document-editor, taxes) adopt it in the polish pass |
 | F8 | document-editor | At 1366 px the line grid scrolls sideways inside the table and hides Impuesto retención and Valor total | document-editor layout: description narrower or wrapping, numeric columns compact |
+| F10 | sales, purchasing, company | Three copies of "today in Bogotá" on the server (`SalesCalendar`, `ColombianCalendar`, `Resolutions::TIMEZONE`) | one `Shared\Domain\Calendar` (or a Clock method), used everywhere |
+| F11 | item 0 | Dates: the UI took "today" and timestamps from the browser/UTC calendar | fixed: `todayInColombia()`, `formatDate()` on Colombia's calendar |
+| F12 | item 0 | ReteIVA was computed on the line's base instead of its IVA | fixed: `TaxBase::ChargeTax`, mirrored in the editor's preview |
 | F9 | company | One resolution per company and desde/prefijo locked after use: a renewal with a new range or prefix cannot be entered (only extended) | product decision: a "close and open a new resolution" action in stage 1, or wait for several resolutions (stage 4) |
 
 After merging ledger, company and document-editor the visual pass (company, resolution, chart, posting rules, payment
