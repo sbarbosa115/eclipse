@@ -104,3 +104,8 @@
 'Choose an open invoice of this client, once.': 'Elige una factura pendiente de este cliente, una sola vez.'
 'Choose an active contado payment method.': 'Elige una forma de pago de contado activa.'
 'Choose where the money comes in.': 'Elige dónde ingresa el dinero.'
+# Supplier payment (item 12)
+'The payment date cannot be in the future.': 'La fecha del pago no puede ser futura.'
+'Allocate the amount paid to at least one invoice.': 'Aplica el valor pagado al menos a una factura.'
+'Choose an open invoice of this supplier, once.': 'Elige una factura pendiente de este proveedor, una sola vez.'
+'Choose where the money comes from.': 'Elige de dónde sale el dinero.'
