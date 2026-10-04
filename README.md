@@ -134,6 +134,11 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/ledger/trial-balance` | `TrialBalanceOutput`: per account and parent, opening/débito/crédito/closing (débito − crédito), totals, `balanced`; `?from`, `?to` (default the year so far) | 400; 403 |
 | GET | `/ledger/income-statement` | `IncomeStatementOutput` (classes 4, 6, 7, 5 by group and cuenta; net income) for `?from`–`?to` | 400; 403 |
 | GET | `/ledger/balance-sheet` | `BalanceSheetOutput` (classes 1–3, current earnings, `balanced`) at `?date` | 400; 403 |
+| GET | `/reports/cartera/{clients\|suppliers}` | `CarteraOutput {as_of, items: CarteraRowOutput[], total, page, per_page, totals}`: open receivables / payables by tercero, largest first, split `current` (al día), `days1_to30`, `days31_to60`, `days61_to90`, `over90` by due date against `?as_of=` (default today in Colombia; a past date rebuilds what was owed then), plus `total`, `overdue`, `documents`; `?q=` (name or identification, literal), `?page`, `?per_page` ≤ 100. `totals` covers every tercero matching `q`, not just the page. READ_DOCUMENTS | 400 `invalid_date`; 401; 403 |
+| GET | `/reports/cartera/{clients\|suppliers}/{terceroId}` | `CarteraDocumentsOutput {as_of, tercero_id, tercero_name, items: CarteraDocumentOutput[], total}`: the tercero's open documents, the soonest due first (`invoice_id`, `invoice_number`, dates, `amount`, `balance`, `days_overdue`, `bucket`); `?as_of=`. READ_DOCUMENTS | 400; 404 (nothing owed at that date, or another company's tercero) |
+| GET | `/reports/cartera/{clients\|suppliers}/export` | the cartera as a file: `?format=csv\|pdf` (default csv), `?as_of=`, `?q=`, `?detail=1` for one row per open document instead of per tercero. READ_DOCUMENTS | 400 `invalid_format`, `invalid_date`; 422 `export_too_large` |
+| GET | `/reports/ledger/{journal\|trial-balance\|income-statement\|balance-sheet}/export` | the ledger's book as a file, from the ledger's own query services: `?format=`, then the screen's filters (`journal`: `?from`, `?to`, `?account`, `?tercero_id`; `trial-balance`, `income-statement`: `?from`, `?to`, default the year so far; `balance-sheet`: `?date`). VIEW_BOOKS | 400; 403; 422 `export_too_large` |
+| GET | `/dashboard` | `DashboardOutput {as_of, clients_total, clients_overdue, suppliers_total, suppliers_overdue, sales_month, sales_month_count, purchases_month, purchases_month_count, cash_and_banks}`: five queries, whatever the size of the company. Sales and purchases are this month's emitted invoices before taxes; `cash_and_banks` (1105 + 1110) is `null` without VIEW_BOOKS. READ_DOCUMENTS | 401; 403 |
 | GET, POST | `/terceros`, `/terceros/quick`, `/terceros/{id}/contacts` | contract only: 501 until the "terceros" item | 501 |
 | GET | `/products` | `{items: ProductOutput[], total, page, per_page}` by name; `?q=` (código or name, matched literally), `?type=producto\|servicio`, `?active=1` only active / `0` only inactive, `?page`, `?per_page` ≤ 100. Every role | 401 |
 | GET | `/products/units` | `{items: {code, name}[]}`: the short DIAN list (94, KGM, MTR, HUR, ZZ) | 401 |
@@ -353,6 +358,35 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   accountant reads) until the "access" item's voters replace it (F4). Dates are Colombian calendar days
   (`America/Bogota`): "not in the future" and the void date.
 
+- **Reporting reads, owns nothing.** `Reporting` has no aggregates and no migration: `DbalCarteraQueries` and
+  `DbalDashboardQueries` read the `receivable`/`payable`, invoice, receipt/payment, `journal_*` and `tercero` tables
+  with DBAL in its own Infrastructure; the ledger's books are exported through `Ledger\Application` services
+  (`JournalQueries`, `LedgerReports`), never by SQL of ours.
+- **Cartera "as of" a date is rebuilt from the documents' dates**: an open item exists from the invoice's issue date
+  until the date of its voiding entry, and each receipt/payment counts from its own date until its reversing entry's
+  date, so any past date answers what the books showed then; for today it is the receivable's own balance. Ageing is
+  `due date` against the date: not yet due or due that day = *al día*, then 1–30, 31–60, 61–90 and > 90 days late
+  (`AgeingBucket`, unit-tested at each edge). Invariant 3 is asserted from this side (`CarteraInvariantTest`): the
+  cartera total, per tercero and as of eight past dates, equals the 1305 / 2205 balance and the balance de prueba's.
+  The equality holds for accounts under 1305 / 2205 (a client's own receivable account such as 130510 included); a
+  supplier whose own payable account is outside 2205 (say 2335) is in cartera de proveedores but not in 2205.
+- **Exports** (`Reporting\Application\Export`): every report becomes a `TabularReport` (columns, rows, a totals row)
+  and `CsvEncoder` / `ReportPdf` write it, so the formats cannot drift. **CSV** is UTF-8 with a BOM, `;` between
+  columns, CRLF, and **machine-readable numbers**: a decimal point and no thousands separator (`1190000.50`), dates as
+  `YYYY-MM-DD` (Colombian Excel opens it in columns with accents right; the PDF shows `$ 1.190.000,00` and
+  `DD/MM/AAAA`). A text that would run as a formula (`=`, `+`, `@`, a leading `-` that is not a number) is prefixed with
+  `'`. The CSV streams page by page (the libro diario reads 200 entries at a time). **Row cap**
+  (`ExportLimits`): 50 000 rows in a CSV, 1 500 in a PDF (dompdf builds it in memory); above it the answer is 422
+  `export_too_large`, never a file cut short. A libro diario counts entries up front (cap ÷ 2: an entry has at least two
+  lines) so a stream never fails halfway. `?check=1` rehearses an export (204 or 422) so the screen can explain a too
+  big report before the browser saves anything.
+- **Dashboard**: one request, five queries. *Ventas / Compras del mes* are the month's emitted, partially paid and paid
+  invoices (not drafts or voided) by issue date, **before taxes** (`subtotal`); the books' figure (cash and banks) is
+  `null` unless the person may VIEW_BOOKS. The resolution warning is the existing `GET /company/resolution/status`,
+  read only by whoever writes documents.
+- **Report permissions**: carteras, the dashboard and their exports are READ_DOCUMENTS; the four ledger exports are
+  VIEW_BOOKS, as the books themselves (`#[IsGranted]`).
+
 ## Known gaps
 
 - **Renewing the invoicing resolution** with a new range or prefix is not possible in stage 1 (one resolution per company, its desde and prefijo locked once used): a renewal can only extend hasta and the dates. Several resolutions come in stage 4 (decided 2026-10-04).
@@ -392,3 +426,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   `VoidSalesInvoiceHandler` reads the invoice without a row lock, so a receipt committing at the same instant as the
   invoice's void is not excluded by a lock (the invoice item's to tighten).
 - Sales invoices: no *Vendedor* field in the form yet (the API takes `seller_id`, an empleado); no attachments on invoices (the form lists none and offers no upload); the read-only form previews a tax deactivated since as 0 (the saved totals are right, from the server); the PDF prints the DIAN fields stage 1 stores, no CUFE/QR (stage 4).
+- Reports: no Excel (.xlsx; Q26 decided CSV and PDF). The ledger pages (`pages/ledger`) do not yet have export buttons
+  of their own or use `widgets/report-table`: the exports are reached from *Reportes › Exportar* (the reusable table is
+  ready for them). The dashboard has no chart. Cartera is by tercero and due date, with no per-sales-person or
+  per-product cut, and a cartera "as of" a past date ignores later changes to a tercero's name.

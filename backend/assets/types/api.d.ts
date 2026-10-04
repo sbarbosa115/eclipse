@@ -1855,6 +1855,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/cartera/{side}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open balances by tercero with al día, 1-30, 31-60, 61-90 and más de 90 días vencida (by due date), largest
+         *     first: ?q= (part of the name or the identification, matched literally), ?page, ?per_page ≤ 100 (default 25).
+         * @description `totals` is the grand total of every tercero matching the search.
+         */
+        get: operations["get_app_reporting_ui_http_cartera_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/cartera/{side}/{terceroId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One tercero's open documents, the soonest due first. 404 for a tercero without a balance. */
+        get: operations["get_app_reporting_ui_http_cartera_documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_app_reporting_ui_http_dashboard_show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/cartera/{side}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cartera by tercero (default) or, with ?detail=1, document by document. ?as_of=, ?q= as the screen. */
+        get: operations["get_app_reporting_ui_http_reportexport_cartera"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/ledger/{report}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The ledger's books: journal (?from, ?to, ?account, ?tercero_id), trial-balance and income-statement (?from, ?to,
+         *     default the year so far), balance-sheet (?date, default today).
+         */
+        get: operations["get_app_reporting_ui_http_reportexport_ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2606,6 +2697,80 @@ export interface components {
             voided_by?: string | null;
             voided_at?: string | null;
             void_reason?: string | null;
+        };
+        CarteraRowOutput: {
+            tercero_id: string;
+            name: string;
+            /** "NIT 900123456-8" */
+            identification: string;
+            current: string;
+            days1_to30: string;
+            days31_to60: string;
+            days61_to90: string;
+            over90: string;
+            total: string;
+            /** Everything past its due date. */
+            overdue: string;
+            /** Open receivables / payables behind the row. */
+            documents: number;
+        };
+        CarteraTotalsOutput: {
+            current: string;
+            days1_to30: string;
+            days31_to60: string;
+            days61_to90: string;
+            over90: string;
+            total: string;
+            overdue: string;
+            terceros: number;
+            documents: number;
+        };
+        CarteraOutput: {
+            /** YYYY-MM-DD */
+            as_of: string;
+            items: components["schemas"]["CarteraRowOutput"][];
+            /** Terceros with a balance matching the search. */
+            total: number;
+            page: number;
+            per_page: number;
+            totals: components["schemas"]["CarteraTotalsOutput"];
+        };
+        CarteraDocumentOutput: {
+            id: string;
+            invoice_id: string;
+            invoice_number: string;
+            issue_date: string;
+            due_date: string;
+            /** What the crédito line was for. */
+            amount: string;
+            /** What is still owed as of the date. */
+            balance: string;
+            /** Whole days after the due date at the report's date; 0 or less while not yet due. */
+            days_overdue: number;
+            /** current, days1_to30, days31_to60, days61_to90 or over90 */
+            bucket: string;
+        };
+        CarteraDocumentsOutput: {
+            as_of: string;
+            tercero_id: string;
+            tercero_name: string;
+            items: components["schemas"]["CarteraDocumentOutput"][];
+            total: string;
+        };
+        DashboardOutput: {
+            /** YYYY-MM-DD, Colombia's today. */
+            as_of: string;
+            clients_total: string;
+            clients_overdue: string;
+            suppliers_total: string;
+            suppliers_overdue: string;
+            /** Invoiced so far this month, before taxes. */
+            sales_month: string;
+            sales_month_count: number;
+            purchases_month: string;
+            purchases_month_count: number;
+            /** Cajas y bancos (1105 + 1110); null for a person who may not see the books. */
+            cash_and_banks?: string | null;
         };
     };
     responses: never;
@@ -5250,6 +5415,109 @@ export interface operations {
             header?: never;
             path: {
                 id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_reporting_ui_http_cartera_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "clients" | "suppliers";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarteraOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_cartera_documents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "clients" | "suppliers";
+                terceroId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarteraDocumentsOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_dashboard_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_reportexport_cartera: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "clients" | "suppliers";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_reporting_ui_http_reportexport_ledger: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report: "journal" | "trial-balance" | "income-statement" | "balance-sheet";
             };
             cookie?: never;
         };
