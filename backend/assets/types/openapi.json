@@ -1793,6 +1793,190 @@
                 }
             }
         },
+        "/api/v1/cash-receipts": {
+            "get": {
+                "summary": "The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=emitted|voided,\n?from=, ?to= (the receipt's date, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page \u2264 100.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CashReceiptSummaryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Saves and so emits a receipt (\u00a74.9): {tercero_id, receipt_date, payment_method_id (an active contado method),\namount, notes?, allocations: [{receivable_id, amount}], send?} \u2192 201. The RC number, each invoice collected, the\nA.2 entry; with `send: true` (*Guardar y enviar por mail*) the PDF is then e-mailed to the client. 422\n`validation_failed` by field (`allocations.0.receivable_id` for an unknown or another client's receivable),\n`allocation_exceeds_balance`, `allocations_do_not_match_amount` (detail: both sums), `tercero_has_no_email`;\n409 `period_locked`.",
+                "operationId": "post_app_sales_ui_http_cashreceipt_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CashReceiptOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cash-receipts/open-receivables": {
+            "get": {
+                "summary": "What a client still owes (\u00a74.9), to allocate a receipt: ?tercero_id= (required). Its receivables with a balance,\nthe oldest due first. 404 for a client the company does not have.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_openreceivables",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OpenReceivableOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cash-receipts/{id}": {
+            "get": {
+                "summary": "One receipt, whole.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CashReceiptOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cash-receipts/{id}/void": {
+            "post": {
+                "summary": "Voids the receipt today (\u00a74.12): {reason}. Each invoice is owed again, the reversing entry is posted, the number\nis kept. 409 `document_voided`, `period_locked`.",
+                "operationId": "post_app_sales_ui_http_cashreceipt_void",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CashReceiptOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cash-receipts/{id}/send": {
+            "post": {
+                "summary": "E-mails the receipt's PDF to the client again \u2192 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`.",
+                "operationId": "post_app_sales_ui_http_cashreceipt_send",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/cash-receipts/{id}/pdf": {
+            "get": {
+                "summary": "The PDF (\u00a74.9), ANULADA when voided.",
+                "operationId": "get_app_sales_ui_http_cashreceipt_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/sales-invoices": {
             "get": {
                 "summary": "The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=draft|emitted|\npartially_paid|paid|voided, ?from=, ?to= (fecha de elaboraci\u00f3n, YYYY-MM-DD, both included), ?tercero_id=, ?page,\n?per_page \u2264 100.",
@@ -3713,6 +3897,201 @@
                     },
                     "name": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CashReceiptSummaryOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "number",
+                    "receipt_date",
+                    "tercero_id",
+                    "tercero_name",
+                    "method_name",
+                    "amount",
+                    "invoice_numbers"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "emitted or voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "receipt_date": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "invoice_numbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "OpenReceivableOutput": {
+                "required": [
+                    "id",
+                    "invoice_id",
+                    "invoice_number",
+                    "issue_date",
+                    "due_date",
+                    "amount",
+                    "balance"
+                ],
+                "properties": {
+                    "id": {
+                        "title": "The receivable: what an allocation names.",
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "title": "What the cr\u00e9dito line was for.",
+                        "type": "string"
+                    },
+                    "balance": {
+                        "title": "What is still owed.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CashReceiptAllocationOutput": {
+                "required": [
+                    "id",
+                    "receivable_id",
+                    "invoice_id",
+                    "invoice_number",
+                    "amount"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "receivable_id": {
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CashReceiptOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "number",
+                    "tercero_id",
+                    "tercero_name",
+                    "receipt_date",
+                    "payment_method_id",
+                    "method_name",
+                    "amount",
+                    "allocations",
+                    "created_by",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "emitted or voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "receipt_date": {
+                        "type": "string"
+                    },
+                    "payment_method_id": {
+                        "type": "string"
+                    },
+                    "method_name": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "allocations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CashReceiptAllocationOutput"
+                        }
+                    },
+                    "journal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reversal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "voided_by": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "voided_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "void_reason": {
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "type": "object"

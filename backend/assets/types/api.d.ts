@@ -1093,6 +1093,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cash-receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=emitted|voided,
+         *     ?from=, ?to= (the receipt's date, YYYY-MM-DD, both included), ?tercero_id=, ?page, ?per_page ≤ 100.
+         */
+        get: operations["get_app_sales_ui_http_cashreceipt_list"];
+        put?: never;
+        /**
+         * Saves and so emits a receipt (§4.9): {tercero_id, receipt_date, payment_method_id (an active contado method),
+         *     amount, notes?, allocations: [{receivable_id, amount}], send?} → 201. The RC number, each invoice collected, the
+         *     A.2 entry; with `send: true` (*Guardar y enviar por mail*) the PDF is then e-mailed to the client. 422
+         *     `validation_failed` by field (`allocations.0.receivable_id` for an unknown or another client's receivable),
+         *     `allocation_exceeds_balance`, `allocations_do_not_match_amount` (detail: both sums), `tercero_has_no_email`;
+         *     409 `period_locked`.
+         */
+        post: operations["post_app_sales_ui_http_cashreceipt_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-receipts/open-receivables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What a client still owes (§4.9), to allocate a receipt: ?tercero_id= (required). Its receivables with a balance,
+         *     the oldest due first. 404 for a client the company does not have.
+         */
+        get: operations["get_app_sales_ui_http_cashreceipt_openreceivables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-receipts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One receipt, whole. */
+        get: operations["get_app_sales_ui_http_cashreceipt_show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-receipts/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voids the receipt today (§4.12): {reason}. Each invoice is owed again, the reversing entry is posted, the number
+         *     is kept. 409 `document_voided`, `period_locked`.
+         */
+        post: operations["post_app_sales_ui_http_cashreceipt_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-receipts/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** E-mails the receipt's PDF to the client again → 202. 409 `document_not_emitted` (voided); 422 `tercero_has_no_email`. */
+        post: operations["post_app_sales_ui_http_cashreceipt_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-receipts/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF (§4.9), ANULADA when voided. */
+        get: operations["get_app_sales_ui_http_cashreceipt_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sales-invoices": {
         parameters: {
             query?: never;
@@ -1795,6 +1914,58 @@ export interface components {
             /** DIAN code: 94, KGM, MTR, HUR, ZZ */
             code: string;
             name: string;
+        };
+        CashReceiptSummaryOutput: {
+            id: string;
+            /** emitted or voided */
+            status: string;
+            number: string;
+            receipt_date: string;
+            tercero_id: string;
+            tercero_name: string;
+            method_name: string;
+            amount: string;
+            invoice_numbers: string[];
+        };
+        OpenReceivableOutput: {
+            /** The receivable: what an allocation names. */
+            id: string;
+            invoice_id: string;
+            invoice_number: string;
+            issue_date: string;
+            due_date: string;
+            /** What the crédito line was for. */
+            amount: string;
+            /** What is still owed. */
+            balance: string;
+        };
+        CashReceiptAllocationOutput: {
+            id: string;
+            receivable_id: string;
+            invoice_id: string;
+            invoice_number: string;
+            amount: string;
+        };
+        CashReceiptOutput: {
+            id: string;
+            /** emitted or voided */
+            status: string;
+            number: string;
+            tercero_id: string;
+            tercero_name: string;
+            receipt_date: string;
+            payment_method_id: string;
+            method_name: string;
+            amount: string;
+            notes?: string | null;
+            allocations: components["schemas"]["CashReceiptAllocationOutput"][];
+            journal_entry_id?: string | null;
+            reversal_entry_id?: string | null;
+            created_by: string;
+            created_at: string;
+            voided_by?: string | null;
+            voided_at?: string | null;
+            void_reason?: string | null;
         };
         SalesInvoiceSummaryOutput: {
             id: string;
@@ -3599,6 +3770,155 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProductOutput"];
                 };
+            };
+        };
+    };
+    get_app_sales_ui_http_cashreceipt_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["CashReceiptSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_cashreceipt_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashReceiptOutput"];
+                };
+            };
+        };
+    };
+    get_app_sales_ui_http_cashreceipt_openreceivables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["OpenReceivableOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_sales_ui_http_cashreceipt_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashReceiptOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_cashreceipt_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashReceiptOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_cashreceipt_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_sales_ui_http_cashreceipt_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
