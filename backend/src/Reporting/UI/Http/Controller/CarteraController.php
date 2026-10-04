@@ -4,12 +4,12 @@ namespace App\Reporting\UI\Http\Controller;
 
 use App\Reporting\Application\Cartera\CarteraQueries;
 use App\Reporting\Application\Cartera\CarteraSide;
-use App\Reporting\Application\ReportingCalendar;
 use App\Reporting\UI\Http\Output\CarteraDocumentOutput;
 use App\Reporting\UI\Http\Output\CarteraDocumentsOutput;
 use App\Reporting\UI\Http\Output\CarteraOutput;
 use App\Reporting\UI\Http\Output\CarteraRowOutput;
 use App\Reporting\UI\Http\Output\CarteraTotalsOutput;
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Money\Money;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
@@ -35,7 +35,7 @@ final class CarteraController extends AbstractController
 
     public function __construct(
         private readonly CarteraQueries $cartera,
-        private readonly ReportingCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

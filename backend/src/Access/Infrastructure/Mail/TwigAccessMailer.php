@@ -3,6 +3,7 @@
 namespace App\Access\Infrastructure\Mail;
 
 use App\Access\Application\Port\AccessMailer;
+use App\Shared\Domain\Calendar;
 use App\Shared\Infrastructure\Mail\QueuedMailer;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -18,6 +19,7 @@ final class TwigAccessMailer implements AccessMailer
 
     public function __construct(
         private readonly QueuedMailer $mailer,
+        private readonly Calendar $calendar,
         #[Autowire('%app.url%')]
         private readonly string $appUrl,
         #[Autowire('%env(MAILER_FROM)%')]
@@ -38,7 +40,7 @@ final class TwigAccessMailer implements AccessMailer
                 'inviter_name' => $inviterName,
                 'role' => self::ROLES[$role] ?? $role,
                 'link' => $this->link('invitacion', $token),
-                'expires_on' => $expiresAt->setTimezone(new \DateTimeZone('America/Bogota'))->format('d/m/Y'),
+                'expires_on' => $this->calendar->dayOf($expiresAt)->format('d/m/Y'),
             ]);
 
         $this->mailer->send($email, 'invitation');

@@ -3,7 +3,6 @@
 namespace App\Sales\Application\Command;
 
 use App\Party\Application\Query\TerceroDirectory;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\QuotationNotOpen;
 use App\Sales\Domain\Error\TerceroHasNoEmail;
 use App\Sales\Domain\Event\QuotationEmailRequested;
@@ -11,6 +10,7 @@ use App\Sales\Domain\Model\QuotationStatus;
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Application\Event\EventBus;
+use App\Shared\Domain\Calendar;
 
 final class SendQuotationHandler implements CommandHandler
 {
@@ -18,7 +18,7 @@ final class SendQuotationHandler implements CommandHandler
         private readonly QuotationRepository $quotations,
         private readonly TerceroDirectory $terceros,
         private readonly EventBus $events,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

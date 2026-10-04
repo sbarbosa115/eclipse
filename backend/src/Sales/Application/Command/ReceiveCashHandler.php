@@ -10,7 +10,6 @@ use App\Party\Application\Query\TerceroDirectory;
 use App\Party\Application\Query\TerceroView;
 use App\Sales\Application\Collection\InvoiceCollections;
 use App\Sales\Application\Posting\CashReceiptPosting;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\InvalidReceipt;
 use App\Sales\Domain\Error\PeriodLocked;
 use App\Sales\Domain\Error\TerceroHasNoEmail;
@@ -21,6 +20,7 @@ use App\Sales\Domain\Repository\CashReceiptRepository;
 use App\Sales\Domain\Repository\ReceivableLocks;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Application\Event\EventBus;
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Money\Money;
 use Symfony\Component\Uid\Uuid;
@@ -43,7 +43,7 @@ final class ReceiveCashHandler implements CommandHandler
         private readonly Numbering $numbering,
         private readonly JournalPoster $poster,
         private readonly EventBus $events,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

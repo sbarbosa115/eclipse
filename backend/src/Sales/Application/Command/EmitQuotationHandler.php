@@ -4,13 +4,13 @@ namespace App\Sales\Application\Command;
 
 use App\Company\Application\Numbering\Numbering;
 use App\Party\Application\Query\TerceroDirectory;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\TerceroHasNoEmail;
 use App\Sales\Domain\Error\TerceroInactive;
 use App\Sales\Domain\Event\QuotationEmailRequested;
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Application\Event\EventBus;
+use App\Shared\Domain\Calendar;
 
 /**
  * Emission of a cotización (§4.7), in one transaction: the draft's own checks, an active client, the next number of
@@ -23,7 +23,7 @@ final class EmitQuotationHandler implements CommandHandler
         private readonly TerceroDirectory $terceros,
         private readonly Numbering $numbering,
         private readonly EventBus $events,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

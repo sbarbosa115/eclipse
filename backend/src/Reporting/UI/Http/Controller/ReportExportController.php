@@ -12,7 +12,7 @@ use App\Reporting\Application\Export\ExportTooLarge;
 use App\Reporting\Application\Export\LedgerTables;
 use App\Reporting\Application\Export\ReportPdf;
 use App\Reporting\Application\Export\TabularReport;
-use App\Reporting\Application\ReportingCalendar;
+use App\Shared\Domain\Calendar;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
@@ -42,7 +42,7 @@ final class ReportExportController extends AbstractController
         private readonly CarteraTables $cartera,
         private readonly LedgerTables $ledger,
         private readonly ReportPdf $pdf,
-        private readonly ReportingCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

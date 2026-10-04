@@ -4,12 +4,12 @@ namespace App\Sales\Application\Command;
 
 use App\Ledger\Application\Posting\JournalPoster;
 use App\Sales\Application\Collection\InvoiceCollections;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\PeriodLocked;
 use App\Sales\Domain\Model\CashReceiptAllocation;
 use App\Sales\Domain\Repository\CashReceiptRepository;
 use App\Sales\Domain\Repository\ReceivableLocks;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Calendar;
 
 /**
  * Void (§4.12): a receipt may be voided at any time, with a reason, dated today (after the fecha de bloqueo). Each
@@ -23,7 +23,7 @@ final class VoidCashReceiptHandler implements CommandHandler
         private readonly ReceivableLocks $locks,
         private readonly InvoiceCollections $collections,
         private readonly JournalPoster $poster,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

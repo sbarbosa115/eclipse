@@ -3,11 +3,11 @@
 namespace App\Sales\Application\Command;
 
 use App\Ledger\Application\Posting\JournalPoster;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\PeriodLocked;
 use App\Sales\Domain\Repository\ReceivableRepository;
 use App\Sales\Domain\Repository\SalesInvoiceRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Calendar;
 
 /**
  * Void (§4.12): while no receipt is applied, dated today (after the fecha de bloqueo), with a reason; the receivables
@@ -19,7 +19,7 @@ final class VoidSalesInvoiceHandler implements CommandHandler
         private readonly SalesInvoiceRepository $invoices,
         private readonly ReceivableRepository $receivables,
         private readonly JournalPoster $poster,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

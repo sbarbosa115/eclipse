@@ -7,7 +7,6 @@ use App\Company\Application\Numbering\SalesInvoiceNumbering;
 use App\Ledger\Application\Posting\JournalPoster;
 use App\Party\Application\Query\TerceroDirectory;
 use App\Sales\Application\Posting\SalesInvoicePosting;
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Error\PeriodLocked;
 use App\Sales\Domain\Error\TerceroHasNoEmail;
 use App\Sales\Domain\Error\TerceroInactive;
@@ -16,6 +15,7 @@ use App\Sales\Domain\Repository\ReceivableRepository;
 use App\Sales\Domain\Repository\SalesInvoiceRepository;
 use App\Shared\Application\Command\CommandHandler;
 use App\Shared\Application\Event\EventBus;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -33,7 +33,7 @@ final class EmitSalesInvoiceHandler implements CommandHandler
         private readonly SalesInvoiceNumbering $numbering,
         private readonly JournalPoster $poster,
         private readonly EventBus $events,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

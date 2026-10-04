@@ -2,10 +2,10 @@
 
 namespace App\Sales\Application\Command;
 
-use App\Sales\Application\SalesCalendar;
 use App\Sales\Domain\Model\SalesInvoice;
 use App\Sales\Domain\Repository\SalesInvoiceRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 final class CreateDraftSalesInvoiceHandler implements CommandHandler
@@ -13,7 +13,7 @@ final class CreateDraftSalesInvoiceHandler implements CommandHandler
     public function __construct(
         private readonly SalesInvoiceRepository $invoices,
         private readonly SalesInvoiceContent $content,
-        private readonly SalesCalendar $calendar,
+        private readonly Calendar $calendar,
     ) {
     }
 

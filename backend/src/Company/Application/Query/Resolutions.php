@@ -5,19 +5,17 @@ namespace App\Company\Application\Query;
 use App\Company\Domain\Model\InvoicingResolution;
 use App\Company\Domain\Repository\CompanyRepository;
 use App\Company\Domain\Repository\InvoicingResolutionRepository;
-use App\Shared\Domain\Clock;
+use App\Shared\Domain\Calendar;
 use Symfony\Component\Uid\Uuid;
 
 /** The invoicing resolution, its status today and the company's warning thresholds. */
 final class Resolutions
 {
     /** The resolution's dates are calendar days in Colombia: "today" must not tick over at 7 pm. */
-    private const TIMEZONE = 'America/Bogota';
-
     public function __construct(
         private readonly InvoicingResolutionRepository $resolutions,
         private readonly CompanyRepository $companies,
-        private readonly Clock $clock,
+        private readonly Calendar $calendar,
     ) {
     }
 
@@ -45,7 +43,7 @@ final class Resolutions
         if (null === $r) {
             return new ResolutionStatusView('missing', 0, 0, false, $warnNumbers, $warnDays);
         }
-        $today = $this->clock->now()->setTimezone(new \DateTimeZone(self::TIMEZONE));
+        $today = $this->calendar->today();
 
         return new ResolutionStatusView($r->status($today)->value, $r->numbersLeft(), $r->daysLeft($today), $r->isRunningOut($today, $warnNumbers, $warnDays), $warnNumbers, $warnDays);
     }
