@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {formatDate} from '@/shared/lib';
 import {useTranslation} from '@/shared/i18n';
-import {Alert, Button, Card, Field} from '@/shared/ui';
+import {Alert, Button, Card, DateInput, Field} from '@/shared/ui';
 import {fetchLockDate, moveLockDate} from '../api/rulesApi';
 import {errorMessage} from '../lib/errorMessage';
 
@@ -61,11 +61,7 @@ export function LockDateCard({keeper}: {keeper: boolean}) {
           }}
         >
           <Field label={t('ledger.lockDate.label')}>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <DateInput value={date} onChange={setDate} />
           </Field>
           <Button type="submit" busy={busy} disabled={date === ''}>
             {t('ledger.lockDate.save')}

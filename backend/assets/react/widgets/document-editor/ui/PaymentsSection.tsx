@@ -5,6 +5,7 @@ import {
   Actions,
   Button,
   DataTable,
+  DateInput,
   Icon,
   IconButton,
   MoneyInput,
@@ -129,14 +130,13 @@ export function PaymentsSection({
                         ))}
                       </select>
                       {payment.term === 'custom' ? (
-                        <input
-                          type="date"
+                        <DateInput
                           aria-label={t('documentEditor.payments.dueDateOf', {
                             n,
                           })}
                           value={payment.due_date ?? ''}
-                          onChange={(e) =>
-                            onUpdate(index, {due_date: e.target.value || null})
+                          onChange={(dueDate) =>
+                            onUpdate(index, {due_date: dueDate || null})
                           }
                           {...invalidProps(ids.due, errors[`${at}.due_date`])}
                         />

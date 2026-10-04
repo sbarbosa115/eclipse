@@ -176,6 +176,29 @@ describe('the document draft', () => {
     ]);
   });
 
+  it('keeps a crédito row’s due date while the issue date is being typed, and moves it once it is a date', () => {
+    const draft = draftWith({
+      payments: [
+        {
+          key: 'a',
+          payment_method_id: 'credit',
+          amount: '10',
+          term: '30',
+          due_date: '2026-11-02',
+        },
+      ],
+    });
+
+    const typing = setIssueDate(draft, '');
+    expect(
+      typing.payments[0]?.due_date,
+      'a half-typed date (DateInput hands back "") must not turn the row into a non-crédito one',
+    ).toBe('2026-11-02');
+
+    const typed = setIssueDate(typing, '2026-10-10');
+    expect(typed.payments[0]?.due_date).toBe('2026-11-09');
+  });
+
   it('offers what is left of Total neto when a payment row is added', () => {
     let draft = addPayment(draftWith({}), '1190.00');
     expect(draft.payments[0]?.amount).toBe('1190.00');

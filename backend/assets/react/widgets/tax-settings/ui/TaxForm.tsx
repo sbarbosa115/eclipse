@@ -6,7 +6,7 @@ import {
 } from '@/features/pick-account';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {Field, FormModal, MoneyInput} from '@/shared/ui';
+import {DateInput, Field, FormModal, MoneyInput} from '@/shared/ui';
 import type {NewTaxPayload, Tax, TaxPayload} from '../api/taxSettingsApi';
 
 const KINDS: Record<string, readonly string[]> = {
@@ -208,18 +208,10 @@ export function TaxForm({tax, onClose, onSave}: Props) {
         error={errors.valid_from}
         optional
       >
-        <input
-          type="date"
-          value={validFrom}
-          onChange={(e) => setValidFrom(e.target.value)}
-        />
+        <DateInput value={validFrom} onChange={setValidFrom} />
       </Field>
       <Field label={t('taxes.form.validTo')} error={errors.valid_to} optional>
-        <input
-          type="date"
-          value={validTo}
-          onChange={(e) => setValidTo(e.target.value)}
-        />
+        <DateInput value={validTo} onChange={setValidTo} />
       </Field>
       <Field
         label={t('taxes.form.salesAccount')}

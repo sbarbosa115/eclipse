@@ -8,7 +8,7 @@ import {
   type TerceroSummary,
 } from '@/entities/tercero';
 import {useTranslation} from '@/shared/i18n';
-import {Field} from '@/shared/ui';
+import {DateInput, Field} from '@/shared/ui';
 import type {
   DocumentDraft,
   DocumentKind,
@@ -134,11 +134,7 @@ export function HeaderSection({
         label={t('documentEditor.header.issueDate')}
         error={errors['issue_date']}
       >
-        <input
-          type="date"
-          value={value.issue_date}
-          onChange={(e) => onIssueDate(e.target.value)}
-        />
+        <DateInput value={value.issue_date} onChange={onIssueDate} />
       </Field>
       {extra}
       {creating && (

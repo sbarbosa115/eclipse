@@ -175,9 +175,10 @@ describe('the document form (§4.6)', () => {
       expect(screen.getByLabelText('Número')).toHaveValue(
         'Se asigna al emitir',
       );
-      expect(screen.getByLabelText('Fecha de elaboración')).toHaveValue(
-        '2026-10-03',
-      );
+      expect(
+        screen.getByLabelText('Fecha de elaboración'),
+        'DD/MM/YYYY whatever the browser’s language',
+      ).toHaveValue('03/10/2026');
     });
 
     it('searches terceros only from the third character, then loads the contacts of the one chosen', async () => {
@@ -645,7 +646,7 @@ describe('the document form (§4.6)', () => {
         'Fecha de vencimiento de la forma de pago 1',
       );
       await userEvent.clear(date);
-      await userEvent.type(date, '2026-12-24');
+      await userEvent.type(date, '24/12/2026');
       expect(latest()?.payments[0]?.due_date).toBe('2026-12-24');
     });
 

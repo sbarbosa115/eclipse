@@ -117,13 +117,13 @@ test('LED-05 · the owner locks the books, never beyond today', async ({
     page.getByText('Los libros están abiertos: no hay fecha de bloqueo.'),
   ).toBeVisible();
 
-  await page.getByLabel('Bloquear hasta').fill('2999-01-01');
+  await page.getByLabel('Bloquear hasta').fill('01/01/2999');
   await page.getByRole('button', {name: 'Guardar fecha'}).click();
   await expect(
     page.getByText('La fecha de bloqueo no puede ser posterior a hoy.'),
   ).toBeVisible();
 
-  await page.getByLabel('Bloquear hasta').fill('2026-01-31');
+  await page.getByLabel('Bloquear hasta').fill('31/01/2026');
   await page.getByRole('button', {name: 'Guardar fecha'}).click();
   await expect(
     page.getByText('Libros bloqueados hasta el 31/01/2026.'),

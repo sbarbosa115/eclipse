@@ -109,7 +109,10 @@ export function dueDateFor(
   return addDays(issueDate, TERM_DAYS[term]);
 }
 
-/** A new issue date moves every due date computed from it; one typed by hand stays. */
+/**
+ * A new issue date moves every due date computed from it; one typed by hand stays. While the issue date is not a date
+ * yet (being typed), the due dates stay as they were.
+ */
 export function setIssueDate(
   draft: DocumentDraft,
   issueDate: string,
@@ -120,7 +123,7 @@ export function setIssueDate(
     payments: draft.payments.map((p) =>
       p.due_date === null || p.term === 'custom'
         ? p
-        : {...p, due_date: dueDateFor(p.term, issueDate, null)},
+        : {...p, due_date: dueDateFor(p.term, issueDate, null) ?? p.due_date},
     ),
   };
 }

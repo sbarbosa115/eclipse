@@ -172,9 +172,9 @@ describe('Configuración › Resolución', () => {
     await userEvent.type(screen.getByLabelText('Hasta'), '1000');
     await userEvent.type(
       screen.getByLabelText('Fecha de inicio'),
-      '2026-01-01',
+      '01/01/2026',
     );
-    await userEvent.type(screen.getByLabelText('Fecha de fin'), '2026-12-31');
+    await userEvent.type(screen.getByLabelText('Fecha de fin'), '31/12/2026');
     await userEvent.click(
       screen.getByRole('button', {name: 'Crear resolución'}),
     );
