@@ -4,19 +4,17 @@ namespace App\Sales\Application\Command;
 
 use App\Sales\Domain\Repository\QuotationRepository;
 use App\Shared\Application\Command\CommandHandler;
-use App\Shared\Domain\Calendar;
 
 final class RejectQuotationHandler implements CommandHandler
 {
     public function __construct(
         private readonly QuotationRepository $quotations,
-        private readonly Calendar $calendar,
     ) {
     }
 
     /** @throws \App\Sales\Domain\Error\QuotationNotOpen */
     public function __invoke(RejectQuotation $command): void
     {
-        $this->quotations->get($command->companyId, $command->quotationId)->reject($this->calendar->today());
+        $this->quotations->get($command->companyId, $command->quotationId)->reject();
     }
 }

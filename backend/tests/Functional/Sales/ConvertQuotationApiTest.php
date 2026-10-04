@@ -115,7 +115,7 @@ final class ConvertQuotationApiTest extends ApiTestCase
         self::assertNotNull($converted['converted_invoice_id']);
     }
 
-    public function testOnlyAnOpenEmittedQuotationConverts(): void
+    public function testOnlyAnEmittedOrExpiredQuotationConverts(): void
     {
         $client = $this->client();
         $product = $this->service();
@@ -137,8 +137,8 @@ final class ConvertQuotationApiTest extends ApiTestCase
         $expired = $this->emittedQuotation($client, $this->service('X'));
         $this->expireOn($expired['id'], self::today('-1 day'));
         $this->sendJson('POST', '/api/v1/quotations/'.$expired['id'].'/convert', []);
-        self::assertResponseStatusCodeSame(409, 'An expired offer is duplicated, not converted.');
-        self::assertSame(0, $this->getJson('/api/v1/sales-invoices')['total']);
+        self::assertResponseIsSuccessful('An expired offer is still converted (decided 2026-10-04).');
+        self::assertSame(1, $this->getJson('/api/v1/sales-invoices')['total']);
     }
 
     public function testAProductDeactivatedSinceIsRefusedAndNothingIsConverted(): void

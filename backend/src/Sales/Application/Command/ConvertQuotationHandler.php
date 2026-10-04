@@ -35,7 +35,7 @@ final class ConvertQuotationHandler implements CommandHandler
     {
         $quotation = $this->quotations->get($command->companyId, $command->quotationId);
         $today = $this->calendar->today();
-        $quotation->assertConvertible($today);
+        $quotation->assertConvertible();
 
         $invoice = $this->commands->dispatch(new CreateDraftSalesInvoice($command->companyId, $command->userId, new SalesInvoiceData(
             $quotation->terceroId(),
@@ -50,7 +50,7 @@ final class ConvertQuotationHandler implements CommandHandler
             [],
         ), $quotation->id()));
         \assert($invoice instanceof Uuid);
-        $quotation->convertedTo($invoice, $today);
+        $quotation->convertedTo($invoice);
 
         return $invoice;
     }

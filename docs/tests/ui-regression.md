@@ -1153,8 +1153,10 @@ Convertir a factura is still offered. **Duplicar** gives a draft the person can 
 **COT-08 · An emitted quotation past its vencimiento reads as Vencida**
 Smoke: `e2e/quotation.spec.ts`.
 An emitted quotation dated 40 days ago (30 days of validity) and a current one › list › **Estado** Vencida; open the old one.
-**Expected:** only the old one is listed, as Vencida; its page says "La oferta venció el DD/MM/AAAA: ya no se puede
-aceptar ni convertir…" and offers only Anular, PDF and Duplicar. On its last valid day it still reads Emitida.
+**Expected:** only the old one is listed, as Vencida; its page says "La oferta venció el DD/MM/AAAA. Si el cliente la
+acepta tarde, aún puedes aceptarla o convertirla…" and still offers Aceptar, Rechazar, Convertir a factura and Anular
+(not Enviar); **Aceptar** makes it Aceptada (late acceptance, decided 2026-10-04). On its last valid day it still reads
+Emitida.
 
 **COT-09 · An emitted quotation is voided with a reason and keeps its number**
 Smoke: `e2e/quotation.spec.ts`.

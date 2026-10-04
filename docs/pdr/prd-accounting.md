@@ -191,7 +191,9 @@ accounting effect; everything else below applies to it.
 - Same header, lines and totals as an invoice (§4.6). Extra fields: *Responsable de la cotización* (Empleado),
   rich-text *Encabezado* and *Condiciones comerciales*, *Fecha de vencimiento* of the offer.
 - Numbering series `C` from the numeración interna; no resolution involved.
-- Lifecycle: `borrador → emitida → aceptada | rechazada | vencida`, plus `anulada`. Emitting freezes it and allows
+- Lifecycle: `borrador → emitida → aceptada | rechazada | vencida`, plus `anulada`. *Vencida* is read from the date,
+  not stored: a client may still accept late, so a vencida quotation is accepted, rejected or converted like an emitida
+  one; it is only no longer sent (decided 2026-10-04). Emitting freezes it and allows
   sending the PDF; it posts **no journal entry** and never affects cartera.
 - **Convertir a factura** creates a draft factura de venta with the same client, contact, lines and taxes; the
   invoice records the quotation as its origin and the quotation becomes `aceptada`. A quotation converts at most

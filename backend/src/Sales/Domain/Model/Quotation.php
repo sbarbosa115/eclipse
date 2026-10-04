@@ -266,16 +266,16 @@ class Quotation implements CompanyOwned
     }
 
     /** The client said yes. */
-    public function accept(\DateTimeImmutable $today): void
+    public function accept(): void
     {
-        $this->assertOpen($today);
+        $this->assertOpen();
         $this->status = QuotationStatus::Accepted;
     }
 
     /** The client said no. */
-    public function reject(\DateTimeImmutable $today): void
+    public function reject(): void
     {
-        $this->assertOpen($today);
+        $this->assertOpen();
         $this->status = QuotationStatus::Rejected;
     }
 
@@ -300,20 +300,20 @@ class Quotation implements CompanyOwned
      * @throws QuotationAlreadyConverted
      * @throws QuotationNotOpen
      */
-    public function assertConvertible(\DateTimeImmutable $today): void
+    public function assertConvertible(): void
     {
         if (null !== $this->convertedInvoiceId) {
             throw new QuotationAlreadyConverted();
         }
         if (QuotationStatus::Accepted !== $this->status) {
-            $this->assertOpen($today);
+            $this->assertOpen();
         }
     }
 
     /** The draft invoice that was made from it: the quotation is accepted and keeps the invoice's id. */
-    public function convertedTo(Uuid $invoiceId, \DateTimeImmutable $today): void
+    public function convertedTo(Uuid $invoiceId): void
     {
-        $this->assertConvertible($today);
+        $this->assertConvertible();
         $this->convertedInvoiceId = $invoiceId;
         $this->status = QuotationStatus::Accepted;
     }
@@ -325,9 +325,13 @@ class Quotation implements CompanyOwned
         }
     }
 
-    private function assertOpen(\DateTimeImmutable $today): void
+    /**
+     * Emitted and not yet decided. A lapsed offer (`expired`) is still open: a client may accept it late, and it is then
+     * accepted, rejected or converted like any other (decided 2026-10-04).
+     */
+    private function assertOpen(): void
     {
-        if (QuotationStatus::Emitted !== $this->statusOn($today)) {
+        if (QuotationStatus::Emitted !== $this->status) {
             throw new QuotationNotOpen();
         }
     }

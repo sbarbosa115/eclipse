@@ -385,11 +385,14 @@ test('COT-08 · an emitted quotation past its vencimiento reads as Vencida', asy
   await expect(
     page.getByText(new RegExp(`La oferta venció el ${ddmmyyyy(day(-10))}`)),
   ).toBeVisible();
-  await expect(page.getByRole('button', {name: 'Aceptar'})).toHaveCount(0);
+  // A late acceptance is allowed (decided 2026-10-04): a lapsed offer is still decided and converted.
+  await expect(page.getByRole('button', {name: 'Aceptar'})).toBeVisible();
   await expect(
     page.getByRole('button', {name: 'Convertir a factura'}),
-  ).toHaveCount(0);
+  ).toBeVisible();
   await expect(page.getByRole('button', {name: 'Anular'})).toBeVisible();
+  await page.getByRole('button', {name: 'Aceptar'}).click();
+  await expect(page.getByText('Aceptada').first()).toBeVisible();
   expect(errors).toEqual([]);
 });
 

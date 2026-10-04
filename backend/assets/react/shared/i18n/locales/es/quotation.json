@@ -91,7 +91,7 @@
     "loadFailed": "No pudimos cargar esta cotización.",
     "readOnly": "Esta cotización ya fue emitida: no se puede modificar, solo anular.",
     "voidedInfo": "Anulada el {{date}}. Motivo: {{reason}}",
-    "expiredInfo": "La oferta venció el {{date}}: ya no se puede aceptar ni convertir. Duplícala para hacer una nueva.",
+    "expiredInfo": "La oferta venció el {{date}}. Si el cliente la acepta tarde, aún puedes aceptarla o convertirla en factura; para cambiar precios o fechas, duplícala.",
     "acceptedInfo": "La cotización fue aceptada.",
     "rejectedInfo": "La cotización fue rechazada."
   },
@@ -110,7 +110,7 @@
   },
   "errors": {
     "document_not_draft": "Esta cotización ya fue emitida: no se puede modificar.",
-    "quotation_not_open": "La cotización no está vigente: debe estar emitida, sin responder y con la oferta sin vencer.",
+    "quotation_not_open": "La cotización no está abierta: debe estar emitida y sin responder (para enviarla, además, con la oferta sin vencer).",
     "quotation_already_converted": "Esta cotización ya se convirtió en factura: solo se convierte una vez.",
     "tercero_inactive": "El cliente está inactivo: actívalo para cotizarle.",
     "tercero_has_no_email": "El cliente no tiene correo: agrégalo en su ficha o emite sin enviar.",

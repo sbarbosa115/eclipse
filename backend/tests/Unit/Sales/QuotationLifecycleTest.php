@@ -132,7 +132,7 @@ final class QuotationLifecycleTest extends TestCase
     public function testAnEmittedQuotationIsAccepted(): void
     {
         $quotation = self::emitted();
-        $quotation->accept(new \DateTimeImmutable('2026-10-04'));
+        $quotation->accept();
 
         self::assertSame(QuotationStatus::Accepted, $quotation->status());
     }
@@ -140,38 +140,37 @@ final class QuotationLifecycleTest extends TestCase
     public function testAnEmittedQuotationIsRejected(): void
     {
         $quotation = self::emitted();
-        $quotation->reject(new \DateTimeImmutable('2026-10-04'));
+        $quotation->reject();
 
         self::assertSame(QuotationStatus::Rejected, $quotation->status());
     }
 
     public function testADraftOrADecidedQuotationIsNotAcceptedOrRejected(): void
     {
-        $today = new \DateTimeImmutable('2026-10-04');
         $draft = self::draft();
         $accepted = self::emitted();
-        $accepted->accept($today);
+        $accepted->accept();
         $rejected = self::emitted();
-        $rejected->reject($today);
+        $rejected->reject();
 
         foreach ([
-            static fn () => $draft->accept($today),
-            static fn () => $draft->reject($today),
-            static fn () => $accepted->reject($today),
-            static fn () => $accepted->accept($today),
-            static fn () => $rejected->accept($today),
-            static fn () => $rejected->reject($today),
+            static fn () => $draft->accept(),
+            static fn () => $draft->reject(),
+            static fn () => $accepted->reject(),
+            static fn () => $accepted->accept(),
+            static fn () => $rejected->accept(),
+            static fn () => $rejected->reject(),
         ] as $change) {
             try {
                 $change();
-                self::fail('Only an emitted quotation that is still open is decided.');
+                self::fail('Only an emitted quotation not yet decided is decided.');
             } catch (QuotationNotOpen $e) {
                 self::assertSame('quotation_not_open', $e->errorCode());
             }
         }
     }
 
-    public function testAQuotationPastItsVencimientoReadsAsExpiredAndIsNotDecided(): void
+    public function testAQuotationPastItsVencimientoReadsAsExpiredAndIsStillDecided(): void
     {
         $quotation = self::emitted();
 
@@ -179,8 +178,12 @@ final class QuotationLifecycleTest extends TestCase
         self::assertSame(QuotationStatus::Expired, $quotation->statusOn(new \DateTimeImmutable('2026-11-01')));
         self::assertSame(QuotationStatus::Emitted, $quotation->status(), 'Nothing is written: it is computed on read.');
 
-        $this->expectException(QuotationNotOpen::class);
-        $quotation->accept(new \DateTimeImmutable('2026-11-01'));
+        $quotation->accept();
+        self::assertSame(QuotationStatus::Accepted, $quotation->statusOn(new \DateTimeImmutable('2026-11-01')), 'A client may accept late (decided 2026-10-04).');
+
+        $rejected = self::emitted();
+        $rejected->reject();
+        self::assertSame(QuotationStatus::Rejected, $rejected->status());
     }
 
     public function testDecidedAndDraftQuotationsNeverReadAsExpired(): void
@@ -188,7 +191,7 @@ final class QuotationLifecycleTest extends TestCase
         $late = new \DateTimeImmutable('2027-01-01');
         $draft = self::draft();
         $accepted = self::emitted();
-        $accepted->accept(new \DateTimeImmutable('2026-10-04'));
+        $accepted->accept();
         $voided = self::emitted();
         $voided->void('Error', Uuid::v7(), new \DateTimeImmutable());
 
@@ -229,7 +232,7 @@ final class QuotationLifecycleTest extends TestCase
     public function testAnAcceptedQuotationIsNotVoided(): void
     {
         $quotation = self::emitted();
-        $quotation->accept(new \DateTimeImmutable('2026-10-04'));
+        $quotation->accept();
 
         $this->expectException(QuotationNotOpen::class);
         $quotation->void('Tarde', Uuid::v7(), new \DateTimeImmutable());
@@ -239,7 +242,7 @@ final class QuotationLifecycleTest extends TestCase
     {
         $quotation = self::emitted();
         $invoice = Uuid::v7();
-        $quotation->convertedTo($invoice, new \DateTimeImmutable('2026-10-04'));
+        $quotation->convertedTo($invoice);
 
         self::assertSame(QuotationStatus::Accepted, $quotation->status());
         self::assertTrue($invoice->equals($quotation->convertedInvoiceId() ?? Uuid::v7()));
@@ -248,39 +251,40 @@ final class QuotationLifecycleTest extends TestCase
     public function testAQuotationConvertsOnce(): void
     {
         $quotation = self::emitted();
-        $quotation->convertedTo(Uuid::v7(), new \DateTimeImmutable('2026-10-04'));
+        $quotation->convertedTo(Uuid::v7());
 
         try {
-            $quotation->assertConvertible(new \DateTimeImmutable('2026-10-05'));
+            $quotation->assertConvertible();
             self::fail('§9 Q17: convert once.');
         } catch (QuotationAlreadyConverted $e) {
             self::assertSame('quotation_already_converted', $e->errorCode());
         }
         $this->expectException(QuotationAlreadyConverted::class);
-        $quotation->convertedTo(Uuid::v7(), new \DateTimeImmutable('2026-10-05'));
+        $quotation->convertedTo(Uuid::v7());
     }
 
     public function testAnAcceptedQuotationNotYetConvertedConvertsLater(): void
     {
         $quotation = self::emitted();
-        $quotation->accept(new \DateTimeImmutable('2026-10-04'));
-        $quotation->assertConvertible(new \DateTimeImmutable('2026-10-05'));
-        $quotation->convertedTo(Uuid::v7(), new \DateTimeImmutable('2026-10-05'));
+        $quotation->accept();
+        $quotation->assertConvertible();
+        $quotation->convertedTo(Uuid::v7());
 
         self::assertNotNull($quotation->convertedInvoiceId());
     }
 
-    public function testOnlyAnOpenEmittedQuotationConverts(): void
+    public function testOnlyAnEmittedQuotationConvertsEvenAfterItsVencimiento(): void
     {
-        $today = new \DateTimeImmutable('2026-10-04');
         $rejected = self::emitted();
-        $rejected->reject($today);
+        $rejected->reject();
         $voided = self::emitted();
         $voided->void('x', Uuid::v7(), new \DateTimeImmutable());
 
-        foreach ([self::draft(), $rejected, $voided, self::emitted()] as $i => $quotation) {
+        self::emitted()->assertConvertible();
+
+        foreach ([self::draft(), $rejected, $voided] as $quotation) {
             try {
-                $quotation->assertConvertible(3 === $i ? new \DateTimeImmutable('2026-11-02') : $today);
+                $quotation->assertConvertible();
                 self::fail('Not convertible.');
             } catch (QuotationNotOpen) {
                 $this->addToAssertionCount(1);

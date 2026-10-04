@@ -11,14 +11,14 @@ describe('what can be done with a quotation', () => {
     ]).toEqual([true, true, true, true]);
   });
 
-  it('offers nothing but a void on an expired offer', () => {
+  it('lets a lapsed offer be decided, converted and voided, not sent', () => {
     const expired = {status: 'expired'};
     expect([
       canSend(expired),
       canDecide(expired),
       canConvert(expired),
       canVoid(expired),
-    ]).toEqual([false, false, false, true]);
+    ]).toEqual([false, true, true, true]);
   });
 
   it('converts an accepted quotation once', () => {

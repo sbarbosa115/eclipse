@@ -367,7 +367,7 @@ describe('the quotation editor', () => {
     );
   });
 
-  it('says an expired offer is over and only allows a void', async () => {
+  it('says an offer lapsed and still lets it be accepted late', async () => {
     api('owner', {
       'GET /quotations/q1': [200, quotation({status: 'expired'})],
     });
@@ -376,11 +376,12 @@ describe('the quotation editor', () => {
     expect(
       await screen.findByText(/La oferta venció el 31\/10\/2026/),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Aceptar'})).toBeNull();
+    expect(screen.getByRole('button', {name: 'Aceptar'})).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', {name: 'Convertir a factura'}),
-    ).toBeNull();
+      screen.getByRole('button', {name: 'Convertir a factura'}),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Anular'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Enviar'})).toBeNull();
   });
 
   it('accepts after asking', async () => {

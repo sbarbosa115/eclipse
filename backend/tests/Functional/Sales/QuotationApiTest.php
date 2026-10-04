@@ -244,11 +244,12 @@ final class QuotationApiTest extends ApiTestCase
         self::assertSame(1, $this->getJson('/api/v1/quotations?status=expired')['total']);
         self::assertSame(0, $this->getJson('/api/v1/quotations?status=emitted')['total']);
         $this->sendJson('POST', '/api/v1/quotations/'.$quotation['id'].'/accept', []);
-        self::assertResponseStatusCodeSame(409, 'An expired offer is not accepted.');
-        self::assertSame('quotation_not_open', $this->body()['error']);
+        self::assertResponseIsSuccessful('An expired offer is still accepted (decided 2026-10-04).');
+        self::assertSame('accepted', $this->getJson('/api/v1/quotations/'.$quotation['id'])['status']);
 
-        $this->expireOn($quotation['id'], self::today());
-        self::assertSame('emitted', $this->getJson('/api/v1/quotations/'.$quotation['id'])['status'], 'It is valid through its vencimiento day.');
+        $today = $this->emittedQuotation($quotation['tercero_id'], $this->service('T'));
+        $this->expireOn($today['id'], self::today());
+        self::assertSame('emitted', $this->getJson('/api/v1/quotations/'.$today['id'])['status'], 'It is valid through its vencimiento day.');
     }
 
     public function testAnEmittedQuotationIsVoidedWithAReason(): void
