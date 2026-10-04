@@ -355,6 +355,9 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   accounts, posting rules, the lock date), Company (profile, logo, resolution, numbering series) and Party (a
   tercero's personal data exported or erased, subject `tercero`) record through it too, with the same actions and
   data as before (their tests assert the rows).
+- **Refusals are logged** (`Access\UI\Http\Security\SecurityLog`): a refused sign-in (the e-mail typed, the address) and
+  a refused action (403: user, company, role, request) are warnings on the `security` channel, which production writes
+  to stderr (the cPanel error log) on their own; never a password.
 - **Security headers on every answer** (`Shared\UI\Http\Security\SecurityHeaders`): `nosniff`, `X-Frame-Options: DENY`,
   `Referrer-Policy`, HSTS over HTTPS, and on the HTML page a Content-Security-Policy that runs only the app's own built
   files (`script-src 'self'`, no inline script or style: `spa.html.twig` must stay that way). The dev toolbar adds its

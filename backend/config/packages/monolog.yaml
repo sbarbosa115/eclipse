@@ -18,6 +18,11 @@ when@dev:
 when@test:
   monolog:
     handlers:
+      # What the security channel warns about (tests/Functional/Security/SecurityLogTest.php).
+      security_test:
+        type: test
+        level: warning
+        channels: [security]
       main:
         type: fingers_crossed
         action_level: error
@@ -32,6 +37,14 @@ when@test:
 when@prod:
   monolog:
     handlers:
+      # Refused sign-ins and refused actions (Access\UI\Http\Security\SecurityLog), kept whether or not an error
+      # follows: on cPanel, stderr is the site's error log.
+      security:
+        type: stream
+        path: php://stderr
+        level: warning
+        channels: [security]
+        formatter: monolog.formatter.json
       main:
         type: fingers_crossed
         action_level: error
