@@ -202,7 +202,7 @@ test('DOC-04 · a product is created from a line and fills it', async ({
   await expect(
     page.getByRole('combobox', {name: 'Producto/Servicio, línea 1'}),
   ).toHaveValue('CUA-01 · Cuaderno rayado');
-  await expect(page.getByLabel('Valor unitario, línea 1')).toHaveValue('10000');
+  await expect(page.getByLabel('Valor unitario, línea 1')).toHaveValue('10.000');
   await expect(
     page.getByRole('cell', {name: '$ 11.900,00'}),
     'an IVA-included price is the line total',
@@ -255,7 +255,7 @@ test('DOC-07 · formas de pago add up to Total neto, with a due date on crédito
   await page.getByRole('button', {name: 'Agregar forma de pago'}).click();
   await page.getByLabel('Método de pago 1').selectOption({label: 'Efectivo'});
   await expect(page.getByLabel('Valor de la forma de pago 1')).toHaveValue(
-    '1190000.00',
+    '1.190.000',
   );
   await expect(page.getByText('Coincide con el total neto')).toBeVisible();
 
