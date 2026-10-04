@@ -676,7 +676,7 @@ second one; it may only extend it through props.
 | F10 | sales, purchasing, company | Three copies of "today in Bogotá" on the server (`SalesCalendar`, `ColombianCalendar`, `Resolutions::TIMEZONE`) | one `Shared\Domain\Calendar` (or a Clock method), used everywhere |
 | F11 | item 0 | Dates: the UI took "today" and timestamps from the browser/UTC calendar | fixed: `todayInColombia()`, `formatDate()` on Colombia's calendar |
 | F12 | item 0 | ReteIVA was computed on the line's base instead of its IVA | fixed: `TaxBase::ChargeTax`, mirrored in the editor's preview |
-| F9 | company | One resolution per company and desde/prefijo locked after use: a renewal with a new range or prefix cannot be entered (only extended) | product decision: a "close and open a new resolution" action in stage 1, or wait for several resolutions (stage 4) |
+| F9 | company | One resolution per company and desde/prefijo locked after use: a renewal with a new range or prefix cannot be entered (only extended) | **Decided 2026-10-04: later.** Stage 4 (several resolutions); stage 1 keeps extending hasta and the dates |
 
 After merging ledger, company and document-editor the visual pass (company, resolution, chart, posting rules, payment
 methods, the four books, the editor's demo page) was done in headless Playwright with screenshots: no console errors.

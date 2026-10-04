@@ -329,6 +329,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 
 ## Known gaps
 
+- **Renewing the invoicing resolution** with a new range or prefix is not possible in stage 1 (one resolution per company, its desde and prefijo locked once used): a renewal can only extend hasta and the dates. Several resolutions come in stage 4 (decided 2026-10-04).
+
 - Terceros: *Autocompletar datos* from RUES/DIAN is out of scope (Q19). The per-tercero account pickers offer the accounts the chart search returns for 1305 / 2205 / 2335 (at most 20 each).
 - Access: a person belongs to one company (§9 Q22); there is no "leave this company" and no e-mail change. The
   last-owner check is not row-locked: two owners demoting each other at the same instant could both succeed. A user is
