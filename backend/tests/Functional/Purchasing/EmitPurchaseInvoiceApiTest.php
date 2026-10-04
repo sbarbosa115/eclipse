@@ -159,6 +159,22 @@ final class EmitPurchaseInvoiceApiTest extends ApiTestCase
         self::assertSame([], array_filter($body['payables'], static fn (array $p) => !$p['voided']));
     }
 
+    public function testTheVoidLocksTheInvoiceSoAPaymentCannotSlipInMeanwhile(): void
+    {
+        $invoice = $this->emitInvoice();
+
+        $this->client->enableProfiler();
+        $this->sendJson('POST', "/api/v1/purchase-invoices/{$invoice['id']}/void", ['reason' => 'Registrada dos veces']);
+
+        self::assertResponseIsSuccessful();
+        $profile = $this->client->getProfile();
+        self::assertNotFalse($profile);
+        /** @var \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector $db */
+        $db = $profile->getCollector('db');
+        $locks = array_filter(array_merge(...array_values($db->getQueries())), static fn (array $q) => str_contains($q['sql'], 'purchase_invoice') && str_contains($q['sql'], 'FOR UPDATE'));
+        self::assertNotEmpty($locks, 'A supplier payment will lock the invoices it pays; the void must take the same lock.');
+    }
+
     public function testAVoidNeedsAReason(): void
     {
         $invoice = $this->emitInvoice();

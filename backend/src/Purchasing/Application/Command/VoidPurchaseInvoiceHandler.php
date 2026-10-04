@@ -22,7 +22,7 @@ final class VoidPurchaseInvoiceHandler implements CommandHandler
 
     public function __invoke(VoidPurchaseInvoice $command): void
     {
-        $invoice = $this->invoices->get($command->companyId, $command->invoiceId);
+        $invoice = $this->invoices->lock($command->companyId, $command->invoiceId);
         $invoice->assertVoidable();
         $reason = trim($command->reason);
         $entry = $invoice->journalEntryId() ?? throw new \LogicException('An emitted invoice has its entry.');

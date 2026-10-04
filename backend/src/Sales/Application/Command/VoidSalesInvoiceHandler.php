@@ -25,7 +25,7 @@ final class VoidSalesInvoiceHandler implements CommandHandler
 
     public function __invoke(VoidSalesInvoice $command): void
     {
-        $invoice = $this->invoices->get($command->companyId, $command->invoiceId);
+        $invoice = $this->invoices->lock($command->companyId, $command->invoiceId);
         $today = $this->calendar->today();
         $invoice->void($command->reason, $this->invoices->hasAllocations($command->companyId, $invoice->id()), $command->userId, $this->calendar->now());
         if (!$this->poster->isOpen($command->companyId, $today)) {

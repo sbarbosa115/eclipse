@@ -57,6 +57,22 @@ final class VoidSalesInvoiceApiTest extends ApiTestCase
         self::assertSame('FE-2', $next['number'], 'AC-7: the number is not reused.');
     }
 
+    public function testTheVoidLocksTheInvoiceSoAReceiptCannotSlipInMeanwhile(): void
+    {
+        $invoice = $this->emitted([$this->credit('1190000.00')]);
+
+        $this->client->enableProfiler();
+        $this->sendJson('POST', '/api/v1/sales-invoices/'.$invoice['id'].'/void', ['reason' => 'Precio equivocado']);
+
+        self::assertResponseIsSuccessful();
+        $profile = $this->client->getProfile();
+        self::assertNotFalse($profile);
+        /** @var \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector $db */
+        $db = $profile->getCollector('db');
+        $locks = array_filter(array_merge(...array_values($db->getQueries())), static fn (array $q) => str_contains($q['sql'], 'sales_invoice') && str_contains($q['sql'], 'FOR UPDATE'));
+        self::assertNotEmpty($locks, 'A cash receipt locks the invoices it pays; the void must take the same lock, or both pass the allocation check at once.');
+    }
+
     public function testAVoidNeedsAReason(): void
     {
         $invoice = $this->emitted();

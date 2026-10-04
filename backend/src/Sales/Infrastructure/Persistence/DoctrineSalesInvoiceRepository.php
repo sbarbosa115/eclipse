@@ -7,13 +7,30 @@ use App\Sales\Domain\Model\CashReceiptAllocation;
 use App\Sales\Domain\Model\SalesInvoice;
 use App\Sales\Domain\Repository\SalesInvoiceRepository;
 use App\Shared\Domain\Model\ReceiptStatus;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query;
 use Symfony\Component\Uid\Uuid;
 
 final class DoctrineSalesInvoiceRepository implements SalesInvoiceRepository
 {
     public function __construct(private readonly EntityManagerInterface $em)
     {
+    }
+
+    public function lock(Uuid $companyId, Uuid $id): SalesInvoice
+    {
+        $invoice = $this->em->createQueryBuilder()
+            ->select('i')->from(SalesInvoice::class, 'i')
+            ->where('i.companyId = :company')->andWhere('i.id = :id')
+            ->setParameter('company', $companyId, 'uuid')->setParameter('id', $id, 'uuid')
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+            // Whatever this request read before, the row as it is now.
+            ->setHint(Query::HINT_REFRESH, true)
+            ->getOneOrNullResult();
+
+        return $invoice instanceof SalesInvoice ? $invoice : throw new SalesInvoiceNotFound();
     }
 
     public function get(Uuid $companyId, Uuid $id): SalesInvoice
