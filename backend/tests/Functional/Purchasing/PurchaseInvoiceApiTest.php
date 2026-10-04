@@ -2,7 +2,11 @@
 
 namespace App\Tests\Functional\Purchasing;
 
+use App\Purchasing\Application\Query\PurchaseInvoicePdf;
+use App\Purchasing\Domain\Model\PurchaseInvoice;
 use App\Tests\Support\ApiTestCase;
+use Symfony\Component\Uid\Uuid;
+use Twig\Environment;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -307,6 +311,22 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         self::assertSame('application/pdf', $this->client->getResponse()->headers->get('Content-Type'));
         self::assertStringStartsWith('%PDF-', (string) $this->client->getResponse()->getContent());
         self::assertStringContainsString('FC-1', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
+    }
+
+    public function testThePdfShowsTheSuppliersNitAndPrintsLinesLikeTheSalesInvoice(): void
+    {
+        $invoice = $this->emitInvoice();
+        $supplier = $this->getJson('/api/v1/terceros/'.$this->supplier->toRfc4122());
+
+        $model = $this->em()->find(PurchaseInvoice::class, Uuid::fromString($invoice['id']));
+        \assert($model instanceof PurchaseInvoice);
+        $pdf = static::getContainer()->get(PurchaseInvoicePdf::class);
+        $html = static::getContainer()->get(Environment::class)->render(PurchaseInvoicePdf::TEMPLATE, $pdf->context($model->companyId(), $model->id()));
+
+        self::assertStringContainsString($supplier['identification_number'].(null === $supplier['check_digit'] ? '' : '-'.$supplier['check_digit']), $html, 'M9: the supplier\'s identification is printed.');
+        self::assertStringContainsString('$ 1.190.000,00', $html, 'M9: a line\'s Valor total is its subtotal plus IVA, as on the sales invoice (the retención is in the totals).');
+        self::assertMatchesRegularExpression('#<td class="num">1</td>#', $html, 'M9: a quantity of 1 reads "1", not "1,00".');
+        self::assertStringContainsString('$ 1.150.000,00', $html, 'The total neto still nets the retención.');
     }
 
     public function testTheAccountantReadsAndWrites(): void

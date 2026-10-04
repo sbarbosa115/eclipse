@@ -1,6 +1,7 @@
 {#
     The internal record of a factura de compra / gasto (Purchasing). Context: company, logo_data_uri, title, number,
-    invoice (Purchasing\Application\Query\PurchaseInvoiceView).
+    invoice (Purchasing\Application\Query\PurchaseInvoiceView), supplier (identification, address) and lines (printed as
+    on the sales invoice: quantity without trailing zeros, Valor total = subtotal + impuesto).
 #}
 {% extends 'pdf/document.html.twig' %}
 
@@ -16,6 +17,8 @@
             <td style="width: 55%; vertical-align: top;">
                 <strong>Proveedor</strong><br>
                 {{ invoice.terceroName }}<br>
+                {{ supplier.identification }}<br>
+                {% if supplier.address %}{{ supplier.address }}<br>{% endif %}
                 <span class="muted">Factura del proveedor:</span> {{ invoice.supplierInvoiceNumber ?? '—' }}
             </td>
             <td style="vertical-align: top;">
@@ -40,16 +43,16 @@
             </tr>
         </thead>
         <tbody>
-            {% for line in invoice.lines %}
+            {% for line in lines %}
                 <tr>
-                    <td>{{ line.productLabel ?? line.accountLabel ?? '' }}</td>
+                    <td>{{ line.label }}</td>
                     <td>{{ line.description }}</td>
-                    <td class="num">{{ line.quantity|number_format(2, ',', '.') }}</td>
-                    <td class="num">{{ f.money(line.unitPrice) }}</td>
-                    <td class="num">{{ line.discount|number_format(2, ',', '.') }}</td>
-                    <td>{{ line.chargeTaxName }}</td>
-                    <td>{{ line.withholdingTaxName }}</td>
-                    <td class="num">{{ f.money(line.totalAmount) }}</td>
+                    <td class="num">{{ line.quantity }}</td>
+                    <td class="num">{{ f.money(line.unit_price) }}</td>
+                    <td class="num">{{ line.discount }}</td>
+                    <td>{{ line.charge_tax }}</td>
+                    <td>{{ line.withholding_tax }}</td>
+                    <td class="num">{{ f.money(line.total) }}</td>
                 </tr>
             {% endfor %}
         </tbody>
