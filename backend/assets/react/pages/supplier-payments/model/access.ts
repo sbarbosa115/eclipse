@@ -1,6 +1,6 @@
-/**
- * Who pays, sends and voids recibos de pago: the owner, billing and the accountant (decided 2026-10-04). One place, so
- * it can follow the server-sent permission list later.
- */
-export const canWriteSupplierPayments = (role: string | undefined) =>
-  role === 'owner' || role === 'billing' || role === 'accountant';
+import {can, type Session} from '@/entities/session';
+
+/** Who pays, sends and voids recibos de pago: whoever the server grants WRITE_DOCUMENTS (§8). */
+export const canWriteSupplierPayments = (
+  session: Session | null | undefined,
+): boolean => can(session, 'WRITE_DOCUMENTS');

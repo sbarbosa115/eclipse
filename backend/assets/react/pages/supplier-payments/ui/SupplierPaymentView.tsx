@@ -37,7 +37,7 @@ export function SupplierPaymentView() {
   const location = useLocation();
   const {id = ''} = useParams();
   const {session} = useSession();
-  const writer = canWriteSupplierPayments(session?.role);
+  const writer = canWriteSupplierPayments(session);
   const [load, setLoad] = useState<Load>({status: 'loading'});
   const [notice, setNotice] = useState<string | null>(
     (location.state as {notice?: string} | null)?.notice ?? null,

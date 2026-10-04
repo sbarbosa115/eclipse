@@ -376,9 +376,6 @@ final class SupplierPaymentApiTest extends ApiTestCase
         self::assertResponseIsSuccessful();
 
         $payment = $this->sendJson('POST', '/api/v1/supplier-payments', $this->paymentPayload($this->supplier, '100.00', [[$payable, '100.00']]));
-        if (403 === $this->client->getResponse()->getStatusCode()) {
-            self::markTestIncomplete('The base branch grants WRITE_DOCUMENTS to the accountant (coordinator, 2026-10-04); this branch still has the old matrix.');
-        }
         self::assertResponseStatusCodeSame(201, 'The accountant may pay.');
         $this->client->request('GET', '/api/v1/supplier-payments/'.$payment['id'].'/pdf');
         self::assertResponseIsSuccessful();

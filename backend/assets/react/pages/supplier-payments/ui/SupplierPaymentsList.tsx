@@ -49,7 +49,7 @@ export function SupplierPaymentsList() {
   const {t} = useTranslation();
   const location = useLocation();
   const {session} = useSession();
-  const writer = canWriteSupplierPayments(session?.role);
+  const writer = canWriteSupplierPayments(session);
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const status = params.get('status') ?? '';

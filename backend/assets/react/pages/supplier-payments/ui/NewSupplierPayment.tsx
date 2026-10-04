@@ -97,7 +97,7 @@ export function NewSupplierPayment() {
   const ready =
     Object.keys(validateForm(form, t)).length === 0 && summary.balanced;
 
-  if (!canWriteSupplierPayments(session?.role)) {
+  if (!canWriteSupplierPayments(session)) {
     return (
       <>
         <PageHeader title={t('supplierPayment.form.title')} />
