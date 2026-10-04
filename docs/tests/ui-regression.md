@@ -800,6 +800,153 @@ The console has no errors.
 
 <!-- Owned by item 8 "sales-invoice" (SAL-01 – 29). -->
 
+Facturas de venta at **`/facturas-venta`**. Every case runs as the owner of a company that has its invoicing resolution
+(prefix `FE`, Configuración › Resolución), a client **Distribuciones Andina S.A.S.** with a billing e-mail, and a
+service **SRV-01 Consultoría mensual** of 1.000.000 with IVA 19 %, unless it says otherwise.
+
+**SAL-01 · A company without invoices is told what the section is for**
+Smoke: `e2e/salesInvoice.spec.ts`.
+A brand-new company › **Facturas de venta** › **Nueva factura**.
+**Expected:** the list says "Aún no has hecho facturas de venta…" with **Crear la primera factura**; the new invoice
+warns "Aún no has registrado tu resolución de facturación…" and still lets a draft be saved.
+
+**SAL-02 · An invoice paid half in cash and half at 30 days is saved, emitted and posted (AC-3)**
+Smoke: `e2e/salesInvoice.spec.ts`.
+**Nueva factura** › Cliente `Dis…` › Distribuciones Andina › line 1 `SRV-01` › **Agregar forma de pago** Efectivo
+`595000` › **Agregar forma de pago** Crédito (*A 30 días*) › **Guardar** › **Emitir** › confirm.
+**Expected:** Tipo reads "Factura electrónica de venta (FE)"; after Guardar "Borrador guardado." and the address is
+the invoice's; after Emitir "Factura FE-1 emitida y contabilizada.", the title is "Factura de venta FE-1", everything is
+read-only with "Saldo por cobrar: $ 595.000,00". In Contabilidad › Libro diario one entry: Dr 11050501 595.000, Dr
+13050501 595.000 (the client), Cr 413595 1.000.000, Cr 240805 190.000.
+
+**SAL-03 · Formas de pago that do not add up stop the emission**
+Smoke: `e2e/salesInvoice.spec.ts`.
+A draft of $ 1.190.000,00 with one Efectivo row of `100000` › **Emitir**.
+**Expected:** no confirmation opens; "Revisa los campos marcados." and under Formas de pago "Total formas de pago
+($ 100.000,00) debe ser igual al total neto ($ 1.190.000,00)."; nothing is numbered.
+
+**SAL-04 · A new invoice warns when the resolution is running out (AC-8)**
+Smoke: `e2e/salesInvoice.spec.ts` (numbers); by hand: days.
+A resolution from 1 to 10 › **Nueva factura**; then one valid only 10 more days.
+**Expected:** "Tu resolución de facturación se está acabando: quedan 10 números y … días de vigencia." on the new
+invoice and on a draft, not on an emitted invoice.
+
+**SAL-05 · An emitted invoice is voided with a reason and keeps its number (AC-7)**
+Smoke: `e2e/salesInvoice.spec.ts`.
+Open FE-1 › **Anular** › **Anular factura** with no reason › type `Precio equivocado` › **Anular factura**.
+**Expected:** without a reason "Escribe el motivo de la anulación." and nothing changes; then "Factura FE-1 anulada.",
+"Anulada el DD/MM/AAAA. Motivo: Precio equivocado", no Anular button, and the libro diario shows the reversing entry
+dated today. The next invoice emitted is FE-2.
+
+**SAL-06 · The list searches, filters by status and offers a way back**
+Smoke: `e2e/salesInvoice.spec.ts` (search, status); by hand: Desde / Hasta.
+An emitted FE-1 and a draft › filter **Estado** Borrador, then Anulada › **Ver todo** › search `FE-1`, then `andina`;
+**Desde** / **Hasta** around a date.
+**Expected:** each filter narrows the rows (newest first; a draft shows "Borrador" as its number); Anulada with none
+says "Ninguna factura coincide con estos filtros." and **Ver todo** clears every filter; dates are typed as DD/MM/AAAA.
+The rows are tinted by status with the legend above, and Total and Saldo are right-aligned.
+
+**SAL-07 · An invoice is duplicated as a new draft**
+Smoke: `e2e/salesInvoice.spec.ts`.
+In the list, row FE-1 › **Duplicar**.
+**Expected:** "Se creó un borrador nuevo a partir de la factura." on a new draft dated today with the same client,
+lines and formas de pago (a crédito keeps its term), editable.
+
+**SAL-08 · Emitir y enviar mails the PDF to the client**
+Smoke: `e2e/salesInvoice.spec.ts`; by hand: open the attachment.
+A draft › **Emitir y enviar** › confirm.
+**Expected:** the dialog says the PDF goes to the client's billing e-mail; "Factura FE-1 emitida; el correo con el PDF
+va en camino."; in Mailpit an e-mail "Factura de venta FE-1 de …" to the client with `factura-FE-1.pdf` attached.
+
+**SAL-09 · The PDF carries what an invoice must say**
+Smoke (part): `e2e/salesInvoice.spec.ts` checks it downloads; by hand: what it shows.
+With a company logo › open FE-1 › **Descargar PDF**.
+**Expected:** the logo and the company's razón social, NIT-DV, address; "Resolución DIAN No. … del …, vigente hasta el
+…. Autoriza la numeración del FE-1 al FE-1000."; "No. FE-1"; the client's name, NIT, address and e-mail; the lines
+with Cantidad, Valor unitario, % Desc., Impuesto and Valor total; Total bruto, IVA 19 % with its base, Total neto;
+the formas de pago with their due dates; Observaciones. Money `$ 1.190.000,00`, dates DD/MM/AAAA. A draft's PDF reads
+BORRADOR and has no number.
+
+**SAL-10 · Another company's invoice does not exist (AC-10)**
+Smoke: `e2e/salesInvoice.spec.ts`.
+Copy the address of an invoice of company A; sign in as company B and open it.
+**Expected:** "Esta factura no existe."; company B's list does not show it.
+
+**SAL-11 · The PDF of a voided invoice says ANULADA (AC-7)**
+Void FE-1 › **Descargar PDF**.
+**Expected:** ANULADA across the page and "ANULADA el DD/MM/AAAA. Motivo: …" above the client; the number is still
+FE-1.
+
+**SAL-12 · An invoice is sent again from the list**
+FE-1 emitted › in the list **Enviar**.
+**Expected:** "El correo con el PDF de la factura FE-1 va en camino." and the e-mail arrives in Mailpit. A draft and a
+voided invoice have no Enviar.
+
+**SAL-13 · A client without e-mail cannot be emitted and sent**
+A client created from the full form without Correo › a draft for it › **Emitir y enviar** › confirm.
+**Expected:** the dialog stays open with "El cliente no tiene correo de facturación: agrégalo en su ficha o emite sin
+enviar."; the invoice is still a draft; **Emitir** works.
+
+**SAL-14 · Nothing is emitted past the resolution's hasta (AC-8)**
+A resolution from 1 to 2 › emit two invoices › a third draft › **Emitir**.
+**Expected:** the third stays a draft and the dialog says "La resolución de facturación ya no tiene números
+disponibles."; Configuración › Resolución shows it exhausted.
+
+**SAL-15 · An invoice dated outside the resolution, in the future or in a closed period is not emitted (AC-8, AC-9)**
+A draft dated before the resolution's fecha inicio › **Emitir**; then dated tomorrow; then, with the fecha de bloqueo
+(Contabilidad) moved to yesterday, dated yesterday.
+**Expected:** "La fecha de la factura está fuera de la vigencia de la resolución."; then Fecha de elaboración is
+marked "La fecha de la factura no puede ser futura."; then "La fecha está en un periodo contable cerrado (fecha de
+bloqueo)." Each time nothing is numbered and the libro diario is unchanged. A draft dated a week ago (open period) is
+emitted and posted on that date.
+
+**SAL-16 · A void today in a closed period is refused (AC-9)**
+FE-1 emitted › move the fecha de bloqueo to today › **Anular** with a reason.
+**Expected:** the dialog stays open with "La fecha está en un periodo contable cerrado (fecha de bloqueo)." and FE-1 is
+unchanged.
+
+**SAL-17 · An inactive client is not invoiced**
+A draft for a client › deactivate the client in Terceros › **Emitir**; then **Nueva factura** and search the client.
+**Expected:** "El cliente está inactivo: actívalo para facturarle."; a new invoice cannot choose it.
+
+**SAL-18 · A draft is edited and saved again**
+A saved draft › change Cantidad to `3`, add a line, remove a forma de pago › **Guardar**; reload the page.
+**Expected:** "Borrador guardado."; after the reload the draft has exactly what was saved and its totals match the
+preview; Número still reads as pending.
+
+**SAL-19 · The server's checks show next to their fields**
+A draft whose crédito due date is before Fecha de elaboración (type the date by hand), saved › **Guardar**.
+**Expected:** under the due date a message that it cannot be before Fecha de elaboración, and nothing is saved.
+
+**SAL-20 · Discounts and retenciones are posted as A.1**
+Line SRV-01, Cantidad `2`, % Descuento `10`, ReteFuente servicios 4 %, all on Crédito › emit.
+**Expected:** Total neto `$ 2.070.000,00`; in the libro diario Dr 13050501 2.070.000, Dr 417501 200.000, Dr 135515
+72.000, Cr 413595 2.000.000, Cr 240805 342.000 (débitos = créditos = 2.342.000).
+
+**SAL-21 · A product's own revenue account is credited**
+Productos y servicios › SRV-01 › Cuenta de ingreso `415595` › invoice it and emit.
+**Expected:** the libro diario credits 415595 instead of 413595.
+
+**SAL-22 · The accountant reads invoices and cannot change them**
+Signed in as the accountant (section 1).
+**Expected:** the list and every invoice open, the PDF downloads; no Nueva factura, Guardar, Emitir, Duplicar, Enviar
+or Anular anywhere.
+
+**SAL-23 · A billing user invoices**
+Signed in as a billing user: create, save, emit and void an invoice.
+**Expected:** everything works as for the owner.
+
+**SAL-24 · An invoice with a receipt applied is not voided**
+Needs the recibo de caja (item "cash-receipt"). FE-1 on crédito › a recibo de caja for part of it › FE-1 › **Anular**.
+**Expected:** Pagada parcialmente, no Anular in the list; the API answers "Esta factura tiene recibos de caja
+aplicados: anúlalos primero."; after voiding the receipt FE-1 is Emitida and can be voided.
+
+**SAL-25 · The screens on a tablet, in both themes**
+At 1366×768, 1024×768 and 768×1024, Tema Claro and Oscuro: the list with filters, a draft, an emitted and a voided
+invoice, the emit and void dialogs.
+**Expected:** the header actions wrap without overlapping; the filters fit; badges and warnings read in both themes;
+the console has no errors.
+
 ## 9. Facturas de compra / gasto
 
 <!-- Owned by item 9 "purchase-invoice" (PUR-01 – 29). -->

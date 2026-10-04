@@ -1093,6 +1093,163 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The list, newest first: ?q= (part of the number or the client's name, matched literally), ?status=draft|emitted|
+         *     partially_paid|paid|voided, ?from=, ?to= (fecha de elaboración, YYYY-MM-DD, both included), ?tercero_id=, ?page,
+         *     ?per_page ≤ 100.
+         */
+        get: operations["get_app_sales_ui_http_salesinvoice_list"];
+        put?: never;
+        /**
+         * A new draft: {tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity,
+         *     unit_price, discount, charge_tax_id, withholding_tax_id}], payments: [{payment_method_id, amount, due_date?}]}
+         *     → 201. The formas de pago need not add up yet. 422 `validation_failed` by field path (`lines.0.product_id`…).
+         */
+        post: operations["post_app_sales_ui_http_salesinvoice_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One invoice, whole. */
+        get: operations["get_app_sales_ui_http_salesinvoice_show"];
+        /** Rewrites a draft with the same body as create. 409 `document_not_draft` once emitted. */
+        put: operations["put_app_sales_ui_http_salesinvoice_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}/emit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emits the draft (§4.8): the resolution's next number, a receivable per crédito line, the A.1 entry. 422
+         *     `validation_failed` (`lines`, `issue_date` in the future, a crédito's `payments.N.due_date`),
+         *     `payments_do_not_match_total`, `tercero_inactive`, `resolution_missing|inactive|exhausted`; 409 `document_not_draft`,
+         *     `period_locked`.
+         */
+        post: operations["post_app_sales_ui_http_salesinvoice_emit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}/emit-and-send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * "Emitir y enviar": emits, then e-mails the PDF to the client's billing address through the queue. Also 422
+         *     `tercero_has_no_email` (nothing is emitted then).
+         */
+        post: operations["post_app_sales_ui_http_salesinvoice_emitandsend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** E-mails an emitted invoice's PDF again → 202. 409 `document_not_emitted`; 422 `tercero_has_no_email`. */
+        post: operations["post_app_sales_ui_http_salesinvoice_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voids an emitted invoice today (§4.12): {reason}. The reversing entry is posted, the receivables leave the
+         *     cartera, the number is kept. 409 `document_has_allocations`, `document_not_emitted`, `period_locked`.
+         */
+        post: operations["post_app_sales_ui_http_salesinvoice_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A new draft, dated today, with the invoice's client, lines and formas de pago (§4.15) → 201. */
+        post: operations["post_app_sales_ui_http_salesinvoice_duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales-invoices/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF (§4.8), ANULADA when voided, BORRADOR on a draft. */
+        get: operations["get_app_sales_ui_http_salesinvoice_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchase-invoices": {
         parameters: {
             query?: never;
@@ -1638,6 +1795,109 @@ export interface components {
             /** DIAN code: 94, KGM, MTR, HUR, ZZ */
             code: string;
             name: string;
+        };
+        SalesInvoiceSummaryOutput: {
+            id: string;
+            /** draft, emitted, partially_paid, paid or voided */
+            status: string;
+            /** Null on a draft. */
+            number?: string | null;
+            issue_date: string;
+            /** The latest crédito due date, or null when nothing is on crédito. */
+            due_date?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            subtotal: string;
+            tax_total: string;
+            withholding_total: string;
+            net_total: string;
+            paid_amount: string;
+            /** What the client still owes: nothing on a draft or a voided invoice. */
+            balance: string;
+        };
+        SalesInvoiceLineOutput: {
+            id: string;
+            position: number;
+            product_id?: string | null;
+            /** "código · nombre" of the product, for the form; null when it is no longer in the catalog. */
+            product_label?: string | null;
+            description: string;
+            quantity: string;
+            unit_price: string;
+            /** % Descuento */
+            discount: string;
+            charge_tax_id?: string | null;
+            charge_tax_name: string;
+            /** A percentage or a value per unit (charge_tax_calculation). */
+            charge_tax_rate: string;
+            charge_tax_calculation: string;
+            withholding_tax_id?: string | null;
+            withholding_tax_name: string;
+            withholding_tax_rate: string;
+            gross_amount: string;
+            discount_amount: string;
+            subtotal_amount: string;
+            tax_amount: string;
+            withholding_amount: string;
+            total_amount: string;
+        };
+        SalesInvoicePaymentOutput: {
+            id: string;
+            position: number;
+            payment_method_id: string;
+            method_name: string;
+            /** cash (contado) or credit */
+            kind: string;
+            amount: string;
+            due_date?: string | null;
+        };
+        ReceivableOutput: {
+            id: string;
+            due_date: string;
+            amount: string;
+            balance: string;
+            voided: boolean;
+        };
+        SalesInvoiceOutput: {
+            id: string;
+            /** draft, emitted, partially_paid, paid or voided */
+            status: string;
+            /** As printed (prefix-authorised number); null on a draft. */
+            number?: string | null;
+            prefix?: string | null;
+            /** The resolution's consecutive. */
+            authorised_number?: number | null;
+            /** The company's internal consecutive. */
+            internal_number?: number | null;
+            resolution_id?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            contact_id?: string | null;
+            seller_id?: string | null;
+            /** The cotización it was converted from. */
+            quotation_id?: string | null;
+            issue_date: string;
+            notes?: string | null;
+            gross_total: string;
+            discount_total: string;
+            subtotal: string;
+            tax_total: string;
+            withholding_total: string;
+            net_total: string;
+            paid_amount: string;
+            balance: string;
+            lines: components["schemas"]["SalesInvoiceLineOutput"][];
+            payments: components["schemas"]["SalesInvoicePaymentOutput"][];
+            receivables: components["schemas"]["ReceivableOutput"][];
+            journal_entry_id?: string | null;
+            reversal_entry_id?: string | null;
+            created_by: string;
+            created_at: string;
+            emitted_by?: string | null;
+            emitted_at?: string | null;
+            voided_by?: string | null;
+            voided_at?: string | null;
+            void_reason?: string | null;
         };
         PurchaseInvoiceSummaryOutput: {
             id: string;
@@ -3339,6 +3599,221 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProductOutput"];
                 };
+            };
+        };
+    };
+    get_app_sales_ui_http_salesinvoice_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["SalesInvoiceSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_salesinvoice_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    get_app_sales_ui_http_salesinvoice_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    put_app_sales_ui_http_salesinvoice_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_salesinvoice_emit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_salesinvoice_emitandsend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_salesinvoice_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_sales_ui_http_salesinvoice_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    post_app_sales_ui_http_salesinvoice_duplicate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceOutput"];
+                };
+            };
+        };
+    };
+    get_app_sales_ui_http_salesinvoice_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
