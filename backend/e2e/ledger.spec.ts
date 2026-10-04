@@ -161,3 +161,30 @@ test('LED-06 · a new company opens each book, empty and balanced', async ({
   await expect(page.getByText('Activo = pasivo + patrimonio.')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('LED-13 · each book downloads as CSV and PDF from its own page', async ({
+  page,
+  newCompany,
+}) => {
+  const errors = consoleErrors(page);
+  await newCompany('Libros');
+
+  for (const [path, name] of [
+    ['diario?from=2026-01-01&to=2026-12-31', 'Libro diario'],
+    ['balance-prueba?from=2026-01-01&to=2026-12-31', 'Balance de prueba'],
+    ['estado-resultados?from=2026-01-01&to=2026-12-31', 'Estado de resultados'],
+    ['balance-general?date=2026-12-31', 'Balance general'],
+  ] as const) {
+    await page.goto(`/contabilidad/${path}`);
+    const csv = page.getByRole('link', {name: `Descargar ${name} en CSV`});
+    await expect(csv).toBeVisible();
+    await expect(
+      page.getByRole('link', {name: `Descargar ${name} en PDF`}),
+    ).toBeVisible();
+    const download = page.waitForEvent('download');
+    await csv.click();
+    const file = await download;
+    expect(file.suggestedFilename(), name).toMatch(/\.csv$/);
+  }
+  expect(errors).toEqual([]);
+});

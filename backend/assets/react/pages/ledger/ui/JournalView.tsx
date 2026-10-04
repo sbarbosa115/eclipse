@@ -16,6 +16,7 @@ import {
 import {fetchJournal} from '../api/ledgerApi';
 import {useLoaded} from '../lib/useLoaded';
 import {DateFilter} from './DateFilter';
+import {LedgerExports} from './LedgerExports';
 import {MoneyCell} from './Money';
 
 /** §4.13 Libro diario: entries by date, each with its lines; filtered by period, account and tercero. */
@@ -78,6 +79,10 @@ export function JournalView() {
           </span>
         )}
       </FilterBar>
+      <LedgerExports
+        book="journal"
+        params={{from, to, account, tercero_id: tercero}}
+      />
       {failed ? (
         <ErrorState message={t('common.loadFailed')} onRetry={retry} />
       ) : !data ? (

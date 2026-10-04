@@ -302,7 +302,7 @@ invoice stays a draft and no number or internal consecutive was consumed.
 
 ## 3. Ledger: chart, posting rules, libro diario, balance de prueba
 
-<!-- Owned by item 3 "ledger" (LED-01 – 29). -->
+<!-- Owned by item 3 "ledger" (LED-01 – 13; LED-13 added in the polish pass). -->
 
 **LED-01 · A new company has the PUC with its own auxiliares**
 Smoke: `e2e/ledger.spec.ts`.
@@ -338,6 +338,12 @@ Smoke: `e2e/ledger.spec.ts`.
 **Libros contables** opens *Libro diario* (`/contabilidad/diario`) with "Aún no hay asientos…". *Balance de prueba*: "No
 hay movimientos en este periodo." *Estado de resultados*: every total `$ 0,00`. *Balance general*: "Activo = pasivo +
 patrimonio."
+
+**LED-13 · Each book downloads as CSV and PDF from its own page**
+Smoke: `e2e/ledger.spec.ts`.
+On *Libro diario*, *Balance de prueba*, *Estado de resultados* and *Balance general*, under the filters: **CSV** and
+**PDF**. **Expected:** each downloads the book with the period (or date) and filters on screen, the same file
+*Reportes › Exportar* gives.
 
 **LED-07 · The libro diario shows each entry with its lines**
 Before: `docker compose exec php php bin/console app:ledger:demo-entries` (posts three sample entries for the demo

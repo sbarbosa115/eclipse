@@ -441,7 +441,6 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   `VoidSalesInvoiceHandler` reads the invoice without a row lock, so a receipt committing at the same instant as the
   invoice's void is not excluded by a lock (the invoice item's to tighten).
 - Sales invoices: no *Vendedor* field in the form yet (the API takes `seller_id`, an empleado); no attachments on invoices (the form lists none and offers no upload); the read-only form previews a tax deactivated since as 0 (the saved totals are right, from the server); the PDF prints the DIAN fields stage 1 stores, no CUFE/QR (stage 4).
-- Reports: no Excel (.xlsx; Q26 decided CSV and PDF). The ledger pages (`pages/ledger`) do not yet have export buttons
-  of their own or use `widgets/report-table`: the exports are reached from *Reportes › Exportar* (the reusable table is
-  ready for them). The dashboard has no chart. Cartera is by tercero and due date, with no per-sales-person or
+- Reports: no Excel (.xlsx; Q26 decided CSV and PDF). Each ledger page (`pages/ledger`) has its CSV and PDF buttons
+  (`widgets/report-table`'s `ExportLinks`, with the filters on screen); its table is still its own, not `ReportTable`. The dashboard has no chart. Cartera is by tercero and due date, with no per-sales-person or
   per-product cut, and a cartera "as of" a past date ignores later changes to a tercero's name.

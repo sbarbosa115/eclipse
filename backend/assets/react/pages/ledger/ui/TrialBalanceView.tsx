@@ -15,6 +15,7 @@ import {fetchTrialBalance} from '../api/ledgerApi';
 import {startOfYear, today} from '../lib/period';
 import {useLoaded} from '../lib/useLoaded';
 import {DateFilter} from './DateFilter';
+import {LedgerExports} from './LedgerExports';
 import {MoneyCell} from './Money';
 
 const LEVELS = ['class', 'group', 'account', 'subaccount', 'auxiliary'];
@@ -66,6 +67,7 @@ export function TrialBalanceView() {
           onChange={(value) => change('to', value)}
         />
       </FilterBar>
+      <LedgerExports book="trialBalance" params={{from, to}} />
       {failed ? (
         <ErrorState message={t('common.loadFailed')} onRetry={retry} />
       ) : !data ? (

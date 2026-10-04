@@ -288,6 +288,65 @@ describe('Libros contables', () => {
     ).toHaveTextContent('$ 1.300.000,00');
   });
 
+  it('downloads each book as CSV or PDF with the filters on screen', async () => {
+    fakeApi({
+      'GET /me': me('accountant'),
+      'GET /ledger/trial-balance': [200, TRIAL_BALANCE],
+      'GET /ledger/journal': journal([entry]),
+    });
+    renderAt('/contabilidad/balance-prueba?from=2026-10-01&to=2026-10-31');
+
+    const csv = await screen.findByRole('link', {
+      name: 'Descargar Balance de prueba en CSV',
+    });
+    const url = new URL(csv.getAttribute('href') ?? '', 'http://localhost');
+    expect(url.pathname).toBe('/api/v1/reports/ledger/trial-balance/export');
+    expect(
+      Object.fromEntries(url.searchParams),
+      'the file is the period on screen',
+    ).toEqual({from: '2026-10-01', to: '2026-10-31', format: 'csv'});
+    expect(
+      screen.getByRole('link', {name: 'Descargar Balance de prueba en PDF'}),
+    ).toHaveAttribute('href', expect.stringContaining('format=pdf'));
+
+    await userEvent.click(screen.getByRole('tab', {name: 'Libro diario'}));
+    const journalCsv = await screen.findByRole('link', {
+      name: 'Descargar Libro diario en CSV',
+    });
+    expect(journalCsv).toHaveAttribute(
+      'href',
+      expect.stringContaining('/reports/ledger/journal/export'),
+    );
+  });
+
+  it('offers the estado de resultados and the balance general as files too', async () => {
+    fakeApi({
+      'GET /me': me('accountant'),
+      'GET /ledger/balance-sheet': [
+        200,
+        {
+          date: '2026-10-31',
+          sections: [],
+          current_earnings: '0.00',
+          total_assets: '0.00',
+          total_liabilities: '0.00',
+          total_equity: '0.00',
+          balanced: true,
+        },
+      ],
+    });
+    renderAt('/contabilidad/balance-general?date=2026-10-31');
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'Descargar Balance general en PDF',
+      }),
+    ).toHaveAttribute(
+      'href',
+      '/api/v1/reports/ledger/balance-sheet/export?date=2026-10-31&format=pdf',
+    );
+  });
+
   it('offers to retry when a report cannot load', async () => {
     fakeApi({
       'GET /me': me('accountant'),
