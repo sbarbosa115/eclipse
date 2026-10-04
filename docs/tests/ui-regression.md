@@ -185,8 +185,9 @@ administrador de la empresa gestiona los usuarios." and no list.
 
 **ACC-90 · The layout on a tablet and in both themes**
 At 1024×768 and at 768×1024, and with Tema `Claro` and `Oscuro`: sign-in, sign-up, the Tablero and Configuración.
-**Expected:** nothing overflows sideways; below 1024px the menu is a drawer that opens with ☰ and closes on Escape,
-on the backdrop and after choosing a section.
+**Expected:** nothing overflows sideways; up to 1100px (a tablet, landscape included) the menu is a drawer that opens
+with ☰ and closes on Escape, on the backdrop and after choosing a section; the Configuración tabs wrap onto a second
+row instead of scrolling out of sight.
 
 ## 2. Company setup and resolution
 

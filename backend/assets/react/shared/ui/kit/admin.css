@@ -329,7 +329,8 @@ body.admin-modal-open {
   padding-inline: max(var(--gutter), 3vw);
 }
 
-@media (max-width: 860px) {
+/* Tablets, landscape included (M1): the menu is a drawer, so lists and the document form get the full width. */
+@media (max-width: 1100px) {
   .admin .shell {
     display: block;
   }
@@ -960,6 +961,18 @@ body.admin-modal-open {
   gap: 6px;
 }
 
+/* Laptops (M1): a row's actions go two by two, so a list with many columns fits beside the menu. */
+@media (max-width: 1439px) {
+  .admin .table .row-actions {
+    display: inline-grid;
+    grid-template-columns: repeat(2, auto);
+  }
+
+  .admin .table th {
+    white-space: normal;
+  }
+}
+
 /* A product's picture in its row. */
 .admin .thumb {
   display: block;
@@ -1063,6 +1076,15 @@ body.admin-modal-open {
   border-bottom: 1px solid var(--color-border);
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+/* Where they do not fit in one row (tablets), the tabs wrap instead of scrolling out of sight (M3). */
+@media (max-width: 1100px) {
+  .admin .tabs-page,
+  .admin .tabs-sub {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
 }
 
 /* A tab's own views, inside its panel: a quieter row of pills under the page's tabs. */

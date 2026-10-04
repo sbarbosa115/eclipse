@@ -21,7 +21,8 @@
 
 /* The grid: the cells are controls that fill their column. On a laptop (1366 px) every column, through Valor total
    and the actions, fits without scrolling (F8, DOC-10): fixed widths for the numbers, taxes and actions; Descripción
-   takes what is left. Below the table's min-width it scrolls inside its box. */
+   takes what is left, at least 116 px (M2). Below the table's min-width (a tablet in portrait) it scrolls inside its
+   box. */
 .admin .doc-lines .table {
   table-layout: fixed;
   min-width: 960px;
@@ -44,25 +45,29 @@
 }
 
 .admin .doc-lines .table th:nth-child(1) {
-  width: 160px;
+  width: 132px;
 }
 
-.admin .doc-lines .table th:nth-child(3),
+.admin .doc-lines .table th:nth-child(3) {
+  width: 64px;
+}
+
+/* "% DESCUENTO" needs its word on one line. */
 .admin .doc-lines .table th:nth-child(5) {
-  width: 76px;
+  width: 80px;
 }
 
 .admin .doc-lines .table th:nth-child(4) {
-  width: 124px;
+  width: 112px;
 }
 
 .admin .doc-lines .table th:nth-child(6),
 .admin .doc-lines .table th:nth-child(7) {
-  width: 118px;
+  width: 128px;
 }
 
 .admin .doc-lines .table th:nth-child(8) {
-  width: 130px;
+  width: 116px;
 }
 
 .admin .doc-lines .table th.col-actions {
@@ -83,6 +88,13 @@
 .admin .doc-lines select {
   width: 100%;
   min-width: 0;
+}
+
+/* "Sin impuesto" and the tax names read whole in their 128 px column (M2). */
+.admin .doc-lines td select {
+  font-size: 0.85rem;
+  padding-left: 5px;
+  padding-right: 2px;
 }
 
 .admin .doc-lines input,
