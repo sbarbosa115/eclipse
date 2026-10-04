@@ -118,13 +118,13 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/payment-methods/{id}/deactivate`, `/activate` | → `PaymentMethodSettingOutput` | 403; 404 |
 | DELETE | `/payment-methods/{id}` | → 204; a method no document uses | 403; 404; 409 `payment_method_in_use` |
 | GET | `/terceros` | `{items: TerceroSummaryOutput[], total, page, per_page}`; `?q=` part of the name, trade name or identification (`%`/`_` literal), `?role=cliente\|proveedor\|empleado\|otro`, `?active=1\|0`, `?page`, `?per_page ≤ 100` | 401 |
-| POST | `/terceros` | full `TerceroInput` → 201 `TerceroOutput` (phones, billing data, responsabilidades, roles, contacts, account overrides). DV computed for a NIT when `check_digit` is empty | 422 `validation_failed` (field), 422 `duplicate_identification` (violation on `identification_number`), 403 accountant |
+| POST | `/terceros` | full `TerceroInput` → 201 `TerceroOutput` (phones, billing data, responsabilidades, roles, contacts, account overrides). DV computed for a NIT when `check_digit` is empty | 422 `validation_failed` (field), 422 `duplicate_identification` (violation on `identification_number`), 403 without WRITE_DOCUMENTS |
 | POST | `/terceros/quick` | `{person_type, identification_type, identification_number, check_digit?, first_names?, last_names?, business_name?, email, roles}` → 201 `TerceroSummaryOutput` | 422 as above, 403 |
-| GET, PUT | `/terceros/{id}` | `TerceroOutput`; PUT replaces the whole record (contacts with an `id` are kept, the rest removed) | 404 other company, 422 `tercero_erased`, 403 (PUT, accountant) |
+| GET, PUT | `/terceros/{id}` | `TerceroOutput`; PUT replaces the whole record (contacts with an `id` are kept, the rest removed) | 404 other company, 422 `tercero_erased`, 403 (PUT, without WRITE_DOCUMENTS) |
 | DELETE | `/terceros/{id}` | 204 when no document names it | 409 `tercero_in_use`, 403 |
 | POST | `/terceros/{id}/deactivate`, `/reactivate` | `TerceroOutput` | 404, 403, 422 `tercero_erased` (reactivate) |
 | GET | `/terceros/{id}/contacts` | `{items: ContactOutput[]}` | 404 |
-| GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (billing and owner only) |
+| GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (WRITE_DOCUMENTS: every role today) |
 | POST | `/terceros/{id}/erase` | Ley 1581: blanks the personal fields and contacts, deactivates, sets `erased_at`; keeps the row and the identification; audited | 404, 403 |
 | GET | `/accounts` | page of `AccountOutput` (the chart in code order): `?q=` digits a code prefix, words the name; `?class=1…9`; `?page`, `?per_page` ≤ 100 | 401 |
 | POST | `/accounts` | `{parent_code, code (parent + 2 digits), name, usable_on_purchases?}` → 201 `AccountOutput`; owner and accountant | 403; 409 `account_code_taken`; 422 `account_code_invalid`, `parent_account_not_found` |
@@ -145,7 +145,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/products` | `{items: ProductOutput[], total, page, per_page}` by name; `?q=` (código or name, matched literally), `?type=producto\|servicio`, `?active=1` only active / `0` only inactive, `?page`, `?per_page` ≤ 100. Every role | 401 |
 | GET | `/products/units` | `{items: {code, name}[]}`: the short DIAN list (94, KGM, MTR, HUR, ZZ) | 401 |
 | GET | `/products/{id}` | `ProductOutput` (`unit_price_net_of_tax` is the value a line starts from; `*_account_label` is "code · name") | 404 |
-| POST | `/products` | full form `{type, code, name, description?, category_id?, unit_code?, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?, revenue_account_id?, expense_account_id?}` → 201. Taxes missing = the company's defaults; unit missing = 94 (producto) / ZZ (servicio) | 422 on `code` (taken in this company), on a tax (not an active tax of that class), an account (not postable), `category_id`, `sale_price` (under a per-unit tax it includes); 403 accountant |
+| POST | `/products` | full form `{type, code, name, description?, category_id?, unit_code?, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?, revenue_account_id?, expense_account_id?}` → 201. Taxes missing = the company's defaults; unit missing = 94 (producto) / ZZ (servicio) | 422 on `code` (taken in this company), on a tax (not an active tax of that class), an account (not postable), `category_id`, `sale_price` (under a per-unit tax it includes); 403 without WRITE_DOCUMENTS |
 | POST | `/products/quick` | `{type, code, name, sale_price, price_includes_tax, charge_tax_id?, withholding_tax_id?}` → 201 `ProductOutput` | as above |
 | PUT | `/products/{id}` | the full form again; what is missing is **none** (no default is filled) | 404, 422, 403 |
 | PUT | `/products/{id}/taxes` | `{charge_tax_id, withholding_tax_id}`, null = no tax ("use these taxes from now on") | 404, 422, 403 |
@@ -210,7 +210,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **One permission matrix.** `Shared\UI\Http\Security\Permission::MATRIX` says who may do what (§8: the owner everything; billing and accountant every document; the accountant also the books; users and company settings the owner's). The voter, every controller check and the session (`SessionOutput.permissions`) read it; the UI shows or hides actions with `can(session, 'WRITE_DOCUMENTS')`, never by role name.
 
 - **Ids are UUID v7, stored BINARY(16).** The tenancy filter compares `company_id` to `UNHEX(...)`.
-- **Terceros:** tipo + número (+ código de sucursal) is unique per company; dots and dashes are not part of the number. Roles are four flags (any combination). A tercero a document names (any table with `tercero_id`, found in the schema) is deactivated, never deleted. Erasing (Ley 1581) keeps the row and the identification (invoices carry it) and blanks everything else; an erased tercero cannot be edited or reactivated. Writes: owner and billing; the accountant reads (§9 Q23).
+- **Terceros:** tipo + número (+ código de sucursal) is unique per company; dots and dashes are not part of the number. Roles are four flags (any combination). A tercero a document names (any table with `tercero_id`, found in the schema) is deactivated, never deleted. Erasing (Ley 1581) keeps the row and the identification (invoices carry it) and blanks everything else; an erased tercero cannot be edited or reactivated. Writes: WRITE_DOCUMENTS (owner, billing and, since 2026-10-04, the accountant).
 - **Documents copy what they used** (tax name, rate, accounts; tercero name) so an edit never changes an emitted
   document.
 - **Taxes and payment methods are seeded by a `CompanyProvisioner` (priority 50)** that looks accounts up with
@@ -237,8 +237,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **A product used by a document line is never deleted**, only deactivated (`Catalog\Application\Port\ProductUsage`
   asks the line tables by SQL, so Catalog names no Sales or Purchasing class). Catalog reads the company's default taxes
   from `Company\Application\Query\Companies` (a CompanyApi dependency in `deptrac.contexts.yaml`).
-- **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): owner and billing write, the
-  accountant reads. The "access" item's voters may replace it.
+- **Catalog writes are checked in the controller** (`Catalog\UI\Http\CatalogAccess`): WRITE_DOCUMENTS (owner, billing,
+  accountant). The "access" item's voters may replace it.
 - **The PUC seed** (`Ledger/Infrastructure/Seed/puc.csv`, 2 519 accounts to subcuenta) was extracted from the Decreto's
   PDF (`docs/references/extract-puc.py`; corrections where the PDF is incomplete are listed in its docstring). Every
   company gets it in one batch of multi-row INSERTs inside the sign-up (≈70–170 ms), plus Mustang's accounts under
@@ -279,7 +279,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **Quotation writes use the voter:** `#[IsGranted(Permission::READ_DOCUMENTS)]` on the controller and `WRITE_DOCUMENTS` on every action that changes anything.
 - **Void** (`VoidSalesInvoiceHandler`): only an emitted invoice with `paid_amount` 0 and no allocation of a receipt that is not voided (`document_has_allocations`), dated today and after the lock date; the reversing entry (`JournalPoster::reverse`), the receivables voided, the number kept, reason and user recorded.
 - **E-mail** (`emit-and-send`, `send`): the command publishes `SalesInvoiceEmailRequested`; after the commit `MailSalesInvoice` renders the PDF and `QueuedSalesInvoiceMailer` puts it on the `async` queue (from `MAILER_FROM`, to the client's billing e-mail).
-- **Sales invoice writes are checked in the controller** (`Sales\UI\Http\SalesInvoiceAccess`): owner and billing write, emit, send and void; the accountant reads and downloads PDFs (§8). The "access" item's voters may replace it.
+- **Sales invoice writes are checked in the controller** (`Sales\UI\Http\SalesInvoiceAccess`): WRITE_DOCUMENTS writes, emits, sends and voids (owner, billing, accountant: §8 as changed 2026-10-04). The "access" item's voters may replace it.
 - **A recibo de caja is emitted when saved** (`ReceiveCashHandler`, one transaction): a client of the company, an active
   contado method with its account (copied with its name), a date not in the future (Colombian day) and after the lock
   date, then `CashReceipt::issue()` checks the allocations (each positive, to an open receivable of *this* client, once,
@@ -387,8 +387,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   `PayableQueries::openFor()`.
 - **Supplier's files** are Shared `Attachment`s (owner type `purchase_invoice`) under `UPLOADS_DIR/<company>/<id>`
   (`FilesystemSupplierFiles`), PDF or XML by `finfo`, ≤ 10 MB; added and removed only while the invoice is a draft.
-- **Purchase roles** are checked in `Purchasing\UI\Http\PurchasingAccess` (owner and billing write, emit and void; the
-  accountant reads) until the "access" item's voters replace it (F4). Dates are Colombian calendar days
+- **Purchase roles** are checked in `Purchasing\UI\Http\PurchasingAccess` (WRITE_DOCUMENTS writes, emits and voids: owner, billing
+  and accountant) until the "access" item's voters replace it (F4). Dates are Colombian calendar days
   (`America/Bogota`): "not in the future" and the void date.
 
 - **Reporting reads, owns nothing.** `Reporting` has no aggregates and no migration: `DbalCarteraQueries` and
@@ -428,6 +428,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
   that only has another role cannot be paid from the screen until it is given the role. No anticipos to suppliers, as
   for clients (§9 Q16).
 - Terceros: *Autocompletar datos* from RUES/DIAN is out of scope (Q19). The per-tercero account pickers offer the accounts the chart search returns for 1305 / 2205 / 2335 (at most 20 each).
+- Security (audit 2026-10-04, open, low): an e-mail is unique across the app (§9 Q22), so sign-up and inviting answer
+  that an address is already registered: whoever signs up (5 an hour per IP) or an owner inviting learns that the
+  address has a Mustang account somewhere. Hiding it needs a product decision (e.g. sign-up confirmed by e-mail). The
+  e-mail quotas (200 document e-mails, 20 invitations an hour per company) are first guesses to tune with real use.
 - Access: a person belongs to one company (§9 Q22); there is no "leave this company" and no e-mail change. The
   last-owner check is not row-locked: two owners demoting each other at the same instant could both succeed. A user is
   never deleted, only deactivated (documents name who made them). Passwords have only a length rule (≥ 10).
