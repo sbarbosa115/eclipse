@@ -1,0 +1,13 @@
+.admin .journal-entry-view {
+  display: grid;
+  gap: 16px;
+}
+
+.admin .journal-entry-meta {
+  margin: 0 0 12px;
+}
+
+.admin .journal-entry-total td {
+  border-top: 2px solid var(--color-border, #d0d5dd);
+  font-weight: 600;
+}

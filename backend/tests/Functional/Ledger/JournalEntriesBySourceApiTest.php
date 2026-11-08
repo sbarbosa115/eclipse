@@ -26,7 +26,8 @@ final class JournalEntriesBySourceApiTest extends ApiTestCase
         $this->sourceId = Uuid::fromBinary((string) $this->db()->fetchOne("SELECT source_id FROM journal_entry WHERE source_number = 'FE-2'"))->toRfc4122();
     }
 
-    private function entries_(string $type = 'sales_invoice', ?string $id = null): array
+    /** @return array<string, mixed> */
+    private function documentEntries(string $type = 'sales_invoice', ?string $id = null): array
     {
         return $this->getJson('/api/v1/ledger/entries?source_type='.$type.'&source_id='.($id ?? $this->sourceId));
     }
@@ -35,7 +36,7 @@ final class JournalEntriesBySourceApiTest extends ApiTestCase
     {
         $this->signInAs('billing');
 
-        $body = $this->entries_();
+        $body = $this->documentEntries();
 
         self::assertResponseIsSuccessful('READ_DOCUMENTS: a document\'s own postings are part of the record.');
         self::assertCount(1, $body['items']);
@@ -49,7 +50,7 @@ final class JournalEntriesBySourceApiTest extends ApiTestCase
     {
         $reversal = $this->reverse($this->entry, '2026-10-25');
 
-        $items = $this->entries_()['items'];
+        $items = $this->documentEntries()['items'];
 
         self::assertCount(2, $items);
         self::assertSame([null, $this->entry->toRfc4122()], array_column($items, 'reverses_id'));
@@ -62,18 +63,18 @@ final class JournalEntriesBySourceApiTest extends ApiTestCase
         $this->signOut();
         $this->startCompany('beto@b.co', '800197268', 'B S.A.S.');
 
-        self::assertSame([], $this->entries_()['items'], 'Another company\'s document id answers an empty list, never its entry.');
+        self::assertSame([], $this->documentEntries()['items'], 'Another company\'s document id answers an empty list, never its entry.');
     }
 
     public function testADocumentOfAnotherTypeWithTheSameIdHasNone(): void
     {
-        self::assertSame([], $this->entries_('cash_receipt')['items']);
+        self::assertSame([], $this->documentEntries('cash_receipt')['items']);
     }
 
     public function testAnUnknownSourceTypeOrABadIdIsRefused(): void
     {
         foreach ([['invoice', $this->sourceId], ['sales_invoice', 'not-a-uuid'], ['sales_invoice', ''], ['', $this->sourceId]] as [$type, $id]) {
-            $this->entries_($type, $id);
+            $this->documentEntries($type, $id);
             self::assertResponseStatusCodeSame(400, "$type / $id");
             self::assertSame('invalid_source', $this->body()['error']);
         }
@@ -82,11 +83,11 @@ final class JournalEntriesBySourceApiTest extends ApiTestCase
     public function testEveryRoleThatReadsDocumentsMayAskAndAnonymousMayNot(): void
     {
         $this->signInAs('accountant');
-        $this->entries_();
+        $this->documentEntries();
         self::assertResponseIsSuccessful();
 
         $this->signOut();
-        $this->entries_();
+        $this->documentEntries();
         self::assertResponseStatusCodeSame(401);
     }
 }

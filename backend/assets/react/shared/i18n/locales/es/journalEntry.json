@@ -1,1 +1,19 @@
-{}
+{
+  "tab": "Contabilización",
+  "document": "Documento",
+  "tabsLabel": "Vistas del documento",
+  "intro": "El asiento contable que dejó este documento. Solo se lee: se corrige anulando el documento.",
+  "entry": "Asiento {{number}}",
+  "reversal": "Anulación del asiento {{number}}",
+  "reversalOther": "Anulación de otro asiento",
+  "columns": {
+    "account": "Cuenta",
+    "name": "Nombre",
+    "tercero": "Tercero",
+    "debit": "Débito",
+    "credit": "Crédito"
+  },
+  "totals": "Totales",
+  "empty": "Este documento no tiene asientos contables.",
+  "loadFailed": "No pudimos cargar el asiento de este documento."
+}
