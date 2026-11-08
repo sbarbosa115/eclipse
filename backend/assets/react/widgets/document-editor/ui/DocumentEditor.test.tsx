@@ -1,4 +1,5 @@
 import {render, screen, waitFor, within} from '@testing-library/react';
+import {GEO, pickMedellin} from '@/shared/test/municipalities';
 import userEvent from '@testing-library/user-event';
 import {useState} from 'react';
 import {fakeApi} from '@/shared/test/fakeApi';
@@ -229,6 +230,7 @@ describe('the document form (§4.6)', () => {
           {...TERCERO, id: 't9', display_name: 'Nuevo S.A.S.'},
         ],
         'GET /terceros/t9/contacts': [200, {items: []}],
+        'GET /geo/municipalities': GEO,
       });
       const {latest} = renderEditor();
 
@@ -257,6 +259,8 @@ describe('the document form (§4.6)', () => {
         within(modal).getByLabelText('Correo electrónico'),
         'nuevo@x.co',
       );
+      // A Colombian tercero needs its municipio (observations §4.3).
+      await pickMedellin();
       await userEvent.click(
         within(modal).getByRole('button', {name: 'Crear tercero'}),
       );
@@ -267,7 +271,7 @@ describe('the document form (§4.6)', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       expect(
         calls.calls.find((c) => c.path === '/terceros/quick')?.body,
-      ).toMatchObject({roles: ['cliente']});
+      ).toMatchObject({roles: ['cliente'], municipality_code: '05001'});
     });
 
     it('asks a purchase for a proveedor, and creates one as proveedor', async () => {

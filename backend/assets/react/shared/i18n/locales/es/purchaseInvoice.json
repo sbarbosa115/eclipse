@@ -94,6 +94,7 @@
     "attachment_not_found": "No encontramos este archivo.",
     "forbidden": "Tu rol no puede modificar facturas de compra.",
     "validation_failed": "Revisa los campos marcados.",
-    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+    "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "account_has_auxiliaries": "Una de las cuentas de este documento tiene auxiliares: los movimientos van a una de ellas. Revisa las reglas de contabilización o la cuenta elegida."
   }
 }
