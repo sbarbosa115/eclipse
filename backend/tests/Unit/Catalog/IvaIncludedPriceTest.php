@@ -36,7 +36,7 @@ final class IvaIncludedPriceTest extends TestCase
     public function testTheRoundedNetStillTotalsTheListPriceOnADocument(): void
     {
         $net = PriceNetOfTax::of(UnitPrice::of('50000'), true, TaxRate::percentage('19'));
-        $totals = DocumentTotals::of([new LineInput(Quantity::of('1'), $net, Rate::zero(), TaxRate::percentage('19'), TaxRate::none())]);
+        $totals = DocumentTotals::of([new LineInput(Quantity::of('1'), $net, Rate::zero(), TaxRate::percentage('19'), [])]);
 
         self::assertSame('50000.00', $totals->net->toString(), 'The customer pays the list price, no more, no less.');
     }
@@ -57,7 +57,7 @@ final class IvaIncludedPriceTest extends TestCase
     public function testAOneUnitLineAlwaysTotalsTheListPrice(string $price, string $rate): void
     {
         $net = PriceNetOfTax::of(UnitPrice::of($price), true, TaxRate::percentage($rate));
-        $totals = DocumentTotals::of([new LineInput(Quantity::of('1'), $net, Rate::zero(), TaxRate::percentage($rate), TaxRate::none())]);
+        $totals = DocumentTotals::of([new LineInput(Quantity::of('1'), $net, Rate::zero(), TaxRate::percentage($rate), [])]);
 
         self::assertSame(number_format((float) $price, 2, '.', ''), $totals->net->toString(), "$price with $rate % included.");
     }

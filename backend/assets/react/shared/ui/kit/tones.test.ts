@@ -7,6 +7,7 @@ describe('the status tones of documents', () => {
     ['partially_paid', 'accent'],
     ['paid', 'success'],
     ['accepted', 'success'],
+    ['converted', 'success'],
     ['rejected', 'neutral'],
     ['expired', 'neutral'],
     ['voided', 'neutral'],

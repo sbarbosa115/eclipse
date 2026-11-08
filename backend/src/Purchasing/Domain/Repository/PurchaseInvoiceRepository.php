@@ -16,8 +16,15 @@ interface PurchaseInvoiceRepository
      */
     public function lock(Uuid $companyId, Uuid $id): PurchaseInvoice;
 
-    /** Is this supplier's invoice number already recorded on another of the company's invoices (letter case aside)? */
+    /** Is this supplier's invoice number already on another of the company's invoices that is not voided (letter case aside)? */
     public function supplierNumberTaken(Uuid $companyId, Uuid $terceroId, string $number, ?Uuid $exceptId = null): bool;
+
+    /**
+     * Writes now that a voided invoice no longer holds its supplier's number (the live-number key), so a copy that
+     * carries the number can be added in the same transaction: the unit of work inserts before it updates (Corregir,
+     * observations PRD §4.6).
+     */
+    public function releaseSupplierNumber(PurchaseInvoice $voided): void;
 
     public function add(PurchaseInvoice $invoice): void;
 

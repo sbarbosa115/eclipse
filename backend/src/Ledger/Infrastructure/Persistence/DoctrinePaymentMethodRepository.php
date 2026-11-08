@@ -41,4 +41,17 @@ final class DoctrinePaymentMethodRepository implements PaymentMethodRepository
 
         return (int) $qb->getQuery()->getSingleScalarResult() > 0;
     }
+
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array
+    {
+        /** @var list<PaymentMethod> $found */
+        $found = $this->em->createQueryBuilder()
+            ->select('m')->from(PaymentMethod::class, 'm')
+            ->where('m.companyId = :company')->setParameter('company', $companyId, 'uuid')
+            ->andWhere('m.accountId = :account')->setParameter('account', $accountId, 'uuid')
+            ->orderBy('m.id', 'ASC')
+            ->getQuery()->getResult();
+
+        return $found;
+    }
 }

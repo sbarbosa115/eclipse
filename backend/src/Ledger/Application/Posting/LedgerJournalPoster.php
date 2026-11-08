@@ -4,7 +4,7 @@ namespace App\Ledger\Application\Posting;
 
 use App\Company\Application\Numbering\Numbering;
 use App\Ledger\Application\Port\TerceroAccounts;
-use App\Ledger\Domain\Error\AccountNotPostable;
+use App\Ledger\Application\PostableAccounts;
 use App\Ledger\Domain\Error\EntryAlreadyReversed;
 use App\Ledger\Domain\Error\EntryEmpty;
 use App\Ledger\Domain\Error\EntryUnbalanced;
@@ -23,12 +23,14 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * The books' one door (see JournalPoster). Everything is checked before the entry takes its number: the lock date,
- * each line's account, and the balance, so a refused entry spends nothing.
+ * each line's account (PostableAccounts: never a subcuenta with auxiliares), and the balance, so a refused entry
+ * spends nothing.
  */
 final class LedgerJournalPoster implements JournalPoster
 {
     public function __construct(
         private readonly AccountRepository $accounts,
+        private readonly PostableAccounts $postable,
         private readonly PostingRuleRepository $rules,
         private readonly JournalEntryRepository $entries,
         private readonly LedgerSettingsRepository $settings,
@@ -49,9 +51,7 @@ final class LedgerJournalPoster implements JournalPoster
                 continue;
             }
             $account = $this->resolve($draft->companyId, $line);
-            if (!$account->isPostable()) {
-                throw new AccountNotPostable($account->code());
-            }
+            $this->postable->assertPostable($account);
             $movements[] = [$line, $account];
             Side::Debit === $line->side ? $debit = $debit->plus($line->amount) : $credit = $credit->plus($line->amount);
         }

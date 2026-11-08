@@ -18,7 +18,7 @@ final class DoctrineTerceroQueries implements TerceroQueries
     {
     }
 
-    public function search(Uuid $companyId, ?string $q, ?string $role, ?bool $active, int $page, int $perPage): TerceroPage
+    public function search(Uuid $companyId, ?string $q, ?string $role, ?bool $active, int $page, int $perPage, bool $missingMunicipality = false): TerceroPage
     {
         $qb = $this->em->createQueryBuilder()->select('t')->from(Tercero::class, 't')
             ->where('t.companyId = :company')->setParameter('company', $companyId, 'uuid')
@@ -41,6 +41,10 @@ final class DoctrineTerceroQueries implements TerceroQueries
         }
         if (null !== $active) {
             $qb->andWhere('t.active = :active')->setParameter('active', $active);
+        }
+
+        if ($missingMunicipality) {
+            $qb->andWhere('t.countryCode = :co AND t.municipalityCode IS NULL')->setParameter('co', 'CO');
         }
 
         $page = max(1, $page);

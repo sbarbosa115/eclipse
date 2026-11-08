@@ -13,6 +13,8 @@ final readonly class PostingRuleView
         public string $accountCode,
         public string $accountName,
         public array $allowedPrefixes,
+        /** PostableAccounts' rule: false once its account got active auxiliares and the rule stayed on it. */
+        public bool $accountPostable = true,
     ) {
     }
 }

@@ -62,6 +62,7 @@ async function seed(
 ): Promise<Seeded> {
   const email = `pagos-${nit}@andinos.co`;
   const supplier = await api(page, 'POST', '/terceros/quick', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: String(Number(nit) + 7),

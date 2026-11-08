@@ -59,6 +59,11 @@ const MENU: NavSection[] = [
         label: 'shell.nav.supplierPayments',
         icon: 'external',
       },
+      {
+        to: '/ordenes-compra',
+        label: 'shell.nav.purchaseOrders',
+        icon: 'cart',
+      },
     ],
   },
   {
@@ -66,6 +71,12 @@ const MENU: NavSection[] = [
     items: [
       {to: '/contabilidad', label: 'shell.nav.ledger', icon: 'calendar'},
       {to: '/reportes', label: 'shell.nav.reports', icon: 'sliders'},
+      {
+        to: '/reportes/impuestos',
+        label: 'shell.nav.taxReports',
+        icon: 'clock',
+        anyOf: ['VIEW_BOOKS'],
+      },
     ],
   },
   {
@@ -211,8 +222,10 @@ function SignedInShell({session}: {session: Session}) {
                   key={item.to}
                   to={item.to}
                   end={item.end}
-                  className={({isActive}) =>
-                    `nav-link${isActive ? ' active' : ''}`
+                  // The longest entry the path starts with is the active one: /reportes/impuestos is Impuestos,
+                  // not Reportes too.
+                  className={() =>
+                    `nav-link${sectionOf(location.pathname) === item ? ' active' : ''}`
                   }
                 >
                   <Icon name={item.icon} size={18} />

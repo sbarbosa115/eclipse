@@ -44,29 +44,41 @@
   font-size: 0.72rem;
 }
 
+/* Column widths by role. A saved document has a Código column after Producto (and no actions): its columns are one
+   further along, so the widths follow the column, never its position alone. */
 .admin .doc-lines .table th:nth-child(1) {
   width: 132px;
 }
 
-.admin .doc-lines .table th:nth-child(3) {
+.admin .doc-lines--coded .table th:nth-child(2) {
+  width: 96px;
+}
+
+.admin .doc-lines:not(.doc-lines--coded) .table th:nth-child(3),
+.admin .doc-lines--coded .table th:nth-child(4) {
   width: 64px;
 }
 
-/* "% DESCUENTO" needs its word on one line. */
-.admin .doc-lines .table th:nth-child(5) {
-  width: 80px;
-}
-
-.admin .doc-lines .table th:nth-child(4) {
+.admin .doc-lines:not(.doc-lines--coded) .table th:nth-child(4),
+.admin .doc-lines--coded .table th:nth-child(5) {
   width: 112px;
 }
 
-.admin .doc-lines .table th:nth-child(6),
-.admin .doc-lines .table th:nth-child(7) {
+/* "% DESCUENTO" needs its word on one line. */
+.admin .doc-lines:not(.doc-lines--coded) .table th:nth-child(5),
+.admin .doc-lines--coded .table th:nth-child(6) {
+  width: 80px;
+}
+
+.admin .doc-lines:not(.doc-lines--coded) .table th:nth-child(6),
+.admin .doc-lines:not(.doc-lines--coded) .table th:nth-child(7),
+.admin .doc-lines--coded .table th:nth-child(7),
+.admin .doc-lines--coded .table th:nth-child(8) {
   width: 128px;
 }
 
-.admin .doc-lines .table th:nth-child(8) {
+.admin .doc-lines:not(.doc-lines--coded) .table th:nth-child(8),
+.admin .doc-lines--coded .table th:nth-child(9) {
   width: 116px;
 }
 
@@ -151,6 +163,25 @@
 
 .admin .doc-totals .definitions > div {
   grid-template-columns: 1fr auto;
+}
+
+.admin .doc-totals .doc-totals-withholding {
+  padding-left: 12px;
+}
+
+.admin .doc-totals .doc-totals-withholding dt {
+  font-size: 0.9em;
+}
+
+.admin .doc-totals .doc-totals-base {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+}
+
+.admin .doc-line-withholdings .btn {
+  max-width: 14rem;
+  white-space: normal;
+  text-align: left;
 }
 
 .admin .doc-totals-net {

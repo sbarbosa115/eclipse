@@ -210,6 +210,15 @@ export function PurchaseInvoiceList({canWrite}: {canWrite: boolean}) {
                     <Link to={`${BASE}/${invoice.id}`}>
                       {invoice.number ?? t('purchaseInvoice.list.draftNumber')}
                     </Link>
+                    {invoice.corrected_by_id && (
+                      <Link
+                        to={`${BASE}/${invoice.corrected_by_id}`}
+                        className="purchase-list-corrected"
+                        title={t('purchaseInvoice.correct.listHintTitle')}
+                      >
+                        {t('purchaseInvoice.correct.listHint')}
+                      </Link>
+                    )}
                   </td>
                   <td>{invoice.tercero_name}</td>
                   <td>{invoice.supplier_invoice_number}</td>

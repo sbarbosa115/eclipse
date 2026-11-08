@@ -16,4 +16,11 @@ interface TerceroRepository
     public function add(Tercero $tercero): void;
 
     public function remove(Tercero $tercero): void;
+
+    /**
+     * The company's terceros whose own receivable or payable account is this one (observations PRD §4.1: they move when it is subdivided).
+     *
+     * @return list<Tercero>
+     */
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array;
 }

@@ -1,4 +1,5 @@
 import {render, screen, waitFor, within} from '@testing-library/react';
+import {GEO, pickMedellin} from '@/shared/test/municipalities';
 import userEvent from '@testing-library/user-event';
 import {useState} from 'react';
 import {fakeApi} from '@/shared/test/fakeApi';
@@ -16,12 +17,13 @@ const tax = (
   name: string,
   taxClass: 'charge' | 'withholding',
   rate: string,
+  kind = 'iva',
   calculation = 'percentage',
 ) => ({
   id,
   name,
   tax_class: taxClass,
-  kind: 'iva',
+  kind,
   calculation,
   rate,
   active: true,
@@ -33,7 +35,17 @@ const CHARGE = [
   tax('iva5', 'IVA 5 %', 'charge', '5.0000'),
 ];
 const WITHHOLDING = [
-  tax('rete4', 'ReteFuente servicios 4 %', 'withholding', '4.0000'),
+  tax('ninguno', 'Ninguno', 'withholding', '0.0000', 'none'),
+  tax(
+    'rete4',
+    'ReteFuente servicios 4 %',
+    'withholding',
+    '4.0000',
+    'retefuente',
+  ),
+  tax('rete25', 'ReteFuente 2,5 %', 'withholding', '2.5000', 'retefuente'),
+  tax('reteiva15', 'ReteIVA 15 %', 'withholding', '15.0000', 'reteiva'),
+  tax('ica966', 'ReteICA 0,966 %', 'withholding', '0.9660', 'reteica'),
 ];
 const METHODS = [
   {id: 'cash', name: 'Efectivo', kind: 'cash', active: true, standard: true},
@@ -157,7 +169,7 @@ const PRD_LINE = line({
   unit_price: '1000000',
   discount: '10',
   charge_tax_id: 'iva19',
-  withholding_tax_id: 'rete4',
+  withholdings: ['rete4'],
 });
 
 describe('the document form (§4.6)', () => {
@@ -218,6 +230,7 @@ describe('the document form (§4.6)', () => {
           {...TERCERO, id: 't9', display_name: 'Nuevo S.A.S.'},
         ],
         'GET /terceros/t9/contacts': [200, {items: []}],
+        'GET /geo/municipalities': GEO,
       });
       const {latest} = renderEditor();
 
@@ -246,6 +259,8 @@ describe('the document form (§4.6)', () => {
         within(modal).getByLabelText('Correo electrónico'),
         'nuevo@x.co',
       );
+      // A Colombian tercero needs its municipio (observations §4.3).
+      await pickMedellin();
       await userEvent.click(
         within(modal).getByRole('button', {name: 'Crear tercero'}),
       );
@@ -256,7 +271,7 @@ describe('the document form (§4.6)', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       expect(
         calls.calls.find((c) => c.path === '/terceros/quick')?.body,
-      ).toMatchObject({roles: ['cliente']});
+      ).toMatchObject({roles: ['cliente'], municipality_code: '05001'});
     });
 
     it('asks a purchase for a proveedor, and creates one as proveedor', async () => {
@@ -575,6 +590,275 @@ describe('the document form (§4.6)', () => {
     });
   });
 
+  describe('retenciones (observations §4.2)', () => {
+    /** OBS-2: 1 000 000 with IVA 19 %, ReteFuente 2,5 %, ReteICA 0,966 % and ReteIVA 15 %. */
+    const OBS2_LINE = line({
+      product: {id: 'p1', label: 'SRV-01 · Hora de consultoría'},
+      description: 'Consultoría',
+      quantity: '1',
+      unit_price: '1000000',
+      charge_tax_id: 'iva19',
+    });
+
+    it('lists a line’s retenciones in its cell, and says when it has none', async () => {
+      api();
+      renderEditor({
+        value: draft({
+          lines: [
+            line({...PRD_LINE, withholdings: ['rete25', 'reteiva15']}),
+            line({quantity: '1', withholdings: ['ninguno']}),
+          ],
+        }),
+      });
+
+      expect(
+        await screen.findByRole('button', {
+          name: 'Retenciones de la línea 1: ReteFuente 2,5 % · ReteIVA 15 %',
+        }),
+      ).toHaveTextContent('ReteFuente 2,5 % · ReteIVA 15 %');
+      expect(
+        screen.getByRole('button', {
+          name: 'Retenciones de la línea 2: Sin retenciones',
+        }),
+      ).toHaveTextContent('Sin retenciones');
+    });
+
+    it('chooses one retención per kind from the cell and previews OBS-2 as the server computes it', async () => {
+      api();
+      const {latest} = renderEditor({value: draft({lines: [OBS2_LINE]})});
+
+      await userEvent.click(
+        await screen.findByRole('button', {name: /Retenciones de la línea 1/}),
+      );
+      const dialog = screen.getByRole('dialog', {
+        name: 'Impuestos de la línea 1',
+      });
+      await userEvent.selectOptions(
+        await within(dialog).findByLabelText('Retefuente'),
+        'rete25',
+      );
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText('ReteIVA'),
+        'reteiva15',
+      );
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText('ReteICA'),
+        'ica966',
+      );
+      await userEvent.click(
+        within(dialog).getByRole('button', {name: 'Aplicar'}),
+      );
+
+      expect(latest()?.lines[0]?.withholdings).toEqual([
+        'rete25',
+        'reteiva15',
+        'ica966',
+      ]);
+      expect(
+        screen.getByRole('button', {name: /Retenciones de la línea 1/}),
+      ).toHaveTextContent('ReteFuente 2,5 % · ReteIVA 15 % · ReteICA 0,966 %');
+      expect(total('Impuestos')).toBe('$ 190.000,00');
+      expect(total('Retenciones'), '25 000 + 28 500 + 9 660').toBe(
+        '$ 63.160,00',
+      );
+      expect(total('Total neto')).toBe('$ 1.126.840,00');
+    });
+
+    it('shows one row per retención in the totals panel, with its base and value', async () => {
+      api();
+      renderEditor({
+        value: draft({
+          lines: [
+            line({
+              ...OBS2_LINE,
+              withholdings: ['rete25', 'reteiva15', 'ica966'],
+            }),
+          ],
+        }),
+      });
+
+      await waitFor(() => expect(total('Retenciones')).toBe('$ 63.160,00'));
+      const panel = screen.getByRole('region', {name: 'Totales'});
+      const row = (name: string) =>
+        within(panel).getByText(name, {selector: 'dt'}).parentElement;
+      expect(total('ReteFuente 2,5 %')).toBe('$ 25.000,00');
+      expect(row('ReteFuente 2,5 %')).toHaveTextContent('Base $ 1.000.000,00');
+      expect(total('ReteIVA 15 %')).toBe('$ 28.500,00');
+      expect(
+        row('ReteIVA 15 %'),
+        'ReteIVA is withheld on the IVA, so its base is the IVA',
+      ).toHaveTextContent('Base $ 190.000,00');
+      expect(total('ReteICA 0,966 %')).toBe('$ 9.660,00');
+    });
+
+    it('shows no retención rows while the document has none', async () => {
+      api();
+      renderEditor({value: draft({lines: [OBS2_LINE]})});
+
+      await waitFor(() => expect(total('Impuestos')).toBe('$ 190.000,00'));
+      expect(
+        within(screen.getByRole('region', {name: 'Totales'})).queryByText(
+          /^Base /,
+        ),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows the API’s message on a line’s retenciones under its cell', async () => {
+      api();
+      renderEditor({
+        value: draft({lines: [line({...PRD_LINE})]}),
+        errors: {
+          'lines.0.withholdings': 'Una retención por tipo en cada línea.',
+        },
+      });
+
+      expect(
+        await screen.findByRole('button', {name: /Retenciones de la línea 1/}),
+      ).toHaveAccessibleDescription('Una retención por tipo en cada línea.');
+    });
+
+    it('keeps a retención the line has even when it is not in force on the date', async () => {
+      api({
+        'GET /taxes': (_body, url) => {
+          const items =
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING;
+          return [
+            200,
+            {
+              items:
+                url.searchParams.get('on') !== null
+                  ? items.filter((tx) => tx.id !== 'ica966')
+                  : items,
+            },
+          ];
+        },
+      });
+      renderEditor({
+        value: draft({lines: [line({...OBS2_LINE, withholdings: ['ica966']})]}),
+      });
+
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: 'Retenciones de la línea 1: ReteICA 0,966 %',
+        }),
+      );
+      expect(
+        await within(screen.getByRole('dialog')).findByLabelText('ReteICA'),
+        'a draft keeps its own retención',
+      ).toHaveValue('ica966');
+    });
+
+    it('shows the retenciones of a document that cannot be edited as text', async () => {
+      api();
+      renderEditor({
+        readOnly: true,
+        value: draft({
+          lines: [line({...OBS2_LINE, withholdings: ['rete25', 'ica966']})],
+        }),
+      });
+
+      expect(
+        await screen.findByText('ReteFuente 2,5 % · ReteICA 0,966 %'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', {name: /Retenciones de la línea 1/}),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('a saved document (TAX-12)', () => {
+    it('keeps showing a tax and a payment method deactivated since it was emitted', async () => {
+      // IVA 19 % and Efectivo were deactivated after FE-1: only ?all=1 still lists them.
+      function inactive(id: string) {
+        return function <T extends {id: string; active: boolean}>(item: T): T {
+          return item.id === id ? {...item, active: false} : item;
+        };
+      }
+      api({
+        'GET /taxes': (_body, url) => {
+          const all = url.searchParams.get('all') === '1';
+          const items = (
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING
+          ).map(inactive('iva19'));
+          return [200, {items: all ? items : items.filter((tx) => tx.active)}];
+        },
+        'GET /payment-methods': (_body, url) => {
+          const items = METHODS.map(inactive('cash'));
+          return [
+            200,
+            {
+              items:
+                url.searchParams.get('all') === '1'
+                  ? items
+                  : items.filter((m) => m.active),
+            },
+          ];
+        },
+      });
+      renderEditor({
+        readOnly: true,
+        value: draft({
+          lines: [
+            line({
+              description: 'Consultoría',
+              quantity: '1',
+              unit_price: '1000000',
+              charge_tax_id: 'iva19',
+            }),
+          ],
+          payments: [
+            {
+              key: 'p1',
+              payment_method_id: 'cash',
+              amount: '1190000',
+              term: 'today',
+              due_date: null,
+            },
+          ],
+        }),
+      });
+
+      await waitFor(() => expect(total('Impuestos')).toBe('$ 190.000,00'));
+      expect(total('Total neto')).toBe('$ 1.190.000,00');
+      expect(
+        screen.getByLabelText('Impuesto cargo, línea 1'),
+      ).toHaveDisplayValue('IVA 19 %');
+      expect(screen.getByLabelText('Método de pago 1')).toHaveDisplayValue(
+        'Efectivo',
+      );
+    });
+
+    it('does not offer a deactivated tax or payment method to a new line', async () => {
+      api({
+        'GET /taxes': (_body, url) => {
+          const items = (
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING
+          ).map((tx) => (tx.id === 'iva5' ? {...tx, active: false} : tx));
+          return [
+            200,
+            {
+              items:
+                url.searchParams.get('all') === '1'
+                  ? items
+                  : items.filter((tx) => tx.active),
+            },
+          ];
+        },
+      });
+      renderEditor({value: draft({lines: [line({quantity: '1'})]})});
+
+      const select = screen.getByLabelText('Impuesto cargo, línea 1');
+      await waitFor(() =>
+        expect(
+          within(select).getByRole('option', {name: 'IVA 19 %'}),
+        ).toBeInTheDocument(),
+      );
+      expect(
+        within(select).queryByRole('option', {name: 'IVA 5 %'}),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe('taxes in force (F5)', () => {
     /** IVA 5 % is in force only from 2027: the server leaves it out of ?on= before then. */
     function datedApi() {
@@ -810,6 +1094,33 @@ describe('the document form (§4.6)', () => {
         screen.getByRole('combobox', {name: 'Cliente'}),
         'a message the person has not answered stays',
       ).toHaveAccessibleDescription('Elige el tercero.');
+    });
+
+    it('shows the code a saved line was written with in its own column, only when read-only (COD)', async () => {
+      api();
+      const coded = line({
+        ...PRD_LINE,
+        product: {id: 'p1', label: 'NUEVO · Renombrado', code: 'VIEJO-01'},
+      });
+      renderEditor({readOnly: true, value: draft({lines: [coded]})});
+      await waitFor(() => expect(total('Total neto')).toBe('$ 2.070.000,00'));
+      expect(
+        screen.getByRole('columnheader', {name: 'Código'}),
+      ).toBeInTheDocument();
+      expect(screen.getByText('VIEJO-01')).toBeInTheDocument();
+    });
+
+    it('has no code column while the document is edited', async () => {
+      api();
+      const coded = line({
+        ...PRD_LINE,
+        product: {id: 'p1', label: 'NUEVO · Renombrado', code: 'VIEJO-01'},
+      });
+      renderEditor({value: draft({lines: [coded]})});
+      await waitFor(() => expect(total('Total neto')).toBe('$ 2.070.000,00'));
+      expect(
+        screen.queryByRole('columnheader', {name: 'Código'}),
+      ).not.toBeInTheDocument();
     });
 
     it('only shows a document that cannot be edited', async () => {

@@ -21,6 +21,11 @@ final class DeletePurchaseInvoiceHandler implements CommandHandler
         if (!$invoice->isDraft()) {
             throw new DocumentNotDraft();
         }
+        $corrected = $invoice->correctedFromId();
+        if (null !== $corrected) {
+            // The voided invoice it corrected stops pointing at a draft that is gone.
+            $this->invoices->get($command->companyId, $corrected)->correctionDiscarded($invoice->id());
+        }
         $this->files->removeAll($command->companyId, $invoice->id());
         $this->invoices->remove($invoice);
     }

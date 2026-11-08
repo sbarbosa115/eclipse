@@ -56,9 +56,12 @@ final class PurchaseInvoicePostingTest extends TestCase
         return new TaxSnapshot(Uuid::v7(), $kind.' '.$rate, $kind, $calculation, $rate, $account);
     }
 
-    private static function line(?Uuid $product, ?Uuid $account, string $quantity, string $price, string $discount = '0', ?TaxSnapshot $charge = null, ?TaxSnapshot $withholding = null): PurchaseLineDraft
+    /**
+     * @param TaxSnapshot|list<TaxSnapshot>|null $withholding one retención, or several (one per kind)
+     */
+    private static function line(?Uuid $product, ?Uuid $account, string $quantity, string $price, string $discount = '0', ?TaxSnapshot $charge = null, TaxSnapshot|array|null $withholding = null): PurchaseLineDraft
     {
-        return new PurchaseLineDraft($product, $account, 'Línea', Quantity::of($quantity), UnitPrice::of($price), Rate::of($discount), $charge ?? TaxSnapshot::none(), $withholding ?? TaxSnapshot::none());
+        return new PurchaseLineDraft($product, $account, 'Línea', Quantity::of($quantity), UnitPrice::of($price), Rate::of($discount), $charge ?? TaxSnapshot::none(), $withholding instanceof TaxSnapshot ? [$withholding] : $withholding ?? []);
     }
 
     private function credit(string $amount): PurchasePaymentDraft
@@ -209,6 +212,58 @@ final class PurchaseInvoicePostingTest extends TestCase
             ['credit', C::IcaWithholdingPracticed->value, '9660.00', true],
             ['credit', C::Payables->value, '2151840.00', true],
         ], $this->movements($draft), 'Lines on the same account are posted together; ReteIVA (on the IVA) → 2367, ReteICA → 2368.');
+        self::assertBalanced($draft);
+    }
+
+    public function testEachRetencionOfALineIsCreditedToItsOwnAccount(): void
+    {
+        // Observations PRD §5 and OBS-3: 1.000.000 + IVA 19 % with Retefuente 2,5 %, ReteICA 0,966 % and ReteIVA 15 %.
+        $services = $this->account('513595 Otros servicios');
+        $renta = $this->account('236540 Retefuente compras');
+        $draft = $this->post(
+            [self::line(null, $services, '1', '1000000', charge: self::tax('iva', '19.0000'), withholding: [
+                self::tax('retefuente', '2.5000', $renta),
+                self::tax('reteica', '0.9660'),
+                self::tax('reteiva', '15.0000'),
+            ])],
+            [$this->credit('1126840.00')],
+        );
+
+        self::assertSame([
+            ['debit', '513595 Otros servicios', '1000000.00', false],
+            ['debit', C::VatDeductible->value, '190000.00', false],
+            ['credit', '236540 Retefuente compras', '25000.00', true],
+            ['credit', C::IcaWithholdingPracticed->value, '9660.00', true],
+            ['credit', C::VatWithholdingPracticed->value, '28500.00', true],
+            ['credit', C::Payables->value, '1126840.00', true],
+        ], $this->movements($draft), 'One credit per retención account (its own, else its kind\'s concept), with the supplier.');
+        self::assertBalanced($draft);
+    }
+
+    public function testRetencionesOnSeveralLinesShareTheCentsAndAddUpPerAccount(): void
+    {
+        // Three lines of 333,33: the 7 cents left over after flooring every (line, retención) pair go to the largest
+        // remainders, and each account still gets exactly its part of Retenciones (63,16).
+        $services = $this->account('513595 Otros servicios');
+        $withholdings = [self::tax('retefuente', '2.5000'), self::tax('reteica', '0.9660'), self::tax('reteiva', '15.0000')];
+        $iva = self::tax('iva', '19.0000');
+        $draft = $this->post(
+            [
+                self::line(null, $services, '1', '333.33', charge: $iva, withholding: $withholdings),
+                self::line(null, $services, '1', '333.33', charge: $iva, withholding: $withholdings),
+                self::line(null, $services, '1', '333.33', charge: $iva, withholding: $withholdings),
+            ],
+            [$this->credit('1126.83')],
+        );
+
+        self::assertSame([
+            ['debit', '513595 Otros servicios', '999.99', false],
+            ['debit', C::VatDeductible->value, '190.00', false],
+            ['credit', C::WithholdingPracticed->value, '25.00', true],
+            ['credit', C::IcaWithholdingPracticed->value, '9.66', true],
+            ['credit', C::VatWithholdingPracticed->value, '28.50', true],
+            ['credit', C::Payables->value, '1126.83', true],
+        ], $this->movements($draft));
         self::assertBalanced($draft);
     }
 

@@ -20,6 +20,10 @@ final readonly class UpdateCompanyProfile
         public ?string $checkDigit,
         public ?string $address,
         public ?string $city,
+        /** ISO 3166-1 alpha-2; Colombia when none */
+        public ?string $countryCode,
+        /** DIVIPOLA code, required for Colombia */
+        public ?string $municipalityCode,
         public ?string $phone,
         public ?string $email,
         public string $vatRegime,

@@ -34,6 +34,11 @@ const company = (over: Record<string, unknown> = {}) => ({
   fiscal_responsibilities: ['R-99-PN'],
   default_charge_tax_id: null,
   default_withholding_tax_id: null,
+  country_code: 'CO',
+  municipality_code: '11001',
+  municipality_name: 'BOGOTÁ, D.C.',
+  department_code: '11',
+  department_name: 'BOGOTÁ, D.C.',
   ...over,
 });
 
@@ -83,7 +88,6 @@ describe('Configuración › Empresa', () => {
     expect(screen.getByLabelText(/^DV/)).toHaveValue('8');
     await userEvent.clear(name);
     await userEvent.type(name, 'Acme Ltda.');
-    await userEvent.type(screen.getByLabelText(/Ciudad/), 'Bogotá');
     await userEvent.selectOptions(
       screen.getByLabelText('Impuesto cargo'),
       'IVA 19 %',
@@ -99,7 +103,8 @@ describe('Configuración › Empresa', () => {
     const put = api.calls.find((c) => c.method === 'PUT');
     expect(put?.body).toMatchObject({
       legal_name: 'Acme Ltda.',
-      city: 'Bogotá',
+      country_code: 'CO',
+      municipality_code: '11001',
       trade_name: null,
       default_charge_tax_id: 't1',
       default_withholding_tax_id: null,
@@ -181,6 +186,80 @@ describe('Configuración › Empresa', () => {
       await screen.findByText('Ya hay una empresa registrada con este NIT.'),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Número de identificación')).toBeInvalid();
+  });
+
+  it('shows the saved municipality and sends the country and its code', async () => {
+    const api = fakeApi({
+      'GET /me': [200, sessionOf('owner')],
+      'GET /company': [200, company()],
+      'GET /taxes': [200, TAXES],
+      'PUT /company': [200, company()],
+    });
+    renderTab();
+
+    expect(await screen.findByLabelText('Municipio')).toHaveValue(
+      'Bogotá, D.C. › Bogotá, D.C. (11001)',
+    );
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Guardar cambios'}),
+    );
+
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.method === 'PUT')?.body).toMatchObject({
+        country_code: 'CO',
+        municipality_code: '11001',
+        city: null,
+      }),
+    );
+  });
+
+  it('asks for the municipality of a Colombian company that has none, before sending', async () => {
+    const api = fakeApi({
+      'GET /me': [200, sessionOf('owner')],
+      'GET /company': [
+        200,
+        company({municipality_code: null, municipality_name: null}),
+      ],
+      'GET /taxes': [200, TAXES],
+    });
+    renderTab();
+
+    await screen.findByLabelText('Municipio');
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Guardar cambios'}),
+    );
+
+    expect(screen.getByText('Elige el municipio.')).toBeInTheDocument();
+    expect(api.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('asks for the city instead of the municipality when the country is not Colombia', async () => {
+    const api = fakeApi({
+      'GET /me': [200, sessionOf('owner')],
+      'GET /company': [200, company()],
+      'GET /taxes': [200, TAXES],
+      'PUT /company': [200, company({country_code: 'EC', city: 'Quito'})],
+    });
+    renderTab();
+
+    await userEvent.selectOptions(await screen.findByLabelText('País'), 'EC');
+    expect(screen.queryByLabelText('Municipio')).not.toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Guardar cambios'}),
+    );
+    expect(screen.getByText('Escribe la ciudad.')).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Ciudad'), 'Quito');
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Guardar cambios'}),
+    );
+    await waitFor(() =>
+      expect(api.calls.find((c) => c.method === 'PUT')?.body).toMatchObject({
+        country_code: 'EC',
+        municipality_code: null,
+        city: 'Quito',
+      }),
+    );
   });
 
   it('hides the check digit for a document that has none', async () => {

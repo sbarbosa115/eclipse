@@ -130,6 +130,23 @@ final class ReportExportApiTest extends ApiTestCase
         self::assertStringContainsString('$ 1.190.000,00', $html);
     }
 
+    public function testAWideReportTurnsThePageSoEveryColumnFits(): void
+    {
+        // IMP-11, EXO-07: Exógena 1001 has a dozen columns; on a portrait letter page the amounts fell off the edge.
+        /** @var \Twig\Environment $twig */
+        $twig = static::getContainer()->get('twig');
+        $render = fn (int $n) => $twig->render('pdf/reports/table.html.twig', [
+            'company' => static::getContainer()->get(\App\Company\Application\Query\Companies::class)->view($this->company),
+            'title' => 'Formato 1001', 'subtitle' => [],
+            'columns' => array_map(static fn (int $i) => ['label' => "Columna $i", 'numeric' => $i > 2], range(1, $n)),
+            'rows' => [], 'totals' => null,
+        ]);
+
+        self::assertStringNotContainsString('landscape', $render(4), 'A narrow report stays portrait.');
+        self::assertStringContainsString('size: letter landscape', $render(8));
+        self::assertStringContainsString('font-size: 6pt', $render(14), 'A very wide one also shrinks its type.');
+    }
+
     public function testBooksExportsAreForWhoMayViewTheBooks(): void
     {
         $this->signInAs('billing');

@@ -87,7 +87,7 @@ abstract class CatalogTestCase extends ApiTestCase
     {
         $this->em()->getConnection()->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
         $quotation = new Quotation($companyId, Uuid::v7(), 'Cliente', new \DateTimeImmutable('2026-10-01'), new \DateTimeImmutable('2026-10-31'), Uuid::v7(), new \DateTimeImmutable());
-        $line = new QuotationLine($quotation, $companyId, 1, null, 'Servicio', Quantity::of(1), UnitPrice::of(100), Rate::zero(), new TaxSnapshot(Uuid::fromString($taxId), 'IVA', 'iva', TaxCalculation::Percentage, '19.0000', null), TaxSnapshot::none());
+        $line = new QuotationLine($quotation, $companyId, 1, null, 'Servicio', Quantity::of(1), UnitPrice::of(100), Rate::zero(), new TaxSnapshot(Uuid::fromString($taxId), 'IVA', 'iva', TaxCalculation::Percentage, '19.0000', null), []);
         $this->save($quotation, $line);
         $this->em()->getConnection()->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
     }

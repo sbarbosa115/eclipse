@@ -248,7 +248,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The company's razón social, NIT, address, régimen, responsabilidades fiscales, default taxes and logo. */
+        /** The company's razón social, NIT, address, país and municipio, régimen, responsabilidades fiscales, default taxes and logo. */
         get: operations["get_app_company_ui_http_company_show"];
         /**
          * Changes the profile (owner). The check digit is computed for a NIT when empty. The default taxes must be active
@@ -506,8 +506,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Postable accounts for a picker: ?q= matches a code prefix or part of the name; ?purchases=1 only those usable on
-         *     purchase lines. At most 20.
+         * Postable accounts for a picker, in code order.
+         * @description ?q= words that must all match (a number as a code prefix, anything else as part of the name); ?purchases=1 only
+         *     those usable on purchase lines; ?limit= 1…200 (default 50). A subcuenta with active auxiliares is not offered.
+         *     `total` counts every match.
          */
         get: operations["get_app_ledger_ui_http_catalog_searchaccounts"];
         put?: never;
@@ -567,7 +569,10 @@ export interface paths {
         put?: never;
         /**
          * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.
-         * @description 409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.
+         * @description The first one under an account that took movements subdivides it: what pointed at the parent (posting rules,
+         *     taxes, payment methods, products, terceros) moves to the new account and `moved` says what; with
+         *     move_references false (default true) nothing moves and `moved` is null. 409 account_code_taken; 422
+         *     account_code_invalid, parent_account_not_found; 403 for the billing user.
          */
         post: operations["post_app_ledger_ui_http_chart_add"];
         delete?: never;
@@ -589,6 +594,49 @@ export interface paths {
          *     rule uses stays active (409 account_in_posting_rule); another company's id is 404.
          */
         put: operations["put_app_ledger_ui_http_chart_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/exogena-concepts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's table, by format then prefix. */
+        get: operations["get_app_ledger_ui_http_exogenaconcept_list"];
+        /**
+         * {items: [{format, account_prefix, concept_code}]} replaces the whole table (at most 500 rows; an empty list is
+         *     allowed). 422 by field (`items[N].format`, `.account_prefix`, `.concept_code`), and on a prefix twice in one format.
+         */
+        put: operations["put_app_ledger_ui_http_exogenaconcept_replace"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ledger/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A document's own entries for its Contabilización tab (observations PRD §4.5): ?source_type= (sales_invoice,
+         *     purchase_invoice, cash_receipt, supplier_payment) and ?source_id=; its posting and, once voided, the reversal, by
+         *     number. READ_DOCUMENTS (the libro diario stays VIEW_BOOKS). 400 invalid_source; another company's document has
+         *     no entries here.
+         */
+        get: operations["get_app_ledger_ui_http_ledgerreport_entries"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -778,7 +826,8 @@ export interface paths {
         };
         /**
          * Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|
-         *     empleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page ≤ 100.
+         *     empleado|otro, ?active=1 (only active) or 0 (only inactive), ?missing_municipality=1 (Colombian terceros
+         *     still without a municipality), ?page, ?per_page ≤ 100.
          */
         get: operations["get_app_party_ui_http_tercero_list"];
         put?: never;
@@ -804,7 +853,8 @@ export interface paths {
         put?: never;
         /**
          * Quick-create from inside a document (§4.2): {person_type, identification_type, identification_number,
-         *     check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…]} → 201.
+         *     check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…], country_code?
+         *     (default CO), municipality_code (required for CO), city (required abroad)} → 201.
          */
         post: operations["post_app_party_ui_http_tercero_quickcreate"];
         delete?: never;
@@ -1231,8 +1281,9 @@ export interface paths {
         put?: never;
         /**
          * A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,
-         *     notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}]} → 201.
-         * @description 422 `validation_failed` by field path (`lines.0.product_id`, `expiry_date`…).
+         *     notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholdings: [{tax_id}]
+         *     (one per kind; the deprecated withholding_tax_id when missing)}]} → 201. 422 `validation_failed` by field path
+         *     (`lines.0.product_id`, `lines.0.withholdings` for two of a kind, `lines.0.withholdings.1.tax_id`, `expiry_date`…).
          */
         post: operations["post_app_sales_ui_http_quotation_create"];
         delete?: never;
@@ -1437,8 +1488,10 @@ export interface paths {
         put?: never;
         /**
          * A new draft: {tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity,
-         *     unit_price, discount, charge_tax_id, withholding_tax_id}], payments: [{payment_method_id, amount, due_date?}]}
-         *     → 201. The formas de pago need not add up yet. 422 `validation_failed` by field path (`lines.0.product_id`…).
+         *     unit_price, discount, charge_tax_id, withholdings: [{tax_id}] (one per kind; the deprecated withholding_tax_id when
+         *     missing)}], payments: [{payment_method_id, amount, due_date?}]} → 201. The formas de pago need not add up yet. 422
+         *     `validation_failed` by field path (`lines.0.product_id`, `lines.0.withholdings` for two of a kind,
+         *     `lines.0.withholdings.1.tax_id`…).
          */
         post: operations["post_app_sales_ui_http_salesinvoice_create"];
         delete?: never;
@@ -1594,9 +1647,11 @@ export interface paths {
         put?: never;
         /**
          * Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,
-         *     description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,
-         *     amount, due_date? (crédito; the invoice's when missing)}]} → 201. 422 `validation_failed` by field
-         *     (`lines[0].account_id`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).
+         *     description, quantity, unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind; the
+         *     deprecated withholding_tax_id when missing)}], payments: [{payment_method_id, amount, due_date? (crédito; the
+         *     invoice's when missing)}]} → 201. 422 `validation_failed` by field (`lines[0].account_id`,
+         *     `lines[0].withholdings` for two of a kind, `lines[0].withholdings[1].tax_id`…), `duplicate_supplier_invoice_number`
+         *     (violation on `supplier_invoice_number`).
          */
         post: operations["post_app_purchasing_ui_http_purchaseinvoice_create"];
         delete?: never;
@@ -1660,6 +1715,28 @@ export interface paths {
          *     `period_locked`.
          */
         post: operations["post_app_purchasing_ui_http_purchaseinvoice_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-invoices/{id}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Corregir (observations PRD §4.6): {reason}. In one transaction voids the emitted invoice as /void does and opens
+         *     an editable copy with the same supplier number, dates, notes, lines, formas de pago and files → 201 the new draft
+         *     (`corrected_from_id`; the voided one gets `corrected_by_id` and the reason "Corregida: <reason>"). 409
+         *     `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseinvoice_correct"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1734,6 +1811,174 @@ export interface paths {
         post?: never;
         /** Removes a file from a draft → 204. 409 `document_not_draft` once emitted. */
         delete: operations["delete_app_purchasing_ui_http_purchaseinvoice_removeattachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Newest first: ?q= part of the number or the supplier's name (literal), ?status=draft|emitted|converted|voided,
+         *     ?from=, ?to= (issue date), ?tercero_id=, ?page, ?per_page ≤ 100. 400 invalid_date.
+         */
+        get: operations["get_app_purchasing_ui_http_purchaseorder_list"];
+        put?: never;
+        /**
+         * A draft {tercero_id, issue_date, expected_date?, notes?, lines: [{product_id | account_id, description, quantity,
+         *     unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind)}]} → 201. 422 `validation_failed`
+         *     by field path (`tercero_id`, `expected_date`, `lines[0].product_id`, `lines[0].withholdings`…).
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One order, whole. */
+        get: operations["get_app_purchasing_ui_http_purchaseorder_show"];
+        /** Rewrites the draft with the same body as create. 409 document_not_draft. */
+        put: operations["put_app_purchasing_ui_http_purchaseorder_update"];
+        post?: never;
+        /** Deletes a draft → 204. 409 document_not_draft. */
+        delete: operations["delete_app_purchasing_ui_http_purchaseorder_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/emit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The next OC number, frozen; posts nothing. 409 document_not_draft; 422 validation_failed, supplier_inactive. */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_emit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/emit-and-send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emits and queues the PDF to the supplier's e-mail. 422 tercero_has_no_email. */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_emitandsend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queues the PDF to the supplier → 202. 409 purchase_order_not_open; 422 tercero_has_no_email. */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** {reason} → voided, number kept, nothing to reverse. 409 purchase_order_not_open. */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A new draft dated today with the same supplier and lines → 201. */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Once, from emitted: a draft purchase invoice with the same supplier and lines, dated today, no supplier number
+         *     and no formas de pago → the order, now converted, with converted_invoice_id (the invoice's purchase_order_id is
+         *     this order). 409 purchase_order_already_converted, purchase_order_not_open; 422 validation_failed (the invoice's
+         *     own violations, by field path): nothing is converted then.
+         */
+        post: operations["post_app_purchasing_ui_http_purchaseorder_convert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The order's PDF (ANULADA when voided, BORRADOR on a draft). */
+        get: operations["get_app_purchasing_ui_http_purchaseorder_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1912,6 +2157,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/taxes/exogena/{format}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The format's rows, its cuantías menores and what keeps it from being filed (missing concepts, municipios). */
+        get: operations["get_app_reporting_ui_http_exogena_exogena"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/taxes/exogena/{format}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The working paper as a file (?format=csv|pdf, ?check=1 to ask first), with the same filters. 422
+         *     `exogena_terceros_incomplete` while a Colombian tercero reported by name has no municipio (the terceros list
+         *     filters them with ?missing_municipality=1); 422 `export_too_large` above the cap.
+         */
+        get: operations["get_app_reporting_ui_http_exogena_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/cartera/{side}/export": {
         parameters: {
             query?: never;
@@ -1941,6 +2224,112 @@ export interface paths {
          *     default the year so far), balance-sheet (?date, default today).
          */
         get: operations["get_app_reporting_ui_http_reportexport_ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/taxes/withholdings/{side}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retenciones practicadas (facturas de compra) or sufridas (facturas de venta), by month then kind, per tercero and
+         *     tax, with each total's *Según libros*. ?kind=retefuente|reteiva|reteica (default all; 400 `invalid_kind`).
+         */
+        get: operations["get_app_reporting_ui_http_taxreport_withholdings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/taxes/withholdings/{side}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The same report as a file, with its subtotals, books' figures and differences in line. */
+        get: operations["get_app_reporting_ui_http_taxreport_exportwithholdings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/taxes/vat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * IVA generado and descontable by rate, ReteIVA practicada and sufrida, impoconsumo and the saldo; a bimester or
+         *     cuatrimestre is a range.
+         */
+        get: operations["get_app_reporting_ui_http_taxreport_vat"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/taxes/vat/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_app_reporting_ui_http_taxreport_exportvat"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/geo/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_app_shared_ui_http_geo_departments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/geo/municipalities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ?q= part of the name or the start of the code (literal); ?department= a 2-digit code; at most 50. */
+        get: operations["get_app_shared_ui_http_geo_municipalities"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2012,6 +2401,22 @@ export interface components {
             fiscal_responsibilities: string[];
             default_charge_tax_id?: string | null;
             default_withholding_tax_id?: string | null;
+            /**
+             * ISO 3166-1 alpha-2 (observations PRD §4.3).
+             * @default CO
+             */
+            country_code: string;
+            /**
+             * DANE DIVIPOLA code (5 digits); null until a Colombian company is saved again.
+             * @default null
+             */
+            municipality_code: string | null;
+            /** @default null */
+            municipality_name: string | null;
+            /** @default null */
+            department_code: string | null;
+            /** @default null */
+            department_name: string | null;
         };
         NumberingSeriesOutput: {
             /** quotation, cash_receipt, purchase_invoice, supplier_payment, sales_invoice_internal */
@@ -2059,6 +2464,11 @@ export interface components {
             account_code: string;
             account_name: string;
             allowed_prefixes: string[];
+            /**
+             * False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD §4.1).
+             * @default true
+             */
+            account_postable: boolean;
         };
         LockDateOutput: {
             /** YYYY-MM-DD, or null while the books are open. */
@@ -2093,6 +2503,13 @@ export interface components {
             active: boolean;
             standard: boolean;
         };
+        AccountMovesOutput: {
+            posting_rules: string[];
+            taxes: number;
+            payment_methods: number;
+            products: number;
+            terceros: number;
+        };
         AccountOutput: {
             id: string;
             code: string;
@@ -2106,6 +2523,15 @@ export interface components {
             active: boolean;
             postable: boolean;
             usable_on_purchases: boolean;
+            /**
+             * Set on the answer to adding the first auxiliar under an account in use: what moved to it.
+             * @default null
+             */
+            moved: components["schemas"]["AccountMovesOutput"] | null;
+        };
+        AccountSearchOutput: {
+            items: components["schemas"]["AccountOutput"][];
+            total: number;
         };
         TaxSettingOutput: {
             id: string;
@@ -2130,6 +2556,11 @@ export interface components {
             standard: boolean;
             /** A document, a product or the company uses it: it can only be deactivated. */
             in_use: boolean;
+            /**
+             * False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD §4.1).
+             * @default true
+             */
+            account_postable: boolean;
         };
         PaymentMethodSettingOutput: {
             id: string;
@@ -2143,6 +2574,17 @@ export interface components {
             standard: boolean;
             /** A document uses it: it can only be deactivated. */
             in_use: boolean;
+            /**
+             * False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD §4.1).
+             * @default true
+             */
+            account_postable: boolean;
+        };
+        ExogenaConceptOutput: {
+            /** 1001 or 1007 */
+            format: string;
+            account_prefix: string;
+            concept_code: string;
         };
         JournalLineOutput: {
             account_id: string;
@@ -2245,6 +2687,22 @@ export interface components {
             active: boolean;
             branch_code: string;
             trade_name?: string | null;
+            /**
+             * ISO 3166-1 alpha-2 (observations PRD §4.3).
+             * @default CO
+             */
+            country_code: string;
+            /**
+             * DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again.
+             * @default null
+             */
+            municipality_code: string | null;
+            /** @default null */
+            municipality_name: string | null;
+            /** @default null */
+            department_code: string | null;
+            /** @default null */
+            department_name: string | null;
         };
         PhoneOutput: {
             indicative: string;
@@ -2295,6 +2753,22 @@ export interface components {
             /** ISO 8601 date-time when the personal data was erased on request (Ley 1581), else null */
             erased_at?: string | null;
             created_at: string;
+            /**
+             * ISO 3166-1 alpha-2 (observations PRD §4.3).
+             * @default CO
+             */
+            country_code: string;
+            /**
+             * DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again.
+             * @default null
+             */
+            municipality_code: string | null;
+            /** @default null */
+            municipality_name: string | null;
+            /** @default null */
+            department_code: string | null;
+            /** @default null */
+            department_name: string | null;
         };
         TerceroExportOutput: {
             /** ISO 8601 date-time of the export */
@@ -2410,6 +2884,18 @@ export interface components {
             /** The draft invoice it was converted into. */
             converted_invoice_id?: string | null;
         };
+        LineWithholdingOutput: {
+            tax_id?: string | null;
+            name: string;
+            /** retefuente, reteiva, reteica */
+            kind: string;
+            /** percentage or per_unit */
+            calculation: string;
+            rate: string;
+            account_id?: string | null;
+            base_amount: string;
+            amount: string;
+        };
         SalesInvoiceLineOutput: {
             id: string;
             position: number;
@@ -2426,6 +2912,7 @@ export interface components {
             /** A percentage or a value per unit (charge_tax_calculation). */
             charge_tax_rate: string;
             charge_tax_calculation: string;
+            /** Deprecated: the line's first retención (withholdings[0]); "Ninguno" and null when it has none. */
             withholding_tax_id?: string | null;
             withholding_tax_name: string;
             withholding_tax_rate: string;
@@ -2435,6 +2922,24 @@ export interface components {
             tax_amount: string;
             withholding_amount: string;
             total_amount: string;
+            /**
+             * The product's código when the line was written (observations PRD §4.4).
+             * @default null
+             */
+            product_code: string | null;
+            /**
+             * The line's retenciones (none, or one per kind), each with its base and its share.
+             * @default []
+             */
+            withholdings: components["schemas"]["LineWithholdingOutput"][];
+        };
+        WithholdingSummaryOutput: {
+            tax_id?: string | null;
+            name: string;
+            kind: string;
+            rate: string;
+            base: string;
+            amount: string;
         };
         QuotationOutput: {
             id: string;
@@ -2475,6 +2980,11 @@ export interface components {
             voided_by?: string | null;
             voided_at?: string | null;
             void_reason?: string | null;
+            /**
+             * The retenciones by tax, for the totals panel (observations PRD §4.2).
+             * @default []
+             */
+            withholdings_by_tax: components["schemas"]["WithholdingSummaryOutput"][];
         };
         SalesInvoiceSummaryOutput: {
             id: string;
@@ -2552,6 +3062,11 @@ export interface components {
             voided_by?: string | null;
             voided_at?: string | null;
             void_reason?: string | null;
+            /**
+             * The retenciones by tax, for the totals panel (observations PRD §4.2).
+             * @default []
+             */
+            withholdings_by_tax: components["schemas"]["WithholdingSummaryOutput"][];
         };
         PurchaseInvoiceSummaryOutput: {
             id: string;
@@ -2568,6 +3083,11 @@ export interface components {
             paid_amount: string;
             /** What is still owed: total neto − paid; 0 on a voided invoice. */
             balance: string;
+            /**
+             * The invoice that corrects this voided one (Corregir, observations PRD §4.6): the list's "Corregida" hint links to it.
+             * @default null
+             */
+            corrected_by_id: string | null;
         };
         PurchaseInvoiceLineOutput: {
             id: string;
@@ -2594,6 +3114,16 @@ export interface components {
             tax_amount: string;
             withholding_amount: string;
             total_amount: string;
+            /**
+             * The product's código when the line was written; null on a line by account.
+             * @default null
+             */
+            product_code: string | null;
+            /**
+             * The line's retenciones (none, or one per kind), each with its base and its share.
+             * @default []
+             */
+            withholdings: components["schemas"]["LineWithholdingOutput"][];
         };
         PurchaseInvoicePaymentOutput: {
             id: string;
@@ -2644,6 +3174,64 @@ export interface components {
             attachments: components["schemas"]["PurchaseInvoiceAttachmentOutput"][];
             journal_entry_id?: string | null;
             reversal_entry_id?: string | null;
+            created_at: string;
+            emitted_at?: string | null;
+            voided_at?: string | null;
+            void_reason?: string | null;
+            /**
+             * The voided invoice this draft corrects (Corregir, observations PRD §4.6).
+             * @default null
+             */
+            corrected_from_id: string | null;
+            /**
+             * The draft that corrects this voided invoice.
+             * @default null
+             */
+            corrected_by_id: string | null;
+            /**
+             * The orden de compra it was converted from.
+             * @default null
+             */
+            purchase_order_id: string | null;
+            /**
+             * The retenciones by tax, for the totals panel (observations PRD §4.2).
+             * @default []
+             */
+            withholdings_by_tax: components["schemas"]["WithholdingSummaryOutput"][];
+        };
+        PurchaseOrderSummaryOutput: {
+            id: string;
+            /** draft, emitted, converted, voided */
+            status: string;
+            /** OC-3; null on a draft. */
+            number?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            issue_date: string;
+            expected_date?: string | null;
+            net_total: string;
+            converted_invoice_id?: string | null;
+        };
+        PurchaseOrderOutput: {
+            id: string;
+            /** draft, emitted, converted, voided */
+            status: string;
+            number?: string | null;
+            tercero_id: string;
+            tercero_name: string;
+            issue_date: string;
+            expected_date?: string | null;
+            notes?: string | null;
+            gross_total: string;
+            discount_total: string;
+            subtotal: string;
+            tax_total: string;
+            withholding_total: string;
+            net_total: string;
+            lines: components["schemas"]["PurchaseInvoiceLineOutput"][];
+            withholdings_by_tax: components["schemas"]["WithholdingSummaryOutput"][];
+            /** The draft purchase invoice it became; set once. */
+            converted_invoice_id?: string | null;
             created_at: string;
             emitted_at?: string | null;
             voided_at?: string | null;
@@ -2774,6 +3362,138 @@ export interface components {
             purchases_month_count: number;
             /** Cajas y bancos (1105 + 1110); null for a person who may not see the books. */
             cash_and_banks?: string | null;
+        };
+        ExogenaRowOutput: {
+            tercero_id?: string | null;
+            /** DIAN document type code (31 NIT, 13 cédula, 43 cuantías menores…) */
+            document_type_code: string;
+            identification_number: string;
+            check_digit?: string | null;
+            /** A person's apellidos (null for a company). */
+            last_names?: string | null;
+            /** A person's nombres (null for a company). */
+            first_names?: string | null;
+            /** A company's razón social. */
+            business_name?: string | null;
+            address?: string | null;
+            department_code?: string | null;
+            municipality_code?: string | null;
+            /** ISO 3166-1 alpha-2 */
+            country_code: string;
+            concept_code?: string | null;
+            account_code?: string | null;
+            values: {
+                [key: string]: string;
+            };
+        };
+        ExogenaOutput: {
+            year: number;
+            /** 1001, 1003, 1005, 1006, 1007, 1008, 1009 */
+            format: string;
+            /** The cuantías menores threshold in pesos (0.00: everyone by name). */
+            threshold: string;
+            value_columns: string[];
+            rows: components["schemas"]["ExogenaRowOutput"][];
+            minor_amounts_rows: components["schemas"]["ExogenaRowOutput"][];
+            totals: {
+                [key: string]: string;
+            };
+            /** Rows whose account has no concept code yet (1001 and 1007; always 0 elsewhere). */
+            missing_concepts: number;
+            /** Colombian terceros reported by name with no municipality: the export is refused while any. */
+            missing_municipality: number;
+        };
+        WithholdingReportRowOutput: {
+            tercero_id: string;
+            /** nit, cc, ce, pasaporte, ti… */
+            identification_type: string;
+            identification_number: string;
+            check_digit?: string | null;
+            tercero_name: string;
+            /** null when the tax was deleted after the document copied it */
+            tax_id?: string | null;
+            tax_name: string;
+            /** percentage or per_unit */
+            calculation: string;
+            rate: string;
+            base: string;
+            amount: string;
+            documents: number;
+        };
+        WithholdingReportGroupOutput: {
+            /** YYYY-MM */
+            month: string;
+            /** retefuente, reteiva, reteica */
+            kind: string;
+            rows: components["schemas"]["WithholdingReportRowOutput"][];
+            total_base: string;
+            total_amount: string;
+            /** Según libros: what the kind's accounts (2365/2367/2368 practicadas, 135515/17/18 sufridas) moved in the month. */
+            ledger_amount: string;
+            /** ledger_amount − total_amount: zero when the books and the documents agree. */
+            difference: string;
+        };
+        WithholdingKindTotalOutput: {
+            /** retefuente, reteiva, reteica */
+            kind: string;
+            total_base: string;
+            total_amount: string;
+            ledger_amount: string;
+            difference: string;
+        };
+        WithholdingReportOutput: {
+            /** YYYY-MM */
+            from: string;
+            to: string;
+            /** practiced or suffered */
+            side: string;
+            /** The ?kind= filter, null for every kind. */
+            kind?: string | null;
+            groups: components["schemas"]["WithholdingReportGroupOutput"][];
+            totals: components["schemas"]["WithholdingKindTotalOutput"][];
+            /** Voided invoices issued in the period with retenciones, left out ("3 facturas anuladas en el periodo no se incluyen"). */
+            voided_count: number;
+        };
+        VatRateRowOutput: {
+            /** "19.0000" */
+            rate: string;
+            base: string;
+            tax: string;
+        };
+        VatReportOutput: {
+            /** YYYY-MM */
+            from: string;
+            to: string;
+            generated: components["schemas"]["VatRateRowOutput"][];
+            deductible: components["schemas"]["VatRateRowOutput"][];
+            generated_total: string;
+            deductible_total: string;
+            /** What the company withheld of its suppliers' IVA (declared on the retenciones return). */
+            reteiva_practiced: string;
+            /** What clients withheld of the company's IVA: discounted from the saldo. */
+            reteiva_suffered: string;
+            /** Impoconsumo of the sales (its own return). */
+            impoconsumo: string;
+            /** generado − descontable − reteiva sufrida: positive a pagar, negative a favor. */
+            net: string;
+            /** Según libros: what 240805 (generado) and 240810 (descontable) moved in the period. */
+            ledger_generated: string;
+            ledger_deductible: string;
+            /** ledger − report, each: zero when the books and the documents agree. */
+            generated_difference: string;
+            deductible_difference: string;
+            /** Voided invoices (sales and purchases) issued in the period, left out. */
+            voided_count: number;
+        };
+        DepartmentOutput: {
+            code: string;
+            name: string;
+        };
+        MunicipalityOutput: {
+            code: string;
+            name: string;
+            department_code: string;
+            department_name: string;
         };
     };
     responses: never;
@@ -3489,9 +4209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        items: components["schemas"]["AccountOutput"][];
-                    };
+                    "application/json": components["schemas"]["AccountSearchOutput"];
                 };
             };
         };
@@ -3603,6 +4321,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountOutput"];
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_exogenaconcept_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ExogenaConceptOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    put_app_ledger_ui_http_exogenaconcept_replace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ExogenaConceptOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_ledger_ui_http_ledgerreport_entries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["JournalEntryOutput"][];
+                    };
                 };
             };
         };
@@ -5179,6 +5963,28 @@ export interface operations {
             };
         };
     };
+    post_app_purchasing_ui_http_purchaseinvoice_correct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseInvoiceOutput"];
+                };
+            };
+        };
+    };
     post_app_purchasing_ui_http_purchaseinvoice_duplicate: {
         parameters: {
             query?: never;
@@ -5269,6 +6075,262 @@ export interface operations {
             path: {
                 id: string;
                 attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseorder_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PurchaseOrderSummaryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                    };
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseorder_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    put_app_purchasing_ui_http_purchaseorder_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    delete_app_purchasing_ui_http_purchaseorder_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_emit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_emitandsend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_duplicate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    post_app_purchasing_ui_http_purchaseorder_convert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderOutput"];
+                };
+            };
+        };
+    };
+    get_app_purchasing_ui_http_purchaseorder_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
             };
             cookie?: never;
         };
@@ -5496,6 +6558,47 @@ export interface operations {
             };
         };
     };
+    get_app_reporting_ui_http_exogena_exogena: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                format: "1001" | "1003" | "1005" | "1006" | "1007" | "1008" | "1009";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExogenaOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_exogena_export: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                format: "1001" | "1003" | "1005" | "1006" | "1007" | "1008" | "1009";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_app_reporting_ui_http_reportexport_cartera: {
         parameters: {
             query?: never;
@@ -5531,6 +6634,128 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_app_reporting_ui_http_taxreport_withholdings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "practiced" | "suffered";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingReportOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_taxreport_exportwithholdings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "practiced" | "suffered";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_reporting_ui_http_taxreport_vat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReportOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_taxreport_exportvat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_app_shared_ui_http_geo_departments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["DepartmentOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    get_app_shared_ui_http_geo_municipalities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["MunicipalityOutput"][];
+                    };
+                };
             };
         };
     };

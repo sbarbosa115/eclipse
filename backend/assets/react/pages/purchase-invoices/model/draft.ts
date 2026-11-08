@@ -5,6 +5,7 @@ import type {
 import {
   draftLineFrom,
   linesToSend,
+  withholdingsInput,
   type DocumentDraft,
   type DraftPayment,
 } from '@/widgets/document-editor';
@@ -39,7 +40,7 @@ export function toRequest(
     unit_price: line.unit_price.trim(),
     discount: line.discount.trim() === '' ? '0' : line.discount.trim(),
     charge_tax_id: line.charge_tax_id,
-    withholding_tax_id: line.withholding_tax_id,
+    ...withholdingsInput(line),
   }));
   return {
     request: {

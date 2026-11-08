@@ -36,6 +36,7 @@ final class PostingRuleApiTest extends ApiTestCase
             'account_code' => '413595',
             'account_name' => 'VENTA DE OTROS PRODUCTOS',
             'allowed_prefixes' => ['41'],
+            'account_postable' => true,
         ], $items[0]);
     }
 

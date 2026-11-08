@@ -3,6 +3,7 @@ import {QuickCreateTerceroModal} from '@/features/quick-create-tercero';
 import {fetchContacts, TerceroPicker, type Contact} from '@/entities/tercero';
 import {useTranslation} from '@/shared/i18n';
 import {DateInput, Field} from '@/shared/ui';
+import {isPurchase} from '../model/draft';
 import type {
   DocumentDraft,
   DocumentKind,
@@ -29,7 +30,7 @@ export function HeaderSection({
   extra?: ReactNode;
 }) {
   const {t} = useTranslation();
-  const purchase = kind === 'purchase_invoice';
+  const purchase = isPurchase(kind);
   const [creating, setCreating] = useState(false);
   const [contacts, setContacts] = useState<{
     terceroId: string | null;

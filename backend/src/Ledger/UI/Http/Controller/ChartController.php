@@ -2,6 +2,7 @@
 
 namespace App\Ledger\UI\Http\Controller;
 
+use App\Ledger\Application\Command\AccountAdded;
 use App\Ledger\Application\Command\AddAccount;
 use App\Ledger\Application\Command\UpdateAccount;
 use App\Ledger\Application\Query\ChartQueries;
@@ -55,7 +56,11 @@ final class ChartController extends AbstractController
 
     /**
      * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.
-     * 409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.
+     *
+     * The first one under an account that took movements subdivides it: what pointed at the parent (posting rules,
+     * taxes, payment methods, products, terceros) moves to the new account and `moved` says what; with
+     * move_references false (default true) nothing moves and `moved` is null. 409 account_code_taken; 422
+     * account_code_invalid, parent_account_not_found; 403 for the billing user.
      */
     #[Route('', methods: ['POST'])]
     #[ApiResponse(AccountOutput::class, status: 201)]
@@ -63,10 +68,10 @@ final class ChartController extends AbstractController
     {
         BooksAccess::assertBookkeeper($user);
         $input = $this->inputs->map($this->inputs->json($request), AddAccountInput::class);
-        /** @var Uuid $id */
-        $id = $this->commands->dispatch(new AddAccount($user->companyId(), $user->userId(), $input->parentCode, $input->code, $input->name, $input->usableOnPurchases));
+        /** @var AccountAdded $added */
+        $added = $this->commands->dispatch(new AddAccount($user->companyId(), $user->userId(), $input->parentCode, $input->code, $input->name, $input->usableOnPurchases, $input->moveReferences));
 
-        return $this->json(AccountOutput::of($this->catalog->account($user->companyId(), $id)), 201);
+        return $this->json(AccountOutput::of($this->catalog->account($user->companyId(), $added->id), $added->moves), 201);
     }
 
     /**

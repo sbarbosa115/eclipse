@@ -10,6 +10,8 @@ use App\Sales\Domain\Model\SalesInvoice;
 use App\Sales\Domain\Model\SalesInvoiceLine;
 use App\Sales\Domain\Model\SalesInvoicePayment;
 use App\Sales\Domain\Repository\SalesInvoiceRepository;
+use App\Shared\Application\Document\LineWithholdingView;
+use App\Shared\Application\Document\WithholdingSummaryView;
 use App\Shared\Application\Port\PdfRenderer;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Model\InvoiceStatus;
@@ -89,7 +91,7 @@ final class SalesInvoicePdf
                 'due_date' => Printed::date(self::lastDueDate($invoice)),
                 'notes' => $invoice->notes(),
                 'void_reason' => $invoice->voidReason(),
-                'voided_at' => Printed::date($invoice->voidedAt()),
+                'voided_at' => Printed::moment($invoice->voidedAt()),
             ],
             'client' => [
                 'name' => $client->displayName,
@@ -101,6 +103,7 @@ final class SalesInvoicePdf
             ],
             'lines' => array_map(static fn (SalesInvoiceLine $l) => [
                 'position' => $l->position(),
+                'product_code' => $l->productCode() ?? '',
                 'description' => $l->description(),
                 'quantity' => Printed::decimal($l->quantity()->toString()),
                 'unit_price' => Printed::money(Money::rounded($l->unitPrice()->toBigDecimal())),
@@ -108,8 +111,8 @@ final class SalesInvoicePdf
                 'charge_tax' => $l->chargeTax()->isNone() ? '' : $l->chargeTax()->name(),
                 'total' => Printed::money($l->subtotalAmount()->plus($l->taxAmount())),
             ], $invoice->lines()),
-            'taxes' => self::taxes($invoice, true),
-            'withholdings' => self::taxes($invoice, false),
+            'taxes' => self::taxes($invoice),
+            'withholdings' => self::withholdings($invoice),
             'totals' => [
                 'gross' => Printed::money($invoice->grossTotal()),
                 'discounts' => Printed::money($invoice->discountTotal()),
@@ -156,16 +159,16 @@ final class SalesInvoicePdf
     }
 
     /**
-     * Each impuesto cargo (or retención) with its base and amount, summed by tax.
+     * Each impuesto cargo with its base and amount, summed by tax.
      *
      * @return list<array{name: string, base: string, amount: string}>
      */
-    private static function taxes(SalesInvoice $invoice, bool $charges): array
+    private static function taxes(SalesInvoice $invoice): array
     {
         $byName = [];
         foreach ($invoice->lines() as $line) {
-            $tax = $charges ? $line->chargeTax() : $line->withholdingTax();
-            $amount = $charges ? $line->taxAmount() : $line->withholdingAmount();
+            $tax = $line->chargeTax();
+            $amount = $line->taxAmount();
             if ($tax->isNone()) {
                 continue;
             }
@@ -176,6 +179,21 @@ final class SalesInvoicePdf
         }
 
         return array_values(array_map(static fn (array $t) => ['name' => $t[0], 'base' => Printed::money($t[1]), 'amount' => Printed::money($t[2])], $byName));
+    }
+
+    /**
+     * Each retención with its base (the lines' subtotals, or their IVA for a ReteIVA) and amount, summed by tax
+     * (observations PRD §4.2): the rows add up to Retenciones.
+     *
+     * @return list<array{name: string, base: string, amount: string}>
+     */
+    private static function withholdings(SalesInvoice $invoice): array
+    {
+        return array_map(static fn (WithholdingSummaryView $w) => [
+            'name' => $w->name,
+            'base' => Printed::money(Money::of($w->base)),
+            'amount' => Printed::money(Money::of($w->amount)),
+        ], WithholdingSummaryView::of(array_map(LineWithholdingView::ofLine(...), $invoice->lines())));
     }
 
     private static function taxKey(TaxSnapshot $tax): string

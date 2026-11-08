@@ -53,6 +53,7 @@ export function TercerosList() {
   const q = params.get('q') ?? '';
   const role = (params.get('role') ?? '') as Role | '';
   const active = (params.get('active') ?? '') as '1' | '0' | '';
+  const missing = params.get('missing_municipality') === '1';
   const page = Math.max(1, Number(params.get('page')) || 1);
 
   const [result, setResult] = useState<Result | null>(null);
@@ -63,16 +64,36 @@ export function TercerosList() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [rowFailure, setRowFailure] = useState<string | null>(null);
 
-  const key = `${q}|${role}|${active}|${page}|${reloads}`;
+  const [missingCount, setMissingCount] = useState(0);
+
+  const key = `${q}|${role}|${active}|${missing}|${page}|${reloads}`;
   useEffect(() => {
     let cancelled = false;
-    searchTerceros({q, role, active, page, per_page: PER_PAGE})
+    searchTerceros({
+      q,
+      role,
+      active,
+      missing_municipality: missing,
+      page,
+      per_page: PER_PAGE,
+    })
       .then((data) => !cancelled && setResult({key, status: 'ok', data}))
       .catch(() => !cancelled && setResult({key, status: 'failed'}));
     return () => {
       cancelled = true;
     };
-  }, [key, q, role, active, page]);
+  }, [key, q, role, active, missing, page]);
+
+  // How many terceros still lack a municipality, whatever the filters: the banner's number.
+  useEffect(() => {
+    let cancelled = false;
+    searchTerceros({missing_municipality: true, per_page: 1})
+      .then((data) => !cancelled && setMissingCount(data.total))
+      .catch(() => !cancelled && setMissingCount(0));
+    return () => {
+      cancelled = true;
+    };
+  }, [reloads]);
 
   const reload = useCallback(() => setReloads((n) => n + 1), []);
 
@@ -85,7 +106,7 @@ export function TercerosList() {
   };
   const showAll = () => setParams(new URLSearchParams(), {replace: true});
 
-  const filtered = q !== '' || role !== '' || active !== '';
+  const filtered = q !== '' || role !== '' || active !== '' || missing;
   // Keep showing the last answer, dimmed, while the next one is on its way.
   const shown = result?.status === 'ok' ? result.data : null;
   const busy = result?.key !== key;
@@ -119,6 +140,28 @@ export function TercerosList() {
       <Alert kind="error" onDismiss={() => setRowFailure(null)}>
         {rowFailure}
       </Alert>
+      {missingCount > 0 && (
+        <Alert kind="warning">
+          <span>
+            {missingCount === 1
+              ? t('terceros.geo.bannerOne')
+              : t('terceros.geo.banner', {count: missingCount})}
+          </span>
+          {' · '}
+          {missing ? (
+            <Button variant="link" onClick={showAll}>
+              {t('terceros.geo.bannerAll')}
+            </Button>
+          ) : (
+            <Button
+              variant="link"
+              onClick={() => setFilter('missing_municipality', '1')}
+            >
+              {t('terceros.geo.bannerView')}
+            </Button>
+          )}
+        </Alert>
+      )}
       <FilterBar
         search={q}
         onSearch={(value) => setFilter('q', value.trim())}
@@ -224,7 +267,15 @@ export function TercerosList() {
                     <RoleBadges roles={tercero.roles} />
                   </td>
                   <td>{tercero.email}</td>
-                  <td>{tercero.city}</td>
+                  <td>
+                    {tercero.city ??
+                      (tercero.country_code === 'CO' &&
+                      tercero.municipality_code === null ? (
+                        <span className="muted small">
+                          {t('terceros.geo.list.missing')}
+                        </span>
+                      ) : null)}
+                  </td>
                   <Actions>
                     <Link
                       to={tercero.id}

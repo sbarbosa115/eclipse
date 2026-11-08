@@ -2,6 +2,8 @@
 
 namespace App\Purchasing\Application\Query;
 
+use App\Shared\Application\Document\LineWithholdingView;
+
 final readonly class PurchaseInvoiceLineView
 {
     public function __construct(
@@ -31,6 +33,9 @@ final readonly class PurchaseInvoiceLineView
         public string $taxAmount,
         public string $withholdingAmount,
         public string $totalAmount,
+        public ?string $productCode = null,
+        /** @var list<LineWithholdingView> */
+        public array $withholdings = [],
     ) {
     }
 }

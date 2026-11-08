@@ -23,6 +23,9 @@ final class CreatePurchaseInvoiceHandler implements CommandHandler
         $draft = $this->resolver->resolve($command->companyId, $command->contents);
         $invoice = new PurchaseInvoice($command->companyId, $draft->terceroId, $draft->terceroName, $draft->supplierInvoiceNumber, $draft->issueDate, $command->userId, $this->clock->now());
         $draft->applyTo($invoice);
+        if (null !== $command->purchaseOrderId) {
+            $invoice->convertedFromOrder($command->purchaseOrderId);
+        }
         $this->invoices->add($invoice);
 
         return $invoice->id();

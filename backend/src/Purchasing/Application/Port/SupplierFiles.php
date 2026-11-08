@@ -13,6 +13,12 @@ interface SupplierFiles
     /** Stores a file the caller already checked (PDF or XML, size) and returns the attachment's id. */
     public function store(Uuid $companyId, Uuid $invoiceId, Uuid $userId, string $originalName, string $contentType, string $sourcePath): Uuid;
 
+    /**
+     * Copies every file of one invoice to another of the same company (Corregir: the draft gets its own copies, so
+     * removing one from it leaves the voided invoice's). A file whose bytes are gone is skipped.
+     */
+    public function copyAll(Uuid $companyId, Uuid $fromInvoiceId, Uuid $toInvoiceId, Uuid $userId): void;
+
     /** @throws \App\Purchasing\Domain\Error\SupplierFileNotFound */
     public function remove(Uuid $companyId, Uuid $invoiceId, Uuid $attachmentId): void;
 

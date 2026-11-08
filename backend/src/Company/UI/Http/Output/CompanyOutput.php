@@ -3,6 +3,7 @@
 namespace App\Company\UI\Http\Output;
 
 use App\Company\Application\Query\CompanyView;
+use App\Shared\Application\Geo\MunicipalityView;
 
 /** The company's profile (§4.1). */
 final readonly class CompanyOutput
@@ -30,11 +31,18 @@ final readonly class CompanyOutput
         public array $fiscalResponsibilities,
         public ?string $defaultChargeTaxId,
         public ?string $defaultWithholdingTaxId,
+        /** ISO 3166-1 alpha-2 (observations PRD §4.3). */
+        public string $countryCode = 'CO',
+        /** DANE DIVIPOLA code (5 digits); null until a Colombian company is saved again. */
+        public ?string $municipalityCode = null,
+        public ?string $municipalityName = null,
+        public ?string $departmentCode = null,
+        public ?string $departmentName = null,
     ) {
     }
 
-    public static function of(CompanyView $c): self
+    public static function of(CompanyView $c, ?MunicipalityView $municipality = null): self
     {
-        return new self($c->id, $c->legalName, $c->tradeName, $c->identificationType, $c->identificationNumber, $c->checkDigit, $c->address, $c->city, $c->phone, $c->email, $c->logoId, $c->vatRegime, $c->fiscalResponsibilities, $c->defaultChargeTaxId, $c->defaultWithholdingTaxId);
+        return new self($c->id, $c->legalName, $c->tradeName, $c->identificationType, $c->identificationNumber, $c->checkDigit, $c->address, $c->city, $c->phone, $c->email, $c->logoId, $c->vatRegime, $c->fiscalResponsibilities, $c->defaultChargeTaxId, $c->defaultWithholdingTaxId, $c->countryCode, $c->municipalityCode, $municipality?->name, $municipality?->departmentCode, $municipality?->departmentName);
     }
 }

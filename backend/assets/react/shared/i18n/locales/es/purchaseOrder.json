@@ -1,0 +1,103 @@
+{
+  "title": "Órdenes de compra",
+  "subtitle": "Pide a tus proveedores lo que necesitas y, cuando lleguen, conviértelas en factura de compra. Una orden de compra no genera movimientos contables.",
+  "new": "Nueva orden de compra",
+  "typeLabel": "Orden de compra",
+  "statuses": {
+    "draft": "Borrador",
+    "emitted": "Emitida",
+    "converted": "Convertida",
+    "voided": "Anulada"
+  },
+  "list": {
+    "searchPlaceholder": "Número o proveedor",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos los estados",
+    "from": "Desde",
+    "to": "Hasta",
+    "empty": "Aún no has hecho órdenes de compra. Crea la primera para tu proveedor.",
+    "emptyAction": "Crear la primera orden de compra",
+    "filteredEmpty": "Ninguna orden de compra coincide con estos filtros.",
+    "draftNumber": "Borrador",
+    "columns": {
+      "number": "Número",
+      "supplier": "Proveedor",
+      "date": "Fecha",
+      "expected": "Entrega esperada",
+      "total": "Total"
+    }
+  },
+  "actions": {
+    "open": "Abrir",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "pdf": "PDF",
+    "downloadPdf": "Descargar PDF",
+    "send": "Enviar",
+    "void": "Anular",
+    "save": "Guardar",
+    "back": "Volver a órdenes de compra",
+    "emit": "Emitir",
+    "emitAndSend": "Emitir y enviar",
+    "convert": "Convertir en factura",
+    "viewInvoice": "Ver la factura"
+  },
+  "notices": {
+    "saved": "Borrador guardado.",
+    "emitted": "Orden de compra {{number}} emitida.",
+    "emittedAndSent": "Orden de compra {{number}} emitida; el correo con el PDF va en camino.",
+    "sent": "El correo con el PDF de la orden de compra {{number}} va en camino.",
+    "voided": "Orden de compra {{number}} anulada.",
+    "duplicated": "Se creó un borrador nuevo a partir de la orden de compra.",
+    "converted": "Se creó este borrador de factura a partir de la orden de compra {{number}}. Escribe el número de la factura del proveedor y las formas de pago."
+  },
+  "emit": {
+    "title": "¿Emitir la orden de compra?",
+    "body": "Tomará el siguiente número de tus órdenes de compra y ya no se podrá modificar. No genera ningún movimiento contable.",
+    "sendNote": "Después de emitirla, enviaremos el PDF al correo del proveedor."
+  },
+  "void": {
+    "title": "Anular la orden de compra {{number}}",
+    "body": "La orden conservará su número y quedará anulada. No hay movimientos contables que reversar.",
+    "reason": "Motivo de la anulación",
+    "reasonRequired": "Escribe el motivo de la anulación.",
+    "confirm": "Anular orden de compra"
+  },
+  "convert": {
+    "title": "Convertir en factura de compra",
+    "body": "Crearemos un borrador de factura de compra con el mismo proveedor, líneas e impuestos, sin número del proveedor ni formas de pago, y la orden quedará convertida. Una orden de compra se convierte una sola vez.",
+    "confirm": "Convertir en factura",
+    "refusedTitle": "No se pudo convertir la orden de compra",
+    "refusedBody": "La factura no acepta algo que cambió desde que hiciste la orden. Duplícala, corrige lo indicado y vuelve a emitirla.",
+    "line": "Línea {{line}}: {{message}}",
+    "converted": "Esta orden de compra ya se convirtió en factura."
+  },
+  "editor": {
+    "newTitle": "Nueva orden de compra",
+    "draftTitle": "Orden de compra · borrador",
+    "title": "Orden de compra {{number}}",
+    "loadFailed": "No pudimos cargar esta orden de compra.",
+    "readOnly": "Esta orden de compra ya fue emitida: no se puede modificar, solo anular o convertir en factura.",
+    "voidedInfo": "Anulada el {{date}}. Motivo: {{reason}}",
+    "convertedInfo": "La orden de compra se convirtió en factura."
+  },
+  "fields": {
+    "expected": "Entrega esperada"
+  },
+  "validation": {
+    "expected": "Escribe una fecha de entrega válida.",
+    "expectedBeforeIssue": "La entrega no puede ser antes de la fecha de la orden."
+  },
+  "errors": {
+    "document_not_draft": "Esta orden de compra ya fue emitida: no se puede modificar.",
+    "purchase_order_not_open": "La orden de compra no está abierta: debe estar emitida, sin convertir ni anular.",
+    "purchase_order_already_converted": "Esta orden de compra ya se convirtió en factura: solo se convierte una vez.",
+    "supplier_inactive": "El proveedor está inactivo: actívalo para pedirle.",
+    "tercero_has_no_email": "El proveedor no tiene correo: agrégalo en su ficha o emite sin enviar.",
+    "purchase_order_not_found": "Esta orden de compra no existe.",
+    "forbidden": "Tu rol no puede hacer esto con las órdenes de compra.",
+    "validation_failed": "Revisa los campos marcados.",
+    "too_many_emails": "La empresa envió demasiados correos en la última hora. Inténtalo más tarde.",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  }
+}

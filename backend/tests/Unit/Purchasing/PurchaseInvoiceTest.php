@@ -69,7 +69,7 @@ final class PurchaseInvoiceTest extends TestCase
             UnitPrice::of('1000000'),
             Rate::zero(),
             new TaxSnapshot(Uuid::v7(), 'IVA 19 %', 'iva', TaxCalculation::Percentage, '19.0000', null),
-            new TaxSnapshot(Uuid::v7(), 'ReteFuente servicios 4 %', 'retefuente', TaxCalculation::Percentage, '4.0000', null),
+            [new TaxSnapshot(Uuid::v7(), 'ReteFuente servicios 4 %', 'retefuente', TaxCalculation::Percentage, '4.0000', null)],
         );
     }
 

@@ -38,6 +38,8 @@ final class DbalChartQueries implements ChartQueries
         $total = (int) $filtered()->select('COUNT(*)')->executeQuery()->fetchOne();
         $rows = $filtered()
             ->select('a.id, a.code, a.name, a.nature, a.level, a.parent_code, a.standard, a.active, a.usable_on_purchases')
+            // PostableAccounts: a subdivided account (an active auxiliar under it) takes no movements.
+            ->addSelect('EXISTS (SELECT 1 FROM ledger_account c WHERE c.company_id = a.company_id AND c.parent_code = a.code AND c.active = 1) AS subdivided')
             ->orderBy('a.code', 'ASC')
             ->setFirstResult(($page - 1) * $perPage)->setMaxResults($perPage)
             ->executeQuery()->fetchAllAssociative();
@@ -60,7 +62,7 @@ final class DbalChartQueries implements ChartQueries
             null === $r['parent_code'] ? null : (string) $r['parent_code'],
             (bool) $r['standard'],
             $active,
-            $active && $level->isPostable(),
+            $active && $level->isPostable() && !(bool) $r['subdivided'],
             (bool) $r['usable_on_purchases'],
         );
     }

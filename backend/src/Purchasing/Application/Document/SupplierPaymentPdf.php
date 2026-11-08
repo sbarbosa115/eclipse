@@ -9,6 +9,7 @@ use App\Purchasing\Domain\Model\SupplierPayment;
 use App\Purchasing\Domain\Model\SupplierPaymentAllocation;
 use App\Purchasing\Domain\Repository\SupplierPaymentRepository;
 use App\Shared\Application\Port\PdfRenderer;
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Model\ReceiptStatus;
 use App\Shared\Domain\Money\Money;
@@ -68,7 +69,7 @@ final class SupplierPaymentPdf
                 'amount' => self::money($payment->amount()),
                 'notes' => $payment->notes(),
                 'void_reason' => $payment->voidReason(),
-                'voided_at' => self::date($payment->voidedAt()),
+                'voided_at' => self::moment($payment->voidedAt()),
             ],
             'supplier' => [
                 'name' => $supplier->displayName,
@@ -102,6 +103,12 @@ final class SupplierPaymentPdf
         [$int, $dec] = explode('.', ltrim($amount->toString(), '-'));
 
         return ($negative ? '-' : '').'$ '.number_format((int) $int, 0, ',', '.').','.$dec;
+    }
+
+    /** The Colombian day a moment fell on: a void at 23:30 in Bogotá is that day, not the next UTC one. */
+    private static function moment(?\DateTimeImmutable $moment): string
+    {
+        return null === $moment ? '' : $moment->setTimezone(new \DateTimeZone(Calendar::TIMEZONE))->format('d/m/Y');
     }
 
     private static function date(?\DateTimeImmutable $date): string

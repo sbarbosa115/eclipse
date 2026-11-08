@@ -69,6 +69,7 @@ async function seed(
 ): Promise<{client: string; product: string; email: string}> {
   const email = `facturas-${nit}@andina.co`;
   const client = await api(page, 'POST', '/terceros/quick', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: String(Number(nit) + 7),

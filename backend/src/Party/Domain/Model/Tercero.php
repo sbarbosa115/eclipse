@@ -24,6 +24,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'tercero')]
 #[ORM\UniqueConstraint(name: 'tercero_identification', columns: ['company_id', 'identification_type', 'identification_number', 'branch_code'])]
 #[ORM\Index(name: 'tercero_company_name', columns: ['company_id', 'display_name'])]
+#[ORM\Index(name: 'tercero_municipality', columns: ['company_id', 'municipality_code'])]
 class Tercero implements CompanyOwned
 {
     #[ORM\Id]
@@ -48,6 +49,14 @@ class Tercero implements CompanyOwned
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $city = null;
+
+    /** ISO 3166-1 alpha-2; Colombia unless the tercero is abroad (observations PRD §4.3). */
+    #[ORM\Column(length: 2, options: ['fixed' => true, 'default' => 'CO'])]
+    private string $countryCode = 'CO';
+
+    /** DANE DIVIPOLA municipality (5 digits), required for a Colombian tercero on its next save. */
+    #[ORM\Column(length: 5, nullable: true, options: ['fixed' => true])]
+    private ?string $municipalityCode = null;
 
     #[ORM\Column(length: 200, nullable: true)]
     private ?string $address = null;
@@ -137,21 +146,21 @@ class Tercero implements CompanyOwned
     /** What an erased tercero is called: documents keep the name they copied, the master keeps only this. */
     public const ERASED_NAME = 'Datos suprimidos';
 
-    public static function register(Uuid $companyId, TerceroProfile $profile, \DateTimeImmutable $now): self
+    public static function register(Uuid $companyId, TerceroProfile $profile, \DateTimeImmutable $now, ?string $municipalityName = null): self
     {
         $tercero = new self($companyId, $profile->personType, $profile->identificationType, $profile->identificationNumber, $profile->checkDigit, $profile->displayName, $now, $profile->branchCode);
-        $tercero->revise($profile);
+        $tercero->revise($profile, $municipalityName);
 
         return $tercero;
     }
 
     /**
      * Replaces everything the person edits. Contacts are matched by id (documents point at them); the ones left out
-     * go away.
+     * go away. A Colombian tercero's city is its municipality's name ($municipalityName, which the caller looked up).
      *
      * @throws TerceroErased
      */
-    public function revise(TerceroProfile $p): void
+    public function revise(TerceroProfile $p, ?string $municipalityName = null): void
     {
         $this->assertNotErased();
         $this->personType = $p->personType;
@@ -164,7 +173,9 @@ class Tercero implements CompanyOwned
         $this->lastNames = $p->lastNames;
         $this->businessName = $p->businessName;
         $this->tradeName = $p->tradeName;
-        $this->city = $p->city;
+        $this->countryCode = $p->countryCode;
+        $this->municipalityCode = $p->municipalityCode;
+        $this->city = null !== $p->municipalityCode ? ($municipalityName ?? $p->city) : $p->city;
         $this->address = $p->address;
         $this->phones = $p->phones;
         $this->billingContactName = $p->billingContactName;
@@ -305,6 +316,16 @@ class Tercero implements CompanyOwned
         return $this->tradeName;
     }
 
+    public function countryCode(): string
+    {
+        return $this->countryCode;
+    }
+
+    public function municipalityCode(): ?string
+    {
+        return $this->municipalityCode;
+    }
+
     public function city(): ?string
     {
         return $this->city;
@@ -406,5 +427,24 @@ class Tercero implements CompanyOwned
     public function contacts(): array
     {
         return $this->contacts->getValues();
+    }
+
+    /**
+     * The accountant subdivided $from in the chart: the tercero's own receivable or payable account that was $from
+     * becomes its new auxiliar $to (observations PRD §4.1). Says whether anything moved.
+     */
+    public function moveAccount(Uuid $from, Uuid $to): bool
+    {
+        $moved = false;
+        if ($this->receivableAccountId?->equals($from)) {
+            $this->receivableAccountId = $to;
+            $moved = true;
+        }
+        if ($this->payableAccountId?->equals($from)) {
+            $this->payableAccountId = $to;
+            $moved = true;
+        }
+
+        return $moved;
     }
 }

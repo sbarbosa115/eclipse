@@ -17,6 +17,7 @@ use App\Purchasing\Domain\Model\PurchaseInvoice;
 use App\Purchasing\Domain\Model\PurchaseInvoiceLine;
 use App\Purchasing\Domain\Model\PurchaseInvoicePayment;
 use App\Purchasing\Domain\Repository\PurchaseInvoiceRepository;
+use App\Shared\Application\Document\LineWithholdingView;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Model\InvoiceStatus;
 use Doctrine\ORM\EntityManagerInterface;
@@ -69,6 +70,9 @@ final class DoctrinePurchaseInvoiceQueries implements PurchaseInvoiceQueries
             $i->emittedAt()?->format(\DATE_ATOM),
             $i->voidedAt()?->format(\DATE_ATOM),
             $i->voidReason(),
+            $i->correctedFromId()?->toRfc4122(),
+            $i->correctedById()?->toRfc4122(),
+            $i->purchaseOrderId()?->toRfc4122(),
         );
     }
 
@@ -99,7 +103,7 @@ final class DoctrinePurchaseInvoiceQueries implements PurchaseInvoiceQueries
 
         $items = [];
         foreach ($paginator as $i) {
-            $items[] = new PurchaseInvoiceSummary($i->id()->toRfc4122(), $i->status()->value, $i->number(), $i->terceroId()->toRfc4122(), $i->terceroName(), $i->supplierInvoiceNumber(), $i->issueDate()->format('Y-m-d'), $i->dueDate()?->format('Y-m-d'), $i->netTotal()->toString(), $i->paidAmount()->toString(), self::balance($i));
+            $items[] = new PurchaseInvoiceSummary($i->id()->toRfc4122(), $i->status()->value, $i->number(), $i->terceroId()->toRfc4122(), $i->terceroName(), $i->supplierInvoiceNumber(), $i->issueDate()->format('Y-m-d'), $i->dueDate()?->format('Y-m-d'), $i->netTotal()->toString(), $i->paidAmount()->toString(), self::balance($i), $i->correctedById()?->toRfc4122());
         }
 
         return new PurchaseInvoicePage($items, \count($paginator), $page, $perPage);
@@ -135,6 +139,7 @@ final class DoctrinePurchaseInvoiceQueries implements PurchaseInvoiceQueries
             $charge->taxId()?->toRfc4122(), $charge->name(), $charge->kind(), $charge->value(),
             $withholding->taxId()?->toRfc4122(), $withholding->name(), $withholding->kind(), $withholding->value(),
             $l->grossAmount()->toString(), $l->discountAmount()->toString(), $l->subtotalAmount()->toString(), $l->taxAmount()->toString(), $l->withholdingAmount()->toString(), $l->totalAmount()->toString(),
+            $l->productCode(), LineWithholdingView::ofLine($l),
         );
     }
 }

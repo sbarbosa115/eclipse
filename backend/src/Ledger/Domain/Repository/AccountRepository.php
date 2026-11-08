@@ -12,5 +12,11 @@ interface AccountRepository
 
     public function byCode(Uuid $companyId, string $code): ?Account;
 
+    /**
+     * Whether the account has an active child (a subcuenta with active auxiliares): such an account no longer
+     * receives movements (observations PRD §4.1).
+     */
+    public function hasActiveChildren(Uuid $companyId, string $code): bool;
+
     public function add(Account $account): void;
 }

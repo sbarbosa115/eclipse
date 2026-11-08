@@ -1,15 +1,20 @@
 import {useEffect, useState} from 'react';
 import {listTaxes, type Tax} from '@/entities/product';
 import {listPaymentMethods, type PaymentMethod} from '../api/documentEditorApi';
+import {hasPayments} from './draft';
 import type {DocumentKind} from './types';
 
 export interface EditorOptions {
   status: 'loading' | 'ready' | 'failed';
-  /** Every active tax: what the preview and the lines' current taxes are read from. */
+  /**
+   * Every tax, inactive ones too: what the preview and the lines' current taxes are read from, so a saved document
+   * keeps showing a tax deactivated since.
+   */
   chargeTaxes: Tax[];
   withholdingTaxes: Tax[];
   /** What may be newly chosen: the active taxes in force on the document's date (F5). */
   inForce: {charge: Tax[]; withholding: Tax[]};
+  /** Every payment method, inactive ones too (a saved row may name one); a select offers the active ones. */
   methods: PaymentMethod[];
 }
 
@@ -34,14 +39,14 @@ export function useEditorOptions(
     charge: Tax[];
     withholding: Tax[];
   } | null>(null);
-  const withPayments = kind !== 'quotation';
+  const withPayments = hasPayments(kind);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      listTaxes('charge'),
-      listTaxes('withholding'),
-      withPayments ? listPaymentMethods() : Promise.resolve([]),
+      listTaxes('charge', undefined, true),
+      listTaxes('withholding', undefined, true),
+      withPayments ? listPaymentMethods(true) : Promise.resolve([]),
     ])
       .then(([chargeTaxes, withholdingTaxes, methods]) => {
         if (cancelled) return;
@@ -75,16 +80,22 @@ export function useEditorOptions(
     ...options,
     inForce: dated
       ? {charge: dated.charge, withholding: dated.withholding}
-      : {charge: options.chargeTaxes, withholding: options.withholdingTaxes},
+      : {
+          charge: options.chargeTaxes.filter((tax) => tax.active),
+          withholding: options.withholdingTaxes.filter((tax) => tax.active),
+        },
   };
 }
 
-/** The taxes a select offers: those in force, plus the one the line already has (a draft keeps its own). */
+/** The taxes a select offers: those in force, plus those the line already has (a draft keeps its own). */
 export function offeredTaxes(
   inForce: Tax[],
   all: Tax[],
-  chosen: string | null,
+  chosen: string | ReadonlyArray<string> | null,
 ): Tax[] {
-  if (!chosen || inForce.some((tax) => tax.id === chosen)) return inForce;
-  return [...inForce, ...all.filter((tax) => tax.id === chosen)];
+  const ids =
+    chosen === null ? [] : typeof chosen === 'string' ? [chosen] : chosen;
+  const missing = ids.filter((id) => !inForce.some((tax) => tax.id === id));
+  if (missing.length === 0) return inForce;
+  return [...inForce, ...all.filter((tax) => missing.includes(tax.id))];
 }

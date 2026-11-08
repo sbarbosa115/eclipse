@@ -67,7 +67,7 @@ final class CashReceiptPdf
                 'amount' => Printed::money($receipt->amount()),
                 'notes' => $receipt->notes(),
                 'void_reason' => $receipt->voidReason(),
-                'voided_at' => Printed::date($receipt->voidedAt()),
+                'voided_at' => Printed::moment($receipt->voidedAt()),
             ],
             'client' => [
                 'name' => $client->displayName,

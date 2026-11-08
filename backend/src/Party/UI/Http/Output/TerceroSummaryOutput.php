@@ -3,6 +3,7 @@
 namespace App\Party\UI\Http\Output;
 
 use App\Party\Domain\Model\Tercero;
+use App\Shared\Application\Geo\MunicipalityView;
 
 /**
  * A tercero in a list or a document's search box.
@@ -27,10 +28,17 @@ final readonly class TerceroSummaryOutput
         public bool $active,
         public string $branchCode,
         public ?string $tradeName,
+        /** ISO 3166-1 alpha-2 (observations PRD §4.3). */
+        public string $countryCode = 'CO',
+        /** DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again. */
+        public ?string $municipalityCode = null,
+        public ?string $municipalityName = null,
+        public ?string $departmentCode = null,
+        public ?string $departmentName = null,
     ) {
     }
 
-    public static function of(Tercero $t): self
+    public static function of(Tercero $t, ?MunicipalityView $municipality = null): self
     {
         return new self(
             $t->id()->toRfc4122(),
@@ -45,6 +53,11 @@ final readonly class TerceroSummaryOutput
             $t->isActive(),
             $t->branchCode(),
             $t->tradeName(),
+            $t->countryCode(),
+            $t->municipalityCode(),
+            $municipality?->name,
+            $municipality?->departmentCode,
+            $municipality?->departmentName,
         );
     }
 

@@ -24,6 +24,19 @@ final class DbalJournalQueries implements JournalQueries
     {
     }
 
+    public function bySource(Uuid $companyId, string $sourceType, Uuid $sourceId): array
+    {
+        $entries = $this->db->fetchAllAssociative(
+            'SELECT id, number, entry_date, source_type, source_id, source_number, description, reverses_id
+             FROM journal_entry
+             WHERE company_id = :company AND source_type = :type AND source_id = :source
+             ORDER BY number',
+            ['company' => $companyId->toBinary(), 'type' => $sourceType, 'source' => $sourceId->toBinary()],
+        );
+
+        return $this->views($companyId, $entries);
+    }
+
     public function page(Uuid $companyId, JournalFilter $filter, int $page, int $perPage): Page
     {
         $filtered = function () use ($companyId, $filter): QueryBuilder {
@@ -54,6 +67,16 @@ final class DbalJournalQueries implements JournalQueries
             ->setFirstResult(($page - 1) * $perPage)->setMaxResults($perPage)
             ->executeQuery()->fetchAllAssociative();
 
+        return new Page($this->views($companyId, $entries), $total, $page, $perPage);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $entries
+     *
+     * @return list<JournalEntryView>
+     */
+    private function views(Uuid $companyId, array $entries): array
+    {
         $lines = [];
         if ([] !== $entries) {
             $rows = $this->db->fetchAllAssociative(
@@ -98,6 +121,6 @@ final class DbalJournalQueries implements JournalQueries
             );
         }
 
-        return new Page($views, $total, $page, $perPage);
+        return $views;
     }
 }

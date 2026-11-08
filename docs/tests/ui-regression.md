@@ -797,7 +797,7 @@ chooses, Escape closes it, and Enter in a cell never submits anything.
 **DOC-09 · The form on a tablet, in both themes, and read-only**
 At 1366×768, 1024×768 and 768×1024, Tema `Claro` and `Oscuro`, with three lines, two formas de pago and an attachment;
 then **Ver como emitido**.
-**Expected:** at 1366×768 every column of the lines (through Impuesto retención, Valor total and the actions) is visible
+**Expected:** at 1366×768 every column of the lines (through Retenciones, Valor total and the actions) is visible
 without scrolling the table (DOC-10); on a narrower screen the lines table scrolls sideways inside its box; the search
 lists are not cut by it; the totals sit
 to the right on a wide screen and below on a narrow one; the check mark and "Faltan…" read in both themes (icon and
@@ -1573,3 +1573,616 @@ errors.
 Smoke: `e2e/reports.spec.ts` (screenshots in `e2e/.results/dashboard-1366.png` and `-768.png`).
 At 1366×768 and 768×1024, **Tablero**. **Expected:** the tiles of each row start at the same height and are as tall;
 each reads title, figure, detail line and, at its foot, its link (*Ver cartera*).
+
+## 14. Accounts: the picker and auxiliares
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 1 account-picker: cases CTA-01 – 09; smoke tests in
+`backend/e2e/accountPicker.spec.ts`. -->
+
+**CTA-01 · The picker finds an auxiliar by its parent's code**
+Smoke: `e2e/accountPicker.spec.ts`.
+Sign up a company › Plan de cuentas › add `41359501 Ventas gravados` and `41359502 Productos gravados celulares` under
+`413595`. **Productos › Nuevo producto o servicio** › *Cuenta de ingreso*, type `4135`. **Expected:** the list offers
+both auxiliares (after the 37 other subcuentas of 4135) and no longer offers `413595`.
+
+**CTA-02 · The picker matches every word of the name**
+Smoke: `e2e/accountPicker.spec.ts`.
+After CTA-01's accounts, in the same box: `gravados` › the two auxiliares; `gravados celulares` › only `41359502`;
+typing `41359502` fills the box with `41359502 · Productos gravados celulares`.
+
+**CTA-03 · The picker says how many more matched than it lists**
+Smoke: `e2e/accountPicker.spec.ts`.
+*Cuenta de ingreso*, type `4`. **Expected:** under the box "Mostrando 50 de N: escribe más para encontrar la cuenta.";
+type `4135` › the line goes away (every match is listed).
+
+**CTA-04 · Subdividing an account in use warns and moves its rule**
+Smoke: `e2e/accountPicker.spec.ts`.
+New company › Plan de cuentas › search `413595` › **Agregar subcuenta bajo 413595**. **Expected:** a warning "413595
+deja de recibir movimientos: van a sus auxiliares." and, once the code is `41359501`, "Lo que la usa pasará a
+41359501: regla Ingresos por ventas y los productos y terceros que la usen."; *Mover a la nueva auxiliar* is ticked.
+Nombre `Ventas gravadas` › **Guardar** › "Cuenta 41359501 creada. Pasaron a 41359501: regla Ingresos por ventas.";
+**Reglas contables** › *Ingresos por ventas* shows `41359501`.
+
+**CTA-05 · A second auxiliar under the same account moves nothing**
+Smoke: `e2e/accountPicker.spec.ts`.
+After CTA-04, add `41359502` under `413595`. **Expected:** no warning and no checkbox; "Cuenta 41359502 creada." with
+nothing about moves; the rule stays on `41359501`.
+
+**CTA-06 · Without moving, the account shows it has no default auxiliar**
+Smoke: `e2e/accountPicker.spec.ts`.
+New company › add `41359501` under `413595` with *Mover a la nueva auxiliar* unticked (the warning then reads "Sin
+mover, 413595 queda marcada «Sin auxiliar por defecto»…"). **Expected:** the `413595` row shows the badge *Sin auxiliar
+por defecto*; Reglas contables still names `413595`. Change the rule to `41359501` (LED-04's way) › the badge goes away.
+
+**CTA-07 · Products, terceros, taxes and payment methods move too, and the log says so**
+New company. Create a product with *Cuenta de ingreso* `413595`, and a tercero with its own *Cuenta por cobrar*
+`13051001`. Add `41359501` under `413595`, `1305100101` under `13051001` and `24080501` under `240805`. **Expected:**
+the messages say "… 1 producto", "… 1 tercero" and "regla IVA generado, 4 impuestos"; the product's and the tercero's
+forms now show the new accounts; Impuestos shows *IVA 19 %* posting its sales side to `24080501` (purchase side still
+`240810`). The audit log (no screen yet: `SELECT action, data FROM audit_log` on the stack's database) has `posting_rule.changed`, `product.updated`,
+`tercero.updated`, `tax.updated` with from/to and reason `account_subdivided`.
+
+**CTA-08 · After subdividing, documents post to the auxiliar and never to its parent**
+After CTA-04 (with the company's resolution). Emit a factura de venta of a service › **Libro diario**: the revenue line
+is on `41359501`, not `413595`. As the accountant, try *Reglas contables › Cambiar* on *Ingresos por ventas*: the search
+for `413595` no longer offers it. A document whose product still names a subdivided account (subdivided without moving)
+is refused with "Esa cuenta tiene auxiliares: los movimientos van a una de ellas." (or the document's own error).
+
+**CTA-09 · The subdivide warning reads well everywhere**
+At laptop and tablet widths, light and dark: the *Agregar subcuenta* modal under an account in use (warning, checkbox,
+both texts), the *Sin auxiliar por defecto* badge next to *Propia*/*Inactiva*, and the picker's "Mostrando…" line under
+*Cuenta de ingreso* and under a purchase line's account. No raw `ledger.` key; the modal closes with Esc.
+
+## 15. Several retenciones per line
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 3 withholdings-editor (2 withholdings-api builds the API): cases RET-01 – 12; smoke tests in
+`backend/e2e/withholdings.spec.ts`. -->
+
+A line takes zero or more retenciones, at most one per kind (Retefuente, ReteIVA, ReteICA), chosen in the line's tax
+dialog (the **Retenciones** cell or the sliders button opens it). Every case runs as the owner of a company with a
+**ReteICA 0,966 %** (Configuración › Impuestos › Nuevo: Retención · ReteICA, `0,966`), a service **SRV-01 Consultoría
+mensual** of 1.000.000 + IVA 19 % whose retención is ReteFuente servicios 4 %, a client **Distribuciones Andina
+S.A.S.** and a supplier **Servicios Andinos S.A.S.**, unless it says otherwise. "OBS-2's retenciones" are ReteFuente
+compras 2,5 %, ReteIVA 15 % and ReteICA 0,966 %.
+
+**RET-01 · The line's tax dialog has one select per kind of retención**
+Smoke: `e2e/withholdings.spec.ts`.
+**Nueva factura** › line 1 `SRV-01` › click the **Retenciones** cell of line 1.
+**Expected:** the dialog "Impuestos de la línea 1" shows Impuesto cargo and, under "Retenciones: a lo sumo una de cada
+tipo.", three selects *Retefuente* (ReteFuente servicios 4 % chosen), *ReteIVA* and *ReteICA* (*Ninguna*); each offers
+*Ninguna* and only the taxes of its kind; "Ninguno" is never offered.
+
+**RET-02 · OBS-2: three retenciones on one line, previewed as the server computes them**
+Smoke: `e2e/withholdings.spec.ts`.
+A line `SRV-01` (1.000.000, IVA 19 %) › its Retenciones › OBS-2's retenciones › **Aplicar**.
+**Expected:** Impuestos $ 190.000,00, Retenciones $ 63.160,00, Total neto $ 1.126.840,00; under Retenciones one row per
+tax: ReteFuente compras 2,5 % $ 25.000,00 (Base $ 1.000.000,00), ReteIVA 15 % $ 28.500,00 (Base $ 190.000,00: the
+IVA), ReteICA 0,966 % $ 9.660,00 (Base $ 1.000.000,00).
+
+**RET-03 · The Retenciones cell lists the names chosen, or says there are none**
+Smoke: `e2e/withholdings.spec.ts`.
+Pick `SRV-01`; then in its dialog Retefuente *Ninguna*, ReteIVA 15 %; then ReteIVA *Ninguna*.
+**Expected:** the cell reads "ReteFuente servicios 4 %", then "ReteIVA 15 %", then "Sin retenciones"; with none the
+totals panel has no retención rows and Retenciones is $ 0,00.
+
+**RET-04 · A sales invoice keeps its three retenciones when saved and reopened (OBS-2)**
+Smoke (part): `e2e/withholdings.spec.ts` covers saving and reopening; by hand: emission, the entry and the PDF.
+**Nueva factura** › Distribuciones Andina › `SRV-01` › OBS-2's retenciones › a forma de pago Efectivo › **Guardar** ›
+reload › **Emitir**.
+**Expected:** after the reload the cell reads "ReteFuente compras 2,5 % · ReteIVA 15 % · ReteICA 0,966 %" and the
+totals are those of RET-02, before and after Emitir (the preview equals the server's). Libro diario: Dr 135515 25.000,
+Dr 135517 28.500, Dr 135518 9.660 with the client as tercero. The PDF lists the three retenciones with their bases.
+
+**RET-05 · A purchase invoice keeps its retenciones and posts one line per account (OBS-3)**
+Smoke (part): `e2e/withholdings.spec.ts` covers saving and reopening; by hand: emission and the entry.
+**Nueva factura de compra** › Servicios Andinos › `SRV-01`, Valor unitario `1000000` › OBS-2's retenciones ›
+**Guardar borrador** › reload › Crédito › **Emitir**.
+**Expected:** after the reload the cell lists the three; Total neto $ 1.126.840,00; the entry credits 236540 25.000,
+236701 28.500 and a 2368 account 9.660, each with the supplier as tercero.
+
+**RET-06 · A quotation carries its retenciones into the invoice it becomes**
+A quotation with `SRV-01` and ReteFuente compras 2,5 % + ReteICA 0,966 % › **Guardar** › **Emitir** › open its PDF ›
+**Convertir en factura**.
+**Expected:** the quotation's totals panel and PDF show both retenciones with their bases; the draft invoice opens with
+the same two in the line's cell and the same Retenciones.
+
+**RET-07 · Three lines with odd cents: the retenciones are rounded once**
+Smoke: `e2e/withholdings.spec.ts` (the preview); by hand: the saved invoice.
+Three lines `SRV-01` of `333,33` each with ReteFuente compras 2,5 % and ReteICA 0,966 % (no IVA needed); then save.
+**Expected:** Retenciones $ 34,66 (not 34,65 nor 34,67), ReteFuente compras 2,5 % $ 25,00 and ReteICA 0,966 % $ 9,66;
+the saved invoice shows the same figures.
+
+**RET-08 · "Aplicar al producto" keeps one default retención: the Retefuente one**
+Smoke: `e2e/withholdings.spec.ts`.
+Line 1 `SRV-01` › dialog: ReteIVA 15 %, Retefuente ReteFuente compras 2,5 %, check *Aplicar estos impuestos al producto
+de ahora en adelante* › **Aplicar** › a new line `SRV-01`.
+**Expected:** line 1 keeps both; the new line brings only ReteFuente compras 2,5 % (a product has one default
+retención; without a Retefuente it takes the first chosen).
+
+**RET-09 · A retención no longer in force stays on the draft that has it**
+A draft dated today with ReteICA 0,966 % › Configuración › Impuestos: give ReteICA 0,966 % a *Vigente hasta* of
+yesterday › reopen the draft and its dialog.
+**Expected:** the cell still names ReteICA 0,966 % and the ReteICA select still shows it; a new line's ReteICA select
+no longer offers it; saving keeps it (a draft keeps its own snapshot).
+
+**RET-10 · An emitted document shows its retenciones read-only**
+The invoice of RET-04, emitted.
+**Expected:** the Retenciones cell is text (no button), the totals panel shows the three rows with their bases, and the
+line's tax dialog cannot be opened.
+
+**RET-11 · The API's refusal of a line's retenciones shows under its cell**
+By hand, with the browser's developer tools: on a draft, make the save send two retenciones of the same kind (or one
+not in force), e.g. by replaying the request with an edited body.
+**Expected:** the page shows "Revisa los campos marcados." and under the line's Retenciones cell the API's message
+("Una retención por tipo en cada línea." or the tax's), and the cell is marked invalid; changing the retenciones clears
+it.
+
+**RET-12 · The cell and the totals rows on a tablet, in both themes**
+At 1366×768, 1024×768 and 768×1024, Tema Claro and Oscuro, a draft with three lines, one of them with OBS-2's
+retenciones.
+**Expected:** at 1366×768 the lines table does not scroll (DOC-10) and the cell wraps its names inside the column; the
+retención rows sit indented under Retenciones with their base in small muted text under each name, readable in both
+themes; the console has no errors.
+
+## 16. Municipalities on terceros and the company
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 4 terceros-city: cases CIU-01 – 09; smoke tests in
+`backend/e2e/terceroCity.spec.ts`. -->
+
+**CIU-01 · A Colombian tercero asks for its municipio before saving**
+Terceros › **Nuevo tercero**, fill the identification, the razón social and a role, leave *Municipio* empty › **Crear
+tercero**. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** "Elige el municipio." under *Municipio*, nothing is saved and the form stays open. *País* is Colombia by
+default.
+
+**CIU-02 · The municipio is chosen by name and becomes the city**
+Type "Medell" in *Municipio* › choose "Antioquia › Medellín (05001)" › **Crear tercero**. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** the box shows "Antioquia › Medellín (05001)"; the list's *Ciudad* column says MEDELLÍN for the new tercero;
+no "sin municipio" banner.
+
+**CIU-03 · The municipio is also found by its code**
+Type "11001" in *Municipio*. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** "Bogotá, D.C. › Bogotá, D.C. (11001)" is offered; fewer than two characters say "Escribe al menos 2
+caracteres."; a nonsense word says "Ningún municipio coincide.".
+
+**CIU-04 · A tercero abroad has a city, not a municipio**
+*País* › Estados Unidos. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** *Municipio* is replaced by *Ciudad*; saving it empty says "Escribe la ciudad."; with "Miami" it is saved and
+the list shows Miami. Switching back to Colombia asks for the municipio again.
+
+**CIU-05 · An edited tercero reopens with its municipio**
+Open the tercero of CIU-02 › **Editar**, change the municipio to Bogotá › **Guardar tercero**. Smoke:
+`e2e/terceroCity.spec.ts`.
+**Expected:** the box first shows "Antioquia › Medellín (05001)"; after saving, "Cambios guardados." and the list's
+*Ciudad* is BOGOTÁ, D.C.. The export of personal data (Ley 1581) lists *country_code*, *municipality_code* and the names.
+
+**CIU-06 · Terceros created before this release are counted and listed**
+On a company with terceros created before the release (the demo company after the migration): Terceros.
+**Expected:** a warning "N terceros sin municipio · Ver" above the filters; **Ver** lists only those (their *Ciudad* says
+"Sin municipio" unless they had one typed) and the warning offers **Ver todos**; opening one and saving without a
+municipio is refused; saving it with one takes it off the list, and the warning disappears with the last one. A foreign
+tercero without municipio is never counted.
+
+**CIU-07 · Quick-create from a document asks País and Municipio**
+Nueva factura de venta › type a name in *Cliente* › **+ Crear nuevo**.
+**Expected:** the modal has *País* (Colombia) and *Municipio* after the identification fields; without a municipio
+"Elige el municipio." appears and nothing is created; with one, the tercero is created and selected. The municipio list
+floats over the modal and is not cut off.
+
+**CIU-08 · The company profile asks for País and Municipio**
+Configuración › Empresa › **Guardar cambios** on a company that has no municipio. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** "Elige el municipio." under *Municipio*; with Medellín it saves and, after reloading, the box shows it. A
+company with another *País* asks for *Ciudad* instead. The city on the PDFs is the municipality's name.
+
+**CIU-09 · The screens on a laptop and a tablet, in both themes**
+At 1366×768 and 768×1024, Tema Claro and Oscuro: the tercero form (País and Municipio next to Dirección), the quick-create
+modal, the company profile, the terceros list with the warning.
+**Expected:** País and Municipio share a row on a laptop and a tablet (form grids drop to one column only at ≤ 600px,
+DESIGN.md); neither is cut off; the municipio list is readable in both
+themes; the warning keeps its contrast; the console has no errors.
+
+## 17. The product code on documents
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 5 product-code: cases COD-01 – 05; smoke tests in
+`backend/e2e/productCode.spec.ts`. -->
+
+**COD-01 · A saved quotation shows the code its lines were written with**
+Create a product SRV-01 › Cotizaciones › **Nueva cotización** with it, **Emitir**; then edit the product: code NUEVO-9,
+another name. Reopen the quotation. Smoke: `e2e/productCode.spec.ts`.
+**Expected:** the read-only lines have a *Código* column between *Producto/Servicio* and *Descripción* saying SRV-01 (not
+NUEVO-9); while the quotation was a draft being edited there is no such column.
+
+**COD-02 · The quotation PDF prints the Código column**
+On the quotation of COD-01 › **Descargar PDF**. Smoke (part): `e2e/productCode.spec.ts` checks the download; the column
+by hand.
+**Expected:** the lines table reads # · *Código* · *Descripción* · …, with SRV-01 in the first line; the columns fit the
+page and nothing overlaps.
+
+**COD-03 · Converting carries the code to the invoice; renaming the product afterwards changes neither**
+Convertir a factura on the quotation of COD-01 (the product already says NUEVO-9). Smoke: `e2e/productCode.spec.ts`.
+**Expected:** the draft invoice shows SRV-01 in *Código* in its saved view; after emitting it, its PDF prints SRV-01;
+Duplicar on the quotation or the invoice keeps SRV-01 in the copy.
+
+**COD-04 · The PDFs of an invoice and a purchase invoice print the code, and a line by account has none**
+Emit a sales invoice with a product, and a purchase invoice with one line by product and one by expense account; download
+both PDFs.
+**Expected:** both have *Código* before *Descripción*; the sales line and the purchase product line show their code, the
+line by account shows an empty cell (its account is still in *Producto / cuenta*).
+
+**COD-05 · The screens on a laptop and a tablet, in both themes**
+At 1366×768 and 768×1024, Tema Claro and Oscuro: a saved quotation, sales invoice and purchase invoice with the *Código*
+column.
+**Expected:** the grid keeps its columns readable (the code does not wrap mid-word, nothing is cut off, the table scrolls
+inside its card), the draft form has no extra column and the console has no errors.
+
+## 18. The Contabilización tab
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 6 journal-entry-tab: cases ASI-01 – 06; smoke tests in
+`backend/e2e/journalTab.spec.ts`. -->
+
+Every case runs as the owner of a company with its invoicing resolution (prefix `FE`), a client **Distribuciones Andina
+S.A.S.** and a service with IVA 19 %. The tab is the same widget on four pages: the entries are read-only and come from
+the libro diario, filtered to the document.
+
+**ASI-01 · An emitted factura de venta shows its entry under Contabilización**
+Smoke: `e2e/journalTab.spec.ts`.
+An invoice of $ 1.190.000,00 (595.000 cash, 595.000 crédito), emitted › open it › the tabs **Documento** | **Contabilización**
+› **Contabilización**.
+**Expected:** one card "Asiento N" with the date and the description; columns Cuenta, Nombre, Tercero, Débito, Crédito;
+Dr 11050501 595.000 and Dr 13050501 595.000 (Distribuciones Andina), Cr 413595 1.000.000, Cr 240805 190.000; a Totales
+row with $ 1.190.000,00 in Débito and in Crédito. Nothing can be edited there. Money as `$ 1.190.000,00`, date DD/MM/AAAA.
+
+**ASI-02 · After the void, the tab also shows the reversal**
+Smoke: `e2e/journalTab.spec.ts`.
+The invoice of ASI-01 › **Anular** › reason › **Contabilización**.
+**Expected:** two cards: the original and "Asiento M" with the badge "Anulación del asiento N", the same accounts with
+débito and crédito swapped; totals equal. Voiding from the page while the tab is open shows the reversal at once.
+
+**ASI-03 · A draft has no Contabilización tab**
+Smoke: `e2e/journalTab.spec.ts`.
+A saved draft factura de venta; a draft factura de compra; a new document; a cotización and (when it exists) an orden de compra.
+**Expected:** no tab bar on any of them: the page looks as before.
+
+**ASI-04 · A recibo de caja shows Dr caja, Cr clientes**
+Smoke: `e2e/journalTab.spec.ts`.
+A receipt of 595.000 in Efectivo for the 30-day receivable › its page › **Contabilización**.
+**Expected:** one entry: Dr 11050501 595.000, Cr 13050501 595.000 with the client in the tercero column; after **Anular** the
+reversal appears under it.
+
+**ASI-05 · An emitted factura de compra shows the A.3 entry; after a void, the reversal (OBS-6)**
+By hand.
+A factura de compra by account 513595 (IVA 19 %, ReteFuente) emitted › **Contabilización**; then **Anular**.
+**Expected:** the entry with the expense, IVA descontable, retenciones and the payable to the supplier (tercero column);
+after the void both entries, the second marked as the reversal. The read-only banner and **Duplicar**, **Anular** keep working
+on **Documento**.
+
+**ASI-06 · The roles and another company's document**
+By hand (the API cases are in `JournalEntriesBySourceApiTest`).
+As the billing user, then the accountant, open an emitted document › **Contabilización**; in the address bar, a document id of
+another company is not reachable (the document answers "no encontrado").
+**Expected:** both roles see the tab (it needs only READ_DOCUMENTS; the libro diario menu stays hidden from billing). A
+failed load shows "No pudimos cargar el asiento de este documento." with **Reintentar**.
+
+## 19. Corregir a factura de compra
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 7 purchase-correct: cases COR-01 – 06; smoke tests in
+`backend/e2e/purchaseCorrect.spec.ts`. -->
+
+An emitted factura de compra is never edited: *Corregir* voids it (reversing entry dated today) and opens an editable
+copy with the same supplier number, dates, lines, retenciones, formas de pago and files, in one step. Data: an emitted
+FC-1 from Servicios Andinos S.A.S., supplier number FAC-881, a service of $ 1.000.000 on 513595 with IVA 19 % and
+ReteFuente servicios 4 %, on credit ($ 1.150.000,00), with the supplier's PDF attached.
+
+**COR-01 · Corregir voids an emitted invoice and opens an editable copy**
+Compras › Facturas de compra › FC-1. Read the banner, click **Corregir**, click **Anular y corregir** with *Qué se
+corrige* empty, then write "Valor mal digitado" and confirm. Smoke: `e2e/purchaseCorrect.spec.ts`.
+**Expected:** the banner reads "Una factura emitida no se edita. Corregir la anula y abre una copia editable." with the
+**Corregir** button; the empty reason shows "Escribe qué se corrige." and nothing is sent; on confirming, the page
+moves to a draft ("Factura FC-1 anulada. Corrige este borrador y emítelo.") with FAC-881, the same issue and due dates,
+the line with both taxes, the forma de pago *Crédito* $ 1.150.000,00 and the supplier's PDF under *Archivos del
+proveedor*; "Ver la factura original" opens FC-1, now *Anulada* ("Anulada: Corregida: Valor mal digitado"), without the
+**Corregir** button and with "Ver la factura que la reemplaza".
+
+**COR-02 · The copy is emitted again under the same supplier number**
+On the copy of COR-01, change the unit price to 1.100.000, adjust the forma de pago to the new total neto and
+**Emitir**. Smoke (part): `e2e/purchaseCorrect.spec.ts` emits the copy unchanged; by hand: the edit first.
+**Expected:** "Factura FC-2 emitida y contabilizada."; FAC-881 is accepted (no "Ya registraste una factura de este
+proveedor con este número."); FC-1 keeps its number. Reportes › Libro diario shows FC-1's entry, its reversal dated today
+and FC-2's entry. A new factura de compra from the same supplier with FAC-881 is refused under the supplier number field.
+
+**COR-03 · The list marks the corrected invoice and links to its replacement**
+Compras › Facturas de compra. Smoke: `e2e/purchaseCorrect.spec.ts`.
+**Expected:** FC-1's row is *Anulada* with a small "Corregida" link under its number that opens the copy (FC-2 after
+COR-02); no other row has it. Search "FAC-881": both rows are listed.
+
+**COR-04 · A paid invoice is corrected only after its payment is voided**
+Emit another invoice (FAC-882) and pay part of it with a recibo de pago (Compras › Recibos de pago). Open it.
+**Expected:** no **Corregir** button; the banner says "Para corregir esta factura, anula primero los recibos de pago que
+la pagan." After voiding the recibo de pago, the invoice shows the **Corregir** banner again and the correction works as
+in COR-01. (Through the API, `POST /purchase-invoices/{id}/correct` on the paid invoice answers 409
+`document_has_allocations`.)
+
+**COR-05 · A closed period refuses Corregir and leaves everything as it was**
+Configuración › Contabilidad: fecha de bloqueo = today. Open an emitted, unpaid invoice and **Corregir** it with a
+reason. Then set the fecha de bloqueo back.
+**Expected:** the dialog shows "La contabilidad está cerrada hasta el DD/MM/YYYY: usa una fecha posterior." and stays
+open; closing it, the invoice is still *Emitida*, no draft was added to the list and the libro diario has no new
+entry.
+
+**COR-06 · The banner, the dialog and the list hint on a laptop and a tablet, in both themes**
+At 1366×768 and 768×1024, Tema Claro and Oscuro: an emitted invoice's banner, the Corregir dialog, a corrected
+invoice's links and the list with the "Corregida" hint.
+**Expected:** the button sits after the banner's text on a laptop and wraps under it on a tablet; the dialog's textarea
+fits; the hint stays under the number without widening the column; links keep their contrast in dark mode; the console
+has no errors.
+
+## 20. Tax reports: retenciones and IVA
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 8 tax-reports: cases IMP-01 – 12; smoke tests in
+`backend/e2e/taxReports.spec.ts`. -->
+
+**IMP-01 · Impuestos opens on retenciones practicadas, empty for a new company**
+Smoke: `e2e/taxReports.spec.ts`.
+As the owner of a brand-new company: Reportes › **Impuestos**.
+**Expected:** `/reportes/impuestos/retenciones-practicadas`; the tabs *Retenciones practicadas*, *Retenciones sufridas*
+and *IVA*; *Desde* and *Hasta* are this month, *Tipo* is Todas; "No hay retenciones practicadas en el periodo." and the
+CSV / PDF buttons; the console has no errors.
+
+**IMP-02 · A purchase with two retenciones is listed per kind, and the books agree**
+Smoke: `e2e/taxReports.spec.ts`.
+Emit a factura de compra of $ 1.000.000 + IVA 19 % with ReteFuente compras 2,5 % and ReteIVA 15 % › Impuestos.
+**Expected:** a table "Retefuente · <mes>" with the supplier (name and NIT), the tax, "2,5 %", base $ 1.000.000,00,
+retención $ 25.000,00, 1 factura and a Total row; under it "Según libros (2365): $ 25.000,00" and "Cuadra con los
+libros."; a table "ReteIVA · <mes>" with base $ 190.000,00 (the IVA) and $ 28.500,00 against 2367.
+
+**IMP-03 · The Tipo filter keeps one kind**
+Smoke: `e2e/taxReports.spec.ts`.
+On IMP-02's company: *Tipo* › ReteIVA.
+**Expected:** the address carries `kind=reteiva`; only the ReteIVA table is left; *Todas* brings Retefuente back.
+
+**IMP-04 · Retenciones sufridas come from the sales invoices**
+Smoke: `e2e/taxReports.spec.ts`.
+Emit a factura de venta of $ 1.000.000 + IVA with ReteFuente servicios 4 % › Impuestos › *Retenciones sufridas*.
+**Expected:** the client (NIT 800197268) with $ 40.000,00 and "Según libros (135515): $ 40.000,00"; the purchase of
+IMP-02 is not on this tab.
+
+**IMP-05 · IVA: generado and descontable by rate, the books and the saldo**
+Smoke: `e2e/taxReports.spec.ts`.
+With IMP-02's purchase and IMP-04's sale: *IVA*.
+**Expected:** *IVA generado (ventas)* 19 % base $ 1.000.000,00, IVA $ 190.000,00, "Según libros (240805)"; *IVA
+descontable (compras)* the same against 240810; *Saldo de la declaración* lists generado, descontable and the ReteIVA
+sufrida, and its last row says *Saldo a pagar* (or *Saldo a favor*, never a negative number); *Otros valores del
+periodo* shows the ReteIVA practicada $ 28.500,00 and the impoconsumo.
+
+**IMP-06 · The CSV downloads with the period in its name**
+Smoke: `e2e/taxReports.spec.ts`.
+On IMP-02's company: **CSV**.
+**Expected:** `retenciones-practicadas-<YYYY-MM>.csv` is saved; opened in Excel (es-CO) the accents read right, the
+columns are Mes, Tipo de retención, Tipo de documento, Número, DV, Proveedor, Impuesto, Tarifa, Base, Retención,
+Documentos, and each kind closes with its Total, Según libros and Diferencia lines.
+
+**IMP-07 · Only the owner and the accountant see the tax reports**
+Sign in as a *Facturación* user (invite one from Configuración › Usuarios).
+**Expected:** Reportes has no *Impuestos* entry; opening `/reportes/impuestos` says "Los reportes de impuestos son del
+administrador y del contador." with no tabs; an accountant sees and exports them.
+
+**IMP-08 · A period that ends before it starts is not asked for**
+Smoke: `e2e/taxReports.spec.ts`.
+*IVA* › *Hasta* › last month (with *Desde* this month).
+**Expected:** "El mes «Hasta» es anterior al mes «Desde»: elige un periodo en orden." and no table nor export
+buttons; choosing a *Hasta* after *Desde* brings the report back. A range of more than 12 months says so the same way.
+
+**IMP-09 · A bimester of IVA, kept across the tabs**
+*IVA* › *Desde* the previous month, *Hasta* this month (both with invoices) › tab *Retenciones practicadas* › back.
+**Expected:** the IVA adds both months' lines (one row per rate); the totals equal the sum of the invoices' IVA (open
+the facturas de venta and de compra of the two months); the period stays the same on every tab and in the address;
+*Retenciones practicadas* shows one table per month and kind, then *Totales del periodo* with Base, Retención, Según
+libros and Diferencia per kind.
+
+**IMP-10 · A voided invoice: left out, counted, and a void in a later month explained**
+Void (or *Corregir*) a factura de compra of this month with retenciones; then, on a company with a purchase of last
+month, void that one today.
+**Expected:** the same-month void: the invoice is gone from the report, "1 factura anulada en el periodo no se
+incluye." above the tables, and the books still agree. The later-month void: last month shows its retención only in the
+books, "Diferencia con los libros: $ …" emphasised (the words say it, not only the colour) and the footnote; this
+month shows the negative difference of the reversal; over both months *Totales del periodo* agree.
+
+**IMP-11 · The PDFs read as working papers, and "Ver facturas" finds the documents**
+Download the PDF of each tab (retenciones practicadas over two months, IVA over a bimester); then **Ver facturas** on a
+row.
+**Expected:** each PDF has the company frame, the title, the period ("Septiembre de 2026 a octubre de 2026"), the
+footnote of voided invoices when there are some, money as $ 1.234.567,89 and rates as "2,5 %"; every month and kind
+closes with Total, Según libros (account) and Diferencia; IVA ends with *Saldo a pagar* / *Saldo a favor*. **Ver
+facturas** opens the facturas de compra (or de venta) of that tercero in that month.
+
+**IMP-12 · Laptop and tablet, light and dark**
+Every tab of Impuestos with data, at laptop and tablet widths, in both themes.
+**Expected:** the filters wrap without overlapping; each table scrolls inside itself, the Acciones column last; the
+"Según libros" line stays under its table, right-aligned, readable in both themes; the warning colour of a difference
+keeps its contrast; the console has no errors.
+
+## 21. Exógena working papers
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 9 exogena: cases EXO-01 – 08; smoke tests in
+`backend/e2e/exogena.spec.ts`. -->
+
+**EXO-01 · Exógena opens on format 1001 of the year that ended, empty for a new company**
+Smoke: `e2e/exogena.spec.ts`.
+As the owner of a brand-new company: Reportes › Impuestos › tab **Exógena**.
+**Expected:** `/reportes/impuestos/exogena`; the sub-tabs *1001 · Pagos*, *1003 · Retenciones*, *1005 · IVA
+descontable*, *1006 · IVA generado*, *1007 · Ingresos*, *1008 · Por cobrar* and *1009 · Por pagar*, 1001 selected;
+*Año gravable* is last year; "Ningún tercero para el formato 1001 en <año>." and the CSV / PDF buttons; the console has
+no errors.
+
+**EXO-02 · A purchase of the year is in 1001 by account and concept, in 1005 and in 1009**
+Smoke: `e2e/exogena.spec.ts`.
+Emit a factura de compra this year of $ 1.000.000 + IVA 19 % on 513595 with ReteFuente compras 2,5 % and ReteIVA 15 %,
+on crédito, from a supplier in Medellín › Exógena › *Año gravable* this year.
+**Expected:** 1001: Concepto 5003, Cuenta 513595, "NIT 830045678", municipio 05001, Pago o abono $ 1.000.000,00, IVA
+mayor valor del costo $ 0,00, Retención en la fuente $ 25.000,00, ReteIVA $ 28.500,00, and a Total row. 1005: IVA
+descontable $ 190.000,00. 1009: Saldo al 31/12 $ 1.136.500,00 (what the cartera de proveedores shows today).
+
+**EXO-03 · A threshold groups the cuantías menores under 222222222**
+Smoke: `e2e/exogena.spec.ts`.
+On EXO-02's company, 1001: *Cuantías menores de* › 2.000.000 › Enter.
+**Expected:** the address carries `threshold=2000000`; the supplier's row is gone and a row "Cuantías menores" with
+222222222 and concept 5003 holds its $ 1.000.000,00; the Total row is unchanged; emptying the field brings the supplier
+back.
+
+**EXO-04 · A tercero without municipio withholds the files and links to the list**
+On a company with a supplier created before the municipio rule (a migrated stage-1 tercero; on a fresh database clear
+it with `UPDATE tercero SET municipality_code = NULL WHERE …`) and a purchase from it this year: Exógena › 1001.
+**Expected:** a warning "1 terceros de este formato no tienen municipio: complétalos para descargar el formato." with
+**Ver terceros sin municipio**, no CSV / PDF buttons, and "Sin municipio" in its row (worded, not only coloured); the
+link opens `/terceros?missing_municipality=1` listing it; after saving its municipio, back on Exógena the buttons are
+there and the CSV downloads. The same supplier grouped under a threshold above its total does not block the files.
+(Through the API, `GET /reports/taxes/exogena/1001/export` answers 422 `exogena_terceros_incomplete`.)
+
+**EXO-05 · Configuración › Exógena: the default concepts, added, changed and removed**
+Smoke: `e2e/exogena.spec.ts`.
+As the owner of a new company: Configuración › tab **Exógena**.
+**Expected:** the rows 1001 · Pagos 1435 → 5007, 5110 → 5001, 5120 → 5004, 5135 → 5003, 5195 → 5016, 6205 → 5007 and
+1007 · Ingresos 41 → 4001, 42 → 4002. **Nueva fila** 1001 · 5115 · 5002 › Guardar: "Tabla de conceptos guardada." and
+the row in its place; **Editar** changes its concept; **Quitar** asks first and then "Se quitó la fila 1001 · 5115.".
+Adding 5110 again in 1001 says "Ese prefijo ya está en la tabla del formato 1001." and a concept of two digits "Escribe
+los cuatro dígitos del concepto."; each saved change is in the audit log as `exogena_concepts.changed`.
+
+**EXO-06 · Rows without a concept are blank and say where to fix them**
+On EXO-02's company: Configuración › Exógena › **Quitar** 1001 · 5135 › Reportes › Impuestos › Exógena › 1001 this year.
+**Expected:** the row's Concepto is blank; "1 fila no tiene concepto DIAN: queda en blanco en el formato." with
+**Completar la tabla de conceptos**, which opens Configuración › Exógena; the CSV still downloads, with the warning in
+the PDF's subtitle. A *Facturación* user opening Configuración › Exógena reads "La tabla de conceptos de la exógena es
+del administrador y del contador." and no buttons.
+
+**EXO-07 · The files read as working papers, and 1008 / 1009 match the cartera at 31/12**
+On a company with sales and purchases of last year, some still owed at 31/12 and some paid in January: download the CSV
+and the PDF of 1001, 1007 and 1008 for last year; open Reportes › Cartera de clientes as of 31/12 of last year.
+**Expected:** `exogena-<formato>-<año>.csv` opens in Excel (es-CO) with the accents right, the columns Concepto, Cuenta
+(1001 and 1007 only), Tipo de documento (31 for a NIT, 13 for a cédula), Número de identificación, DV, apellidos,
+nombres, razón social, dirección, códigos de departamento y municipio, País (169 for Colombia), then the format's
+values, the cuantías menores rows and a Total row; the PDF has the company frame, "Formato 1008 · Cuentas por cobrar al
+31 de diciembre", "Año gravable <año>" and money as $ 1.234.567,89. 1008's totals per client equal the cartera as of
+31/12 (invoices paid in January still count; voided ones do not); 1007 shows gross income with its discounts under
+*Devoluciones y descuentos*.
+
+**EXO-08 · Laptop and tablet, light and dark**
+Exógena with data on every sub-tab, and Configuración › Exógena with its dialogs, at 1366×768 and 768×1024, Tema Claro
+and Oscuro.
+**Expected:** the seven format pills scroll or wrap without pushing the page wider; *Año gravable* and *Cuantías menores
+de* sit in the filter bar and wrap on a tablet; the wide 1001 table scrolls inside itself with money right-aligned; the
+"Sin municipio" badge and the warnings keep their contrast in dark mode; the console has no errors.
+
+## 22. Órdenes de compra
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 10 purchase-orders: cases OC-01 – 14; smoke tests in
+`backend/e2e/purchaseOrder.spec.ts`. -->
+
+Órdenes de compra at **`/ordenes-compra`** (Compras › Órdenes de compra). An order asks a supplier for goods or services;
+it has a factura de compra's lines (product **or** expense account, taxes, retenciones) and no formas de pago, takes
+its number from series OC at emission, posts nothing and converts once into a draft factura de compra. Data, unless a
+case says otherwise: the owner of a company, a supplier **Papelería Andina S.A.S.** with a billing e-mail, and an
+emitted OC-1 with one line of 2 × $ 500.000 by account 513595 with IVA 19 % (total $ 1.190.000,00), expected in 10 days.
+
+**OC-01 · A company without orders is told what the section is for**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+A brand-new company › **Órdenes de compra** › **Nueva orden de compra**.
+**Expected:** the list says "Aún no has hecho órdenes de compra…" with **Crear la primera orden de compra**; the new
+form has *Tipo* "Orden de compra", *Proveedor*, *Entrega esperada* and the lines grid, and **no** *Formas de pago*;
+**Guardar**, **Emitir** and **Emitir y enviar** are there; no console errors.
+
+**OC-02 · An order is saved, emitted as OC-1 and posts nothing**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+Nueva orden de compra: choose the supplier, set *Entrega esperada* in 10 days, a line by account 513595 ("Mantenimiento de
+equipos", 2 × 500.000, IVA 19 %), **Guardar**, then **Emitir** and confirm.
+**Expected:** "Borrador guardado." and the page becomes "Orden de compra · borrador"; after confirming, "Orden de compra
+OC-1 emitida.", the title "Orden de compra OC-1", "Esta orden de compra ya fue emitida: no se puede modificar…", no
+**Guardar**, *Entrega esperada* kept; Reportes › Libro diario has no entry; the page has no *Contabilización* tab.
+
+**OC-03 · Nothing is emitted without a supplier or a line**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+Nueva orden de compra › **Emitir** with the form empty.
+**Expected:** no confirmation dialog; "Revisa los campos marcados." with the supplier and the lines marked.
+
+**OC-04 · Emitir y enviar mails the PDF to the supplier**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+A saved draft › **Emitir y enviar**.
+**Expected:** the dialog says "enviaremos el PDF al correo del proveedor"; after confirming, "Orden de compra OC-1
+emitida; el correo con el PDF va en camino."; Mailpit has "Orden de compra OC-1 de <empresa>" to the supplier's address
+with the PDF attached. On an emitted order, **Enviar** says "El correo con el PDF de la orden de compra OC-1 va en
+camino." and a supplier without e-mail gets "El proveedor no tiene correo…" for both buttons.
+
+**OC-05 · The list shows the orders and filters by status**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+With OC-1 emitted and a second order as a draft: Órdenes de compra.
+**Expected:** OC-1's row shows the supplier, *Emitida*, the dates, the entrega esperada and $ 1.190.000, with **PDF**,
+**Duplicar**, **Enviar**, **Anular**; the draft's row says *Borrador*, **Editar**; *Estado* offers Borrador, Emitida,
+Convertida and Anulada; filtering Anulada shows "Ninguna orden de compra coincide con estos filtros." and **Ver todo**
+brings everything back; searching "OC-1" or "Andina" finds the order; the filters stay in the address.
+
+**OC-06 · The PDF is a document the supplier can read**
+Smoke (part): `e2e/purchaseOrder.spec.ts` checks it is a PDF; by hand: its content.
+OC-1 › **Descargar PDF**.
+**Expected:** the company's header and logo, "Orden de compra No. OC-1", the supplier with its NIT, the fecha de la orden
+and *Entrega esperada*, the lines with their *Código* (when by product), impuesto and retenciones, the totals with each
+retención's base, the observaciones; a draft prints **BORRADOR** and a voided order **ANULADA**; text typed with `<b>`
+shows as characters.
+
+**OC-07 · Duplicating opens a new draft dated today**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 › **Duplicar** (also from a voided or converted order).
+**Expected:** "Se creó un borrador nuevo a partir de la orden de compra." on a draft with the same supplier and lines,
+dated today, the entrega esperada keeping its distance from the order date, and no number.
+
+**OC-08 · An emitted order is voided with a reason**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 › **Anular** › confirm with the reason empty, then write "El proveedor ya no vende".
+**Expected:** "Escribe el motivo de la anulación." first; then "Orden de compra OC-1 anulada.", *Anulada el … Motivo: El
+proveedor ya no vende*, no **Anular** or **Convertir en factura**; the order keeps OC-1 and Libro diario is still empty.
+
+**OC-09 · Converting makes a draft purchase invoice with the same lines and no number**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 › **Convertir en factura** › confirm.
+**Expected:** the dialog says the order converts once; the page opens a *Factura de compra (borrador)* ("Se creó este
+borrador de factura a partir de la orden de compra OC-1…") with the same supplier, the line (2 × 500.000, IVA 19 %), an
+empty *Número de factura del proveedor*, today's date and no formas de pago; the totals equal the order's; Libro diario
+is still empty. Completing the supplier's number and a forma de pago and emitting the invoice works as for any draft
+(its FC number is taken then).
+
+**OC-10 · An order converts once and links to its invoice**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 after OC-09.
+**Expected:** the order is *Convertida*; "La orden de compra se convirtió en factura." with **Ver la factura** (opens the
+draft or the emitted invoice, which shows its *orden de compra*); no **Convertir en factura**, **Anular** or **Enviar**;
+in the list the row says *Convertida*. A second conversion by API answers 409 `purchase_order_already_converted`.
+
+**OC-11 · What the invoice refuses is listed and nothing is converted**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+Deactivate the supplier (Terceros), then OC-1 › **Convertir en factura** › confirm. By hand also: deactivate the product
+or the IVA of the line instead.
+**Expected:** "No se pudo convertir la orden de compra" lists "Este tercero está inactivo." (or "Línea 1: Este producto está
+inactivo."); the order is still *Emitida* with **Convertir en factura**; Facturas de compra has no new draft.
+Reactivating the supplier lets it convert.
+
+**OC-12 · Several retenciones and the product code travel to the invoice**
+By hand (the line's tax dialog).
+An order whose line is a product (e.g. RES-01 · Resma carta) with ReteFuente 2,5 % **and** ReteICA, emitted; then rename
+the product to RES-99; convert.
+**Expected:** the order's totals panel lists both retenciones by tax; the draft invoice has both in the line's
+*Retenciones* cell, the same withholding total and net total, and the line's *Código* column says RES-01 (the order's
+snapshot), also on the order's PDF.
+
+**OC-13 · The OC series is edited in Configuración › Numeración**
+By hand.
+Configuración › Resolución/Numeración: the *Orden de compra* row says prefix OC and next number 1 (2 after OC-1). Change
+the prefix to "ORD" and the next number to 50, then emit another draft.
+**Expected:** the row *Orden de compra* is listed with the other series and saves ("Guardamos la numeración."); the next
+order is "ORD-50"; moving the next number below the current one is refused.
+
+**OC-14 · The screens at laptop and tablet widths, light and dark**
+By hand.
+The list, a draft, an emitted order, a converted one, the void dialog and the conversion dialog at 1366 px and 768 px,
+in both themes.
+**Expected:** nothing overflows; the tables keep **Acciones** as their last column; the form is the same shared document
+form as a factura de compra's (without formas de pago); every message is in Spanish; focus returns to the button that
+opened a dialog.
+

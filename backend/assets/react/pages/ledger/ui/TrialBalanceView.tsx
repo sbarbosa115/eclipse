@@ -76,11 +76,16 @@ export function TrialBalanceView() {
         <EmptyState>{t('ledger.trialBalance.empty')}</EmptyState>
       ) : (
         <>
-          <Alert kind={data.balanced ? 'success' : 'error'}>
-            {data.balanced
-              ? t('ledger.trialBalance.balanced')
-              : t('ledger.trialBalance.unbalanced')}
-          </Alert>
+          {/* A period with no entries still lists the saldos anteriores; it says so rather than "they balance". */}
+          {Number(data.total_debit) === 0 && Number(data.total_credit) === 0 ? (
+            <Alert kind="info">{t('ledger.trialBalance.noMovement')}</Alert>
+          ) : (
+            <Alert kind={data.balanced ? 'success' : 'error'}>
+              {data.balanced
+                ? t('ledger.trialBalance.balanced')
+                : t('ledger.trialBalance.unbalanced')}
+            </Alert>
+          )}
           <DataTable
             columns={[
               t('ledger.chart.code'),

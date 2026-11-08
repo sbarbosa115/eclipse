@@ -117,7 +117,22 @@ describe('the document draft', () => {
     );
     expect(filled.quantity).toBe('1');
     expect(filled.charge_tax_id).toBe('iva19');
-    expect(filled.withholding_tax_id).toBe('rete4');
+    expect(
+      filled.withholdings,
+      'the product’s default retención is the line’s only one',
+    ).toEqual(['rete4']);
+  });
+
+  it('starts a line with no retenciones, and a product without a default adds none', () => {
+    expect(emptyLine().withholdings).toEqual([]);
+    expect(
+      applyProduct(
+        'sales_invoice',
+        {...emptyLine(), withholdings: ['rete4', 'reteiva15']},
+        {...product, withholding_tax_id: null},
+      ).withholdings,
+      'choosing a product brings its taxes, replacing the line’s',
+    ).toEqual([]);
   });
 
   it('keeps the price on a purchase line: the product’s is a sale price', () => {

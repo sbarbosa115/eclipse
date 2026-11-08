@@ -46,7 +46,10 @@ export interface SalesInvoiceRequest {
     unit_price: string;
     discount: string;
     charge_tax_id: string | null;
+    /** Deprecated alias of the first retención (observations §6): sent while the API still reads it. */
     withholding_tax_id: string | null;
+    /** The line's retenciones, at most one per kind (observations §4.2). */
+    withholdings?: {tax_id: string}[];
   }[];
   payments: {
     payment_method_id: string;

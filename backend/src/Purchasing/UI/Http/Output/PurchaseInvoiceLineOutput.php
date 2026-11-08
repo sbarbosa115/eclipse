@@ -3,6 +3,7 @@
 namespace App\Purchasing\UI\Http\Output;
 
 use App\Purchasing\Application\Query\PurchaseInvoiceLineView;
+use App\Shared\UI\Http\Output\LineWithholdingOutput;
 
 /** A line as it was saved, its taxes as copied then, and its share of the totals. */
 final readonly class PurchaseInvoiceLineOutput
@@ -32,11 +33,19 @@ final readonly class PurchaseInvoiceLineOutput
         public string $taxAmount,
         public string $withholdingAmount,
         public string $totalAmount,
+        /** The product's código when the line was written; null on a line by account. */
+        public ?string $productCode = null,
+        /**
+         * The line's retenciones (none, or one per kind), each with its base and its share.
+         *
+         * @var list<LineWithholdingOutput>
+         */
+        public array $withholdings = [],
     ) {
     }
 
     public static function of(PurchaseInvoiceLineView $v): self
     {
-        return new self($v->id, $v->position, $v->productId, $v->productLabel, $v->accountId, $v->accountLabel, $v->description, $v->quantity, $v->unitPrice, $v->discount, $v->chargeTaxId, $v->chargeTaxName, $v->chargeTaxKind, $v->chargeTaxRate, $v->withholdingTaxId, $v->withholdingTaxName, $v->withholdingTaxKind, $v->withholdingTaxRate, $v->grossAmount, $v->discountAmount, $v->subtotalAmount, $v->taxAmount, $v->withholdingAmount, $v->totalAmount);
+        return new self($v->id, $v->position, $v->productId, $v->productLabel, $v->accountId, $v->accountLabel, $v->description, $v->quantity, $v->unitPrice, $v->discount, $v->chargeTaxId, $v->chargeTaxName, $v->chargeTaxKind, $v->chargeTaxRate, $v->withholdingTaxId, $v->withholdingTaxName, $v->withholdingTaxKind, $v->withholdingTaxRate, $v->grossAmount, $v->discountAmount, $v->subtotalAmount, $v->taxAmount, $v->withholdingAmount, $v->totalAmount, $v->productCode, array_map(LineWithholdingOutput::of(...), $v->withholdings));
     }
 }

@@ -21,8 +21,8 @@ final class CarteraInvariantTest extends ApiTestCase
         $this->startReporting();
         $ana = $this->newClient('Ana Ltda.', '800197268');
         $beto = $this->newClient('Beto S.A.S.', '900200300');
-        // Beto's receivable account is his own, still under 1305.
-        $this->db()->update('tercero', ['receivable_account_id' => $this->account('130510')->toBinary()], ['id' => Uuid::fromString($beto)->toBinary()]);
+        // Beto's receivable account is his own, still under 1305 (an auxiliar: 130510 has one, observations §4.1).
+        $this->db()->update('tercero', ['receivable_account_id' => $this->account('13051001')->toBinary()], ['id' => Uuid::fromString($beto)->toBinary()]);
         $andes = $this->supplierNamed('Andes S.A.S.');
         $zeta = $this->supplierNamed('Zeta Ltda.');
 

@@ -14,6 +14,7 @@ import {
   type Role,
   type TerceroSummary,
 } from '@/entities/tercero';
+import {PlaceFields, placeLabels} from '@/entities/municipality';
 import {useTranslation} from '@/shared/i18n';
 import {Field, FormModal} from '@/shared/ui';
 
@@ -72,6 +73,12 @@ export function QuickCreateTerceroModal({
     >
       <p className="span-2 muted small">{t('terceros.quick.intro')}</p>
       <IdentificationFields value={form} errors={errors} onChange={patch} />
+      <PlaceFields
+        value={form}
+        errors={errors}
+        onChange={patch}
+        labels={placeLabels(t, 'terceros.geo')}
+      />
       <Field
         label={t('terceros.form.fields.email')}
         error={errors['email']}

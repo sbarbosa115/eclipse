@@ -41,6 +41,9 @@ final readonly class PurchaseInvoiceView
         public ?string $emittedAt,
         public ?string $voidedAt,
         public ?string $voidReason,
+        public ?string $correctedFromId = null,
+        public ?string $correctedById = null,
+        public ?string $purchaseOrderId = null,
     ) {
     }
 }

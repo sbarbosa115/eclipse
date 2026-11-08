@@ -24,6 +24,10 @@ final readonly class TerceroProfile
     public ?string $firstNames;
     public ?string $lastNames;
     public ?string $businessName;
+    /** ISO 3166-1 alpha-2, Colombia when none is given. */
+    public string $countryCode;
+    /** DIVIPOLA code: required for Colombia, dropped for any other country. */
+    public ?string $municipalityCode;
     /** @var list<string> */
     public array $roles;
     /** @var list<FiscalResponsibility> */
@@ -48,6 +52,8 @@ final readonly class TerceroProfile
         ?string $businessName,
         public ?string $tradeName,
         public ?string $city,
+        ?string $countryCode,
+        ?string $municipalityCode,
         public ?string $address,
         array $phones,
         public ?string $billingContactName,
@@ -79,6 +85,24 @@ final readonly class TerceroProfile
         $this->lastNames = self::blankToNull($lastNames);
         $this->businessName = self::blankToNull($businessName);
         $this->displayName = $this->nameFor($personType);
+
+        $country = strtoupper(self::blankToNull($countryCode) ?? 'CO');
+        if (1 !== preg_match('/^[A-Z]{2}$/', $country)) {
+            throw new InvalidTerceroValue('country_code', 'Choose the country.');
+        }
+        $this->countryCode = $country;
+        if ('CO' === $country) {
+            $municipality = self::blankToNull($municipalityCode);
+            if (null === $municipality || 1 !== preg_match('/^\d{5}$/', $municipality)) {
+                throw new InvalidTerceroValue('municipality_code', 'Choose the municipality.');
+            }
+            $this->municipalityCode = $municipality;
+        } else {
+            $this->municipalityCode = null;
+            if (null === self::blankToNull($city)) {
+                throw new InvalidTerceroValue('city', 'Write the city.');
+            }
+        }
 
         $unknown = array_diff($roles, self::ROLES);
         if ([] !== $unknown) {

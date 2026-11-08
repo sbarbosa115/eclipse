@@ -1,3 +1,4 @@
+import {municipalityLabel} from '@/shared/lib';
 import type {Company, CompanyPayload} from '../api/companyApi';
 
 export const IDENTIFICATION_TYPES = [
@@ -31,6 +32,10 @@ export interface CompanyForm {
   check_digit: string;
   address: string;
   city: string;
+  country_code: string;
+  municipality_code: string;
+  /** What the picker shows for `municipality_code`. */
+  municipality_label: string;
   phone: string;
   email: string;
   vat_regime: string;
@@ -47,7 +52,17 @@ export function toForm(company: Company): CompanyForm {
     identification_number: company.identification_number,
     check_digit: company.check_digit ?? '',
     address: company.address ?? '',
-    city: company.city ?? '',
+    city: company.country_code === 'CO' ? '' : (company.city ?? ''),
+    country_code: company.country_code,
+    municipality_code: company.municipality_code ?? '',
+    municipality_label:
+      company.municipality_code === null || !company.municipality_name
+        ? (company.municipality_code ?? '')
+        : municipalityLabel({
+            code: company.municipality_code,
+            name: company.municipality_name,
+            department_name: company.department_name,
+          }),
     phone: company.phone ?? '',
     email: company.email ?? '',
     vat_regime: company.vat_regime,
@@ -70,7 +85,10 @@ export function toPayload(form: CompanyForm): CompanyPayload {
     check_digit:
       form.identification_type === 'nit' ? blank(form.check_digit) : null,
     address: blank(form.address),
-    city: blank(form.city),
+    city: form.country_code === 'CO' ? null : blank(form.city),
+    country_code: form.country_code,
+    municipality_code:
+      form.country_code === 'CO' ? blank(form.municipality_code) : null,
     phone: blank(form.phone),
     email: blank(form.email),
     vat_regime: form.vat_regime,

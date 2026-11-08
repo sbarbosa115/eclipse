@@ -21,6 +21,8 @@ export interface TerceroFilters {
   role?: Role | '';
   /** '1' only the active ones, '0' only the inactive ones, '' both */
   active?: '1' | '0' | '';
+  /** Only the Colombian terceros that still have no municipality. */
+  missing_municipality?: boolean;
   page?: number;
   per_page?: number;
 }
@@ -37,6 +39,8 @@ export interface TerceroPayload {
   business_name: string | null;
   trade_name: string | null;
   city: string | null;
+  country_code: string;
+  municipality_code: string | null;
   address: string | null;
   phones: {
     indicative: string;
@@ -72,6 +76,9 @@ export interface QuickTerceroPayload {
   business_name: string | null;
   email: string;
   roles: string[];
+  country_code: string;
+  municipality_code: string | null;
+  city: string | null;
 }
 
 export function searchTerceros(
@@ -81,6 +88,7 @@ export function searchTerceros(
   if (filters.q) params.set('q', filters.q);
   if (filters.role) params.set('role', filters.role);
   if (filters.active) params.set('active', filters.active);
+  if (filters.missing_municipality) params.set('missing_municipality', '1');
   if (filters.page && filters.page > 1) {
     params.set('page', String(filters.page));
   }

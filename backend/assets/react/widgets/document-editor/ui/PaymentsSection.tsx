@@ -90,11 +90,17 @@ export function PaymentsSection({
                     <option value="">
                       {t('documentEditor.payments.chooseMethod')}
                     </option>
-                    {methods.map((method) => (
-                      <option key={method.id} value={method.id}>
-                        {method.name}
-                      </option>
-                    ))}
+                    {methods
+                      .filter(
+                        (method) =>
+                          method.active ||
+                          method.id === payment.payment_method_id,
+                      )
+                      .map((method) => (
+                        <option key={method.id} value={method.id}>
+                          {method.name}
+                        </option>
+                      ))}
                   </select>
                   <CellError
                     id={ids.method}
