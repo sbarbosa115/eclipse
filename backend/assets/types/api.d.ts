@@ -506,8 +506,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Postable accounts for a picker: ?q= matches a code prefix or part of the name; ?purchases=1 only those usable on
-         *     purchase lines. At most 20.
+         * Postable accounts for a picker, in code order.
+         * @description ?q= words that must all match (a number as a code prefix, anything else as part of the name); ?purchases=1 only
+         *     those usable on purchase lines; ?limit= 1…200 (default 50). A subcuenta with active auxiliares is not offered.
+         *     `total` counts every match.
          */
         get: operations["get_app_ledger_ui_http_catalog_searchaccounts"];
         put?: never;
@@ -567,7 +569,10 @@ export interface paths {
         put?: never;
         /**
          * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.
-         * @description 409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.
+         * @description The first one under an account that took movements subdivides it: what pointed at the parent (posting rules,
+         *     taxes, payment methods, products, terceros) moves to the new account and `moved` says what; with
+         *     move_references false (default true) nothing moves and `moved` is null. 409 account_code_taken; 422
+         *     account_code_invalid, parent_account_not_found; 403 for the billing user.
          */
         post: operations["post_app_ledger_ui_http_chart_add"];
         delete?: never;

@@ -55,10 +55,11 @@ final class ChartController extends AbstractController
     }
 
     /**
-     * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?,
-     * move_references? (default true)}. The first one under an account that took movements subdivides it: what pointed
-     * at the parent (posting rules, taxes, payment methods, products, terceros) moves to the new account and `moved`
-     * says what; with move_references false nothing moves and `moved` is null. 409 account_code_taken; 422
+     * Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.
+     *
+     * The first one under an account that took movements subdivides it: what pointed at the parent (posting rules,
+     * taxes, payment methods, products, terceros) moves to the new account and `moved` says what; with
+     * move_references false (default true) nothing moves and `moved` is null. 409 account_code_taken; 422
      * account_code_invalid, parent_account_not_found; 403 for the billing user.
      */
     #[Route('', methods: ['POST'])]

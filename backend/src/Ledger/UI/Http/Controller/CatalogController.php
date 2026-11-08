@@ -56,9 +56,11 @@ final class CatalogController extends AbstractController
     }
 
     /**
-     * Postable accounts for a picker, in code order: ?q= words that must all match (a number as a code prefix,
-     * anything else as part of the name); ?purchases=1 only those usable on purchase lines; ?limit= 1…200 (default
-     * 50). A subcuenta with active auxiliares is not offered. `total` counts every match.
+     * Postable accounts for a picker, in code order.
+     *
+     * ?q= words that must all match (a number as a code prefix, anything else as part of the name); ?purchases=1 only
+     * those usable on purchase lines; ?limit= 1…200 (default 50). A subcuenta with active auxiliares is not offered.
+     * `total` counts every match.
      */
     #[Route('/accounts/search', methods: ['GET'])]
     #[ApiResponse(AccountSearchOutput::class)]
