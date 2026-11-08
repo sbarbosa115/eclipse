@@ -5,6 +5,8 @@ namespace App\Purchasing\Application\Query;
 use App\Company\Application\Query\Companies;
 use App\Company\Application\Query\LogoReader;
 use App\Party\Application\Query\TerceroDirectory;
+use App\Shared\Application\Document\LineWithholdingView;
+use App\Shared\Application\Document\WithholdingSummaryView;
 use App\Shared\Application\Port\PdfRenderer;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Money\Money;
@@ -13,7 +15,8 @@ use Symfony\Component\Uid\Uuid;
 /**
  * The company's internal record of a purchase (§4.15 "download PDF"): who sold it (with the supplier's NIT), the
  * supplier's number, the lines, the taxes and retenciones, the formas de pago; ANULADA across a voided one. A line
- * reads like on the sales invoice: its Valor total is subtotal plus impuesto, and the retención shows in the totals.
+ * reads like on the sales invoice: its Valor total is subtotal plus impuesto, and the retenciones show in the totals,
+ * one row per tax with its base.
  */
 final class PurchaseInvoicePdf
 {
@@ -65,9 +68,12 @@ final class PurchaseInvoicePdf
                 'unit_price' => $l->unitPrice,
                 'discount' => self::decimal($l->discount),
                 'charge_tax' => $l->chargeTaxName,
-                'withholding_tax' => $l->withholdingTaxName,
+                // Every retención of the line (observations PRD §4.2), "Ninguno" when it has none.
+                'withholding_tax' => [] === $l->withholdings ? $l->withholdingTaxName : implode(' · ', array_map(static fn (LineWithholdingView $w) => $w->name, $l->withholdings)),
                 'total' => Money::of($l->subtotalAmount)->plus(Money::of($l->taxAmount))->toString(),
             ], $invoice->lines),
+            // The retenciones by tax, each with its base and value, under Retenciones: they add up to it.
+            'withholdings' => WithholdingSummaryView::of(array_map(static fn (PurchaseInvoiceLineView $l) => $l->withholdings, $invoice->lines)),
         ];
     }
 

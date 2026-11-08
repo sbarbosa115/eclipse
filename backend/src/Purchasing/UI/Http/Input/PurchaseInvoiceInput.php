@@ -3,7 +3,6 @@
 namespace App\Purchasing\UI\Http\Input;
 
 use App\Purchasing\Application\Command\PurchaseInvoiceContents;
-use App\Purchasing\Application\Command\PurchaseLineContents;
 use App\Purchasing\Application\Command\PurchasePaymentContents;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -47,14 +46,9 @@ final class PurchaseInvoiceInput
             new \DateTimeImmutable($this->issueDate),
             self::date($this->dueDate),
             $this->notes,
-            array_map(static fn (PurchaseLineInput $l) => new PurchaseLineContents(self::uuid($l->productId), self::uuid($l->accountId), $l->description, $l->quantity, $l->unitPrice, $l->discount ?? '0', self::uuid($l->chargeTaxId), self::uuid($l->withholdingTaxId)), $this->lines),
+            array_map(static fn (PurchaseLineInput $l) => $l->toContents(), $this->lines),
             array_map(static fn (PurchasePaymentInput $p) => new PurchasePaymentContents(Uuid::fromString($p->paymentMethodId), $p->amount, self::date($p->dueDate)), $this->payments),
         );
-    }
-
-    private static function uuid(?string $id): ?Uuid
-    {
-        return null === $id || '' === $id ? null : Uuid::fromString($id);
     }
 
     private static function date(?string $date): ?\DateTimeImmutable
