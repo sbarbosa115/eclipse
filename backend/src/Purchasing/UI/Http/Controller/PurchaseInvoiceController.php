@@ -97,9 +97,11 @@ final class PurchaseInvoiceController extends AbstractController
 
     /**
      * Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,
-     * description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,
-     * amount, due_date? (crédito; the invoice's when missing)}]} → 201. 422 `validation_failed` by field
-     * (`lines[0].account_id`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).
+     * description, quantity, unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind; the
+     * deprecated withholding_tax_id when missing)}], payments: [{payment_method_id, amount, due_date? (crédito; the
+     * invoice's when missing)}]} → 201. 422 `validation_failed` by field (`lines[0].account_id`,
+     * `lines[0].withholdings` for two of a kind, `lines[0].withholdings[1].tax_id`…), `duplicate_supplier_invoice_number`
+     * (violation on `supplier_invoice_number`).
      */
     #[Route('', methods: ['POST'])]
     #[ApiResponse(PurchaseInvoiceOutput::class, status: 201)]

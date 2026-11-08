@@ -103,8 +103,9 @@ final class QuotationController extends AbstractController
 
     /**
      * A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,
-     * notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}]} → 201.
-     * 422 `validation_failed` by field path (`lines.0.product_id`, `expiry_date`…).
+     * notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholdings: [{tax_id}]
+     * (one per kind; the deprecated withholding_tax_id when missing)}]} → 201. 422 `validation_failed` by field path
+     * (`lines.0.product_id`, `lines.0.withholdings` for two of a kind, `lines.0.withholdings.1.tax_id`, `expiry_date`…).
      */
     #[Route('', methods: ['POST'])]
     #[IsGranted(Permission::WRITE_DOCUMENTS)]

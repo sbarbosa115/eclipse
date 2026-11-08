@@ -94,8 +94,10 @@ final class SalesInvoiceController extends AbstractController
 
     /**
      * A new draft: {tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity,
-     * unit_price, discount, charge_tax_id, withholding_tax_id}], payments: [{payment_method_id, amount, due_date?}]}
-     * → 201. The formas de pago need not add up yet. 422 `validation_failed` by field path (`lines.0.product_id`…).
+     * unit_price, discount, charge_tax_id, withholdings: [{tax_id}] (one per kind; the deprecated withholding_tax_id when
+     * missing)}], payments: [{payment_method_id, amount, due_date?}]} → 201. The formas de pago need not add up yet. 422
+     * `validation_failed` by field path (`lines.0.product_id`, `lines.0.withholdings` for two of a kind,
+     * `lines.0.withholdings.1.tax_id`…).
      */
     #[Route('', methods: ['POST'])]
     #[ApiResponse(SalesInvoiceOutput::class, status: 201)]

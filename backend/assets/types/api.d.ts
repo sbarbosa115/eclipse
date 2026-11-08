@@ -1270,8 +1270,9 @@ export interface paths {
         put?: never;
         /**
          * A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,
-         *     notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}]} → 201.
-         * @description 422 `validation_failed` by field path (`lines.0.product_id`, `expiry_date`…).
+         *     notes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholdings: [{tax_id}]
+         *     (one per kind; the deprecated withholding_tax_id when missing)}]} → 201. 422 `validation_failed` by field path
+         *     (`lines.0.product_id`, `lines.0.withholdings` for two of a kind, `lines.0.withholdings.1.tax_id`, `expiry_date`…).
          */
         post: operations["post_app_sales_ui_http_quotation_create"];
         delete?: never;
@@ -1476,8 +1477,10 @@ export interface paths {
         put?: never;
         /**
          * A new draft: {tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity,
-         *     unit_price, discount, charge_tax_id, withholding_tax_id}], payments: [{payment_method_id, amount, due_date?}]}
-         *     → 201. The formas de pago need not add up yet. 422 `validation_failed` by field path (`lines.0.product_id`…).
+         *     unit_price, discount, charge_tax_id, withholdings: [{tax_id}] (one per kind; the deprecated withholding_tax_id when
+         *     missing)}], payments: [{payment_method_id, amount, due_date?}]} → 201. The formas de pago need not add up yet. 422
+         *     `validation_failed` by field path (`lines.0.product_id`, `lines.0.withholdings` for two of a kind,
+         *     `lines.0.withholdings.1.tax_id`…).
          */
         post: operations["post_app_sales_ui_http_salesinvoice_create"];
         delete?: never;
@@ -1633,9 +1636,11 @@ export interface paths {
         put?: never;
         /**
          * Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,
-         *     description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,
-         *     amount, due_date? (crédito; the invoice's when missing)}]} → 201. 422 `validation_failed` by field
-         *     (`lines[0].account_id`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).
+         *     description, quantity, unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind; the
+         *     deprecated withholding_tax_id when missing)}], payments: [{payment_method_id, amount, due_date? (crédito; the
+         *     invoice's when missing)}]} → 201. 422 `validation_failed` by field (`lines[0].account_id`,
+         *     `lines[0].withholdings` for two of a kind, `lines[0].withholdings[1].tax_id`…), `duplicate_supplier_invoice_number`
+         *     (violation on `supplier_invoice_number`).
          */
         post: operations["post_app_purchasing_ui_http_purchaseinvoice_create"];
         delete?: never;
