@@ -1800,6 +1800,86 @@ themes; the warning keeps its contrast; the console has no errors.
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 8 tax-reports: cases IMP-01 – 12; smoke tests in
 `backend/e2e/taxReports.spec.ts`. -->
 
+**IMP-01 · Impuestos opens on retenciones practicadas, empty for a new company**
+Smoke: `e2e/taxReports.spec.ts`.
+As the owner of a brand-new company: Reportes › **Impuestos**.
+**Expected:** `/reportes/impuestos/retenciones-practicadas`; the tabs *Retenciones practicadas*, *Retenciones sufridas*
+and *IVA*; *Desde* and *Hasta* are this month, *Tipo* is Todas; "No hay retenciones practicadas en el periodo." and the
+CSV / PDF buttons; the console has no errors.
+
+**IMP-02 · A purchase with two retenciones is listed per kind, and the books agree**
+Smoke: `e2e/taxReports.spec.ts`.
+Emit a factura de compra of $ 1.000.000 + IVA 19 % with ReteFuente compras 2,5 % and ReteIVA 15 % › Impuestos.
+**Expected:** a table "Retefuente · <mes>" with the supplier (name and NIT), the tax, "2,5 %", base $ 1.000.000,00,
+retención $ 25.000,00, 1 factura and a Total row; under it "Según libros (2365): $ 25.000,00" and "Cuadra con los
+libros."; a table "ReteIVA · <mes>" with base $ 190.000,00 (the IVA) and $ 28.500,00 against 2367.
+
+**IMP-03 · The Tipo filter keeps one kind**
+Smoke: `e2e/taxReports.spec.ts`.
+On IMP-02's company: *Tipo* › ReteIVA.
+**Expected:** the address carries `kind=reteiva`; only the ReteIVA table is left; *Todas* brings Retefuente back.
+
+**IMP-04 · Retenciones sufridas come from the sales invoices**
+Smoke: `e2e/taxReports.spec.ts`.
+Emit a factura de venta of $ 1.000.000 + IVA with ReteFuente servicios 4 % › Impuestos › *Retenciones sufridas*.
+**Expected:** the client (NIT 800197268) with $ 40.000,00 and "Según libros (135515): $ 40.000,00"; the purchase of
+IMP-02 is not on this tab.
+
+**IMP-05 · IVA: generado and descontable by rate, the books and the saldo**
+Smoke: `e2e/taxReports.spec.ts`.
+With IMP-02's purchase and IMP-04's sale: *IVA*.
+**Expected:** *IVA generado (ventas)* 19 % base $ 1.000.000,00, IVA $ 190.000,00, "Según libros (240805)"; *IVA
+descontable (compras)* the same against 240810; *Saldo de la declaración* lists generado, descontable and the ReteIVA
+sufrida, and its last row says *Saldo a pagar* (or *Saldo a favor*, never a negative number); *Otros valores del
+periodo* shows the ReteIVA practicada $ 28.500,00 and the impoconsumo.
+
+**IMP-06 · The CSV downloads with the period in its name**
+Smoke: `e2e/taxReports.spec.ts`.
+On IMP-02's company: **CSV**.
+**Expected:** `retenciones-practicadas-<YYYY-MM>.csv` is saved; opened in Excel (es-CO) the accents read right, the
+columns are Mes, Tipo de retención, Tipo de documento, Número, DV, Proveedor, Impuesto, Tarifa, Base, Retención,
+Documentos, and each kind closes with its Total, Según libros and Diferencia lines.
+
+**IMP-07 · Only the owner and the accountant see the tax reports**
+Sign in as a *Facturación* user (invite one from Configuración › Usuarios).
+**Expected:** Reportes has no *Impuestos* entry; opening `/reportes/impuestos` says "Los reportes de impuestos son del
+administrador y del contador." with no tabs; an accountant sees and exports them.
+
+**IMP-08 · A period that ends before it starts is not asked for**
+Smoke: `e2e/taxReports.spec.ts`.
+*IVA* › *Hasta* › last month (with *Desde* this month).
+**Expected:** "El mes «Hasta» es anterior al mes «Desde»: elige un periodo en orden." and no table nor export
+buttons; choosing a *Hasta* after *Desde* brings the report back. A range of more than 12 months says so the same way.
+
+**IMP-09 · A bimester of IVA, kept across the tabs**
+*IVA* › *Desde* the previous month, *Hasta* this month (both with invoices) › tab *Retenciones practicadas* › back.
+**Expected:** the IVA adds both months' lines (one row per rate); the totals equal the sum of the invoices' IVA (open
+the facturas de venta and de compra of the two months); the period stays the same on every tab and in the address;
+*Retenciones practicadas* shows one table per month and kind, then *Totales del periodo* with Base, Retención, Según
+libros and Diferencia per kind.
+
+**IMP-10 · A voided invoice: left out, counted, and a void in a later month explained**
+Void (or *Corregir*) a factura de compra of this month with retenciones; then, on a company with a purchase of last
+month, void that one today.
+**Expected:** the same-month void: the invoice is gone from the report, "1 factura anulada en el periodo no se
+incluye." above the tables, and the books still agree. The later-month void: last month shows its retención only in the
+books, "Diferencia con los libros: $ …" emphasised (the words say it, not only the colour) and the footnote; this
+month shows the negative difference of the reversal; over both months *Totales del periodo* agree.
+
+**IMP-11 · The PDFs read as working papers, and "Ver facturas" finds the documents**
+Download the PDF of each tab (retenciones practicadas over two months, IVA over a bimester); then **Ver facturas** on a
+row.
+**Expected:** each PDF has the company frame, the title, the period ("Septiembre de 2026 a octubre de 2026"), the
+footnote of voided invoices when there are some, money as $ 1.234.567,89 and rates as "2,5 %"; every month and kind
+closes with Total, Según libros (account) and Diferencia; IVA ends with *Saldo a pagar* / *Saldo a favor*. **Ver
+facturas** opens the facturas de compra (or de venta) of that tercero in that month.
+
+**IMP-12 · Laptop and tablet, light and dark**
+Every tab of Impuestos with data, at laptop and tablet widths, in both themes.
+**Expected:** the filters wrap without overlapping; each table scrolls inside itself, the Acciones column last; the
+"Según libros" line stays under its table, right-aligned, readable in both themes; the warning colour of a difference
+keeps its contrast; the console has no errors.
+
 ## 21. Exógena working papers
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 9 exogena: cases EXO-01 – 08; smoke tests in
