@@ -20,7 +20,7 @@ use Symfony\Component\Uid\Uuid;
  *                                                                        account, else compra_mercancias (producto) or
  *                                                                        gasto_por_defecto (servicio)
  *     Dr IVA descontable                                                 the tax's purchase account, else iva_descontable
- *     Cr each retención practicada                                       the tax's purchase account, else its kind's concept
+ *     Cr each retención practicada (each of a line's, one per kind)      the tax's purchase account, else its kind's concept
  *     Cr each crédito payment                                            proveedores (the supplier's own account if it has one)
  *     Cr each contado payment                                            the payment method's account
  *
@@ -52,9 +52,12 @@ final class PurchaseInvoiceEntry
             if (!$isConsumption && $line->taxAmount()->isPositive()) {
                 self::add($vat, self::taxTarget($charge, PostingConcept::VatDeductible), Side::Debit, $line->taxAmount(), null);
             }
-            if ($line->withholdingAmount()->isPositive()) {
-                $withholding = $line->withholdingTax();
-                self::add($withholdings, self::taxTarget($withholding, self::withholdingConcept($withholding->kind())), Side::Credit, $line->withholdingAmount(), $supplier);
+            // One movement per retención account (observations PRD §5): each retención's share of Retenciones.
+            foreach ($line->withholdings() as $withholding) {
+                if ($withholding->amount()->isPositive()) {
+                    $tax = $withholding->tax();
+                    self::add($withholdings, self::taxTarget($tax, self::withholdingConcept($tax->kind())), Side::Credit, $withholding->amount(), $supplier);
+                }
             }
         }
 

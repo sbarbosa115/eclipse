@@ -28,7 +28,7 @@ final class DuplicateQuotationHandler implements CommandHandler
 
         $copy = new Quotation($command->companyId, $source->terceroId(), $source->terceroName(), $today, $today->modify(\sprintf('+%d days', $days)), $command->userId, $this->calendar->now());
         $copy->revise($source->terceroId(), $source->terceroName(), $source->contactId(), $source->responsibleId(), $today, $today->modify(\sprintf('+%d days', $days)), $source->header(), $source->terms(), $source->notes());
-        $copy->replaceLines(array_map(static fn (QuotationLine $l) => new InvoiceLineDraft($l->productId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTax()), $source->lines()));
+        $copy->replaceLines(array_map(static fn (QuotationLine $l) => new InvoiceLineDraft($l->productId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes()), $source->lines()));
         $this->quotations->add($copy);
 
         return $copy->id();

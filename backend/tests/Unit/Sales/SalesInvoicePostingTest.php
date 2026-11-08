@@ -134,6 +134,67 @@ final class SalesInvoicePostingTest extends TestCase
         self::assertContains(['debit', '9.66', $municipal->toRfc4122(), self::client()->toRfc4122()], self::rows(SalesInvoicePosting::linesFor($invoice, [])));
     }
 
+    public function testEachRetencionOfALineIsDebitedToItsOwnAccount(): void
+    {
+        // Observations PRD §5 and OBS-2: 1.000.000 + IVA 19 % with Retefuente 2,5 %, ReteICA 0,966 % and ReteIVA 15 %.
+        $invoice = self::draft();
+        $invoice->replaceLines([self::line('1', '1000000', '0', self::iva(), [
+            self::withholding('retefuente', '2.5000'),
+            self::withholding('reteica', '0.9660'),
+            self::withholding('reteiva', '15.0000'),
+        ])]);
+        $invoice->replacePayments([self::credit('1126840.00')]);
+        self::emit($invoice);
+
+        $lines = SalesInvoicePosting::linesFor($invoice, []);
+
+        $client = self::client()->toRfc4122();
+        self::assertSame([
+            ['debit', '1126840.00', 'clientes', $client],
+            ['debit', '25000.00', 'retefuente_sufrida', $client],
+            ['debit', '9660.00', 'reteica_sufrida', $client],
+            ['debit', '28500.00', 'reteiva_sufrida', $client],
+            ['credit', '1000000.00', 'ingreso', null],
+            ['credit', '190000.00', 'iva_generado', null],
+        ], self::rows($lines), 'One debit per retención account, with the client: 135515, 135518 and 135517 (ReteIVA on the IVA).');
+        self::assertSame('63160.00', $invoice->withholdingTotal()->toString());
+        self::assertSame('1190000.00', self::total($lines, Side::Debit));
+        self::assertSame('1190000.00', self::total($lines, Side::Credit));
+    }
+
+    public function testRetencionesOnSeveralLinesShareTheCentsAndAddUpPerAccount(): void
+    {
+        // Three lines of 333,33 with the same three retenciones: each pair is computed exactly (8,33325; 3,2199678;
+        // 9,499905), Retenciones is rounded once (63,16) and the 7 cents left over go to the largest remainders.
+        $own = Uuid::v7();
+        $retefuente = self::withholding('retefuente', '2.5000');
+        $reteica = self::withholding('reteica', '0.9660', $own);
+        $reteiva = self::withholding('reteiva', '15.0000');
+        $invoice = self::draft();
+        $invoice->replaceLines([
+            self::line('1', '333.33', '0', self::iva(), [$retefuente, $reteica, $reteiva]),
+            self::line('1', '333.33', '0', self::iva(), [$retefuente, $reteica, $reteiva]),
+            self::line('1', '333.33', '0', self::iva(), [$retefuente, $reteica, $reteiva]),
+        ]);
+        $invoice->replacePayments([self::credit('1126.83')]);
+        self::emit($invoice);
+
+        $shares = array_map(static fn ($l) => array_map(static fn ($w) => $w->amount()->toString(), $l->withholdings()), $invoice->lines());
+        self::assertSame([['8.34', '3.22', '9.50'], ['8.33', '3.22', '9.50'], ['8.33', '3.22', '9.50']], $shares, 'Largest remainder over every (line, retención) pair.');
+
+        $rows = self::rows(SalesInvoicePosting::linesFor($invoice, []));
+        $client = self::client()->toRfc4122();
+        self::assertSame([
+            ['debit', '1126.83', 'clientes', $client],
+            ['debit', '25.00', 'retefuente_sufrida', $client],
+            ['debit', '9.66', $own->toRfc4122(), $client],
+            ['debit', '28.50', 'reteiva_sufrida', $client],
+            ['credit', '999.99', 'ingreso', null],
+            ['credit', '190.00', 'iva_generado', null],
+        ], $rows, 'Grouped by account; the shares add up to Retenciones (63,16) to the cent.');
+        self::assertSame('63.16', $invoice->withholdingTotal()->toString());
+    }
+
     public function testNothingIsPostedForAZeroAmount(): void
     {
         $invoice = self::draft();
