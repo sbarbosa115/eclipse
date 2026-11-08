@@ -1,2 +1,2 @@
-// The órdenes de compra list (observations PRD §4.8): built by the "purchase-orders" item.
-export {};
+// Item 10 (purchase-orders): the órdenes de compra list with its filters and row actions.
+export {PurchaseOrderList} from './ui/PurchaseOrderList';

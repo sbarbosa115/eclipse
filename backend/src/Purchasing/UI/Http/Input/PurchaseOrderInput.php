@@ -2,6 +2,8 @@
 
 namespace App\Purchasing\UI\Http\Input;
 
+use App\Purchasing\Application\Command\PurchaseOrderContents;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /** A draft orden de compra (create and update): supplier, dates, lines as a purchase invoice's, no formas de pago. */
@@ -26,4 +28,15 @@ final class PurchaseOrderInput
     #[Assert\Valid]
     #[Assert\Count(max: 200)]
     public array $lines = [];
+
+    public function toContents(): PurchaseOrderContents
+    {
+        return new PurchaseOrderContents(
+            Uuid::fromString($this->terceroId),
+            new \DateTimeImmutable($this->issueDate),
+            null === $this->expectedDate || '' === $this->expectedDate ? null : new \DateTimeImmutable($this->expectedDate),
+            $this->notes,
+            array_map(static fn (PurchaseLineInput $l) => $l->toContents(), $this->lines),
+        );
+    }
 }

@@ -7,6 +7,7 @@ import {
   addLine,
   addPayment,
   applyProduct,
+  hasPayments,
   moveLine,
   removeLine,
   removePayment,
@@ -160,7 +161,7 @@ export function DocumentEditor({
       </section>
       <div className="doc-bottom">
         <div className="doc-bottom-main">
-          {kind !== 'quotation' && (
+          {hasPayments(kind) && (
             <PaymentsSection
               payments={value.payments}
               methods={options.methods}

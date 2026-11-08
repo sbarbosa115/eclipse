@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {listTaxes, type Tax} from '@/entities/product';
 import {listPaymentMethods, type PaymentMethod} from '../api/documentEditorApi';
+import {hasPayments} from './draft';
 import type {DocumentKind} from './types';
 
 export interface EditorOptions {
@@ -34,7 +35,7 @@ export function useEditorOptions(
     charge: Tax[];
     withholding: Tax[];
   } | null>(null);
-  const withPayments = kind !== 'quotation';
+  const withPayments = hasPayments(kind);
 
   useEffect(() => {
     let cancelled = false;

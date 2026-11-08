@@ -1,17 +1,23 @@
-import {useTranslation} from '@/shared/i18n';
-import {EmptyState, PageHeader} from '@/shared/ui';
+import {Route, Routes, useParams} from 'react-router-dom';
+import {PurchaseOrderEditor} from './PurchaseOrderEditor';
+import {PurchaseOrdersList} from './PurchaseOrdersList';
+
+/** Another order is another form: going from one to the next (duplicate) starts the editor afresh. */
+function EditorForRoute() {
+  const {id} = useParams();
+  return <PurchaseOrderEditor key={id ?? 'new'} />;
+}
 
 /**
- * Órdenes de compra (observations PRD §4.8). Placeholder of the contract (item 0): the "purchase-orders" item builds
- * the list, the editor and the detail under /ordenes-compra/*.
+ * Órdenes de compra (observations PRD §4.8): the list at /ordenes-compra, a new one at /ordenes-compra/nueva, one
+ * order at /ordenes-compra/:id.
  */
 export function PurchaseOrdersPage() {
-  const {t} = useTranslation();
-
   return (
-    <>
-      <PageHeader title={t('purchaseOrder.title')} />
-      <EmptyState>{t('purchaseOrder.comingSoon')}</EmptyState>
-    </>
+    <Routes>
+      <Route index element={<PurchaseOrdersList />} />
+      <Route path="nueva" element={<EditorForRoute />} />
+      <Route path=":id" element={<EditorForRoute />} />
+    </Routes>
   );
 }

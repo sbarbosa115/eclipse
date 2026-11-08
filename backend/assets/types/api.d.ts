@@ -1825,7 +1825,11 @@ export interface paths {
          */
         get: operations["get_app_purchasing_ui_http_purchaseorder_list"];
         put?: never;
-        /** A draft {tercero_id, issue_date, expected_date?, notes?, lines: [...as a purchase invoice's]} → 201. */
+        /**
+         * A draft {tercero_id, issue_date, expected_date?, notes?, lines: [{product_id | account_id, description, quantity,
+         *     unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind)}]} → 201. 422 `validation_failed`
+         *     by field path (`tercero_id`, `expected_date`, `lines[0].product_id`, `lines[0].withholdings`…).
+         */
         post: operations["post_app_purchasing_ui_http_purchaseorder_create"];
         delete?: never;
         options?: never;
@@ -1840,8 +1844,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** One order, whole. */
         get: operations["get_app_purchasing_ui_http_purchaseorder_show"];
-        /** Rewrites the draft. 409 document_not_draft. */
+        /** Rewrites the draft with the same body as create. 409 document_not_draft. */
         put: operations["put_app_purchasing_ui_http_purchaseorder_update"];
         post?: never;
         /** Deletes a draft → 204. 409 document_not_draft. */
@@ -1947,8 +1952,9 @@ export interface paths {
         put?: never;
         /**
          * Once, from emitted: a draft purchase invoice with the same supplier and lines, dated today, no supplier number
-         *     and no formas de pago → the order, now converted, with converted_invoice_id. 409 purchase_order_already_converted,
-         *     purchase_order_not_open; 422 validation_failed (the invoice's own violations).
+         *     and no formas de pago → the order, now converted, with converted_invoice_id (the invoice's purchase_order_id is
+         *     this order). 409 purchase_order_already_converted, purchase_order_not_open; 422 validation_failed (the invoice's
+         *     own violations, by field path): nothing is converted then.
          */
         post: operations["post_app_purchasing_ui_http_purchaseorder_convert"];
         delete?: never;

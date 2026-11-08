@@ -409,6 +409,12 @@ class PurchaseInvoice implements CompanyOwned
         return $this->purchaseOrderId;
     }
 
+    /** This draft was made by converting an orden de compra (observations PRD §4.8). */
+    public function convertedFromOrder(Uuid $orderId): void
+    {
+        $this->purchaseOrderId = $orderId;
+    }
+
     /**
      * A new draft of the same supplier with these lines, taxes and formas de pago, its due dates moved by $due.
      *

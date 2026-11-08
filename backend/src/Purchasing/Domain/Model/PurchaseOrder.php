@@ -2,6 +2,10 @@
 
 namespace App\Purchasing\Domain\Model;
 
+use App\Purchasing\Domain\Error\DocumentNotDraft;
+use App\Purchasing\Domain\Error\InvalidPurchaseOrder;
+use App\Purchasing\Domain\Error\PurchaseOrderAlreadyConverted;
+use App\Purchasing\Domain\Error\PurchaseOrderNotOpen;
 use App\Shared\Domain\Model\CompanyOwned;
 use App\Shared\Domain\Model\DocumentAuditColumns;
 use App\Shared\Domain\Model\DocumentTotalsColumns;
@@ -15,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
 /**
  * An orden de compra (observations PRD §4.8): what the company asks a supplier for, with a factura de compra's lines
  * and no formas de pago. Numbered from series OC at emission; posts nothing; converts once into a draft purchase
- * invoice. Contract only (item 0): its behaviour is the "purchase-orders" item's.
+ * invoice.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'purchase_order')]
@@ -141,5 +145,129 @@ class PurchaseOrder implements CompanyOwned
     public function lines(): array
     {
         return $this->lines->getValues();
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Draft
+
+    /** The header of a draft: supplier, fecha, fecha esperada de entrega and observaciones (plain text, trimmed). */
+    public function revise(Uuid $terceroId, string $terceroName, \DateTimeImmutable $issueDate, ?\DateTimeImmutable $expectedDate, ?string $notes): void
+    {
+        $this->assertDraft();
+        $issueDate = $issueDate->setTime(0, 0);
+        $expectedDate = $expectedDate?->setTime(0, 0);
+        if (null !== $expectedDate && $expectedDate < $issueDate) {
+            throw InvalidPurchaseOrder::field('expected_date', 'The expected delivery cannot be before the order date.');
+        }
+        $this->terceroId = $terceroId;
+        $this->terceroName = $terceroName;
+        $this->issueDate = $issueDate;
+        $this->expectedDate = $expectedDate;
+        $notes = null === $notes ? '' : trim($notes);
+        $this->notes = '' === $notes ? null : $notes;
+    }
+
+    /**
+     * Replaces every line (in this order) and recomputes the totals.
+     *
+     * @param list<PurchaseLineDraft> $lines
+     */
+    public function replaceLines(array $lines): void
+    {
+        $this->assertDraft();
+        $this->lines->clear();
+        foreach ($lines as $i => $line) {
+            $added = new PurchaseOrderLine($this, $this->companyId, $i + 1, $line->productId, $line->accountId, trim($line->description), $line->quantity, $line->unitPrice, $line->discount, $line->chargeTax, $line->withholdings);
+            $added->useProductCode($line->productCode);
+            $this->lines->add($added);
+        }
+        $this->recomputeTotals($this->lines);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Emission
+
+    /** What emission needs of the draft: a line and a date that is not in the future. */
+    public function assertEmittable(\DateTimeImmutable $today): void
+    {
+        $this->assertDraft();
+        $violations = [];
+        if ($this->lines->isEmpty()) {
+            $violations[] = ['field' => 'lines', 'message' => 'Add at least one line.'];
+        }
+        if ($this->issueDate->format('Y-m-d') > $today->format('Y-m-d')) {
+            $violations[] = ['field' => 'issue_date', 'message' => 'The order date cannot be in the future.'];
+        }
+        if ([] !== $violations) {
+            throw new InvalidPurchaseOrder($violations);
+        }
+    }
+
+    /** Emits the draft with the number series OC gave it: frozen from now on. It has no accounting effect. */
+    public function emit(string $prefix, int $sequence, \DateTimeImmutable $today, Uuid $by, \DateTimeImmutable $at): void
+    {
+        $this->assertEmittable($today);
+        $this->prefix = $prefix;
+        $this->sequence = $sequence;
+        $this->number = '' === $prefix ? (string) $sequence : $prefix.'-'.$sequence;
+        $this->status = PurchaseOrderStatus::Emitted;
+        $this->recordEmission($by, $at);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // After emission
+
+    /** Whether the order is out to the supplier and still waiting: emitted, not converted, not voided. */
+    public function isOpen(): bool
+    {
+        return PurchaseOrderStatus::Emitted === $this->status;
+    }
+
+    /** Voids an emitted order, with a reason; it keeps its number and has nothing to reverse. */
+    public function void(string $reason, Uuid $by, \DateTimeImmutable $at): void
+    {
+        $this->assertOpen();
+        $reason = trim($reason);
+        if ('' === $reason) {
+            throw InvalidPurchaseOrder::field('reason', 'Write the reason for the void.');
+        }
+        $this->status = PurchaseOrderStatus::Voided;
+        $this->recordVoid($by, $at, mb_substr($reason, 0, 500));
+    }
+
+    /**
+     * Whether it may become an invoice: once, and only while it stands (emitted).
+     *
+     * @throws PurchaseOrderAlreadyConverted
+     * @throws PurchaseOrderNotOpen
+     */
+    public function assertConvertible(): void
+    {
+        if (null !== $this->convertedInvoiceId) {
+            throw new PurchaseOrderAlreadyConverted();
+        }
+        $this->assertOpen();
+    }
+
+    /** The draft invoice that was made from it: the order is converted and keeps the invoice's id. */
+    public function convertedTo(Uuid $invoiceId): void
+    {
+        $this->assertConvertible();
+        $this->convertedInvoiceId = $invoiceId;
+        $this->status = PurchaseOrderStatus::Converted;
+    }
+
+    private function assertDraft(): void
+    {
+        if (PurchaseOrderStatus::Draft !== $this->status) {
+            throw new DocumentNotDraft();
+        }
+    }
+
+    private function assertOpen(): void
+    {
+        if (PurchaseOrderStatus::Emitted !== $this->status) {
+            throw new PurchaseOrderNotOpen();
+        }
     }
 }

@@ -289,6 +289,8 @@ const TONES: Record<string, string> = {
   partially_paid: 'accent',
   paid: 'success',
   accepted: 'success',
+  // An orden de compra's answer is the invoice it became.
+  converted: 'success',
   rejected: 'neutral',
   expired: 'neutral',
   voided: 'neutral',

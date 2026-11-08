@@ -9,6 +9,8 @@ export {
   emptyDraft,
   emptyLine,
   hasErrors,
+  hasPayments,
+  isPurchase,
   isBlankLine,
   moveLine,
   paymentBalance,

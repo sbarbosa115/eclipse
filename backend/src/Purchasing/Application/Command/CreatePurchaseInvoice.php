@@ -11,6 +11,8 @@ final readonly class CreatePurchaseInvoice
         public Uuid $companyId,
         public Uuid $userId,
         public PurchaseInvoiceContents $contents,
+        /** The orden de compra this draft is converted from (observations PRD §4.8), if any. */
+        public ?Uuid $purchaseOrderId = null,
     ) {
     }
 }

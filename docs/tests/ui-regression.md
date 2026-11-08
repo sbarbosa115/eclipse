@@ -2010,3 +2010,112 @@ keeps its contrast; the console has no errors.
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 10 purchase-orders: cases OC-01 – 14; smoke tests in
 `backend/e2e/purchaseOrder.spec.ts`. -->
 
+Órdenes de compra at **`/ordenes-compra`** (Compras › Órdenes de compra). An order asks a supplier for goods or services;
+it has a factura de compra's lines (product **or** expense account, taxes, retenciones) and no formas de pago, takes
+its number from series OC at emission, posts nothing and converts once into a draft factura de compra. Data, unless a
+case says otherwise: the owner of a company, a supplier **Papelería Andina S.A.S.** with a billing e-mail, and an
+emitted OC-1 with one line of 2 × $ 500.000 by account 513595 with IVA 19 % (total $ 1.190.000,00), expected in 10 days.
+
+**OC-01 · A company without orders is told what the section is for**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+A brand-new company › **Órdenes de compra** › **Nueva orden de compra**.
+**Expected:** the list says "Aún no has hecho órdenes de compra…" with **Crear la primera orden de compra**; the new
+form has *Tipo* "Orden de compra", *Proveedor*, *Entrega esperada* and the lines grid, and **no** *Formas de pago*;
+**Guardar**, **Emitir** and **Emitir y enviar** are there; no console errors.
+
+**OC-02 · An order is saved, emitted as OC-1 and posts nothing**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+Nueva orden de compra: choose the supplier, set *Entrega esperada* in 10 days, a line by account 513595 ("Mantenimiento de
+equipos", 2 × 500.000, IVA 19 %), **Guardar**, then **Emitir** and confirm.
+**Expected:** "Borrador guardado." and the page becomes "Orden de compra · borrador"; after confirming, "Orden de compra
+OC-1 emitida.", the title "Orden de compra OC-1", "Esta orden de compra ya fue emitida: no se puede modificar…", no
+**Guardar**, *Entrega esperada* kept; Reportes › Libro diario has no entry; the page has no *Contabilización* tab.
+
+**OC-03 · Nothing is emitted without a supplier or a line**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+Nueva orden de compra › **Emitir** with the form empty.
+**Expected:** no confirmation dialog; "Revisa los campos marcados." with the supplier and the lines marked.
+
+**OC-04 · Emitir y enviar mails the PDF to the supplier**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+A saved draft › **Emitir y enviar**.
+**Expected:** the dialog says "enviaremos el PDF al correo del proveedor"; after confirming, "Orden de compra OC-1
+emitida; el correo con el PDF va en camino."; Mailpit has "Orden de compra OC-1 de <empresa>" to the supplier's address
+with the PDF attached. On an emitted order, **Enviar** says "El correo con el PDF de la orden de compra OC-1 va en
+camino." and a supplier without e-mail gets "El proveedor no tiene correo…" for both buttons.
+
+**OC-05 · The list shows the orders and filters by status**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+With OC-1 emitted and a second order as a draft: Órdenes de compra.
+**Expected:** OC-1's row shows the supplier, *Emitida*, the dates, the entrega esperada and $ 1.190.000, with **PDF**,
+**Duplicar**, **Enviar**, **Anular**; the draft's row says *Borrador*, **Editar**; *Estado* offers Borrador, Emitida,
+Convertida and Anulada; filtering Anulada shows "Ninguna orden de compra coincide con estos filtros." and **Ver todo**
+brings everything back; searching "OC-1" or "Andina" finds the order; the filters stay in the address.
+
+**OC-06 · The PDF is a document the supplier can read**
+Smoke (part): `e2e/purchaseOrder.spec.ts` checks it is a PDF; by hand: its content.
+OC-1 › **Descargar PDF**.
+**Expected:** the company's header and logo, "Orden de compra No. OC-1", the supplier with its NIT, the fecha de la orden
+and *Entrega esperada*, the lines with their *Código* (when by product), impuesto and retenciones, the totals with each
+retención's base, the observaciones; a draft prints **BORRADOR** and a voided order **ANULADA**; text typed with `<b>`
+shows as characters.
+
+**OC-07 · Duplicating opens a new draft dated today**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 › **Duplicar** (also from a voided or converted order).
+**Expected:** "Se creó un borrador nuevo a partir de la orden de compra." on a draft with the same supplier and lines,
+dated today, the entrega esperada keeping its distance from the order date, and no number.
+
+**OC-08 · An emitted order is voided with a reason**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 › **Anular** › confirm with the reason empty, then write "El proveedor ya no vende".
+**Expected:** "Escribe el motivo de la anulación." first; then "Orden de compra OC-1 anulada.", *Anulada el … Motivo: El
+proveedor ya no vende*, no **Anular** or **Convertir en factura**; the order keeps OC-1 and Libro diario is still empty.
+
+**OC-09 · Converting makes a draft purchase invoice with the same lines and no number**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 › **Convertir en factura** › confirm.
+**Expected:** the dialog says the order converts once; the page opens a *Factura de compra (borrador)* ("Se creó este
+borrador de factura a partir de la orden de compra OC-1…") with the same supplier, the line (2 × 500.000, IVA 19 %), an
+empty *Número de factura del proveedor*, today's date and no formas de pago; the totals equal the order's; Libro diario
+is still empty. Completing the supplier's number and a forma de pago and emitting the invoice works as for any draft
+(its FC number is taken then).
+
+**OC-10 · An order converts once and links to its invoice**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+OC-1 after OC-09.
+**Expected:** the order is *Convertida*; "La orden de compra se convirtió en factura." with **Ver la factura** (opens the
+draft or the emitted invoice, which shows its *orden de compra*); no **Convertir en factura**, **Anular** or **Enviar**;
+in the list the row says *Convertida*. A second conversion by API answers 409 `purchase_order_already_converted`.
+
+**OC-11 · What the invoice refuses is listed and nothing is converted**
+Smoke: `e2e/purchaseOrder.spec.ts`.
+Deactivate the supplier (Terceros), then OC-1 › **Convertir en factura** › confirm. By hand also: deactivate the product
+or the IVA of the line instead.
+**Expected:** "No se pudo convertir la orden de compra" lists "Este tercero está inactivo." (or "Línea 1: Este producto está
+inactivo."); the order is still *Emitida* with **Convertir en factura**; Facturas de compra has no new draft.
+Reactivating the supplier lets it convert.
+
+**OC-12 · Several retenciones and the product code travel to the invoice**
+By hand (the line's tax dialog).
+An order whose line is a product (e.g. RES-01 · Resma carta) with ReteFuente 2,5 % **and** ReteICA, emitted; then rename
+the product to RES-99; convert.
+**Expected:** the order's totals panel lists both retenciones by tax; the draft invoice has both in the line's
+*Retenciones* cell, the same withholding total and net total, and the line's *Código* column says RES-01 (the order's
+snapshot), also on the order's PDF.
+
+**OC-13 · The OC series is edited in Configuración › Numeración**
+By hand.
+Configuración › Resolución/Numeración: the *Orden de compra* row says prefix OC and next number 1 (2 after OC-1). Change
+the prefix to "ORD" and the next number to 50, then emit another draft.
+**Expected:** the row *Orden de compra* is listed with the other series and saves ("Guardamos la numeración."); the next
+order is "ORD-50"; moving the next number below the current one is refused.
+
+**OC-14 · The screens at laptop and tablet widths, light and dark**
+By hand.
+The list, a draft, an emitted order, a converted one, the void dialog and the conversion dialog at 1366 px and 768 px,
+in both themes.
+**Expected:** nothing overflows; the tables keep **Acciones** as their last column; the form is the same shared document
+form as a factura de compra's (without formas de pago); every message is in Spanish; focus returns to the button that
+opened a dialog.
+
