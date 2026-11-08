@@ -1589,6 +1589,57 @@ each reads title, figure, detail line and, at its foot, its link (*Ver cartera*)
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 4 terceros-city: cases CIU-01 – 09; smoke tests in
 `backend/e2e/terceroCity.spec.ts`. -->
 
+**CIU-01 · A Colombian tercero asks for its municipio before saving**
+Terceros › **Nuevo tercero**, fill the identification, the razón social and a role, leave *Municipio* empty › **Crear
+tercero**. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** "Elige el municipio." under *Municipio*, nothing is saved and the form stays open. *País* is Colombia by
+default.
+
+**CIU-02 · The municipio is chosen by name and becomes the city**
+Type "Medell" in *Municipio* › choose "Antioquia › Medellín (05001)" › **Crear tercero**. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** the box shows "Antioquia › Medellín (05001)"; the list's *Ciudad* column says MEDELLÍN for the new tercero;
+no "sin municipio" banner.
+
+**CIU-03 · The municipio is also found by its code**
+Type "11001" in *Municipio*. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** "Bogotá, D.C. › Bogotá, D.C. (11001)" is offered; fewer than two characters say "Escribe al menos 2
+caracteres."; a nonsense word says "Ningún municipio coincide.".
+
+**CIU-04 · A tercero abroad has a city, not a municipio**
+*País* › Estados Unidos. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** *Municipio* is replaced by *Ciudad*; saving it empty says "Escribe la ciudad."; with "Miami" it is saved and
+the list shows Miami. Switching back to Colombia asks for the municipio again.
+
+**CIU-05 · An edited tercero reopens with its municipio**
+Open the tercero of CIU-02 › **Editar**, change the municipio to Bogotá › **Guardar tercero**. Smoke:
+`e2e/terceroCity.spec.ts`.
+**Expected:** the box first shows "Antioquia › Medellín (05001)"; after saving, "Cambios guardados." and the list's
+*Ciudad* is BOGOTÁ, D.C.. The export of personal data (Ley 1581) lists *country_code*, *municipality_code* and the names.
+
+**CIU-06 · Terceros created before this release are counted and listed**
+On a company with terceros created before the release (the demo company after the migration): Terceros.
+**Expected:** a warning "N terceros sin municipio · Ver" above the filters; **Ver** lists only those (their *Ciudad* says
+"Sin municipio" unless they had one typed) and the warning offers **Ver todos**; opening one and saving without a
+municipio is refused; saving it with one takes it off the list, and the warning disappears with the last one. A foreign
+tercero without municipio is never counted.
+
+**CIU-07 · Quick-create from a document asks País and Municipio**
+Nueva factura de venta › type a name in *Cliente* › **+ Crear nuevo**.
+**Expected:** the modal has *País* (Colombia) and *Municipio* after the identification fields; without a municipio
+"Elige el municipio." appears and nothing is created; with one, the tercero is created and selected. The municipio list
+floats over the modal and is not cut off.
+
+**CIU-08 · The company profile asks for País and Municipio**
+Configuración › Empresa › **Guardar cambios** on a company that has no municipio. Smoke: `e2e/terceroCity.spec.ts`.
+**Expected:** "Elige el municipio." under *Municipio*; with Medellín it saves and, after reloading, the box shows it. A
+company with another *País* asks for *Ciudad* instead. The city on the PDFs is the municipality's name.
+
+**CIU-09 · The screens on a laptop and a tablet, in both themes**
+At 1366×768 and 768×1024, Tema Claro and Oscuro: the tercero form (País and Municipio next to Dirección), the quick-create
+modal, the company profile, the terceros list with the warning.
+**Expected:** País and Municipio share a row on a laptop and stack on a tablet; the municipio list is readable in both
+themes; the warning keeps its contrast; the console has no errors.
+
 ## 17. The product code on documents
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 5 product-code: cases COD-01 – 05; smoke tests in

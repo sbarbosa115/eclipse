@@ -2,8 +2,8 @@
 
 namespace App\Company\UI\Http\Output;
 
-use App\Shared\Application\Geo\MunicipalityView;
 use App\Company\Application\Query\CompanyView;
+use App\Shared\Application\Geo\MunicipalityView;
 
 /** The company's profile (§4.1). */
 final readonly class CompanyOutput

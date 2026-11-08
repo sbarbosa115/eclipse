@@ -1,5 +1,6 @@
 import type {Page} from '@playwright/test';
 import {consoleErrors, expect, test} from './support/test';
+import {pickMunicipality} from './support/municipality';
 
 // Cases CO-01 – 19 of docs/tests/ui-regression.md (item 2 "company"): Configuración › Empresa and Resolución. CO-10
 // (other roles read only, needs the Usuarios tab), CO-18 and CO-19 (need emitted sales invoices) are run by hand.
@@ -90,7 +91,7 @@ test('CO-02 · the owner edits the profile and it is kept', async ({
   await page.getByLabel('Razón social').fill('Mi Empresa Ltda.');
   await page.getByLabel(/^Nombre comercial/).fill('Mi Empresa');
   await page.getByLabel(/^Dirección/).fill('Calle 1 # 2-3');
-  await page.getByLabel(/^Ciudad/).fill('Bogotá');
+  await pickMunicipality(page);
   await page.getByLabel(/^Teléfono/).fill('6011234567');
   await page.getByLabel(/^Correo electrónico/).fill('contacto@miempresa.co');
   await page.getByRole('button', {name: 'Guardar cambios'}).click();
@@ -100,7 +101,9 @@ test('CO-02 · the owner edits the profile and it is kept', async ({
 
   await page.reload();
   await expect(page.getByLabel('Razón social')).toHaveValue('Mi Empresa Ltda.');
-  await expect(page.getByLabel(/^Ciudad/)).toHaveValue('Bogotá');
+  await expect(page.getByLabel('Municipio')).toHaveValue(
+    'Antioquia › Medellín (05001)',
+  );
   await expect(page.getByLabel(/^Correo electrónico/)).toHaveValue(
     'contacto@miempresa.co',
   );
@@ -113,6 +116,7 @@ test('CO-03 · the DV is computed when empty and may be typed', async ({
   await newCompany('Perfil');
   await openCompany(page);
 
+  await pickMunicipality(page);
   await page.getByLabel(/^DV/).fill('');
   await page.getByRole('button', {name: 'Guardar cambios'}).click();
   await expect(
@@ -138,6 +142,7 @@ test('CO-04 · a NIT another company has is refused', async ({
   await openCompany(page);
 
   await page.getByLabel('Número de identificación').fill(first.nit);
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Guardar cambios'}).click();
 
   await expect(
@@ -168,6 +173,7 @@ test('CO-06 · régimen and responsabilidades fiscales are kept', async ({
   await page.getByLabel('Régimen de IVA').selectOption('simple');
   await page.getByLabel(/O-13 Gran contribuyente/).check();
   await page.getByLabel(/O-15 Autorretenedor/).check();
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Guardar cambios'}).click();
   await expect(
     page.getByText('Guardamos los datos de la empresa.'),
@@ -204,6 +210,7 @@ test('CO-07 · default taxes come from the active taxes of their class', async (
 
   await charge.selectOption({label: 'IVA 5 %'});
   await withholding.selectOption({label: 'ReteFuente servicios 4 %'});
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Guardar cambios'}).click();
   await expect(
     page.getByText('Guardamos los datos de la empresa.'),

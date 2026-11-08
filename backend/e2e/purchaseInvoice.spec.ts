@@ -52,6 +52,7 @@ async function accountId(page: Page, code: string): Promise<string> {
 /** A supplier, Servicios Andinos S.A.S. */
 async function seedSupplier(page: Page): Promise<string> {
   const tercero = (await api(page, 'POST', '/terceros', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: '800197268',

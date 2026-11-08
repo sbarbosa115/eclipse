@@ -1,5 +1,6 @@
 import {expect, test, consoleErrors} from './support/test';
 import type {Page} from '@playwright/test';
+import {pickMunicipality} from './support/municipality';
 
 // Cases TER-01 – 19 of docs/tests/ui-regression.md (item 5 "terceros"). The ones with a smoke line there run here.
 
@@ -13,6 +14,7 @@ async function createCompany(
   await page.getByLabel('Número de identificación').fill(nit);
   await page.getByLabel('Razón social').fill(name);
   await page.getByRole('checkbox', {name: role, exact: true}).check();
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Crear tercero'}).click();
   await expect(page.getByText(`Tercero ${name} creado.`)).toBeVisible();
 }
@@ -34,6 +36,7 @@ test('TER-01 · the first tercero is a company with its DV computed', async ({
   await page.getByLabel('Número', {exact: true}).fill('6011234567');
   await page.getByRole('button', {name: 'Agregar contacto'}).click();
   await page.getByLabel('Nombre del contacto').fill('Pedro Ruiz');
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Crear tercero'}).click();
 
   await expect(
@@ -58,6 +61,7 @@ test('TER-02 · a person has nombres and a cédula, with no DV', async ({
   await page.getByLabel('Nombres').fill('Ana María');
   await page.getByLabel('Apellidos').fill('Pérez Soto');
   await page.getByRole('checkbox', {name: 'Empleado'}).check();
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Crear tercero'}).click();
 
   const row = page.getByRole('row', {name: /Ana María Pérez Soto/});
@@ -75,6 +79,7 @@ test('TER-03 · the same identification twice is refused on its field', async ({
   await page.getByLabel('Número de identificación').fill('800.197.268');
   await page.getByLabel('Razón social').fill('Segunda S.A.S.');
   await page.getByRole('checkbox', {name: 'Cliente'}).check();
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Crear tercero'}).click();
 
   await expect(
@@ -93,6 +98,7 @@ test('TER-04 · the form says what is missing before saving', async ({
 
   await expect(page.getByText('Este campo es obligatorio.')).toHaveCount(2);
   await expect(page.getByText('Elige al menos un rol.')).toBeVisible();
+  await expect(page.getByText('Elige el municipio.')).toBeVisible();
 });
 
 test('TER-05 · the list searches, filters and offers a way back', async ({
@@ -130,13 +136,13 @@ test('TER-06 · a tercero is edited and the change is kept', async ({
 
   await page.goto('/terceros');
   await page.getByRole('link', {name: 'Editar'}).click();
-  await page.getByLabel('Ciudad').fill('Medellín');
+  await page.getByLabel('Nombre comercial').fill('Andina');
   await page.getByLabel('DV').fill('9');
   await page.getByRole('button', {name: 'Guardar tercero'}).click();
   await expect(page.getByText('Cambios guardados.')).toBeVisible();
 
   await page.reload();
-  await expect(page.getByLabel('Ciudad')).toHaveValue('Medellín');
+  await expect(page.getByLabel('Nombre comercial')).toHaveValue('Andina');
   await expect(page.getByLabel('DV')).toHaveValue('9');
 });
 
@@ -191,6 +197,7 @@ test('TER-09 · personal data is erased on request and the row stays', async ({
   await page.getByLabel('Nombres').fill('Ana');
   await page.getByRole('checkbox', {name: 'Cliente'}).check();
   await page.getByLabel(/^Correo electrónico/).fill('ana@mail.co');
+  await pickMunicipality(page);
   await page.getByRole('button', {name: 'Crear tercero'}).click();
   await expect(page.getByText('Tercero Ana creado.')).toBeVisible();
 

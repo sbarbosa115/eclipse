@@ -57,6 +57,7 @@ async function seed(
 ): Promise<{client: string; product: string; email: string}> {
   const email = `cotizaciones-${nit}@andina.co`;
   const client = await api(page, 'POST', '/terceros/quick', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: String(Number(nit) + 7),
@@ -158,6 +159,7 @@ test('COT-02 · a quotation is saved with its own fields, emitted as C-1 and pos
   const errors = consoleErrors(page);
   await seed(page, nit);
   await api(page, 'POST', '/terceros/quick', {
+    municipality_code: '11001',
     person_type: 'persona',
     identification_type: 'cc',
     identification_number: '1010101010',

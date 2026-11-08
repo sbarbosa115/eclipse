@@ -1,6 +1,7 @@
 import './company.css';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {can, useSession} from '@/entities/session';
+import {PlaceFields, placeLabels} from '@/entities/municipality';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {
@@ -96,6 +97,12 @@ export function CompanySettings() {
       found['legal_name'] = t('company.errors.required');
     if (form.identification_number.trim() === '')
       found['identification_number'] = t('company.errors.required');
+    if (form.country_code === 'CO') {
+      if (form.municipality_code === '')
+        found['municipality_code'] = t('company.geo.errors.municipality');
+    } else if (form.city.trim() === '') {
+      found['city'] = t('company.geo.errors.city');
+    }
     setErrors(found);
     setNotice(null);
     if (Object.keys(found).length > 0) return;
@@ -251,13 +258,12 @@ export function CompanySettings() {
               >
                 <input maxLength={200} {...text('address')} />
               </Field>
-              <Field
-                label={t('company.fields.city')}
-                error={errors['city']}
-                optional
-              >
-                <input maxLength={100} {...text('city')} />
-              </Field>
+              <PlaceFields
+                value={form}
+                errors={errors}
+                onChange={change}
+                labels={placeLabels(t, 'company.geo')}
+              />
               <Field
                 label={t('company.fields.phone')}
                 error={errors['phone']}

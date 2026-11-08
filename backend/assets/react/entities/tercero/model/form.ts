@@ -1,3 +1,4 @@
+import {titleCase} from '@/shared/lib';
 import type {
   QuickTerceroPayload,
   Role,
@@ -66,6 +67,10 @@ export interface TerceroForm {
   business_name: string;
   trade_name: string;
   city: string;
+  country_code: string;
+  municipality_code: string;
+  /** What the picker shows for `municipality_code`. */
+  municipality_label: string;
   address: string;
   phones: PhoneForm[];
   billing_contact_name: string;
@@ -96,6 +101,9 @@ export function emptyForm(role?: Role): TerceroForm {
     business_name: '',
     trade_name: '',
     city: '',
+    country_code: 'CO',
+    municipality_code: '',
+    municipality_label: '',
     address: '',
     phones: [],
     billing_contact_name: '',
@@ -123,7 +131,10 @@ export function formFromTercero(t: Tercero): TerceroForm {
     last_names: t.last_names ?? '',
     business_name: t.business_name ?? '',
     trade_name: t.trade_name ?? '',
-    city: t.city ?? '',
+    city: t.country_code === 'CO' ? '' : (t.city ?? ''),
+    country_code: t.country_code,
+    municipality_code: t.municipality_code ?? '',
+    municipality_label: municipalityLabelOf(t),
     address: t.address ?? '',
     phones: t.phones.map((p) => ({
       indicative: p.indicative,
@@ -149,6 +160,18 @@ export function formFromTercero(t: Tercero): TerceroForm {
   };
 }
 
+/** "Antioquia › Medellín (05001)" for a saved tercero, '' while it has no municipality. */
+function municipalityLabelOf(t: Tercero): string {
+  if (t.municipality_code === null) return '';
+  const place = [t.department_name, t.municipality_name]
+    .filter((part) => part)
+    .map((part) => titleCase(part as string))
+    .join(' › ');
+  return place === ''
+    ? t.municipality_code
+    : `${place} (${t.municipality_code})`;
+}
+
 const blank = (value: string): string | null => {
   const text = value.trim();
   return text === '' ? null : text;
@@ -171,7 +194,10 @@ export function toPayload(form: TerceroForm): TerceroPayload {
     last_names: company ? null : blank(form.last_names),
     business_name: company ? blank(form.business_name) : null,
     trade_name: blank(form.trade_name),
-    city: blank(form.city),
+    city: form.country_code === 'CO' ? null : blank(form.city),
+    country_code: form.country_code,
+    municipality_code:
+      form.country_code === 'CO' ? blank(form.municipality_code) : null,
     address: blank(form.address),
     phones: form.phones
       .filter((p) => p.number.trim() !== '')
@@ -209,6 +235,10 @@ export interface QuickForm {
   business_name: string;
   email: string;
   roles: string[];
+  country_code: string;
+  municipality_code: string;
+  municipality_label: string;
+  city: string;
 }
 
 export function emptyQuickForm(role?: Role): QuickForm {
@@ -222,6 +252,10 @@ export function emptyQuickForm(role?: Role): QuickForm {
     business_name: '',
     email: '',
     roles: role ? [role] : [],
+    country_code: 'CO',
+    municipality_code: '',
+    municipality_label: '',
+    city: '',
   };
 }
 
@@ -238,6 +272,10 @@ export function toQuickPayload(form: QuickForm): QuickTerceroPayload {
     business_name: company ? blank(form.business_name) : null,
     email: form.email.trim(),
     roles: form.roles,
+    country_code: form.country_code,
+    municipality_code:
+      form.country_code === 'CO' ? blank(form.municipality_code) : null,
+    city: form.country_code === 'CO' ? null : blank(form.city),
   };
 }
 
@@ -269,6 +307,12 @@ export function validateForm(
     errors['email'] = 'email';
   }
   if (form.roles.length === 0) errors['roles'] = 'roles';
+  if (form.country_code === 'CO') {
+    if (form.municipality_code === '')
+      errors['municipality_code'] = 'municipality';
+  } else if (form.city.trim() === '') {
+    errors['city'] = 'city';
+  }
   if ('contacts' in form) {
     form.contacts.forEach((c, i) => {
       if (c.name.trim() === '') errors[`contacts[${i}].name`] = 'required';
