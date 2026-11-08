@@ -80,7 +80,6 @@ final class ContractTest extends ApiTestCase
         $id = '0190f0d4-0000-7000-8000-000000000000';
         yield 'purchase orders' => ['GET', '/api/v1/purchase-orders', 'purchase-orders'];
         yield 'convert an order' => ['POST', "/api/v1/purchase-orders/$id/convert", 'purchase-orders'];
-        yield 'correct a purchase invoice' => ['POST', "/api/v1/purchase-invoices/$id/correct", 'purchase-correct'];
         yield 'retenciones practicadas' => ['GET', '/api/v1/reports/taxes/withholdings/practiced', 'tax-reports'];
         yield 'IVA' => ['GET', '/api/v1/reports/taxes/vat', 'tax-reports'];
         yield 'exógena 1001' => ['GET', '/api/v1/reports/taxes/exogena/1001', 'exogena'];

@@ -17,6 +17,8 @@ final readonly class PurchaseInvoiceSummary
         public string $netTotal,
         public string $paidAmount,
         public string $balance,
+        /** The draft or invoice that corrects this voided one (Corregir). */
+        public ?string $correctedById = null,
     ) {
     }
 }

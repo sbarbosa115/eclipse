@@ -2855,7 +2855,7 @@
         },
         "/api/v1/purchase-invoices/{id}/correct": {
             "post": {
-                "summary": "Corregir (observations PRD \u00a74.6): {reason}. In one transaction voids the emitted invoice as /void does and opens\nan editable copy with the same supplier number, lines, formas de pago and files \u2192 201 the new draft. 409\n`document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.",
+                "summary": "Corregir (observations PRD \u00a74.6): {reason}. In one transaction voids the emitted invoice as /void does and opens\nan editable copy with the same supplier number, dates, notes, lines, formas de pago and files \u2192 201 the new draft\n(`corrected_from_id`; the voided one gets `corrected_by_id` and the reason \"Corregida: <reason>\"). 409\n`document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.",
                 "operationId": "post_app_purchasing_ui_http_purchaseinvoice_correct",
                 "parameters": [
                     {
@@ -6307,6 +6307,12 @@
                     "balance": {
                         "title": "What is still owed: total neto \u2212 paid; 0 on a voided invoice.",
                         "type": "string"
+                    },
+                    "corrected_by_id": {
+                        "title": "The invoice that corrects this voided one (Corregir, observations PRD \u00a74.6): the list's \"Corregida\" hint links to it.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                     }
                 },
                 "type": "object"

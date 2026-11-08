@@ -1867,6 +1867,54 @@ failed load shows "No pudimos cargar el asiento de este documento." with **Reint
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 7 purchase-correct: cases COR-01 – 06; smoke tests in
 `backend/e2e/purchaseCorrect.spec.ts`. -->
 
+An emitted factura de compra is never edited: *Corregir* voids it (reversing entry dated today) and opens an editable
+copy with the same supplier number, dates, lines, retenciones, formas de pago and files, in one step. Data: an emitted
+FC-1 from Servicios Andinos S.A.S., supplier number FAC-881, a service of $ 1.000.000 on 513595 with IVA 19 % and
+ReteFuente servicios 4 %, on credit ($ 1.150.000,00), with the supplier's PDF attached.
+
+**COR-01 · Corregir voids an emitted invoice and opens an editable copy**
+Compras › Facturas de compra › FC-1. Read the banner, click **Corregir**, click **Anular y corregir** with *Qué se
+corrige* empty, then write "Valor mal digitado" and confirm. Smoke: `e2e/purchaseCorrect.spec.ts`.
+**Expected:** the banner reads "Una factura emitida no se edita. Corregir la anula y abre una copia editable." with the
+**Corregir** button; the empty reason shows "Escribe qué se corrige." and nothing is sent; on confirming, the page
+moves to a draft ("Factura FC-1 anulada. Corrige este borrador y emítelo.") with FAC-881, the same issue and due dates,
+the line with both taxes, the forma de pago *Crédito* $ 1.150.000,00 and the supplier's PDF under *Archivos del
+proveedor*; "Ver la factura original" opens FC-1, now *Anulada* ("Anulada: Corregida: Valor mal digitado"), without the
+**Corregir** button and with "Ver la factura que la reemplaza".
+
+**COR-02 · The copy is emitted again under the same supplier number**
+On the copy of COR-01, change the unit price to 1.100.000, adjust the forma de pago to the new total neto and
+**Emitir**. Smoke (part): `e2e/purchaseCorrect.spec.ts` emits the copy unchanged; by hand: the edit first.
+**Expected:** "Factura FC-2 emitida y contabilizada."; FAC-881 is accepted (no "Ya registraste una factura de este
+proveedor con este número."); FC-1 keeps its number. Reportes › Libro diario shows FC-1's entry, its reversal dated today
+and FC-2's entry. A new factura de compra from the same supplier with FAC-881 is refused under the supplier number field.
+
+**COR-03 · The list marks the corrected invoice and links to its replacement**
+Compras › Facturas de compra. Smoke: `e2e/purchaseCorrect.spec.ts`.
+**Expected:** FC-1's row is *Anulada* with a small "Corregida" link under its number that opens the copy (FC-2 after
+COR-02); no other row has it. Search "FAC-881": both rows are listed.
+
+**COR-04 · A paid invoice is corrected only after its payment is voided**
+Emit another invoice (FAC-882) and pay part of it with a recibo de pago (Compras › Recibos de pago). Open it.
+**Expected:** no **Corregir** button; the banner says "Para corregir esta factura, anula primero los recibos de pago que
+la pagan." After voiding the recibo de pago, the invoice shows the **Corregir** banner again and the correction works as
+in COR-01. (Through the API, `POST /purchase-invoices/{id}/correct` on the paid invoice answers 409
+`document_has_allocations`.)
+
+**COR-05 · A closed period refuses Corregir and leaves everything as it was**
+Configuración › Contabilidad: fecha de bloqueo = today. Open an emitted, unpaid invoice and **Corregir** it with a
+reason. Then set the fecha de bloqueo back.
+**Expected:** the dialog shows "La contabilidad está cerrada hasta el DD/MM/YYYY: usa una fecha posterior." and stays
+open; closing it, the invoice is still *Emitida*, no draft was added to the list and the libro diario has no new
+entry.
+
+**COR-06 · The banner, the dialog and the list hint on a laptop and a tablet, in both themes**
+At 1366×768 and 768×1024, Tema Claro and Oscuro: an emitted invoice's banner, the Corregir dialog, a corrected
+invoice's links and the list with the "Corregida" hint.
+**Expected:** the button sits after the banner's text on a laptop and wraps under it on a tablet; the dialog's textarea
+fits; the hint stays under the number without widening the column; links keep their contrast in dark mode; the console
+has no errors.
+
 ## 20. Tax reports: retenciones and IVA
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 8 tax-reports: cases IMP-01 – 12; smoke tests in

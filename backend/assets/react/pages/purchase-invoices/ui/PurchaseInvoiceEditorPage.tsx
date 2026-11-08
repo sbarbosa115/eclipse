@@ -44,6 +44,7 @@ import {
 import {DocumentTabs} from '@/widgets/journal-entry-view';
 import {draftFromInvoice, toRequest, type PurchaseHeader} from '../model/draft';
 import {usePurchaseOptions} from '../model/usePurchaseOptions';
+import {PurchaseCorrection} from './correction/PurchaseCorrection';
 
 const BASE = '/facturas-compra';
 
@@ -382,6 +383,7 @@ export function PurchaseInvoiceEditorPage() {
               )}`}
         </Alert>
       )}
+      {invoice && <PurchaseCorrection invoice={invoice} canWrite={writer} />}
       <DocumentTabs
         sourceType="purchase_invoice"
         sourceId={invoice?.id}

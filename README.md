@@ -207,7 +207,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/geo/departments`, `/geo/municipalities` | DANE's DIVIPOLA: `{items: [{code, name}]}` by code; municipalities `?q=` part of the name (accents and case aside, literal) or the start of the code, `?department=`, at most 50: `{items: [{code, name, department_code, department_name}]}`. Every role | 401 |
 | GET | `/ledger/entries` | *(observations item 6 "journal-entry-tab"; 501 until built)* | 501 |
 | GET, PUT | `/ledger/exogena-concepts` | *(observations item 9 "exogena"; 501 until built)* | 501 |
-| POST | `/purchase-invoices/{id}/correct` | *(observations item 7 "purchase-correct"; 501 until built)* | 501 |
+| POST | `/purchase-invoices/{id}/correct` | *Corregir*: `{reason}` → 201 `PurchaseInvoiceOutput` of the **new draft**. One transaction: the invoice is voided as `/void` does (reversing entry today, payables voided, number kept, `void_reason` "Corregida: <reason>", `corrected_by_id` = the draft), and a draft opens with the same supplier, supplier number, issue and due dates, notes, lines (every retención), formas de pago and copies of the supplier's files (`corrected_from_id` = the voided one). Deleting that draft clears `corrected_by_id`. The list's `PurchaseInvoiceSummaryOutput` carries `corrected_by_id` too. Owner, billing and accountant | 403; 404; 409 `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason` (≤ 489) |
 | any | `/purchase-orders`, `/purchase-orders/{id}…` | *(observations item 10 "purchase-orders"; 501 until built)* | 501 |
 | GET | `/reports/taxes/withholdings/{practiced\|suffered}`, `/reports/taxes/vat` (+ `/export`) | *(observations item 8 "tax-reports"; 501 until built)* | 501 |
 | GET | `/reports/taxes/exogena/{format}` (+ `/export`) | *(observations item 9 "exogena"; 501 until built)* | 501 |
@@ -454,6 +454,9 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 ## Known gaps
 
 - **An account subdivided with `move_references: false`** must be fixed by hand: the chart shows it with *Sin auxiliar por defecto* while a posting rule, tax or payment method names it (products and terceros that still name it are not flagged: their forms refuse it on the next save, and documents that would post to it are refused with `account_has_auxiliaries`). The warning before subdividing counts the products and terceros only in the answer, not beforehand.
+- **Corregir a factura de compra** works only while nothing is allocated to it (void the recibo de pago first), and
+  there is no approval step (observations §9 Q-A). The supplier's files are copied to the draft on disk before the
+  transaction commits: a commit that fails after the copy leaves those bytes without a row (nothing lists them).
 - **Renewing the invoicing resolution** with a new range or prefix is not possible in stage 1 (one resolution per company, its desde and prefijo locked once used): a renewal can only extend hasta and the dates. Several resolutions come in stage 4 (decided 2026-10-04).
 
 - **Recibo de pago: the supplier search lists terceros with the *proveedor* role** (inactive ones too); a tercero
