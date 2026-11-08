@@ -19,7 +19,7 @@ import {
   SearchCombobox,
   type ComboOption,
 } from '@/shared/ui';
-import {setLineMode} from '../model/draft';
+import {isPurchase, setLineMode} from '../model/draft';
 import {offeredTaxes} from '../model/useEditorOptions';
 import type {LineAmounts} from '../model/totals';
 import type {DocumentKind, DraftLine, EditorErrors} from '../model/types';
@@ -89,7 +89,7 @@ export function LinesGrid({
   const baseId = useId();
   const grid = useRef<HTMLDivElement>(null);
   const pending = useRef<PendingFocus>(null);
-  const purchase = kind === 'purchase_invoice';
+  const purchase = isPurchase(kind);
 
   const focusCell = (key: string, col: Column) => {
     const cell = grid.current?.querySelector(

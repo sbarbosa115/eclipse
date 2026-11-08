@@ -151,6 +151,7 @@
       "cash_receipt": "Recibo de caja",
       "purchase_invoice": "Factura de compra",
       "supplier_payment": "Recibo de pago",
+      "purchase_order": "Orden de compra",
       "sales_invoice_internal": "Factura de venta (consecutivo interno)"
     },
     "edit": "Editar",

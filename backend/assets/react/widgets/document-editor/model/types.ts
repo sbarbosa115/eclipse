@@ -1,7 +1,11 @@
 import type {AccountChoice} from '@/features/pick-account';
 
-/** The three documents that share the form (§4.6). A quotation has no formas de pago. */
-export type DocumentKind = 'quotation' | 'sales_invoice' | 'purchase_invoice';
+/**
+ * The documents that share the form (§4.6). A quotation and a purchase order have no formas de pago; a purchase order
+ * (observations PRD §4.8) has a purchase invoice's lines (product or expense account).
+ */
+export type DocumentKind =
+  'quotation' | 'sales_invoice' | 'purchase_invoice' | 'purchase_order';
 
 /** A tercero as the header holds it: its id and the name to show. */
 export interface PartyRef {
