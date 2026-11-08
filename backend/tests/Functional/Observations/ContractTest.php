@@ -8,7 +8,7 @@ use App\Tests\Support\ApiTestCase;
 /**
  * Item 0 of the observations-2026-11 PRD: the contract the items build on. Lines keep their retenciones in a list
  * (the single one of stage 1 is its first) and DIVIPOLA answers. (Its list of routes answering 501 went as each item built
- * them.)
+ * them.).
  */
 final class ContractTest extends ApiTestCase
 {
