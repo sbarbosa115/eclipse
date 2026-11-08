@@ -180,6 +180,13 @@ The client asks for: entries/exits, real-time stock, several warehouses, kardex 
 | GET/POST/PUT/DELETE | `/purchase-orders`, `/purchase-orders/{id}` | as `/quotations` with purchase lines (`product_id` xor `account_id`) and `expected_date?`; statuses `draft\|emitted\|converted\|voided` |
 | POST | `/purchase-orders/{id}/emit`, `/emit-and-send`, `/send`, `/void`, `/duplicate`, `/convert`; GET `/pdf` | as a quotation's; `convert` → the order with `converted_invoice_id`; 409 `purchase_order_not_open`, `purchase_order_already_converted` |
 
+As built (the items refined the contract): `ExogenaOutput` has `minor_amounts_rows` (one per concept, as the DIAN
+groups cuantías menores) and `totals`; `WithholdingReportOutput` has `kind` and `totals`, its rows `calculation`;
+`VatReportOutput` has `generated_difference` and `deductible_difference`; `PurchaseInvoiceSummaryOutput` has
+`corrected_by_id`; reports refuse bad filters with 400 `invalid_date`, `invalid_period`, `invalid_kind`, `invalid_year`,
+`invalid_threshold`; the exógena routes live in their own `ExogenaController`. The README's API reference is the
+contract.
+
 Error codes added: `account_has_auxiliaries`, `invalid_source`, `purchase_order_not_open`, `purchase_order_already_converted`, `exogena_terceros_incomplete`; violation messages on `lines.N.withholdings`, `municipality_code`, `city`, `country_code`.
 
 ## 7. Migrations (item 0, one migration per concern, dev and test databases)
