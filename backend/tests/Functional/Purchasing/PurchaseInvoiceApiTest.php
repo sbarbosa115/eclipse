@@ -103,6 +103,7 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
      * The fixture's line (513595, 1.000.000 + IVA 19 %) with the retenciones given, on credit for what it nets.
      *
      * @param list<array{tax_id: string}>|null $withholdings
+     * @param array<string, mixed>             $line         fields of the line to change
      *
      * @return array<string, mixed>
      */

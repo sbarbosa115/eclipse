@@ -15,18 +15,16 @@ trait WithholdingTaxes
 
     protected function reteIca(): string
     {
-        if (null === $this->reteIca) {
-            $tax = $this->sendJson('POST', '/api/v1/taxes', ['name' => 'ReteICA 0,966 %', 'tax_class' => 'withholding', 'kind' => 'reteica', 'calculation' => 'percentage', 'rate' => '0.9660']);
-            self::assertResponseStatusCodeSame(201, 'The ReteICA is created: '.json_encode($tax));
-            $this->reteIca = $tax['id'];
+        if (null !== $this->reteIca) {
+            return $this->reteIca;
         }
+        $tax = $this->sendJson('POST', '/api/v1/taxes', ['name' => 'ReteICA 0,966 %', 'tax_class' => 'withholding', 'kind' => 'reteica', 'calculation' => 'percentage', 'rate' => '0.9660']);
+        self::assertResponseStatusCodeSame(201, 'The ReteICA is created: '.json_encode($tax));
 
-        return $this->reteIca;
+        return $this->reteIca = (string) $tax['id'];
     }
 
     /**
-     * @param list<string> $taxIds
-     *
      * @return list<array{tax_id: string}>
      */
     protected static function withholdings(string ...$taxIds): array

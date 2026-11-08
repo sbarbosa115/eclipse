@@ -8,7 +8,7 @@ use App\Tests\Support\ApiTestCase;
 
 /**
  * Observations PRD §8, OBS-3, the posting half: "The same with a purchase invoice: Cr 2365xx, 2367xx, 2368xx per
- * retención". (The retenciones practicadas report and its *Según libros* are item 8's half.)
+ * retención". (The retenciones practicadas report and its *Según libros* are item 8's half.).
  */
 final class Obs03PurchaseInvoicePostsEachRetencionTest extends ApiTestCase
 {

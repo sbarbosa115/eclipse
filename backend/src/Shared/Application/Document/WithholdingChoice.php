@@ -30,7 +30,7 @@ final class WithholdingChoice
         }
 
         $fields = [];
-        foreach (array_values($taxIds) as $k => $taxId) {
+        foreach ($taxIds as $k => $taxId) {
             $fields[] = [$taxId, $brackets ? "$line.withholdings[$k].tax_id" : "$line.withholdings.$k.tax_id"];
         }
 

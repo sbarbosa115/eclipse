@@ -13,8 +13,8 @@ use App\Purchasing\Domain\Model\PurchasePaymentDraft;
 use App\Purchasing\Domain\Repository\PurchaseInvoiceRepository;
 use App\Shared\Application\Document\WithholdingChoice;
 use App\Shared\Domain\Error\InvalidValues;
-use App\Shared\Domain\Model\CommercialLine;
 use App\Shared\Domain\Error\NotFound;
+use App\Shared\Domain\Model\CommercialLine;
 use App\Shared\Domain\Model\PaymentKind;
 use App\Shared\Domain\Model\TaxSnapshot;
 use App\Shared\Domain\Money\Money;
@@ -115,15 +115,15 @@ final class PurchaseDraftResolver
     }
 
     /**
-     * @param list<PurchaseLineContents>               $lines
-     * @param array<string, true|TaxSnapshot>          $kept
+     * @param list<PurchaseLineContents>      $lines
+     * @param array<string, true|TaxSnapshot> $kept
      *
      * @return list<PurchaseLineDraft>
      */
     private function lines(Uuid $companyId, array $lines, array $kept, \DateTimeImmutable $issueDate): array
     {
         $drafts = [];
-        foreach (array_values($lines) as $i => $line) {
+        foreach ($lines as $i => $line) {
             $draft = $this->line($companyId, "lines[$i]", $line, $kept, $issueDate);
             if (null !== $draft) {
                 $drafts[] = $draft;

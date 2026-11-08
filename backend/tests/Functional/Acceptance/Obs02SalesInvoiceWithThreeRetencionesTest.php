@@ -14,7 +14,7 @@ use Symfony\Component\Uid\Uuid;
  * Observations PRD §8, OBS-2: "A sales invoice line of $1.000.000 with IVA 19 %, Retefuente 2,5 % and ReteICA 0,966 % and
  * ReteIVA 15 %: Retenciones = 25.000 + 9.660 + 28.500 = 63.160; Total neto = 1.126.840; the entry has Dr 135515 25.000,
  * Dr 135518 9.660, Dr 135517 28.500; […] the PDF lists the three retenciones with their bases." (The editor's preview is
- * item 3's.)
+ * item 3's.).
  */
 final class Obs02SalesInvoiceWithThreeRetencionesTest extends ApiTestCase
 {
