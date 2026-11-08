@@ -7,7 +7,7 @@ use App\Tests\Support\ApiTestCase;
 
 /**
  * Observations PRD §8, OBS-8: "The IVA report for a bimester equals Σ sales lines' IVA and Σ purchase lines' IVA of
- * emitted documents in it, and its *Según libros* row matches 240805/240810 for the period."
+ * emitted documents in it, and its *Según libros* row matches 240805/240810 for the period.".
  */
 final class Obs08VatReportTest extends ApiTestCase
 {

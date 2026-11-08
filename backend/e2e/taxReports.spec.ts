@@ -33,7 +33,11 @@ function today(): string {
 }
 
 async function taxId(page: Page, tax: 'charge' | 'withholding', name: string) {
-  const {items} = (await api(page, 'GET', `/taxes?class=${tax}`)) as unknown as {
+  const {items} = (await api(
+    page,
+    'GET',
+    `/taxes?class=${tax}`,
+  )) as unknown as {
     items: {id: string; name: string}[];
   };
   const found = items.find((item) => item.name === name);
@@ -93,7 +97,13 @@ async function purchase(page: Page, supplierName: string): Promise<void> {
         discount: '0',
         charge_tax_id: await taxId(page, 'charge', 'IVA 19 %'),
         withholdings: [
-          {tax_id: await taxId(page, 'withholding', 'ReteFuente compras 2,5 %')},
+          {
+            tax_id: await taxId(
+              page,
+              'withholding',
+              'ReteFuente compras 2,5 %',
+            ),
+          },
           {tax_id: await taxId(page, 'withholding', 'ReteIVA 15 %')},
         ],
       },
@@ -180,7 +190,11 @@ test('IMP-01 · a new company opens Impuestos on retenciones practicadas, with n
     /\/reportes\/impuestos\/retenciones-practicadas$/,
   );
   await expect(page.getByRole('heading', {name: 'Impuestos'})).toBeVisible();
-  for (const tab of ['Retenciones practicadas', 'Retenciones sufridas', 'IVA']) {
+  for (const tab of [
+    'Retenciones practicadas',
+    'Retenciones sufridas',
+    'IVA',
+  ]) {
     await expect(page.getByRole('tab', {name: tab})).toBeVisible();
   }
   await expect(
@@ -229,9 +243,9 @@ test('IMP-03 · the Tipo filter keeps one kind', async ({newCompany}) => {
 
   await expect(page).toHaveURL(/kind=reteiva/);
   await expect(page.getByRole('region', {name: /^ReteIVA · /})).toBeVisible();
-  await expect(
-    page.getByRole('region', {name: /^Retefuente · /}),
-  ).toHaveCount(0);
+  await expect(page.getByRole('region', {name: /^Retefuente · /})).toHaveCount(
+    0,
+  );
 });
 
 test('IMP-04 · retenciones sufridas come from the sales invoices', async ({

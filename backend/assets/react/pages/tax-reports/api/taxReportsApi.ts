@@ -23,7 +23,7 @@ const query = (params: Record<string, string | undefined>) => {
   return text === '' ? '' : `?${text}`;
 };
 
-export const WITHHOLDINGS_PATH = (side: WithholdingSide) =>
+export const withholdingsPath = (side: WithholdingSide) =>
   `/reports/taxes/withholdings/${side}`;
 export const VAT_PATH = '/reports/taxes/vat';
 
@@ -33,7 +33,7 @@ export function fetchWithholdings(
   kind?: WithholdingKind,
 ) {
   return apiGet<WithholdingReport>(
-    `${WITHHOLDINGS_PATH(side)}${query({...period, kind})}`,
+    `${withholdingsPath(side)}${query({...period, kind})}`,
   );
 }
 

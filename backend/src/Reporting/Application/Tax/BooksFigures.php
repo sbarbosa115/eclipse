@@ -34,6 +34,6 @@ final class BooksFigures
             }
         }
 
-        return $moved;
+        return array_values($moved);
     }
 }

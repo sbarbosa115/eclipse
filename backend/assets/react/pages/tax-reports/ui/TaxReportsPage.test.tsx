@@ -103,15 +103,17 @@ describe('TaxReportsPage', () => {
     expect(
       await screen.findByRole('region', {name: 'Retefuente · noviembre 2026'}),
     ).toBeInTheDocument();
-    expect(screen.getByRole('tab', {name: 'Retenciones practicadas'})).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(
+      screen.getByRole('tab', {name: 'Retenciones practicadas'}),
+    ).toHaveAttribute('aria-selected', 'true');
     const month = todayInColombia().slice(0, 7);
     const call = api.calls.find(
       (c) => c.path === '/reports/taxes/withholdings/practiced',
     )!;
-    expect([call.url.searchParams.get('from'), call.url.searchParams.get('to')]).toEqual([month, month]);
+    expect([
+      call.url.searchParams.get('from'),
+      call.url.searchParams.get('to'),
+    ]).toEqual([month, month]);
     expect(screen.getByText('Servicios Andinos S.A.S.')).toBeInTheDocument();
     expect(screen.getByText('NIT 800197268-4')).toBeInTheDocument();
     expect(screen.getByText('2,5 %')).toBeInTheDocument();
@@ -130,7 +132,9 @@ describe('TaxReportsPage', () => {
       `/api/v1/reports/taxes/withholdings/practiced/export?from=${month}&to=${month}&format=pdf`,
     );
     expect(
-      screen.getByRole('link', {name: 'Ver facturas de Servicios Andinos S.A.S.'}),
+      screen.getByRole('link', {
+        name: 'Ver facturas de Servicios Andinos S.A.S.',
+      }),
     ).toHaveAttribute(
       'href',
       '/facturas-compra?q=Servicios+Andinos+S.A.S.&from=2026-11-01&to=2026-11-30',
@@ -240,7 +244,8 @@ describe('TaxReportsPage', () => {
   it('shows the error and retries', async () => {
     let calls = 0;
     renderAt('/reportes/impuestos/iva', 'accountant', {
-      'GET /reports/taxes/vat': () => (++calls === 1 ? [500, {}] : [200, vat()]),
+      'GET /reports/taxes/vat': () =>
+        ++calls === 1 ? [500, {}] : [200, vat()],
     });
 
     const user = userEvent.setup();
@@ -275,7 +280,9 @@ describe('TaxReportsPage', () => {
       screen
         .getByRole('link', {name: 'Descargar IVA en CSV'})
         .getAttribute('href'),
-    ).toBe('/api/v1/reports/taxes/vat/export?from=2026-09&to=2026-10&format=csv');
+    ).toBe(
+      '/api/v1/reports/taxes/vat/export?from=2026-09&to=2026-10&format=csv',
+    );
   });
 
   it('is only for who may view the books', async () => {

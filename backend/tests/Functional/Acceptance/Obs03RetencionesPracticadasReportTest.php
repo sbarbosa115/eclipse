@@ -8,7 +8,7 @@ use App\Tests\Support\ApiTestCase;
 /**
  * Observations PRD §8, OBS-3, the report half: "the retenciones practicadas report for the month shows the supplier
  * with base 1.000.000 and each retención, and *Según libros* equals the report." (The posting half is item 2's,
- * Obs03PurchaseInvoicePostsEachRetencionTest.)
+ * Obs03PurchaseInvoicePostsEachRetencionTest.).
  */
 final class Obs03RetencionesPracticadasReportTest extends ApiTestCase
 {

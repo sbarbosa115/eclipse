@@ -1,12 +1,6 @@
 import {useTranslation} from '@/shared/i18n';
 import {formatMoney} from '@/shared/lib';
-import {
-  Alert,
-  ErrorState,
-  FilterBar,
-  Loading,
-  TabIntro,
-} from '@/shared/ui';
+import {Alert, ErrorState, FilterBar, Loading, TabIntro} from '@/shared/ui';
 import {ReportTable} from '@/widgets/report-table';
 import {
   fetchVat,

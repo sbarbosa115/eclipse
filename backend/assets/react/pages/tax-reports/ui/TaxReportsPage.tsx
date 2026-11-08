@@ -48,7 +48,10 @@ export function TaxReportsPage() {
 
   return (
     <>
-      <PageHeader title={t('taxReports.title')} subtitle={t('taxReports.subtitle')} />
+      <PageHeader
+        title={t('taxReports.title')}
+        subtitle={t('taxReports.subtitle')}
+      />
       {!session ? null : !keeper ? (
         <EmptyState>{t('taxReports.noAccess')}</EmptyState>
       ) : (

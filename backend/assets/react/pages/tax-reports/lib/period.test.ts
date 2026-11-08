@@ -47,8 +47,17 @@ describe('tax report periods', () => {
 
 describe('monthDays', () => {
   it('spans a month from its first to its last day', () => {
-    expect(monthDays('2026-02')).toEqual({from: '2026-02-01', to: '2026-02-28'});
-    expect(monthDays('2024-02')).toEqual({from: '2024-02-01', to: '2024-02-29'});
-    expect(monthDays('2026-11')).toEqual({from: '2026-11-01', to: '2026-11-30'});
+    expect(monthDays('2026-02')).toEqual({
+      from: '2026-02-01',
+      to: '2026-02-28',
+    });
+    expect(monthDays('2024-02')).toEqual({
+      from: '2024-02-01',
+      to: '2024-02-29',
+    });
+    expect(monthDays('2026-11')).toEqual({
+      from: '2026-11-01',
+      to: '2026-11-30',
+    });
   });
 });

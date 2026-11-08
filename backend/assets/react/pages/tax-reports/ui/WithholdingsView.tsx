@@ -14,7 +14,7 @@ import {
 import {ReportTable} from '@/widgets/report-table';
 import {
   fetchWithholdings,
-  WITHHOLDINGS_PATH,
+  withholdingsPath,
   type WithholdingGroup,
   type WithholdingKind,
   type WithholdingKindTotal,
@@ -79,7 +79,7 @@ export function WithholdingsView({side}: {side: WithholdingSide}) {
       ) : (
         <TaxExports
           name={t(`taxReports.tabs.${side}`)}
-          path={WITHHOLDINGS_PATH(side)}
+          path={withholdingsPath(side)}
           params={{from, to, kind}}
         />
       )}

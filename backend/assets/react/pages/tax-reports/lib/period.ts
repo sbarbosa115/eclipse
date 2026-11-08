@@ -5,7 +5,6 @@ import type {SelectOption} from '@/shared/ui';
 // The periods of the tax reports are whole months (YYYY-MM), as the API takes them; Colombia's returns are monthly,
 // bimonthly or cuatrimestral, so a period is a range of months.
 
-
 /** How far back the month pickers reach: two years of returns. */
 export const MONTHS_OFFERED = 24;
 
@@ -20,7 +19,10 @@ const parts = (month: string): [number, number] => {
 /** "2026-11" → "noviembre 2026". */
 export function monthLabel(t: Translate, month: string): string {
   const [y, m] = parts(month);
-  return t('taxReports.period.month', {month: t(`taxReports.months.${m}`), year: y});
+  return t('taxReports.period.month', {
+    month: t(`taxReports.months.${m}`),
+    year: y,
+  });
 }
 
 /** The month of a day ("2026-11-07" → "2026-11"). */
