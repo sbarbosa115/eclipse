@@ -13,11 +13,13 @@ use App\Ledger\UI\Http\Security\BooksAccess;
 use App\Shared\Domain\Clock;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
+use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Uid\Uuid;
 
@@ -29,6 +31,9 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/api/v1/ledger')]
 final class LedgerReportController extends AbstractController
 {
+    /** The documents that post (Sales, Purchasing); a quotation or an order never does. */
+    private const SOURCE_TYPES = ['sales_invoice', 'purchase_invoice', 'cash_receipt', 'supplier_payment'];
+
     public function __construct(
         private readonly JournalQueries $journal,
         private readonly LedgerReports $reports,
@@ -44,9 +49,16 @@ final class LedgerReportController extends AbstractController
      */
     #[Route('/entries', methods: ['GET'])]
     #[ApiResponse(JournalEntryOutput::class, key: 'items', list: true)]
-    public function entries(): JsonResponse
+    #[IsGranted(Permission::READ_DOCUMENTS)]
+    public function entries(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
-        throw ApiException::notImplemented('journal-entry-tab');
+        $type = $request->query->getString('source_type');
+        $id = $request->query->getString('source_id');
+        if (!\in_array($type, self::SOURCE_TYPES, true) || !Uuid::isValid($id)) {
+            throw ApiException::badRequest('invalid_source', 'source_type must be one of '.implode(', ', self::SOURCE_TYPES).' and source_id a document id.');
+        }
+
+        return $this->json(['items' => array_map(JournalEntryOutput::of(...), $this->journal->bySource($user->companyId(), $type, Uuid::fromString($id)))]);
     }
 
     /**
