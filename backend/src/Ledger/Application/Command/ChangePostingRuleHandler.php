@@ -23,7 +23,7 @@ final class ChangePostingRuleHandler implements CommandHandler
         $from = $this->accounts->get($command->companyId, $rule->accountId());
         $to = $this->accounts->get($command->companyId, $command->accountId);
 
-        $rule->pointTo($to);
+        $rule->pointTo($to, $this->accounts->hasActiveChildren($command->companyId, $to->code()));
 
         if ($from->code() !== $to->code()) {
             $this->audit->record($command->companyId, $command->userId, 'posting_rule.changed', 'posting_rule', $rule->id(), ['concept' => $command->concept->value, 'from' => $from->code(), 'to' => $to->code()]);

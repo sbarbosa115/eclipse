@@ -12,4 +12,11 @@ interface PostingRuleRepository
 
     /** Whether any rule of the company posts to this account. */
     public function pointsAt(Uuid $companyId, Uuid $accountId): bool;
+
+    /**
+     * The company's rules that post to this account, in the order of PostingConcept.
+     *
+     * @return list<PostingRule>
+     */
+    public function pointingAt(Uuid $companyId, Uuid $accountId): array;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Tests\Functional\Ledger;
 
+use App\Ledger\Domain\Error\AccountHasAuxiliaries;
 use App\Ledger\Domain\Error\AccountNotFound;
 use App\Ledger\Domain\Error\AccountNotPostable;
 use App\Ledger\Domain\Error\EntryAlreadyReversed;
@@ -10,6 +11,7 @@ use App\Ledger\Domain\Error\EntryUnbalanced;
 use App\Ledger\Domain\Error\JournalEntryNotFound;
 use App\Ledger\Domain\Error\PeriodLocked;
 use App\Ledger\Domain\Error\PostingRuleMissing;
+use App\Ledger\Domain\Model\Account;
 use App\Ledger\Domain\Model\JournalEntry;
 use App\Ledger\Domain\Model\JournalLine;
 use App\Shared\Domain\Accounting\PostingConcept as C;
@@ -168,6 +170,37 @@ final class JournalPosterTest extends ApiTestCase
 
         $this->expectException(AccountNotPostable::class);
         $this->post([self::line('debit', '1.00', $this->account('11100501')), self::line('credit', '1.00', C::Revenue)]);
+    }
+
+    public function testASubcuentaWithAuxiliaresTakesNoMovement(): void
+    {
+        // 110505 CAJA GENERAL has the seeded auxiliar 11050501: its movements go there (observations PRD §4.1).
+        try {
+            $this->post([self::line('debit', '1.00', $this->account('110505')), self::line('credit', '1.00', C::Revenue)]);
+            self::fail('A subcuenta with active auxiliares is refused.');
+        } catch (AccountHasAuxiliaries $e) {
+            self::assertSame('account_has_auxiliaries', $e->errorCode());
+            self::assertSame(['account_code' => '110505'], $e->details());
+        }
+        self::assertSame([], $this->entries(), 'Nothing was posted and no number was spent.');
+    }
+
+    public function testAPostingRuleLeftOnASubdividedAccountIsRefused(): void
+    {
+        // Subdivided without moving the rule (move_references: false).
+        $this->inTransaction(fn () => $this->em()->persist(Account::under($this->em()->find(Account::class, $this->account('413595')) ?? throw new \LogicException(), '41359501', 'Ventas gravadas')));
+
+        $this->expectException(AccountHasAuxiliaries::class);
+        $this->post([self::line('debit', '1.00', $this->account('11050501')), self::line('credit', '1.00', C::Revenue)]);
+    }
+
+    public function testADeactivatedAuxiliarHandsTheMovementsBackToItsParent(): void
+    {
+        $this->db()->update('ledger_account', ['active' => 0], ['id' => $this->account('11050501')->toBinary()]);
+
+        $this->post([self::line('debit', '1.00', $this->account('110505')), self::line('credit', '1.00', C::Revenue)]);
+
+        self::assertSame('110505', $this->entries()[0]->lines()[0]->accountCode());
     }
 
     public function testAnotherCompanysAccountIsNotFound(): void

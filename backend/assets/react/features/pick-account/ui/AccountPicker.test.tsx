@@ -69,4 +69,32 @@ describe('the account picker', () => {
 
     expect(picks.at(-1)).toEqual({id: null, text: 'zzz'});
   });
+
+  it('says how many more matched than it shows, so the person types more', async () => {
+    const api = fakeApi({
+      'GET /accounts/search': [200, {items: [IVA], total: 61}],
+    });
+    render(<Harness onPick={() => undefined} />);
+
+    await userEvent.type(screen.getByLabelText('Cuenta'), '41');
+
+    expect(
+      await screen.findByText(
+        'Mostrando 1 de 61: escribe más para encontrar la cuenta.',
+      ),
+    ).toBeInTheDocument();
+    expect(api.calls.at(-1)?.url.searchParams.get('limit')).toBe('50');
+  });
+
+  it('says nothing more when every match is listed', async () => {
+    fakeApi({'GET /accounts/search': [200, {items: [IVA], total: 1}]});
+    render(<Harness onPick={() => undefined} />);
+
+    await userEvent.type(screen.getByLabelText('Cuenta'), 'iva');
+
+    await waitFor(() =>
+      expect(document.querySelector('datalist option')).not.toBeNull(),
+    );
+    expect(screen.queryByText(/Mostrando/)).toBeNull();
+  });
 });

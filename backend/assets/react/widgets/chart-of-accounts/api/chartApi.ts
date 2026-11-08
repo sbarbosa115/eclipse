@@ -1,4 +1,5 @@
 import {apiGet, apiPost, apiPut, type Schema} from '@/shared/api';
+import {usesOf, type AccountUse} from '../lib/uses';
 
 export type Account = Schema<'AccountOutput'>;
 
@@ -27,6 +28,8 @@ export interface NewAccount {
   code: string;
   name: string;
   usable_on_purchases: boolean;
+  /** Only for the first auxiliar of an account that takes movements: move what points at it (default true). */
+  move_references?: boolean;
 }
 
 export function addAccount(data: NewAccount) {
@@ -41,4 +44,20 @@ export interface AccountChanges {
 
 export function updateAccount(id: string, data: AccountChanges) {
   return apiPut<Account>(`/accounts/${id}`, data);
+}
+
+/**
+ * What points at each account: the posting rules, the taxes and the payment methods, as the settings tabs list them.
+ * For the warning before subdividing an account and the "Sin auxiliar por defecto" badge.
+ */
+export function fetchUses(): Promise<AccountUse[]> {
+  return Promise.all([
+    apiGet<{items: Schema<'PostingRuleOutput'>[]}>('/posting-rules'),
+    apiGet<{items: Schema<'TaxSettingOutput'>[]}>('/settings/taxes'),
+    apiGet<{items: Schema<'PaymentMethodSettingOutput'>[]}>(
+      '/settings/payment-methods',
+    ),
+  ]).then(([rules, taxes, methods]) =>
+    usesOf(rules.items, taxes.items, methods.items),
+  );
 }

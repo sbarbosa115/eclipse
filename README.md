@@ -107,8 +107,8 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | any | `/api/v1/*` (signed in) | a session with no request for 2 hours ends: 401 `session_expired`, and the UI shows the sign-in page | 401 |
 | GET | `/taxes` | `{items: TaxOutput[]}`; `?class=charge\|withholding`, `?all=1` with inactive, `?on=YYYY-MM-DD` only those in force that day (no dates = always) | 401; 400 `invalid_date` |
 | GET | `/payment-methods` | `{items: PaymentMethodOutput[]}`; `?all=1` | 401 |
-| GET | `/accounts/search` | `{items: AccountOutput[]}` postable accounts, `?q=` code prefix or name, `?purchases=1` | 401 |
-| GET | `/settings/taxes`, `/settings/payment-methods` | `{items: TaxSettingOutput[]}` / `{items: PaymentMethodSettingOutput[]}`: every row, inactive too, with the accounts' codes and names and `in_use` (a document, product or company default points at it). Every role | 401 |
+| GET | `/accounts/search` | `{items: AccountOutput[], total}` postable accounts (active, subcuenta or auxiliar, no active auxiliar under it) in code order: `?q=` words that must all match (digits a code prefix, the rest part of the name), `?purchases=1`, `?limit=` 1–200 (default 50); `total` counts every match | 401 |
+| GET | `/settings/taxes`, `/settings/payment-methods` | `{items: TaxSettingOutput[]}` / `{items: PaymentMethodSettingOutput[]}`: every row, inactive too, with the accounts' codes and names, `in_use` (a document, product or company default points at it) and `account_postable` (false while an account it names was subdivided and not moved). Every role | 401 |
 | POST | `/taxes` | `{name, tax_class, kind, calculation, rate, sales_account_id?, purchase_account_id?, valid_from?, valid_to?}` → 201 `TaxSettingOutput`. Owner and accountant | 403; 422 `validation_failed` on `name` (taken), `kind`, `calculation`, `rate` (0–100, four decimals), `valid_to` (before `valid_from`), `*_account_id` |
 | PUT | `/taxes/{id}` | `{name, calculation, rate, sales_account_id, purchase_account_id, valid_from, valid_to}` → `TaxSettingOutput`; class and kind never change | 403; 404; 422 as above, `tax_not_editable` (Ninguno) |
 | POST | `/taxes/{id}/deactivate`, `/activate` | → `TaxSettingOutput` | 403; 404; 422 `tax_not_editable` |
@@ -127,10 +127,10 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | GET | `/terceros/{id}/export` | Ley 1581: `{exported_at, tercero}` as an attachment; audited (`tercero.personal_data_exported`) | 404, 403 (WRITE_DOCUMENTS: every role today) |
 | POST | `/terceros/{id}/erase` | Ley 1581: blanks the personal fields and contacts, deactivates, sets `erased_at`; keeps the row and the identification; audited | 404, 403 |
 | GET | `/accounts` | page of `AccountOutput` (the chart in code order): `?q=` digits a code prefix, words the name; `?class=1…9`; `?page`, `?per_page` ≤ 100 | 401 |
-| POST | `/accounts` | `{parent_code, code (parent + 2 digits), name, usable_on_purchases?}` → 201 `AccountOutput`; owner and accountant | 403; 409 `account_code_taken`; 422 `account_code_invalid`, `parent_account_not_found` |
+| POST | `/accounts` | `{parent_code, code (parent + 2 digits), name, usable_on_purchases?, move_references? (default true)}` → 201 `AccountOutput`; owner and accountant. The first auxiliar under a postable account subdivides it: the posting rules, taxes, payment methods, products and terceros that named it move to the new account (audited, reason `account_subdivided`) and `moved: {posting_rules, taxes, payment_methods, products, terceros}` says what; otherwise, or with `move_references: false`, `moved` is null | 403; 409 `account_code_taken`; 422 `account_code_invalid`, `parent_account_not_found` |
 | PUT | `/accounts/{id}` | `{name, active, usable_on_purchases}` → `AccountOutput`; owner and accountant; audited | 403; 404; 409 `account_standard` (PUC names are fixed), `account_in_posting_rule` |
-| GET | `/posting-rules` | `{items: PostingRuleOutput[]}` (concept, account, `allowed_prefixes`) in the order of §5 | 401 |
-| PUT | `/posting-rules/{concept}` | `{account_id}` → `PostingRuleOutput`; owner and accountant; audited (`posting_rule.changed`) | 403; 404; 409 `account_not_postable`; 422 `account_not_allowed_for_concept` |
+| GET | `/posting-rules` | `{items: PostingRuleOutput[]}` (concept, account, `allowed_prefixes`, `account_postable`) in the order of §5 | 401 |
+| PUT | `/posting-rules/{concept}` | `{account_id}` → `PostingRuleOutput`; owner and accountant; audited (`posting_rule.changed`) | 403; 404; 409 `account_not_postable`, `account_has_auxiliaries` (`detail.account_code`); 422 `account_not_allowed_for_concept` |
 | GET, PUT | `/ledger/lock-date` | `LockDateOutput {locked_until}`; PUT `{locked_until: YYYY-MM-DD}` by owner and accountant, audited | 403; 422 `lock_date_in_future` |
 | GET | `/ledger/journal` | page of `JournalEntryOutput` (with lines, account and tercero names): `?from`, `?to`, `?account` (code and children), `?tercero_id`, `?page`, `?per_page` ≤ 100; owner and accountant | 400 `invalid_date`; 403 |
 | GET | `/ledger/trial-balance` | `TrialBalanceOutput`: per account and parent, opening/débito/crédito/closing (débito − crédito), totals, `balanced`; `?from`, `?to` (default the year so far) | 400; 403 |
@@ -280,6 +280,13 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 - **A resolution's hasta may equal the last number used** (it is then exhausted); it cannot go below it. A resolution that has numbered invoices cannot change desde or prefix, so renewing under a new range/prefix is not possible with the single resolution of §9 Q12 (see Known gaps).
 - **Manual mode** is rejected on a resolution until the owner confirms the DIAN permission (`POST /company/manual-invoicing-confirmation`); the confirmation is permanent and audited, and going back to electronic is always allowed.
 - **The internal series are edited under the same row lock a document takes**; the next number never goes below the current one and the journal's own series (`journal_entry`) is not editable.
+- **Postable means active, a subcuenta or auxiliar, and no active auxiliar under it** (`Ledger\Application\PostableAccounts`,
+  observations 2026-11 §4.1): the poster refuses a subdivided account with 409 `account_has_auxiliaries`, the pickers do
+  not offer it, and `AccountView::$postable` answers the same for products, terceros and purchase lines. Adding the first
+  auxiliar under an account in use moves the ledger's own references in the same transaction; products (Catalog,
+  `MoveProductAccounts`) and terceros (Party, `MoveTerceroAccounts`) move on `AccountSubdivided` after the commit; the
+  answer's `moved` counts them before. Journal lines already on the parent stay there (the balance de prueba groups by
+  parent).
 - **The document form is one widget** (`widgets/document-editor`), controlled: a page keeps a `DocumentDraft` (decimal
   strings, never floats) and saves it; `validateDraft()` names problems by field path (`lines.0.quantity`), the same
   paths the page maps the API's violations to. Its totals are a preview computed with exact decimals (BigInt, one
@@ -441,6 +448,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 
 ## Known gaps
 
+- **An account subdivided with `move_references: false`** must be fixed by hand: the chart shows it with *Sin auxiliar por defecto* while a posting rule, tax or payment method names it (products and terceros that still name it are not flagged: their forms refuse it on the next save, and documents that would post to it are refused with `account_has_auxiliaries`). The warning before subdividing counts the products and terceros only in the answer, not beforehand.
 - **Renewing the invoicing resolution** with a new range or prefix is not possible in stage 1 (one resolution per company, its desde and prefijo locked once used): a renewal can only extend hasta and the dates. Several resolutions come in stage 4 (decided 2026-10-04).
 
 - **Recibo de pago: the supplier search lists terceros with the *proveedor* role** (inactive ones too); a tercero

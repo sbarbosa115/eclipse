@@ -121,4 +121,18 @@ class PaymentMethod implements CompanyOwned
     {
         return $this->standard;
     }
+
+    /**
+     * The accountant subdivided $from: the money lands in its new auxiliar $to (observations PRD §4.1). Says whether
+     * anything moved.
+     */
+    public function moveAccount(Uuid $from, Uuid $to): bool
+    {
+        if (!($this->accountId?->equals($from) ?? false)) {
+            return false;
+        }
+        $this->accountId = $to;
+
+        return true;
+    }
 }

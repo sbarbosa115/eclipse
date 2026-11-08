@@ -110,7 +110,27 @@
     "saved": "Cuenta {{code}} guardada.",
     "empty": "No hay cuentas.",
     "filteredEmpty": "Ninguna cuenta coincide con la búsqueda.",
-    "readOnly": "Solo el administrador y el contador pueden modificar el plan de cuentas."
+    "readOnly": "Solo el administrador y el contador pueden modificar el plan de cuentas.",
+    "subdivide": {
+      "warning": "{{parent}} deja de recibir movimientos: van a sus auxiliares.",
+      "willMove": "Lo que la usa pasará a {{child}}: {{uses}}.",
+      "theNewAuxiliar": "la nueva auxiliar",
+      "othersUsing": "los productos y terceros que la usen",
+      "move": "Mover a la nueva auxiliar",
+      "stay": "Sin mover, {{parent}} queda marcada «Sin auxiliar por defecto» hasta que cambies a mano lo que la usa.",
+      "moved": "Pasaron a {{code}}: {{what}}.",
+      "badge": "Sin auxiliar por defecto",
+      "rule": "regla {{name}}",
+      "taxesOne": "1 impuesto",
+      "taxesOther": "{{count}} impuestos",
+      "methodsOne": "1 forma de pago",
+      "methodsOther": "{{count}} formas de pago",
+      "productsOne": "1 producto",
+      "productsOther": "{{count}} productos",
+      "tercerosOne": "1 tercero",
+      "tercerosOther": "{{count}} terceros",
+      "and": " y "
+    }
   },
   "rules": {
     "intro": "A qué cuenta del PUC va cada concepto cuando se emite un documento.",
@@ -164,6 +184,10 @@
     "lock_date_in_future": "La fecha de bloqueo no puede ser posterior a hoy.",
     "invalid_date": "Revisa las fechas del periodo.",
     "forbidden": "No tienes permiso para hacer esto.",
-    "validation_failed": "Revisa los datos marcados."
+    "validation_failed": "Revisa los datos marcados.",
+    "account_has_auxiliaries": "Esa cuenta tiene auxiliares: los movimientos van a una de ellas."
+  },
+  "picker": {
+    "more": "Mostrando {{shown}} de {{total}}: escribe más para encontrar la cuenta."
   }
 }

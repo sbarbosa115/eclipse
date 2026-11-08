@@ -1,7 +1,12 @@
 import {useEffect, useRef, useState} from 'react';
 import {apiGet, type Schema} from '@/shared/api';
+import {useTranslation} from '@/shared/i18n';
 
 type Account = Schema<'AccountOutput'>;
+type Matches = Schema<'AccountSearchOutput'>;
+
+/** How many accounts a search lists; the answer's total says how many more matched. */
+const LIMIT = 50;
 
 /**
  * What the picker holds: the account chosen (null while none matches) and the text in the box, so a form can tell
@@ -31,7 +36,8 @@ interface Props {
 /**
  * A box that searches the company's postable accounts by code or name as you type and offers them in a list. Choosing
  * one (or typing its code or its full label) sets the account. Built on the native list so the keyboard and screen
- * readers work as they do everywhere.
+ * readers work as they do everywhere. When more matched than it lists, a line under the box says so ("Mostrando 50 de
+ * 61"), so the person types more of the code or the name.
  */
 export function AccountPicker({
   value,
@@ -39,7 +45,9 @@ export function AccountPicker({
   purchases = false,
   ...aria
 }: Props) {
+  const {t} = useTranslation();
   const [options, setOptions] = useState<Account[]>([]);
+  const [total, setTotal] = useState(0);
   const listId = `${aria.id ?? 'account'}-options`;
   const asked = useRef(0);
   const latest = useRef({onChange});
@@ -53,12 +61,13 @@ export function AccountPicker({
     if (term === '') return;
     const attempt = ++asked.current;
     const timer = setTimeout(() => {
-      const query = new URLSearchParams({q: term});
+      const query = new URLSearchParams({q: term, limit: String(LIMIT)});
       if (purchases) query.set('purchases', '1');
-      apiGet<{items: Account[]}>(`/accounts/search?${query}`)
+      apiGet<Matches>(`/accounts/search?${query}`)
         .then((answer) => {
           if (attempt !== asked.current) return;
           setOptions(answer.items);
+          setTotal(answer.total);
           const exact = answer.items.find(
             (a) => accountLabel(a) === text || a.code === term,
           );
@@ -70,7 +79,9 @@ export function AccountPicker({
           }
         })
         .catch(() => {
-          if (attempt === asked.current) setOptions([]);
+          if (attempt !== asked.current) return;
+          setOptions([]);
+          setTotal(0);
         });
     }, 250);
     return () => clearTimeout(timer);
@@ -100,6 +111,11 @@ export function AccountPicker({
           <option key={account.id} value={accountLabel(account)} />
         ))}
       </datalist>
+      {total > options.length && value.text.trim() !== '' && (
+        <span className="admin-field-hint" aria-live="polite">
+          {t('ledger.picker.more', {shown: options.length, total})}
+        </span>
+      )}
     </>
   );
 }

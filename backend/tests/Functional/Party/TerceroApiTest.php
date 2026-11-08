@@ -312,16 +312,16 @@ final class TerceroApiTest extends ApiTestCase
         $company = $this->companyId($this->signUp());
         $this->signOut();
         $other = $this->companyId($this->signUp('beto@b.co', '890903938', 'B'));
-        $receivable = $this->chartAccount($company, '130505', 'Nacionales', AccountNature::Debit, '1305');
-        $payable = $this->chartAccount($company, '220505', 'Proveedores nacionales', AccountNature::Credit, '2205');
+        $receivable = $this->chartAccount($company, '13050501', 'Nacionales', AccountNature::Debit, '130505');
+        $payable = $this->chartAccount($company, '22050501', 'Proveedores nacionales', AccountNature::Credit, '220505');
         $group = $this->chartAccount($company, '1305', 'Clientes', AccountNature::Debit, '13');
-        $foreign = $this->chartAccount($other, '130505', 'Nacionales de B', AccountNature::Debit, '1305');
+        $foreign = $this->chartAccount($other, '13050501', 'Nacionales de B', AccountNature::Debit, '130505');
         $this->signOut();
         $this->signIn('ana@acme.co');
 
         $ok = $this->create(['receivable_account_id' => $receivable->id()->toRfc4122(), 'payable_account_id' => $payable->id()->toRfc4122()]);
-        self::assertSame('130505', $ok['receivable_account']['code']);
-        self::assertSame('220505', $ok['payable_account']['code']);
+        self::assertSame('13050501', $ok['receivable_account']['code'], 'An auxiliar: 130505 has one, so it takes no movements (observations §4.1).');
+        self::assertSame('22050501', $ok['payable_account']['code']);
 
         foreach ([[$group, 'receivable_account_id'], [$foreign, 'receivable_account_id'], [$payable, 'receivable_account_id'], [$receivable, 'payable_account_id']] as [$account, $field]) {
             $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['identification_number' => '890903938', $field => $account->id()->toRfc4122()]));
