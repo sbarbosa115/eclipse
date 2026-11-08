@@ -318,6 +318,52 @@ Item 5 depends on 2 and 3 because the snapshot is written in the resolvers item 
 - **Per-kind selects, not a multi-select** for retenciones: enforces one per kind in the UI and reads as the accountant thinks (Renta / ReteIVA / ReteICA).
 - **Model risks**: item 7 is opus for the uniqueness-key trick in one transaction (could be sonnet); item 10 is sonnet because it copies Quotation closely (could fail on the convert-with-violations path: relaunch one up if it does); item 4 is sonnet despite touching two contexts because every rule is a plain validation.
 
+### Contract as built by item 0 (read before starting an item)
+
+- **Schema:** migrations `Version20261108010107` (every table and column of §7 except the exógena seed; existing
+  single retenciones moved to `<line table>_withholding`, product codes backfilled, `active_number_key` backfilled, an
+  `OC` series per company; `down()` is irreversible) and `Version20261108010200` (DIVIPOLA, 1 122 rows). An item adds
+  a migration only for a table it alone owns; `ledger_exogena_concept` is item 9's (it seeds the defaults per company
+  with its provisioner and a data migration).
+- **Lines** (`Shared\Domain\Model\CommercialLine`): constructors of `QuotationLine`, `SalesInvoiceLine`,
+  `PurchaseInvoiceLine`, `PurchaseOrderLine` take `list<TaxSnapshot> $withholdings` (a "no tax" snapshot is skipped);
+  `withholdings()` (entities, ordered), `withholdingTaxes()` (snapshots, what a copy passes on), deprecated
+  `withholdingTax()` (the first, or none); `applyAmounts()` sets each retención's base (`TaxBase`) and share;
+  `useProductCode()` / `productCode()` (item 5 writes it). `LineInput::$withholdings` and `LineAmounts::$withholdings`
+  are lists. **Still single (item 2's):** `InvoiceLineDraft` / `PurchaseLineDraft` carry one `withholdingTax`, the
+  aggregates wrap it (`[$line->withholdingTax]`), duplicate / convert copy only the first, posting
+  (`SalesInvoicePosting`, `PurchaseInvoiceEntry`) and the PDFs read `withholdingTax()`; the inputs' `withholdings`
+  is declared but no controller reads it yet.
+- **Outputs:** every line output has `product_code` and `withholdings` (`Shared\UI\Http\Output\LineWithholdingOutput`,
+  from `Shared\Application\Document\LineWithholdingView::ofLine()`); invoices, quotations and purchase orders have
+  `withholdings_by_tax` (`WithholdingSummaryView::of()`). `DbalCatalogUsage` already reads the withholding tables.
+- **Terceros and the company:** `country_code` / `municipality_code` columns and getters, no setters and no rules
+  (item 4); outputs fill the two codes, `municipality_name` / `department_*` are null until item 4 fills them from
+  `Shared\Application\Geo\Municipalities` (working, with `GET /geo/*`); inputs declare the fields, unused.
+- **Purchase invoices:** `activeNumberKey` is kept by the constructor, `revise()` and `void()`; `supplierNumberTaken()`
+  already ignores voided invoices. `correctedFromId` / `correctedById` / `purchaseOrderId` have getters only (items 7
+  and 10 add the methods that set them).
+- **Purchase orders:** `PurchaseOrder`, `PurchaseOrderLine`, `PurchaseOrderLineWithholding`, `PurchaseOrderStatus`
+  (constructors and getters), `PurchaseOrderRepository` + Doctrine adapter, `PurchaseOrderNotFound`,
+  `SeriesKind::PurchaseOrder`, `Numbering::purchaseOrder()`.
+- **Ledger:** `AccountRepository::hasActiveChildren()` works; `JournalQueries::bySource()` throws until item 6;
+  `AccountSubdivided` has a no-op `IgnoreAccountSubdivided` that item 1 deletes when it adds Catalog's and Party's
+  handlers; `ExogenaConcept` + repository; `GET /accounts/search` answers `{items, total}` with `total` = the page's
+  count until item 1 counts every match; `AccountOutput.moved` is null and the settings outputs' `account_postable`
+  is true until item 1.
+- **501 routes:** `PurchaseOrderController` (10), `PurchaseInvoiceController::correct` (7),
+  `LedgerReportController::entries` (6), `TaxReportController` withholdings and vat (8) and exógena (9),
+  `ExogenaConceptController` (9). `tests/Functional/Observations/ContractTest::unbuiltRoutes` lists them: **an item
+  that builds a route removes its row there**.
+- **Frontend:** `DraftLine.withholdings?: string[]` (optional; item 3 makes it the field and drops
+  `withholding_tax_id`); placeholder pages `pages/purchase-orders` (`/ordenes-compra/*`, item 10) and
+  `pages/tax-reports` (`/reportes/impuestos/*`, VIEW_BOOKS in the menu; items 8 then 9); empty slices
+  `widgets/journal-entry-view` (6) and `widgets/purchase-order-list` (10); the menu marks the longest matching
+  entry. i18n `journalEntry.json` (6), `taxReports.json` (8 owns it, 9 adds the `exogena` key), `purchaseOrder.json`
+  (10); new keys under existing namespaces go under each item's prefix of the split table.
+- **Regression and smoke:** sections 14–22 of `docs/tests/ui-regression.md` and one spec file per item in
+  `backend/e2e/`, each with a comment naming its owner.
+
 ## Regression sections to add to `docs/tests/ui-regression.md`
 
 14. Cuentas: picker y auxiliares — `CTA-01 – 09`; 15. Retenciones múltiples — `RET-01 – 12`; 16. Municipios — `CIU-01 – 09`; 17. Código en documentos — `COD-01 – 05`; 18. Contabilización — `ASI-01 – 06`; 19. Corregir factura de compra — `COR-01 – 06`; 20. Reportes de impuestos — `IMP-01 – 12`; 21. Exógena — `EXO-01 – 08`; 22. Órdenes de compra — `OC-01 – 14`. No prefix collides with the existing ones (ACC, CO, LED, TAX, TER, PRD, DOC, SAL, PUR, COT, RC, PAY, REP; strays AC, CUA, FAC, SRV).
