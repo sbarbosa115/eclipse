@@ -5,6 +5,7 @@ namespace App\Tests\Functional\Purchasing;
 use App\Purchasing\Domain\Model\Payable;
 use App\Tests\Functional\Observations\WithholdingTaxes;
 use App\Tests\Support\ApiTestCase;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
 
@@ -103,7 +104,9 @@ final class CorrectPurchaseInvoiceApiTest extends ApiTestCase
 
         $this->client->request('GET', "/api/v1/purchase-invoices/{$copy['id']}/attachments/{$copy['attachments'][0]['id']}");
         self::assertResponseIsSuccessful();
-        self::assertSame(self::pdfBytes(), (string) file_get_contents($this->client->getResponse()->getFile()->getPathname()), 'The bytes are copied too.');
+        $download = $this->client->getResponse();
+        self::assertInstanceOf(BinaryFileResponse::class, $download);
+        self::assertSame(self::pdfBytes(), (string) file_get_contents($download->getFile()->getPathname()), 'The bytes are copied too.');
     }
 
     public function testTheCopyIsEmittedAgainUnderTheSameSupplierNumber(): void

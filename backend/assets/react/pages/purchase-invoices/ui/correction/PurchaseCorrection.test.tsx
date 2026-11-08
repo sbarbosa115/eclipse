@@ -161,7 +161,12 @@ describe('Corregir on a purchase invoice', () => {
     unmount();
 
     renderFor(
-      invoice({id: 'i9', status: 'draft', number: null, corrected_from_id: 'i1'}),
+      invoice({
+        id: 'i9',
+        status: 'draft',
+        number: null,
+        corrected_from_id: 'i1',
+      }),
     );
     expect(
       screen.getByText(/Esta factura corrige una factura anulada/),
