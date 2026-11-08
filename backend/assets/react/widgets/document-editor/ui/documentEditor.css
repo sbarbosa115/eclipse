@@ -153,6 +153,25 @@
   grid-template-columns: 1fr auto;
 }
 
+.admin .doc-totals .doc-totals-withholding {
+  padding-left: 12px;
+}
+
+.admin .doc-totals .doc-totals-withholding dt {
+  font-size: 0.9em;
+}
+
+.admin .doc-totals .doc-totals-base {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+}
+
+.admin .doc-line-withholdings .btn {
+  max-width: 14rem;
+  white-space: normal;
+  text-align: left;
+}
+
 .admin .doc-totals-net {
   border-top: 1px solid var(--color-border);
   padding-top: 8px;

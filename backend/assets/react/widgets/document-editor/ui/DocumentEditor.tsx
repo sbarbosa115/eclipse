@@ -131,7 +131,6 @@ export function DocumentEditor({
           errors={errors}
           readOnly={readOnly}
           chargeTaxes={options.inForce.charge}
-          withholdingTaxes={options.inForce.withholding}
           knownTaxes={[...options.chargeTaxes, ...options.withholdingTaxes]}
           onChange={(index, change) => {
             answer(index, change);
@@ -209,7 +208,7 @@ export function DocumentEditor({
           lineNumber={taxLine + 1}
           subtotal={totals.lines[taxLine]?.subtotal ?? '0.00'}
           chargeTaxId={taxLineValue.charge_tax_id}
-          withholdingTaxId={taxLineValue.withholding_tax_id}
+          withholdings={taxLineValue.withholdings}
           chargeTaxes={offeredTaxes(
             options.inForce.charge,
             options.chargeTaxes,
@@ -218,12 +217,13 @@ export function DocumentEditor({
           withholdingTaxes={offeredTaxes(
             options.inForce.withholding,
             options.withholdingTaxes,
-            taxLineValue.withholding_tax_id,
+            taxLineValue.withholdings,
           )}
           productId={taxLineValue.product?.id ?? null}
           onClose={() => setTaxesFor(null)}
           onApply={(taxes) => {
             setTaxesFor(null);
+            answer(taxLine, taxes);
             onChange(updateLine(value, taxLine, taxes));
           }}
         />

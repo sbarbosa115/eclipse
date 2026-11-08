@@ -59,7 +59,6 @@ export function LinesGrid({
   errors,
   readOnly,
   chargeTaxes,
-  withholdingTaxes,
   knownTaxes,
   onChange,
   onAdd,
@@ -74,10 +73,9 @@ export function LinesGrid({
   amounts: LineAmounts[];
   errors: EditorErrors;
   readOnly: boolean;
-  /** The taxes in force on the document's date: what may be newly chosen. */
+  /** The charge taxes in force on the document's date: what may be newly chosen (retenciones: the tax dialog). */
   chargeTaxes: Tax[];
-  withholdingTaxes: Tax[];
-  /** Every active tax, so a line keeps showing the one it already has. */
+  /** Every active tax, so a line keeps showing those it already has. */
   knownTaxes: Tax[];
   onChange: (index: number, change: Partial<DraftLine>) => void;
   onAdd: () => void;
@@ -98,7 +96,7 @@ export function LinesGrid({
       `tr[data-line="${key}"] td[data-col="${col}"]`,
     );
     const control = cell?.querySelector<HTMLElement>(
-      col === 'item' ? 'input' : 'input, select',
+      col === 'item' ? 'input' : 'input, select, button',
     );
     control?.focus();
   };
@@ -166,31 +164,64 @@ export function LinesGrid({
   const label = (column: string, index: number) =>
     t('documentEditor.lines.cellLabel', {column, n: index + 1});
 
-  const taxSelect = (
+  const chargeSelect = (
     index: number,
-    col: 'charge' | 'withholding',
     line: DraftLine,
-    taxes: Tax[],
     column: string,
   ): ReactNode => {
-    const field = col === 'charge' ? 'charge_tax_id' : 'withholding_tax_id';
-    const errorId = `${baseId}-${line.key}-${col}-error`;
-    const message = errors[`lines.${index}.${field}`];
+    const errorId = `${baseId}-${line.key}-charge-error`;
+    const message = errors[`lines.${index}.charge_tax_id`];
     return (
-      <td data-col={col}>
+      <td data-col="charge">
         <select
           aria-label={label(column, index)}
-          value={line[field] ?? ''}
-          onChange={(e) => onChange(index, {[field]: e.target.value || null})}
+          value={line.charge_tax_id ?? ''}
+          onChange={(e) =>
+            onChange(index, {charge_tax_id: e.target.value || null})
+          }
           {...invalidProps(errorId, message)}
         >
           <option value="">{t('documentEditor.lines.noTax')}</option>
-          {offeredTaxes(taxes, knownTaxes, line[field]).map((tax) => (
-            <option key={tax.id} value={tax.id}>
-              {tax.name}
-            </option>
-          ))}
+          {offeredTaxes(chargeTaxes, knownTaxes, line.charge_tax_id).map(
+            (tax) => (
+              <option key={tax.id} value={tax.id}>
+                {tax.name}
+              </option>
+            ),
+          )}
         </select>
+        <CellError id={errorId} message={message} />
+      </td>
+    );
+  };
+
+  // Retenciones: the names chosen ("Rte 4 % · ReteIVA 15 %"); the cell opens the line's tax dialog to change them.
+  const withholdingsCell = (index: number, line: DraftLine): ReactNode => {
+    const errorId = `${baseId}-${line.key}-withholdings-error`;
+    const message = errors[`lines.${index}.withholdings`];
+    const names = line.withholdings
+      .map((id) => knownTaxes.find((tax) => tax.id === id)?.name)
+      .filter((name): name is string => Boolean(name))
+      .join(' · ');
+    const text = names || t('documentEditor.lines.noWithholdings');
+    return (
+      <td data-col="withholding" className="doc-line-withholdings">
+        {readOnly ? (
+          <span className={names ? undefined : 'muted'}>{text}</span>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={t('documentEditor.lines.withholdingsOf', {
+              n: index + 1,
+              names: text,
+            })}
+            onClick={() => onOpenTaxes(index)}
+            {...invalidProps(errorId, message)}
+          >
+            {text}
+          </Button>
+        )}
         <CellError id={errorId} message={message} />
       </td>
     );
@@ -307,14 +338,8 @@ export function LinesGrid({
             {textCell(index, 'quantity', line, columns[2] ?? '')}
             {textCell(index, 'unit_price', line, columns[3] ?? '')}
             {textCell(index, 'discount', line, columns[4] ?? '')}
-            {taxSelect(index, 'charge', line, chargeTaxes, columns[5] ?? '')}
-            {taxSelect(
-              index,
-              'withholding',
-              line,
-              withholdingTaxes,
-              columns[6] ?? '',
-            )}
+            {chargeSelect(index, line, columns[5] ?? '')}
+            {withholdingsCell(index, line)}
             <td className="doc-amount nowrap">
               {formatMoney(amounts[index]?.lineTotal ?? '0')}
             </td>

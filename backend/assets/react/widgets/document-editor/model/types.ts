@@ -30,10 +30,8 @@ export interface DraftLine {
   /** % Descuento, 0 to 100; empty is none. */
   discount: string;
   charge_tax_id: string | null;
-  /** Deprecated: the first retención. The "withholdings-editor" item moves the form to `withholdings` and drops it. */
-  withholding_tax_id: string | null;
-  /** Retenciones of the line (tax ids, at most one per kind), in order (observations PRD §4.2). */
-  withholdings?: string[];
+  /** Retenciones of the line: tax ids, at most one per kind (Retefuente, ReteIVA, ReteICA), in order (§4.2). */
+  withholdings: string[];
 }
 
 /** Hoy, a 15, 30 o 60 días, or a date typed by hand (§4.5). */

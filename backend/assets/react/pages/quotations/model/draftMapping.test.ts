@@ -34,7 +34,11 @@ const quotation = (over: Partial<Quotation> = {}): Quotation =>
         unit_price: '1000000.0000',
         discount: '0.0000',
         charge_tax_id: 'iva19',
-        withholding_tax_id: null,
+        withholding_tax_id: 'rete25',
+        withholdings: [
+          {tax_id: 'rete25', name: 'ReteFuente 2,5 %', kind: 'retefuente'},
+          {tax_id: 'ica966', name: 'ReteICA 0,966 %', kind: 'reteica'},
+        ],
       },
     ],
     ...over,
@@ -53,6 +57,7 @@ describe('the quotation draft and the API', () => {
       unit_price: '1000000',
       discount: '',
       charge_tax_id: 'iva19',
+      withholdings: ['rete25', 'ica966'],
     });
     expect(extrasFromQuotation(quotation())).toEqual({
       responsible: {id: 'e1', name: 'Elena Pérez'},
@@ -80,6 +85,7 @@ describe('the quotation draft and the API', () => {
           description: ' Servicio ',
           quantity: '1',
           unit_price: '100',
+          withholdings: ['rete25', 'reteiva15'],
         },
       ],
     };
@@ -107,6 +113,9 @@ describe('the quotation draft and the API', () => {
           description: 'Servicio',
           quantity: '1',
           unit_price: '100',
+          withholdings: [{tax_id: 'rete25'}, {tax_id: 'reteiva15'}],
+          // The deprecated alias, while the API reads only it (observations §6).
+          withholding_tax_id: 'rete25',
         },
       ],
     });

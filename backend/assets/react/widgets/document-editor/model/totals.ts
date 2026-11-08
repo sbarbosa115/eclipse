@@ -4,6 +4,8 @@ import type {DraftLine} from './types';
 /** What the preview needs of a tax: how it computes and its rate (a percentage, or a value per unit). */
 export interface TaxRateInfo {
   id: string;
+  /** Shown in the totals panel's row of each retención. */
+  name?: string;
   calculation: string;
   rate: string;
   /** The tax's kind (`reteiva`…): a ReteIVA is a percentage of the line's IVA, not of its base. */
@@ -16,11 +18,22 @@ export interface LineAmounts {
   discount: string;
   subtotal: string;
   tax: string;
+  /** Σ of the line's retenciones. */
   withholding: string;
-  /** What the line adds to Total neto: subtotal + impuesto − retención (the server's LineAmounts::total). */
+  /** One share per retención the preview knows, in the line's order (the server's LineAmounts::$withholdings). */
+  withholdings: string[];
+  /** What the line adds to Total neto: subtotal + impuesto − retenciones (the server's LineAmounts::total). */
   total: string;
   /** The grid's Valor total: subtotal + impuesto cargo, so an IVA-included price is the line total (§4.3). */
   lineTotal: string;
+}
+
+/** A retención summed over the document: its base (subtotals, or IVA for ReteIVA) and its value (WithholdingSummaryView). */
+export interface WithholdingByTax {
+  tax_id: string;
+  name: string;
+  base: string;
+  amount: string;
 }
 
 export interface TotalsPreview {
@@ -31,6 +44,8 @@ export interface TotalsPreview {
   withholdings: string;
   net: string;
   lines: LineAmounts[];
+  /** One row per retención tax, in the order each first appears; their amounts add up to `withholdings`. */
+  withholdingsByTax: WithholdingByTax[];
 }
 
 const MONEY_SCALE = 2;
@@ -85,8 +100,11 @@ function shares(exact: Decimal[]): Decimal[] {
  *     Descuentos   = Σ cantidad × valor unitario × % descuento
  *     Subtotal     = Total bruto − Descuentos
  *     Impuestos    = Σ impuesto cargo de cada línea, sobre la base con descuento
- *     Retenciones  = Σ impuesto retención de cada línea (ReteIVA sobre el IVA de la línea)
+ *     Retenciones  = Σ retenciones de cada línea (ReteIVA sobre el IVA de la línea)
  *     Total neto   = Subtotal + Impuestos − Retenciones
+ *
+ * Retenciones are shared per (line, retención) pair, as on the server, so each one's amount (what posts to its own
+ * account) adds up to the document's Retenciones. A tax the company no longer offers is left out.
  */
 export function computeTotals(
   lines: ReadonlyArray<DraftLine>,
@@ -97,8 +115,10 @@ export function computeTotals(
   const discount: Decimal[] = [];
   const tax: Decimal[] = [];
   const withholding: Decimal[] = [];
+  /** Per (line, retención) pair: its line and its tax. */
+  const pairs: {line: number; tax: TaxRateInfo}[] = [];
 
-  for (const line of lines) {
+  lines.forEach((line, i) => {
     const quantity = read(line.quantity);
     const lineGross = quantity.times(read(line.unit_price));
     const lineDiscount = lineGross.times(read(line.discount).percent());
@@ -107,21 +127,29 @@ export function computeTotals(
     discount.push(lineDiscount);
     const lineTax = taxOn(byId.get(line.charge_tax_id ?? ''), base, quantity);
     tax.push(lineTax);
-    withholding.push(
-      taxOn(byId.get(line.withholding_tax_id ?? ''), base, quantity, lineTax),
-    );
-  }
+    for (const id of line.withholdings) {
+      const rate = byId.get(id);
+      if (!rate) continue;
+      withholding.push(taxOn(rate, base, quantity, lineTax));
+      pairs.push({line: i, tax: rate});
+    }
+  });
 
   const grossShares = shares(gross);
   const discountShares = shares(discount);
   const taxShares = shares(tax);
   const withholdingShares = shares(withholding);
+  const perLine: Decimal[][] = lines.map(() => []);
+  withholdingShares.forEach((share, k) => {
+    perLine[(pairs[k] as {line: number}).line]?.push(share);
+  });
 
   const amounts = lines.map((_, i): LineAmounts => {
     const g = grossShares[i] as Decimal;
     const d = discountShares[i] as Decimal;
     const tx = taxShares[i] as Decimal;
-    const w = withholdingShares[i] as Decimal;
+    const own = perLine[i] ?? [];
+    const w = Decimal.sum(own).roundHalfUp(MONEY_SCALE);
     const subtotal = g.minus(d);
     return {
       gross: g.toString(),
@@ -129,9 +157,30 @@ export function computeTotals(
       subtotal: subtotal.toString(),
       tax: tx.toString(),
       withholding: w.toString(),
+      withholdings: own.map((share) => share.toString()),
       total: subtotal.plus(tx).minus(w).toString(),
       lineTotal: subtotal.plus(tx).toString(),
     };
+  });
+
+  // By tax, as WithholdingSummaryView: the base is the line's subtotal share, or its IVA share for a ReteIVA.
+  const byTax = new Map<string, {name: string; base: Decimal; amount: Decimal}>();
+  withholdingShares.forEach((share, k) => {
+    const {line, tax: rate} = pairs[k] as {line: number; tax: TaxRateInfo};
+    const base =
+      rate.kind === 'reteiva'
+        ? (taxShares[line] as Decimal)
+        : (grossShares[line] as Decimal).minus(discountShares[line] as Decimal);
+    const group = byTax.get(rate.id) ?? {
+      name: rate.name ?? '',
+      base: Decimal.ZERO,
+      amount: Decimal.ZERO,
+    };
+    byTax.set(rate.id, {
+      name: group.name,
+      base: group.base.plus(base),
+      amount: group.amount.plus(share),
+    });
   });
 
   const money = (values: Decimal[]) =>
@@ -150,5 +199,11 @@ export function computeTotals(
     withholdings: totalWithholdings.toString(),
     net: subtotal.plus(totalTaxes).minus(totalWithholdings).toString(),
     lines: amounts,
+    withholdingsByTax: [...byTax].map(([taxId, group]) => ({
+      tax_id: taxId,
+      name: group.name,
+      base: group.base.roundHalfUp(MONEY_SCALE).toString(),
+      amount: group.amount.roundHalfUp(MONEY_SCALE).toString(),
+    })),
   };
 }

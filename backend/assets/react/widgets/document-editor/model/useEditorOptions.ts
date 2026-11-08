@@ -79,12 +79,14 @@ export function useEditorOptions(
   };
 }
 
-/** The taxes a select offers: those in force, plus the one the line already has (a draft keeps its own). */
+/** The taxes a select offers: those in force, plus those the line already has (a draft keeps its own). */
 export function offeredTaxes(
   inForce: Tax[],
   all: Tax[],
-  chosen: string | null,
+  chosen: string | ReadonlyArray<string> | null,
 ): Tax[] {
-  if (!chosen || inForce.some((tax) => tax.id === chosen)) return inForce;
-  return [...inForce, ...all.filter((tax) => tax.id === chosen)];
+  const ids = chosen === null ? [] : typeof chosen === 'string' ? [chosen] : chosen;
+  const missing = ids.filter((id) => !inForce.some((tax) => tax.id === id));
+  if (missing.length === 0) return inForce;
+  return [...inForce, ...all.filter((tax) => missing.includes(tax.id))];
 }
