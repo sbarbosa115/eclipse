@@ -3,6 +3,7 @@
 namespace App\Party\UI\Http\Output;
 
 use App\Party\Domain\Model\Tercero;
+use App\Shared\Application\Geo\MunicipalityView;
 
 /**
  * A tercero in a list or a document's search box.
@@ -37,7 +38,7 @@ final readonly class TerceroSummaryOutput
     ) {
     }
 
-    public static function of(Tercero $t): self
+    public static function of(Tercero $t, ?MunicipalityView $municipality = null): self
     {
         return new self(
             $t->id()->toRfc4122(),
@@ -54,6 +55,9 @@ final readonly class TerceroSummaryOutput
             $t->tradeName(),
             $t->countryCode(),
             $t->municipalityCode(),
+            $municipality?->name,
+            $municipality?->departmentCode,
+            $municipality?->departmentName,
         );
     }
 

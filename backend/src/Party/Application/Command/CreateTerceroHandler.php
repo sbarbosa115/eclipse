@@ -14,6 +14,7 @@ final class CreateTerceroHandler implements CommandHandler
     public function __construct(
         private readonly TerceroRepository $terceros,
         private readonly TerceroAccounts $accounts,
+        private readonly TerceroPlace $place,
         private readonly Clock $clock,
     ) {
     }
@@ -26,7 +27,7 @@ final class CreateTerceroHandler implements CommandHandler
         }
         $this->accounts->check($command->companyId, $p);
 
-        $tercero = Tercero::register($command->companyId, $p, $this->clock->now());
+        $tercero = Tercero::register($command->companyId, $p, $this->clock->now(), $this->place->municipalityName($p));
         $this->terceros->add($tercero);
 
         return $tercero->id();

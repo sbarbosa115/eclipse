@@ -2,6 +2,7 @@
 
 namespace App\Company\UI\Http\Output;
 
+use App\Shared\Application\Geo\MunicipalityView;
 use App\Company\Application\Query\CompanyView;
 
 /** The company's profile (§4.1). */
@@ -40,8 +41,8 @@ final readonly class CompanyOutput
     ) {
     }
 
-    public static function of(CompanyView $c): self
+    public static function of(CompanyView $c, ?MunicipalityView $municipality = null): self
     {
-        return new self($c->id, $c->legalName, $c->tradeName, $c->identificationType, $c->identificationNumber, $c->checkDigit, $c->address, $c->city, $c->phone, $c->email, $c->logoId, $c->vatRegime, $c->fiscalResponsibilities, $c->defaultChargeTaxId, $c->defaultWithholdingTaxId, $c->countryCode, $c->municipalityCode);
+        return new self($c->id, $c->legalName, $c->tradeName, $c->identificationType, $c->identificationNumber, $c->checkDigit, $c->address, $c->city, $c->phone, $c->email, $c->logoId, $c->vatRegime, $c->fiscalResponsibilities, $c->defaultChargeTaxId, $c->defaultWithholdingTaxId, $c->countryCode, $c->municipalityCode, $municipality?->name, $municipality?->departmentCode, $municipality?->departmentName);
     }
 }

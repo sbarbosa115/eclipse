@@ -66,6 +66,7 @@ trait SalesInvoiceFixtures
             'identification_type' => 'nit',
             'identification_number' => $number,
             'business_name' => $name,
+            'municipality_code' => '11001',
             'email' => $email ?? 'sin-correo@cliente.co',
             'roles' => ['cliente'],
         ]);

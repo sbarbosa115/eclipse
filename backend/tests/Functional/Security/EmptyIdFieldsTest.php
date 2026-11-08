@@ -50,7 +50,7 @@ final class EmptyIdFieldsTest extends ApiTestCase
         $this->signUp();
         $tercero = [
             'person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '800197268',
-            'business_name' => 'Andina S.A.S.', 'roles' => ['cliente'],
+            'business_name' => 'Andina S.A.S.', 'municipality_code' => '11001', 'roles' => ['cliente'],
             'receivable_account_id' => '', 'payable_account_id' => '',
             'contacts' => [['id' => '', 'name' => 'Pedro Ruiz']],
         ];

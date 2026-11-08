@@ -146,21 +146,21 @@ class Tercero implements CompanyOwned
     /** What an erased tercero is called: documents keep the name they copied, the master keeps only this. */
     public const ERASED_NAME = 'Datos suprimidos';
 
-    public static function register(Uuid $companyId, TerceroProfile $profile, \DateTimeImmutable $now): self
+    public static function register(Uuid $companyId, TerceroProfile $profile, \DateTimeImmutable $now, ?string $municipalityName = null): self
     {
         $tercero = new self($companyId, $profile->personType, $profile->identificationType, $profile->identificationNumber, $profile->checkDigit, $profile->displayName, $now, $profile->branchCode);
-        $tercero->revise($profile);
+        $tercero->revise($profile, $municipalityName);
 
         return $tercero;
     }
 
     /**
      * Replaces everything the person edits. Contacts are matched by id (documents point at them); the ones left out
-     * go away.
+     * go away. A Colombian tercero's city is its municipality's name ($municipalityName, which the caller looked up).
      *
      * @throws TerceroErased
      */
-    public function revise(TerceroProfile $p): void
+    public function revise(TerceroProfile $p, ?string $municipalityName = null): void
     {
         $this->assertNotErased();
         $this->personType = $p->personType;
@@ -173,7 +173,9 @@ class Tercero implements CompanyOwned
         $this->lastNames = $p->lastNames;
         $this->businessName = $p->businessName;
         $this->tradeName = $p->tradeName;
-        $this->city = $p->city;
+        $this->countryCode = $p->countryCode;
+        $this->municipalityCode = $p->municipalityCode;
+        $this->city = null !== $p->municipalityCode ? ($municipalityName ?? $p->city) : $p->city;
         $this->address = $p->address;
         $this->phones = $p->phones;
         $this->billingContactName = $p->billingContactName;

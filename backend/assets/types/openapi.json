@@ -280,7 +280,7 @@
         },
         "/api/v1/company": {
             "get": {
-                "summary": "The company's raz\u00f3n social, NIT, address, r\u00e9gimen, responsabilidades fiscales, default taxes and logo.",
+                "summary": "The company's raz\u00f3n social, NIT, address, pa\u00eds and municipio, r\u00e9gimen, responsabilidades fiscales, default taxes and logo.",
                 "operationId": "get_app_company_ui_http_company_show",
                 "responses": {
                     "200": {
@@ -1237,7 +1237,7 @@
         },
         "/api/v1/terceros": {
             "get": {
-                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page \u2264 100.",
+                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1 (only active) or 0 (only inactive), ?missing_municipality=1 (Colombian terceros\nstill without a municipality), ?page, ?per_page \u2264 100.",
                 "operationId": "get_app_party_ui_http_tercero_list",
                 "responses": {
                     "200": {
@@ -1295,7 +1295,7 @@
         },
         "/api/v1/terceros/quick": {
             "post": {
-                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|\u2026]} \u2192 201.",
+                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|\u2026], country_code?\n(default CO), municipality_code (required for CO), city (required abroad)} \u2192 201.",
                 "operationId": "post_app_party_ui_http_tercero_quickcreate",
                 "responses": {
                     "201": {

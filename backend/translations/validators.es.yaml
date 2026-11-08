@@ -110,3 +110,8 @@
 'Allocate the amount paid to at least one invoice.': 'Aplica el valor pagado al menos a una factura.'
 'Choose an open invoice of this supplier, once.': 'Elige una factura pendiente de este proveedor, una sola vez.'
 'Choose where the money comes from.': 'Elige de dónde sale el dinero.'
+
+# Party and Company: país and municipio (observations 2026-11, item 4)
+'Choose the municipality.': 'Elige el municipio.'
+'Write the city.': 'Escribe la ciudad.'
+'Choose the country.': 'Elige el país.'
