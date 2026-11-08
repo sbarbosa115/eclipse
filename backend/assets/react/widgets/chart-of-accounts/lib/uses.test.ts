@@ -56,7 +56,9 @@ describe('what points at an account', () => {
         products: 2,
         terceros: 1,
       }),
-    ).toBe('regla Ingresos por ventas, 1 forma de pago, 2 productos y 1 tercero');
+    ).toBe(
+      'regla Ingresos por ventas, 1 forma de pago, 2 productos y 1 tercero',
+    );
     expect(
       movedText(t, {
         posting_rules: [],

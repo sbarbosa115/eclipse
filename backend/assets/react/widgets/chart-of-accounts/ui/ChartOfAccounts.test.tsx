@@ -256,10 +256,7 @@ describe('Plan de cuentas', () => {
           ],
         },
       ] as [number, unknown],
-      'GET /settings/payment-methods': [200, {items: []}] as [
-        number,
-        unknown,
-      ],
+      'GET /settings/payment-methods': [200, {items: []}] as [number, unknown],
     };
 
     const openAdd = async (code: string) => {
@@ -326,9 +323,9 @@ describe('Plan de cuentas', () => {
           'Cuenta 41359501 creada. Pasaron a 41359501: regla Ingresos por ventas y 2 productos.',
         ),
       ).toBeInTheDocument();
-      expect(
-        api.calls.find((c) => c.method === 'POST')?.body,
-      ).toMatchObject({move_references: true});
+      expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+        move_references: true,
+      });
     });
 
     it('leaves the references where they are when told not to move them', async () => {
@@ -365,9 +362,9 @@ describe('Plan de cuentas', () => {
       expect(
         await screen.findByText('Cuenta 41359501 creada.'),
       ).toBeInTheDocument();
-      expect(
-        api.calls.find((c) => c.method === 'POST')?.body,
-      ).toMatchObject({move_references: false});
+      expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+        move_references: false,
+      });
     });
 
     it('does not warn under an account that already has auxiliares', async () => {

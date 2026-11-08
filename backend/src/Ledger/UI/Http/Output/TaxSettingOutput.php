@@ -39,6 +39,6 @@ final readonly class TaxSettingOutput
     {
         $t = $v->tax;
 
-        return new self($t->id, $t->name, $t->taxClass, $t->kind, $t->calculation, $t->rate, $t->salesAccountId, $v->salesAccount?->code, $v->salesAccount?->name, $t->purchaseAccountId, $v->purchaseAccount?->code, $v->purchaseAccount?->name, $t->validFrom, $t->validTo, $t->active, $t->standard, $v->inUse, ($v->salesAccount?->postable ?? true) && ($v->purchaseAccount?->postable ?? true));
+        return new self($t->id, $t->name, $t->taxClass, $t->kind, $t->calculation, $t->rate, $t->salesAccountId, $v->salesAccount?->code, $v->salesAccount?->name, $t->purchaseAccountId, $v->purchaseAccount?->code, $v->purchaseAccount?->name, $t->validFrom, $t->validTo, $t->active, $t->standard, $v->inUse, ($v->salesAccount->postable ?? true) && ($v->purchaseAccount->postable ?? true));
     }
 }

@@ -45,7 +45,7 @@ final class CatalogSettings
         $used = array_flip($this->usage->usedPaymentMethodIds($companyId));
         $accounts = [];
 
-        return array_map(fn (PaymentMethodView $m) => new PaymentMethodSettingView($m, isset($used[$m->id]), $this->account($companyId, $m->accountId, $accounts)?->postable ?? true), $this->catalog->paymentMethods($companyId, false));
+        return array_map(fn (PaymentMethodView $m) => new PaymentMethodSettingView($m, isset($used[$m->id]), $this->account($companyId, $m->accountId, $accounts)->postable ?? true), $this->catalog->paymentMethods($companyId, false));
     }
 
     public function paymentMethod(Uuid $companyId, Uuid $methodId): PaymentMethodSettingView
@@ -53,7 +53,7 @@ final class CatalogSettings
         $method = $this->catalog->paymentMethod($companyId, $methodId);
         $accounts = [];
 
-        return new PaymentMethodSettingView($method, $this->usage->paymentMethodIsUsed($companyId, $methodId), $this->account($companyId, $method->accountId, $accounts)?->postable ?? true);
+        return new PaymentMethodSettingView($method, $this->usage->paymentMethodIsUsed($companyId, $methodId), $this->account($companyId, $method->accountId, $accounts)->postable ?? true);
     }
 
     /**

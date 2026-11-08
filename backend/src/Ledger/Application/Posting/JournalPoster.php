@@ -24,7 +24,7 @@ interface JournalPoster
      * @return Uuid the new entry's id
      *
      * @throws \App\Shared\Domain\Error\DomainError entry_unbalanced, period_locked, account_not_postable,
-     *                                               account_has_auxiliaries, posting_rule_missing
+     *                                              account_has_auxiliaries, posting_rule_missing
      */
     public function post(EntryDraft $draft): Uuid;
 

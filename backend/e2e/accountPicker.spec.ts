@@ -34,7 +34,10 @@ async function addUnder(page: Page, parent: string) {
   await page.goto('/configuracion?tab=chart');
   await page.getByRole('searchbox').fill(parent);
   await page
-    .getByRole('button', {name: `Agregar subcuenta bajo ${parent}`, exact: true})
+    .getByRole('button', {
+      name: `Agregar subcuenta bajo ${parent}`,
+      exact: true,
+    })
     .click();
   return page.getByRole('dialog');
 }
@@ -100,7 +103,9 @@ test('CTA-03 · the picker says how many more matched than it lists', async ({
 
   await box.fill('4');
   await expect(
-    form.getByText(/^Mostrando 50 de \d+: escribe más para encontrar la cuenta\.$/),
+    form.getByText(
+      /^Mostrando 50 de \d+: escribe más para encontrar la cuenta\.$/,
+    ),
   ).toBeVisible();
 
   await box.fill('4135');

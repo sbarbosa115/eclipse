@@ -19,13 +19,12 @@ final class AccountSearchApiTest extends ApiTestCase
         $this->startCompany();
     }
 
-    /** @return array{items: list<array<string, mixed>>, total: int} */
+    /** @return array<mixed> */
     private function search(string $query): array
     {
         $answer = $this->getJson('/api/v1/accounts/search?'.$query);
         self::assertResponseIsSuccessful();
 
-        /* @var array{items: list<array<string, mixed>>, total: int} $answer */
         return $answer;
     }
 

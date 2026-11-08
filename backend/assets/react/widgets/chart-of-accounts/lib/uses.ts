@@ -16,10 +16,10 @@ export function usesOf(
   rules: {concept: string; account_id: string}[],
   taxes: {
     name: string;
-    sales_account_id: string | null;
-    purchase_account_id: string | null;
+    sales_account_id?: string | null;
+    purchase_account_id?: string | null;
   }[],
-  methods: {name: string; account_id: string | null}[],
+  methods: {name: string; account_id?: string | null}[],
 ): AccountUse[] {
   const uses: AccountUse[] = rules.map((r) => ({
     accountId: r.account_id,
@@ -33,7 +33,11 @@ export function usesOf(
   }
   for (const method of methods) {
     if (method.account_id) {
-      uses.push({accountId: method.account_id, kind: 'method', name: method.name});
+      uses.push({
+        accountId: method.account_id,
+        kind: 'method',
+        name: method.name,
+      });
     }
   }
   return uses;
