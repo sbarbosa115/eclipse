@@ -361,19 +361,35 @@ class PurchaseInvoice implements CompanyOwned
         $issue = new \DateTimeImmutable($today->format('Y-m-d'));
         $shift = fn (?\DateTimeImmutable $due) => null === $due ? null : $issue->modify(\sprintf('%+d days', (int) $this->issueDate->diff($due)->format('%r%a')));
 
-        $copy = new self($this->companyId, $this->terceroId, $this->terceroName, null, $issue, $by, $at);
-        $copy->revise(
-            $this->terceroId,
-            $this->terceroName,
-            null,
-            $issue,
-            $shift($this->dueDate),
-            $this->notes,
-            array_map(static fn (PurchaseInvoiceLine $l) => new PurchaseLineDraft($l->productId(), $l->accountId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes()), $this->lines()),
-            array_map(static fn (PurchaseInvoicePayment $p) => new PurchasePaymentDraft($p->paymentMethodId(), $p->methodName(), $p->kind(), $p->accountId(), $p->amount(), $shift($p->dueDate())), $this->payments()),
-        );
+        return $this->copy(null, $issue, $shift, $by, $at);
+    }
+
+    /**
+     * Corregir (observations PRD §4.6): the editable copy of this invoice, just voided for it. Unlike a duplicate it is
+     * the same supplier's invoice: the supplier's number, the dates, notes, lines (every retención) and formas de pago
+     * as they were recorded. The copy holds the supplier's number again, which the void released (activeNumberKey),
+     * and the two point at each other.
+     *
+     * @throws \LogicException when it is not voided, or already corrected: the handler voids it first, under a lock
+     */
+    public function correction(Uuid $by, \DateTimeImmutable $at): self
+    {
+        if (InvoiceStatus::Voided !== $this->status || null !== $this->correctedById) {
+            throw new \LogicException('Only a voided invoice not corrected yet opens a correction.');
+        }
+        $copy = $this->copy($this->supplierInvoiceNumber, $this->issueDate, static fn (?\DateTimeImmutable $due) => $due, $by, $at);
+        $copy->correctedFromId = $this->id;
+        $this->correctedById = $copy->id;
 
         return $copy;
+    }
+
+    /** The draft that corrected this voided invoice was deleted: there is no replacement to point at any more. */
+    public function correctionDiscarded(Uuid $draftId): void
+    {
+        if (null !== $this->correctedById && $this->correctedById->equals($draftId)) {
+            $this->correctedById = null;
+        }
     }
 
     public function correctedFromId(): ?Uuid
@@ -389,6 +405,28 @@ class PurchaseInvoice implements CompanyOwned
     public function purchaseOrderId(): ?Uuid
     {
         return $this->purchaseOrderId;
+    }
+
+    /**
+     * A new draft of the same supplier with these lines, taxes and formas de pago, its due dates moved by $due.
+     *
+     * @param \Closure(?\DateTimeImmutable): ?\DateTimeImmutable $due
+     */
+    private function copy(?string $supplierInvoiceNumber, \DateTimeImmutable $issueDate, \Closure $due, Uuid $by, \DateTimeImmutable $at): self
+    {
+        $copy = new self($this->companyId, $this->terceroId, $this->terceroName, $supplierInvoiceNumber, $issueDate, $by, $at);
+        $copy->revise(
+            $this->terceroId,
+            $this->terceroName,
+            $supplierInvoiceNumber,
+            $issueDate,
+            $due($this->dueDate),
+            $this->notes,
+            array_map(static fn (PurchaseInvoiceLine $l) => new PurchaseLineDraft($l->productId(), $l->accountId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes()), $this->lines()),
+            array_map(static fn (PurchaseInvoicePayment $p) => new PurchasePaymentDraft($p->paymentMethodId(), $p->methodName(), $p->kind(), $p->accountId(), $p->amount(), $due($p->dueDate())), $this->payments()),
+        );
+
+        return $copy;
     }
 
     public function isDraft(): bool

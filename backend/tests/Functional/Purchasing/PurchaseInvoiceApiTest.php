@@ -330,7 +330,7 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
 
         $all = $this->getJson('/api/v1/purchase-invoices');
         self::assertSame(3, $all['total']);
-        self::assertSame(['id', 'status', 'number', 'tercero_id', 'tercero_name', 'supplier_invoice_number', 'issue_date', 'due_date', 'net_total', 'paid_amount', 'balance'], array_keys($all['items'][0]));
+        self::assertSame(['id', 'status', 'number', 'tercero_id', 'tercero_name', 'supplier_invoice_number', 'issue_date', 'due_date', 'net_total', 'paid_amount', 'balance', 'corrected_by_id'], array_keys($all['items'][0]));
 
         $byNumber = fn (string $query) => array_column($this->getJson('/api/v1/purchase-invoices?'.$query)['items'], 'supplier_invoice_number');
         self::assertSame(['A-1'], $byNumber('q=FC-1'), 'By the internal number.');

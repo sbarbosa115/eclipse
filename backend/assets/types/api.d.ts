@@ -1728,7 +1728,8 @@ export interface paths {
         put?: never;
         /**
          * Corregir (observations PRD §4.6): {reason}. In one transaction voids the emitted invoice as /void does and opens
-         *     an editable copy with the same supplier number, lines, formas de pago and files → 201 the new draft. 409
+         *     an editable copy with the same supplier number, dates, notes, lines, formas de pago and files → 201 the new draft
+         *     (`corrected_from_id`; the voided one gets `corrected_by_id` and the reason "Corregida: <reason>"). 409
          *     `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.
          */
         post: operations["post_app_purchasing_ui_http_purchaseinvoice_correct"];
@@ -3061,6 +3062,11 @@ export interface components {
             paid_amount: string;
             /** What is still owed: total neto − paid; 0 on a voided invoice. */
             balance: string;
+            /**
+             * The invoice that corrects this voided one (Corregir, observations PRD §4.6): the list's "Corregida" hint links to it.
+             * @default null
+             */
+            corrected_by_id: string | null;
         };
         PurchaseInvoiceLineOutput: {
             id: string;

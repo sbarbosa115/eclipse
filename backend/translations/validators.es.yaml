@@ -79,6 +79,7 @@
 'The discount is between 0 and 100, with at most four decimals.': 'El descuento va de 0 a 100, con máximo cuatro decimales.'
 'Write the amount in pesos, with at most two decimals.': 'Escribe el valor en pesos, con máximo dos decimales.'
 'Write why the invoice is voided.': 'Escribe por qué se anula la factura.'
+'Write why the invoice is corrected.': 'Escribe por qué se corrige la factura.'
 
 # Sales invoice (item 8)
 'Add at least one line.': 'Agrega al menos una línea.'
