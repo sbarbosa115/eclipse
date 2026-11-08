@@ -38,6 +38,9 @@
 'Choose an active charge tax (IVA, impoconsumo).': 'Elige un impuesto cargo activo (IVA, impoconsumo).'
 "This tax is not in force on the document's date.": 'Este impuesto no está vigente en la fecha del documento.'
 'Choose an active withholding tax (retención).': 'Elige un impuesto de retención activo.'
+# Observations 2026-11, item 2 (withholdings-api): several retenciones per line
+'One retención per kind on each line.': 'Una retención por tipo en cada línea.'
+'Choose the retención.': 'Elige la retención.'
 'Choose a postable account of the chart.': 'Elige una cuenta del plan de cuentas que reciba movimientos.'
 'The price is lower than the tax per unit it includes.': 'El precio es menor que el impuesto por unidad que incluye.'
 'Write the price in pesos, with at most four decimals.': 'Escribe el precio en pesos, con máximo cuatro decimales.'

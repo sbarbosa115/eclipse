@@ -11,6 +11,7 @@ use App\Sales\Domain\Error\InvalidInvoice;
 use App\Sales\Domain\Model\InvoiceLineDraft;
 use App\Sales\Domain\Model\InvoicePaymentDraft;
 use App\Sales\Domain\Model\SalesInvoice;
+use App\Shared\Application\Document\WithholdingChoice;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Model\CommercialLine;
 use App\Shared\Domain\Model\PaymentKind;
@@ -141,7 +142,7 @@ final class SalesInvoiceContent
         $kept = [];
         $keptProducts = [];
         foreach ($current as $line) {
-            foreach ([$line->chargeTax(), $line->withholdingTax()] as $tax) {
+            foreach ([$line->chargeTax(), ...$line->withholdingTaxes()] as $tax) {
                 if (null !== $tax->taxId()) {
                     $kept[$tax->taxId()->toRfc4122()] = $tax;
                 }
@@ -170,18 +171,46 @@ final class SalesInvoiceContent
                 $this->violate("$at.description", 'Write the description.');
             }
             $charge = $this->tax($companyId, $line->chargeTaxId, 'charge', "$at.charge_tax_id", $kept, $issueDate);
-            $withholding = $this->tax($companyId, $line->withholdingTaxId, 'withholding', "$at.withholding_tax_id", $kept, $issueDate);
+            $withholdings = $this->withholdings($companyId, $at, $line, $kept, $issueDate);
             $quantity = Quantity::of($line->quantity);
             if (!$quantity->toBigDecimal()->isPositive()) {
                 $this->violate("$at.quantity", 'The quantity is greater than zero.');
             }
             $discount = Rate::of('' === trim($line->discount) ? '0' : $line->discount);
-            if (null !== $charge && null !== $withholding) {
-                $drafts[] = new InvoiceLineDraft($line->productId, $line->description, $quantity, UnitPrice::of($line->unitPrice), $discount, $charge, $withholding);
+            if (null !== $charge && null !== $withholdings) {
+                $drafts[] = new InvoiceLineDraft($line->productId, $line->description, $quantity, UnitPrice::of($line->unitPrice), $discount, $charge, $withholdings);
             }
         }
 
         return $drafts;
+    }
+
+    /**
+     * The line's retenciones (observations PRD §4.2): each one as a tax of its own, at most one per kind. Null when one
+     * of them was refused (the violation is recorded).
+     *
+     * @param array<string, TaxSnapshot> $kept
+     *
+     * @return list<TaxSnapshot>|null
+     */
+    private function withholdings(Uuid $companyId, string $at, SalesInvoiceLineData $line, array $kept, \DateTimeImmutable $issueDate): ?array
+    {
+        $withholdings = [];
+        $ok = true;
+        foreach (WithholdingChoice::fields($line->withholdingTaxIds, $line->withholdingTaxId, $at) as [$taxId, $field]) {
+            $tax = $this->tax($companyId, $taxId, 'withholding', $field, $kept, $issueDate);
+            if (null === $tax) {
+                $ok = false;
+            } elseif (!$tax->isNone()) {
+                $withholdings[] = $tax;
+            }
+        }
+        if (WithholdingChoice::repeatsAKind($withholdings)) {
+            $this->violate("$at.withholdings", WithholdingChoice::ONE_PER_KIND);
+            $ok = false;
+        }
+
+        return $ok ? $withholdings : null;
     }
 
     /**

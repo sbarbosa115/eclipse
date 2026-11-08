@@ -24,6 +24,7 @@ use App\Sales\UI\Http\Output\SalesInvoiceSummaryOutput;
 use App\Sales\UI\Http\SalesInvoiceAccess;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Domain\Error\NotFound;
+use App\Shared\UI\Http\Input\LineWithholdingInput;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
@@ -241,6 +242,7 @@ final class SalesInvoiceController extends AbstractController
             array_map(static fn (SalesInvoiceLineInput $l) => new SalesInvoiceLineData(
                 SalesInvoiceAccess::optionalUuid($l->productId), $l->description, $l->quantity, $l->unitPrice, $l->discount,
                 SalesInvoiceAccess::optionalUuid($l->chargeTaxId), SalesInvoiceAccess::optionalUuid($l->withholdingTaxId),
+                null === $l->withholdings ? null : array_map(static fn (LineWithholdingInput $w) => Uuid::fromString((string) $w->taxId), $l->withholdings),
             ), $in->lines),
             array_map(static fn (SalesInvoicePaymentInput $p) => new SalesInvoicePaymentData(
                 Uuid::fromString($p->paymentMethodId), $p->amount, null === $p->dueDate || '' === $p->dueDate ? null : new \DateTimeImmutable($p->dueDate),
