@@ -82,8 +82,6 @@ final class ContractTest extends ApiTestCase
         yield 'convert an order' => ['POST', "/api/v1/purchase-orders/$id/convert", 'purchase-orders'];
         yield 'correct a purchase invoice' => ['POST', "/api/v1/purchase-invoices/$id/correct", 'purchase-correct'];
         yield 'a document\'s entries' => ['GET', "/api/v1/ledger/entries?source_type=sales_invoice&source_id=$id", 'journal-entry-tab'];
-        yield 'retenciones practicadas' => ['GET', '/api/v1/reports/taxes/withholdings/practiced', 'tax-reports'];
-        yield 'IVA' => ['GET', '/api/v1/reports/taxes/vat', 'tax-reports'];
         yield 'exógena 1001' => ['GET', '/api/v1/reports/taxes/exogena/1001', 'exogena'];
         yield 'exógena concepts' => ['GET', '/api/v1/ledger/exogena-concepts', 'exogena'];
     }

@@ -3658,7 +3658,7 @@
         },
         "/api/v1/reports/taxes/withholdings/{side}": {
             "get": {
-                "summary": "?from=YYYY-MM&to=YYYY-MM (default this month), ?kind=retefuente|reteiva|reteica. 400 invalid_date.",
+                "summary": "Retenciones practicadas (facturas de compra) or sufridas (facturas de venta), by month then kind, per tercero and\ntax, with each total's *Seg\u00fan libros*. ?kind=retefuente|reteiva|reteica (default all; 400 `invalid_kind`).",
                 "operationId": "get_app_reporting_ui_http_taxreport_withholdings",
                 "parameters": [
                     {
@@ -3691,6 +3691,7 @@
         },
         "/api/v1/reports/taxes/withholdings/{side}/export": {
             "get": {
+                "summary": "The same report as a file, with its subtotals, books' figures and differences in line.",
                 "operationId": "get_app_reporting_ui_http_taxreport_exportwithholdings",
                 "parameters": [
                     {
@@ -3716,7 +3717,7 @@
         },
         "/api/v1/reports/taxes/vat": {
             "get": {
-                "summary": "?from=YYYY-MM&to=YYYY-MM: a bimester or cuatrimestre is a range.",
+                "summary": "IVA generado and descontable by rate, ReteIVA practicada and sufrida, impoconsumo and the saldo; a bimester or\ncuatrimestre is a range.",
                 "operationId": "get_app_reporting_ui_http_taxreport_vat",
                 "responses": {
                     "200": {
@@ -7278,6 +7279,7 @@
                     "identification_number",
                     "tercero_name",
                     "tax_name",
+                    "calculation",
                     "rate",
                     "base",
                     "amount",
@@ -7288,6 +7290,7 @@
                         "type": "string"
                     },
                     "identification_type": {
+                        "title": "nit, cc, ce, pasaporte, ti\u2026",
                         "type": "string"
                     },
                     "identification_number": {
@@ -7301,10 +7304,15 @@
                         "type": "string"
                     },
                     "tax_id": {
+                        "title": "null when the tax was deleted after the document copied it",
                         "type": "string",
                         "nullable": true
                     },
                     "tax_name": {
+                        "type": "string"
+                    },
+                    "calculation": {
+                        "title": "percentage or per_unit",
                         "type": "string"
                     },
                     "rate": {
@@ -7354,7 +7362,36 @@
                         "type": "string"
                     },
                     "ledger_amount": {
-                        "title": "Seg\u00fan libros: the kind's accounts (2365/2367/2368 practicadas, 135515/17/18 sufridas) in the month.",
+                        "title": "Seg\u00fan libros: what the kind's accounts (2365/2367/2368 practicadas, 135515/17/18 sufridas) moved in the month.",
+                        "type": "string"
+                    },
+                    "difference": {
+                        "title": "ledger_amount \u2212 total_amount: zero when the books and the documents agree.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "WithholdingKindTotalOutput": {
+                "required": [
+                    "kind",
+                    "total_base",
+                    "total_amount",
+                    "ledger_amount",
+                    "difference"
+                ],
+                "properties": {
+                    "kind": {
+                        "title": "retefuente, reteiva, reteica",
+                        "type": "string"
+                    },
+                    "total_base": {
+                        "type": "string"
+                    },
+                    "total_amount": {
+                        "type": "string"
+                    },
+                    "ledger_amount": {
                         "type": "string"
                     },
                     "difference": {
@@ -7369,6 +7406,7 @@
                     "to",
                     "side",
                     "groups",
+                    "totals",
                     "voided_count"
                 ],
                 "properties": {
@@ -7383,14 +7421,25 @@
                         "title": "practiced or suffered",
                         "type": "string"
                     },
+                    "kind": {
+                        "title": "The ?kind= filter, null for every kind.",
+                        "type": "string",
+                        "nullable": true
+                    },
                     "groups": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/WithholdingReportGroupOutput"
                         }
                     },
+                    "totals": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingKindTotalOutput"
+                        }
+                    },
                     "voided_count": {
-                        "title": "Voided invoices in the period, left out (\"3 facturas anuladas en el periodo no se incluyen\").",
+                        "title": "Voided invoices issued in the period with retenciones, left out (\"3 facturas anuladas en el periodo no se incluyen\").",
                         "type": "integer"
                     }
                 },
@@ -7404,6 +7453,7 @@
                 ],
                 "properties": {
                     "rate": {
+                        "title": "\"19.0000\"",
                         "type": "string"
                     },
                     "base": {
@@ -7429,10 +7479,13 @@
                     "net",
                     "ledger_generated",
                     "ledger_deductible",
+                    "generated_difference",
+                    "deductible_difference",
                     "voided_count"
                 ],
                 "properties": {
                     "from": {
+                        "title": "YYYY-MM",
                         "type": "string"
                     },
                     "to": {
@@ -7457,26 +7510,37 @@
                         "type": "string"
                     },
                     "reteiva_practiced": {
+                        "title": "What the company withheld of its suppliers' IVA (declared on the retenciones return).",
                         "type": "string"
                     },
                     "reteiva_suffered": {
+                        "title": "What clients withheld of the company's IVA: discounted from the saldo.",
                         "type": "string"
                     },
                     "impoconsumo": {
+                        "title": "Impoconsumo of the sales (its own return).",
                         "type": "string"
                     },
                     "net": {
-                        "title": "generado \u2212 descontable: positive a pagar, negative a favor.",
+                        "title": "generado \u2212 descontable \u2212 reteiva sufrida: positive a pagar, negative a favor.",
                         "type": "string"
                     },
                     "ledger_generated": {
-                        "title": "Seg\u00fan libros: 2408 generado and descontable in the period.",
+                        "title": "Seg\u00fan libros: what 240805 (generado) and 240810 (descontable) moved in the period.",
                         "type": "string"
                     },
                     "ledger_deductible": {
                         "type": "string"
                     },
+                    "generated_difference": {
+                        "title": "ledger \u2212 report, each: zero when the books and the documents agree.",
+                        "type": "string"
+                    },
+                    "deductible_difference": {
+                        "type": "string"
+                    },
                     "voided_count": {
+                        "title": "Voided invoices (sales and purchases) issued in the period, left out.",
                         "type": "integer"
                     }
                 },

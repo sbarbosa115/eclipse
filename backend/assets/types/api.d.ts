@@ -2190,7 +2190,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** ?from=YYYY-MM&to=YYYY-MM (default this month), ?kind=retefuente|reteiva|reteica. 400 invalid_date. */
+        /**
+         * Retenciones practicadas (facturas de compra) or sufridas (facturas de venta), by month then kind, per tercero and
+         *     tax, with each total's *Según libros*. ?kind=retefuente|reteiva|reteica (default all; 400 `invalid_kind`).
+         */
         get: operations["get_app_reporting_ui_http_taxreport_withholdings"];
         put?: never;
         post?: never;
@@ -2207,6 +2210,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** The same report as a file, with its subtotals, books' figures and differences in line. */
         get: operations["get_app_reporting_ui_http_taxreport_exportwithholdings"];
         put?: never;
         post?: never;
@@ -2223,7 +2227,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** ?from=YYYY-MM&to=YYYY-MM: a bimester or cuatrimestre is a range. */
+        /**
+         * IVA generado and descontable by rate, ReteIVA practicada and sufrida, impoconsumo and the saldo; a bimester or
+         *     cuatrimestre is a range.
+         */
         get: operations["get_app_reporting_ui_http_taxreport_vat"];
         put?: never;
         post?: never;
@@ -3338,12 +3345,16 @@ export interface components {
         };
         WithholdingReportRowOutput: {
             tercero_id: string;
+            /** nit, cc, ce, pasaporte, ti… */
             identification_type: string;
             identification_number: string;
             check_digit?: string | null;
             tercero_name: string;
+            /** null when the tax was deleted after the document copied it */
             tax_id?: string | null;
             tax_name: string;
+            /** percentage or per_unit */
+            calculation: string;
             rate: string;
             base: string;
             amount: string;
@@ -3357,7 +3368,16 @@ export interface components {
             rows: components["schemas"]["WithholdingReportRowOutput"][];
             total_base: string;
             total_amount: string;
-            /** Según libros: the kind's accounts (2365/2367/2368 practicadas, 135515/17/18 sufridas) in the month. */
+            /** Según libros: what the kind's accounts (2365/2367/2368 practicadas, 135515/17/18 sufridas) moved in the month. */
+            ledger_amount: string;
+            /** ledger_amount − total_amount: zero when the books and the documents agree. */
+            difference: string;
+        };
+        WithholdingKindTotalOutput: {
+            /** retefuente, reteiva, reteica */
+            kind: string;
+            total_base: string;
+            total_amount: string;
             ledger_amount: string;
             difference: string;
         };
@@ -3367,30 +3387,42 @@ export interface components {
             to: string;
             /** practiced or suffered */
             side: string;
+            /** The ?kind= filter, null for every kind. */
+            kind?: string | null;
             groups: components["schemas"]["WithholdingReportGroupOutput"][];
-            /** Voided invoices in the period, left out ("3 facturas anuladas en el periodo no se incluyen"). */
+            totals: components["schemas"]["WithholdingKindTotalOutput"][];
+            /** Voided invoices issued in the period with retenciones, left out ("3 facturas anuladas en el periodo no se incluyen"). */
             voided_count: number;
         };
         VatRateRowOutput: {
+            /** "19.0000" */
             rate: string;
             base: string;
             tax: string;
         };
         VatReportOutput: {
+            /** YYYY-MM */
             from: string;
             to: string;
             generated: components["schemas"]["VatRateRowOutput"][];
             deductible: components["schemas"]["VatRateRowOutput"][];
             generated_total: string;
             deductible_total: string;
+            /** What the company withheld of its suppliers' IVA (declared on the retenciones return). */
             reteiva_practiced: string;
+            /** What clients withheld of the company's IVA: discounted from the saldo. */
             reteiva_suffered: string;
+            /** Impoconsumo of the sales (its own return). */
             impoconsumo: string;
-            /** generado − descontable: positive a pagar, negative a favor. */
+            /** generado − descontable − reteiva sufrida: positive a pagar, negative a favor. */
             net: string;
-            /** Según libros: 2408 generado and descontable in the period. */
+            /** Según libros: what 240805 (generado) and 240810 (descontable) moved in the period. */
             ledger_generated: string;
             ledger_deductible: string;
+            /** ledger − report, each: zero when the books and the documents agree. */
+            generated_difference: string;
+            deductible_difference: string;
+            /** Voided invoices (sales and purchases) issued in the period, left out. */
             voided_count: number;
         };
         ExogenaRowOutput: {
