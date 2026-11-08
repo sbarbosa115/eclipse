@@ -1,0 +1,35 @@
+/* Reportes › Impuestos (observations 2026-11, item 8 tax-reports). */
+
+/* A report's CSV and PDF buttons, under its filters on the right. */
+.admin .tax-exports {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 12px;
+}
+
+.admin .tax-section {
+  margin-bottom: 24px;
+}
+
+.admin .tax-section-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Según libros under a total: muted when it agrees, underlined in the warning colour when it does not. */
+.admin .tax-books {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 16px;
+  margin: 8px 0 16px;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin .tax-books-off .tax-books-verdict {
+  font-weight: 600;
+  color: var(--color-warning);
+}
