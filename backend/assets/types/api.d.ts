@@ -608,8 +608,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** The company's table, by format then prefix. */
         get: operations["get_app_ledger_ui_http_exogenaconcept_list"];
-        /** {items: [{format, account_prefix, concept_code}]} replaces the table. 422 by field. */
+        /**
+         * {items: [{format, account_prefix, concept_code}]} replaces the whole table (at most 500 rows; an empty list is
+         *     allowed). 422 by field (`items[N].format`, `.account_prefix`, `.concept_code`), and on a prefix twice in one format.
+         */
         put: operations["put_app_ledger_ui_http_exogenaconcept_replace"];
         post?: never;
         delete?: never;
@@ -2153,6 +2157,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/taxes/exogena/{format}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The format's rows, its cuantías menores and what keeps it from being filed (missing concepts, municipios). */
+        get: operations["get_app_reporting_ui_http_exogena_exogena"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/taxes/exogena/{format}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The working paper as a file (?format=csv|pdf, ?check=1 to ask first), with the same filters. 422
+         *     `exogena_terceros_incomplete` while a Colombian tercero reported by name has no municipio (the terceros list
+         *     filters them with ?missing_municipality=1); 422 `export_too_large` above the cap.
+         */
+        get: operations["get_app_reporting_ui_http_exogena_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/cartera/{side}/export": {
         parameters: {
             query?: never;
@@ -2255,40 +2297,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_app_reporting_ui_http_taxreport_exportvat"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/reports/taxes/exogena/{format}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** ?year= (default last year), ?threshold= pesos (default 0: everyone). */
-        get: operations["get_app_reporting_ui_http_taxreport_exogena"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/reports/taxes/exogena/{format}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 422 exogena_terceros_incomplete while a tercero of the format has no municipality. */
-        get: operations["get_app_reporting_ui_http_taxreport_exportexogena"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3355,6 +3363,46 @@ export interface components {
             /** Cajas y bancos (1105 + 1110); null for a person who may not see the books. */
             cash_and_banks?: string | null;
         };
+        ExogenaRowOutput: {
+            tercero_id?: string | null;
+            /** DIAN document type code (31 NIT, 13 cédula, 43 cuantías menores…) */
+            document_type_code: string;
+            identification_number: string;
+            check_digit?: string | null;
+            /** A person's apellidos (null for a company). */
+            last_names?: string | null;
+            /** A person's nombres (null for a company). */
+            first_names?: string | null;
+            /** A company's razón social. */
+            business_name?: string | null;
+            address?: string | null;
+            department_code?: string | null;
+            municipality_code?: string | null;
+            /** ISO 3166-1 alpha-2 */
+            country_code: string;
+            concept_code?: string | null;
+            account_code?: string | null;
+            values: {
+                [key: string]: string;
+            };
+        };
+        ExogenaOutput: {
+            year: number;
+            /** 1001, 1003, 1005, 1006, 1007, 1008, 1009 */
+            format: string;
+            /** The cuantías menores threshold in pesos (0.00: everyone by name). */
+            threshold: string;
+            value_columns: string[];
+            rows: components["schemas"]["ExogenaRowOutput"][];
+            minor_amounts_rows: components["schemas"]["ExogenaRowOutput"][];
+            totals: {
+                [key: string]: string;
+            };
+            /** Rows whose account has no concept code yet (1001 and 1007; always 0 elsewhere). */
+            missing_concepts: number;
+            /** Colombian terceros reported by name with no municipality: the export is refused while any. */
+            missing_municipality: number;
+        };
         WithholdingReportRowOutput: {
             tercero_id: string;
             /** nit, cc, ce, pasaporte, ti… */
@@ -3436,39 +3484,6 @@ export interface components {
             deductible_difference: string;
             /** Voided invoices (sales and purchases) issued in the period, left out. */
             voided_count: number;
-        };
-        ExogenaRowOutput: {
-            tercero_id?: string | null;
-            /** DIAN document type code (31 NIT, 13 cédula…) */
-            document_type_code: string;
-            identification_number: string;
-            check_digit?: string | null;
-            last_names?: string | null;
-            first_names?: string | null;
-            business_name?: string | null;
-            address?: string | null;
-            department_code?: string | null;
-            municipality_code?: string | null;
-            country_code: string;
-            concept_code?: string | null;
-            account_code?: string | null;
-            values: {
-                [key: string]: string;
-            };
-        };
-        ExogenaOutput: {
-            year: number;
-            /** 1001, 1003, 1005, 1006, 1007, 1008, 1009 */
-            format: string;
-            threshold: string;
-            value_columns: string[];
-            rows: components["schemas"]["ExogenaRowOutput"][];
-            /** Rows under the threshold, grouped under the pseudo-NIT 222222222. */
-            minor_amounts_row?: components["schemas"]["ExogenaRowOutput"] | null;
-            /** Rows whose account has no concept code yet. */
-            missing_concepts: number;
-            /** Terceros in the format with no municipality: the export is refused while any. */
-            missing_municipality: number;
         };
         DepartmentOutput: {
             code: string;
@@ -6543,6 +6558,47 @@ export interface operations {
             };
         };
     };
+    get_app_reporting_ui_http_exogena_exogena: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                format: "1001" | "1003" | "1005" | "1006" | "1007" | "1008" | "1009";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExogenaOutput"];
+                };
+            };
+        };
+    };
+    get_app_reporting_ui_http_exogena_export: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                format: "1001" | "1003" | "1005" | "1006" | "1007" | "1008" | "1009";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_app_reporting_ui_http_reportexport_cartera: {
         parameters: {
             query?: never;
@@ -6647,47 +6703,6 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_app_reporting_ui_http_taxreport_exogena: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                format: "1001" | "1003" | "1005" | "1006" | "1007" | "1008" | "1009";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExogenaOutput"];
-                };
-            };
-        };
-    };
-    get_app_reporting_ui_http_taxreport_exportexogena: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                format: "1001" | "1003" | "1005" | "1006" | "1007" | "1008" | "1009";
-            };
             cookie?: never;
         };
         requestBody?: never;

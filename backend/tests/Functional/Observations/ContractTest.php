@@ -7,7 +7,8 @@ use App\Tests\Support\ApiTestCase;
 
 /**
  * Item 0 of the observations-2026-11 PRD: the contract the items build on. Lines keep their retenciones in a list
- * (the single one of stage 1 is its first), DIVIPOLA answers, and every new route exists and says who builds it.
+ * (the single one of stage 1 is its first) and DIVIPOLA answers. (Its list of routes answering 501 went as each item built
+ * them.)
  */
 final class ContractTest extends ApiTestCase
 {
@@ -70,23 +71,5 @@ final class ContractTest extends ApiTestCase
         $this->client->request('GET', '/api/v1/geo/municipalities?q=bogota');
 
         self::assertResponseStatusCodeSame(401);
-    }
-
-    /**
-     * @return iterable<string, array{string, string, string}>
-     */
-    public static function unbuiltRoutes(): iterable
-    {
-        yield 'exógena 1001' => ['GET', '/api/v1/reports/taxes/exogena/1001', 'exogena'];
-        yield 'exógena concepts' => ['GET', '/api/v1/ledger/exogena-concepts', 'exogena'];
-    }
-
-    #[\PHPUnit\Framework\Attributes\DataProvider('unbuiltRoutes')]
-    public function testEveryNewRouteExistsAndNamesItsItem(string $method, string $uri, string $item): void
-    {
-        $body = 'GET' === $method ? $this->getJson($uri) : $this->sendJson($method, $uri, []);
-
-        self::assertResponseStatusCodeSame(501);
-        self::assertSame(['error' => 'not_implemented', 'message' => "Built by the \"$item\" item."], $body);
     }
 }

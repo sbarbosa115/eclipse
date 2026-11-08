@@ -8,6 +8,7 @@ import {
 import {can, useSession} from '@/entities/session';
 import {useTranslation} from '@/shared/i18n';
 import {EmptyState, PageHeader, TabPanel, Tabs} from '@/shared/ui';
+import {ExogenaView} from './ExogenaView';
 import {VatView} from './VatView';
 import {WithholdingsView} from './WithholdingsView';
 import './taxReports.css';
@@ -28,6 +29,7 @@ const VIEWS = [
     element: <WithholdingsView key="suffered" side="suffered" />,
   },
   {value: 'vat', path: 'iva', element: <VatView />},
+  {value: 'exogena', path: 'exogena', element: <ExogenaView />},
 ] as const;
 type View = (typeof VIEWS)[number]['value'];
 const FIRST = VIEWS[0].path;
