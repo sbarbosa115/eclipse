@@ -3055,7 +3055,7 @@
                 }
             },
             "post": {
-                "summary": "A draft {tercero_id, issue_date, expected_date?, notes?, lines: [...as a purchase invoice's]} \u2192 201.",
+                "summary": "A draft {tercero_id, issue_date, expected_date?, notes?, lines: [{product_id | account_id, description, quantity,\nunit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind)}]} \u2192 201. 422 `validation_failed`\nby field path (`tercero_id`, `expected_date`, `lines[0].product_id`, `lines[0].withholdings`\u2026).",
                 "operationId": "post_app_purchasing_ui_http_purchaseorder_create",
                 "responses": {
                     "201": {
@@ -3073,6 +3073,7 @@
         },
         "/api/v1/purchase-orders/{id}": {
             "get": {
+                "summary": "One order, whole.",
                 "operationId": "get_app_purchasing_ui_http_purchaseorder_show",
                 "parameters": [
                     {
@@ -3098,7 +3099,7 @@
                 }
             },
             "put": {
-                "summary": "Rewrites the draft. 409 document_not_draft.",
+                "summary": "Rewrites the draft with the same body as create. 409 document_not_draft.",
                 "operationId": "put_app_purchasing_ui_http_purchaseorder_update",
                 "parameters": [
                     {
@@ -3278,7 +3279,7 @@
         },
         "/api/v1/purchase-orders/{id}/convert": {
             "post": {
-                "summary": "Once, from emitted: a draft purchase invoice with the same supplier and lines, dated today, no supplier number\nand no formas de pago \u2192 the order, now converted, with converted_invoice_id. 409 purchase_order_already_converted,\npurchase_order_not_open; 422 validation_failed (the invoice's own violations).",
+                "summary": "Once, from emitted: a draft purchase invoice with the same supplier and lines, dated today, no supplier number\nand no formas de pago \u2192 the order, now converted, with converted_invoice_id (the invoice's purchase_order_id is\nthis order). 409 purchase_order_already_converted, purchase_order_not_open; 422 validation_failed (the invoice's\nown violations, by field path): nothing is converted then.",
                 "operationId": "post_app_purchasing_ui_http_purchaseorder_convert",
                 "parameters": [
                     {

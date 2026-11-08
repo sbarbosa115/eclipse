@@ -1,0 +1,82 @@
+{#
+    An orden de compra (Purchasing), the document the supplier receives. Context: company, logo_data_uri, title, number,
+    order (Purchasing\Application\Query\PurchaseOrderView), supplier (identification, address, email), lines (printed as
+    on the factura de compra) and withholdings (the retenciones by tax: name, base, amount).
+#}
+{% extends 'pdf/document.html.twig' %}
+
+{% macro money(value) %}$ {{ value|number_format(2, ',', '.') }}{% endmacro %}
+{% macro date(value) %}{{ value ? value|date('d/m/Y') : '' }}{% endmacro %}
+{% import _self as f %}
+
+{% block watermark %}{% if order.status == 'voided' %}<div class="voided">ANULADA</div>{% elseif order.status == 'draft' %}<div class="voided">BORRADOR</div>{% endif %}{% endblock %}
+
+{% block body %}
+    <table style="width: 100%; margin-bottom: 8px;">
+        <tr>
+            <td style="width: 55%; vertical-align: top;">
+                <strong>Proveedor</strong><br>
+                {{ order.terceroName }}<br>
+                {{ supplier.identification }}<br>
+                {% if supplier.address %}{{ supplier.address }}<br>{% endif %}
+                {% if supplier.email %}{{ supplier.email }}{% endif %}
+            </td>
+            <td style="vertical-align: top;">
+                <span class="muted">Fecha de la orden:</span> {{ f.date(order.issueDate) }}<br>
+                <span class="muted">Entrega esperada:</span> {{ order.expectedDate ? f.date(order.expectedDate) : '—' }}<br>
+                <span class="muted">Estado:</span> {{ {draft: 'Borrador', emitted: 'Emitida', converted: 'Convertida en factura', voided: 'Anulada'}[order.status] }}
+            </td>
+        </tr>
+    </table>
+
+    <table class="lines">
+        <thead>
+            <tr>
+                <th>Producto / cuenta</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th class="num">Cantidad</th>
+                <th class="num">Valor unitario</th>
+                <th class="num">% Desc.</th>
+                <th>Impuesto</th>
+                <th>Retenciones</th>
+                <th class="num">Valor total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+                <tr>
+                    <td>{{ line.label }}</td>
+                    <td>{{ line.product_code }}</td>
+                    <td>{{ line.description }}</td>
+                    <td class="num">{{ line.quantity }}</td>
+                    <td class="num">{{ f.money(line.unit_price) }}</td>
+                    <td class="num">{{ line.discount }}</td>
+                    <td>{{ line.charge_tax }}</td>
+                    <td>{{ line.withholding_tax }}</td>
+                    <td class="num">{{ f.money(line.total) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table style="width: 100%; margin-top: 10px;">
+        <tr>
+            <td style="width: 55%; vertical-align: top;">
+                {% if order.notes %}<strong>Observaciones</strong><br>{{ order.notes }}{% endif %}
+                {% if order.status == 'voided' %}<br><br><strong>Anulada:</strong> {{ order.voidReason }}{% endif %}
+            </td>
+            <td style="vertical-align: top;">
+                <table style="width: 100%;">
+                    <tr><td>Total bruto</td><td class="num">{{ f.money(order.grossTotal) }}</td></tr>
+                    <tr><td>Descuentos</td><td class="num">{{ f.money(order.discountTotal) }}</td></tr>
+                    <tr><td>Subtotal</td><td class="num">{{ f.money(order.subtotal) }}</td></tr>
+                    <tr><td>Impuestos</td><td class="num">{{ f.money(order.taxTotal) }}</td></tr>
+                    <tr><td>Retenciones</td><td class="num">{{ f.money(order.withholdingTotal) }}</td></tr>
+                    {% for tax in withholdings %}<tr class="muted"><td>{{ tax.name }} (base {{ f.money(tax.base) }})</td><td class="num">{{ f.money(tax.amount) }}</td></tr>{% endfor %}
+                    <tr><td><strong>Total neto</strong></td><td class="num"><strong>{{ f.money(order.netTotal) }}</strong></td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

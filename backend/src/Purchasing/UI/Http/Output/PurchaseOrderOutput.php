@@ -2,6 +2,9 @@
 
 namespace App\Purchasing\UI\Http\Output;
 
+use App\Purchasing\Application\Query\PurchaseInvoiceLineView;
+use App\Purchasing\Application\Query\PurchaseOrderView;
+use App\Shared\Application\Document\WithholdingSummaryView;
 use App\Shared\UI\Http\Output\WithholdingSummaryOutput;
 
 /** An orden de compra, whole: header, lines (as a purchase invoice's), totals, conversion and audit. */
@@ -36,5 +39,16 @@ final readonly class PurchaseOrderOutput
         public ?string $voidedAt,
         public ?string $voidReason,
     ) {
+    }
+
+    public static function of(PurchaseOrderView $v): self
+    {
+        return new self(
+            $v->id, $v->status, $v->number, $v->terceroId, $v->terceroName, $v->issueDate, $v->expectedDate, $v->notes,
+            $v->grossTotal, $v->discountTotal, $v->subtotal, $v->taxTotal, $v->withholdingTotal, $v->netTotal,
+            array_map(PurchaseInvoiceLineOutput::of(...), $v->lines),
+            array_map(WithholdingSummaryOutput::of(...), WithholdingSummaryView::of(array_map(static fn (PurchaseInvoiceLineView $l) => $l->withholdings, $v->lines))),
+            $v->convertedInvoiceId, $v->createdAt, $v->emittedAt, $v->voidedAt, $v->voidReason,
+        );
     }
 }

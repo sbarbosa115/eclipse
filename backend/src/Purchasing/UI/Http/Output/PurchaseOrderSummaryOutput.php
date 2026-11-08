@@ -2,6 +2,8 @@
 
 namespace App\Purchasing\UI\Http\Output;
 
+use App\Purchasing\Application\Query\PurchaseOrderSummary;
+
 /** A row of the órdenes de compra list. */
 final readonly class PurchaseOrderSummaryOutput
 {
@@ -18,5 +20,10 @@ final readonly class PurchaseOrderSummaryOutput
         public string $netTotal,
         public ?string $convertedInvoiceId,
     ) {
+    }
+
+    public static function of(PurchaseOrderSummary $s): self
+    {
+        return new self($s->id, $s->status, $s->number, $s->terceroId, $s->terceroName, $s->issueDate, $s->expectedDate, $s->netTotal, $s->convertedInvoiceId);
     }
 }
