@@ -1619,7 +1619,7 @@ New company. Create a product with *Cuenta de ingreso* `413595`, and a tercero w
 `13051001`. Add `41359501` under `413595`, `1305100101` under `13051001` and `24080501` under `240805`. **Expected:**
 the messages say "… 1 producto", "… 1 tercero" and "regla IVA generado, 4 impuestos"; the product's and the tercero's
 forms now show the new accounts; Impuestos shows *IVA 19 %* posting its sales side to `24080501` (purchase side still
-`240810`). **Configuración › Registro de cambios** (or `audit_log`): `posting_rule.changed`, `product.updated`,
+`240810`). The audit log (no screen yet: `SELECT action, data FROM audit_log` on the stack's database) has `posting_rule.changed`, `product.updated`,
 `tercero.updated`, `tax.updated` with from/to and reason `account_subdivided`.
 
 **CTA-08 · After subdividing, documents post to the auxiliar and never to its parent**
