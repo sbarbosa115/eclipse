@@ -13,6 +13,8 @@ export interface PartyRef {
 export interface ProductRef {
   id: string;
   label: string;
+  /** The code the line was written with (a snapshot); read-only forms show it in its own column. */
+  code?: string | null;
 }
 
 /**

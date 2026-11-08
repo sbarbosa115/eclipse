@@ -11,6 +11,8 @@ export interface SavedLine {
   id?: string;
   product_id?: string | null;
   product_label?: string | null;
+  /** The product's code as it was when the line was written (a snapshot). */
+  product_code?: string | null;
   account_id?: string | null;
   account_label?: string | null;
   description: string;
@@ -52,7 +54,11 @@ export function draftLineFrom(line: SavedLine): DraftLine {
     ...emptyLine(),
     ...(line.id ? {key: `line-${line.id}`} : {}),
     product: line.product_id
-      ? {id: line.product_id, label: line.product_label ?? line.description}
+      ? {
+          id: line.product_id,
+          label: line.product_label ?? line.description,
+          code: line.product_code ?? null,
+        }
       : null,
     account: line.account_id
       ? {id: line.account_id, text: line.account_label ?? ''}

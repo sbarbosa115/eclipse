@@ -32,7 +32,7 @@ final class DuplicateSalesInvoiceHandler implements CommandHandler
 
         $copy = new SalesInvoice($command->companyId, $source->terceroId(), $source->terceroName(), $today, $command->userId, $this->calendar->now());
         $copy->revise($source->terceroId(), $source->terceroName(), $source->contactId(), $source->sellerId(), $today, $source->notes());
-        $copy->replaceLines(array_map(static fn (SalesInvoiceLine $l) => new InvoiceLineDraft($l->productId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes()), $source->lines()));
+        $copy->replaceLines(array_map(static fn (SalesInvoiceLine $l) => new InvoiceLineDraft($l->productId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes(), $l->productCode()), $source->lines()));
         $copy->replacePayments(array_map(static function (SalesInvoicePayment $p) use ($source, $today): InvoicePaymentDraft {
             $due = $p->dueDate();
             if (null !== $due) {

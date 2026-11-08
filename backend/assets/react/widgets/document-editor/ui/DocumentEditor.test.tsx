@@ -1003,6 +1003,33 @@ describe('the document form (§4.6)', () => {
       ).toHaveAccessibleDescription('Elige el tercero.');
     });
 
+    it('shows the code a saved line was written with in its own column, only when read-only (COD)', async () => {
+      api();
+      const coded = line({
+        ...PRD_LINE,
+        product: {id: 'p1', label: 'NUEVO · Renombrado', code: 'VIEJO-01'},
+      });
+      renderEditor({readOnly: true, value: draft({lines: [coded]})});
+      await waitFor(() => expect(total('Total neto')).toBe('$ 2.070.000,00'));
+      expect(
+        screen.getByRole('columnheader', {name: 'Código'}),
+      ).toBeInTheDocument();
+      expect(screen.getByText('VIEJO-01')).toBeInTheDocument();
+    });
+
+    it('has no code column while the document is edited', async () => {
+      api();
+      const coded = line({
+        ...PRD_LINE,
+        product: {id: 'p1', label: 'NUEVO · Renombrado', code: 'VIEJO-01'},
+      });
+      renderEditor({value: draft({lines: [coded]})});
+      await waitFor(() => expect(total('Total neto')).toBe('$ 2.070.000,00'));
+      expect(
+        screen.queryByRole('columnheader', {name: 'Código'}),
+      ).not.toBeInTheDocument();
+    });
+
     it('only shows a document that cannot be edited', async () => {
       api();
       renderEditor({

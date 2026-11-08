@@ -25,6 +25,8 @@ final readonly class InvoiceLineDraft
         public Rate $discount,
         public TaxSnapshot $chargeTax,
         public array $withholdings = [],
+        /** The product's code as it was when the line was written (the snapshot a copy passes on); null on a free line. */
+        public ?string $productCode = null,
     ) {
     }
 }

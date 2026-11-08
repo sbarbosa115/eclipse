@@ -63,6 +63,7 @@ final class PurchaseInvoicePdf
             ],
             'lines' => array_map(static fn (PurchaseInvoiceLineView $l) => [
                 'label' => $l->productLabel ?? $l->accountLabel ?? '',
+                'product_code' => $l->productCode ?? '',
                 'description' => $l->description,
                 'quantity' => self::decimal($l->quantity),
                 'unit_price' => $l->unitPrice,

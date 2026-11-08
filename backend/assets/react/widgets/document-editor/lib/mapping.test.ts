@@ -23,6 +23,7 @@ describe('between the document form and the API', () => {
         id: 'l1',
         product_id: 'p1',
         product_label: 'SRV-01 · Consultoría',
+        product_code: 'SRV-01',
         account_id: null,
         description: 'Consultoría',
         quantity: '2.0000',
@@ -37,7 +38,7 @@ describe('between the document form and the API', () => {
       }),
     ).toEqual({
       key: 'line-l1',
-      product: {id: 'p1', label: 'SRV-01 · Consultoría'},
+      product: {id: 'p1', label: 'SRV-01 · Consultoría', code: 'SRV-01'},
       account: null,
       description: 'Consultoría',
       quantity: '2',

@@ -103,6 +103,7 @@ final class SalesInvoicePdf
             ],
             'lines' => array_map(static fn (SalesInvoiceLine $l) => [
                 'position' => $l->position(),
+                'product_code' => $l->productCode() ?? '',
                 'description' => $l->description(),
                 'quantity' => Printed::decimal($l->quantity()->toString()),
                 'unit_price' => Printed::money(Money::rounded($l->unitPrice()->toBigDecimal())),

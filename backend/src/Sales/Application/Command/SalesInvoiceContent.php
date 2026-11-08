@@ -155,11 +155,14 @@ final class SalesInvoiceContent
         $drafts = [];
         foreach ($lines as $i => $line) {
             $at = "lines.$i";
+            $productCode = null;
             if (null === $line->productId) {
                 $this->violate("$at.product_id", 'Choose a product or service.');
             } else {
                 try {
                     $product = $this->products->get($companyId, $line->productId);
+                    // The code is copied with the line; a copy (convert) passes on the source line's own snapshot.
+                    $productCode = $line->productCode ?? $product->code;
                     if (!$product->active && !isset($keptProducts[$product->id])) {
                         $this->violate("$at.product_id", 'This product is inactive.');
                     }
@@ -178,7 +181,7 @@ final class SalesInvoiceContent
             }
             $discount = Rate::of('' === trim($line->discount) ? '0' : $line->discount);
             if (null !== $charge && null !== $withholdings) {
-                $drafts[] = new InvoiceLineDraft($line->productId, $line->description, $quantity, UnitPrice::of($line->unitPrice), $discount, $charge, $withholdings);
+                $drafts[] = new InvoiceLineDraft($line->productId, $line->description, $quantity, UnitPrice::of($line->unitPrice), $discount, $charge, $withholdings, $productCode);
             }
         }
 

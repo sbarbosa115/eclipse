@@ -236,7 +236,9 @@ class PurchaseInvoice implements CompanyOwned
 
         $this->lines->clear();
         foreach ($lines as $position => $l) {
-            $this->lines->add(new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, $l->withholdings));
+            $added = new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, $l->withholdings);
+            $added->useProductCode($l->productCode);
+            $this->lines->add($added);
         }
         $this->payments->clear();
         foreach ($payments as $position => $p) {
@@ -369,7 +371,7 @@ class PurchaseInvoice implements CompanyOwned
             $issue,
             $shift($this->dueDate),
             $this->notes,
-            array_map(static fn (PurchaseInvoiceLine $l) => new PurchaseLineDraft($l->productId(), $l->accountId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes()), $this->lines()),
+            array_map(static fn (PurchaseInvoiceLine $l) => new PurchaseLineDraft($l->productId(), $l->accountId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes(), $l->productCode()), $this->lines()),
             array_map(static fn (PurchaseInvoicePayment $p) => new PurchasePaymentDraft($p->paymentMethodId(), $p->methodName(), $p->kind(), $p->accountId(), $p->amount(), $shift($p->dueDate())), $this->payments()),
         );
 

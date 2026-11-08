@@ -34,6 +34,7 @@
         <thead>
             <tr>
                 <th>Producto / cuenta</th>
+                <th>Código</th>
                 <th>Descripción</th>
                 <th class="num">Cantidad</th>
                 <th class="num">Valor unitario</th>
@@ -47,6 +48,7 @@
             {% for line in lines %}
                 <tr>
                     <td>{{ line.label }}</td>
+                    <td>{{ line.product_code }}</td>
                     <td>{{ line.description }}</td>
                     <td class="num">{{ line.quantity }}</td>
                     <td class="num">{{ f.money(line.unit_price) }}</td>
