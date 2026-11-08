@@ -189,5 +189,40 @@
   },
   "picker": {
     "more": "Mostrando {{shown}} de {{total}}: escribe más para encontrar la cuenta."
+  },
+  "exogena": {
+    "intro": "La exógena reporta cada pago (formato 1001) y cada ingreso (formato 1007) bajo un concepto de la DIAN. Aquí dices qué concepto le corresponde a cada grupo de cuentas: una cuenta usa la fila con el prefijo más largo que la cubre.",
+    "noAccess": "La tabla de conceptos de la exógena es del administrador y del contador.",
+    "empty": "La tabla no tiene filas: ninguna cuenta tendrá concepto en la exógena.",
+    "new": "Nueva fila",
+    "edit": "Editar",
+    "remove": "Quitar",
+    "rowLabel": "{{format}} · {{prefix}}",
+    "columns": {
+      "format": "Formato",
+      "prefix": "Prefijo de cuenta",
+      "concept": "Concepto DIAN"
+    },
+    "formats": {
+      "1001": "1001 · Pagos",
+      "1007": "1007 · Ingresos"
+    },
+    "form": {
+      "newTitle": "Nueva fila de la tabla de conceptos",
+      "editTitle": "Editar fila de la tabla de conceptos",
+      "prefixHint": "El comienzo del código: 5135 cubre 513505, 513595 y sus auxiliares.",
+      "conceptHint": "Cuatro dígitos: 5001 honorarios, 5002 comisiones, 5003 servicios, 5004 arrendamientos, 5007 compras, 4001 ingresos operacionales…",
+      "prefixInvalid": "Escribe el comienzo de un código de cuenta (solo dígitos).",
+      "prefixTaken": "Ese prefijo ya está en la tabla del formato {{format}}.",
+      "conceptInvalid": "Escribe los cuatro dígitos del concepto."
+    },
+    "notice": {
+      "saved": "Tabla de conceptos guardada.",
+      "removed": "Se quitó la fila {{row}}."
+    },
+    "confirmRemove": {
+      "title": "Quitar fila",
+      "body": "Las cuentas de la fila {{row}} quedarán sin concepto en la exógena, salvo que otra fila las cubra. ¿Quitarla?"
+    }
   }
 }

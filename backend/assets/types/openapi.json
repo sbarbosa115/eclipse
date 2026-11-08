@@ -7358,6 +7358,7 @@
                     "value_columns",
                     "rows",
                     "minor_amounts_rows",
+                    "totals",
                     "missing_concepts",
                     "missing_municipality"
                 ],
@@ -7389,6 +7390,12 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/ExogenaRowOutput"
+                        }
+                    },
+                    "totals": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
                         }
                     },
                     "missing_concepts": {

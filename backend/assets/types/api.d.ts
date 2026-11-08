@@ -3389,6 +3389,9 @@ export interface components {
             value_columns: string[];
             rows: components["schemas"]["ExogenaRowOutput"][];
             minor_amounts_rows: components["schemas"]["ExogenaRowOutput"][];
+            totals: {
+                [key: string]: string;
+            };
             /** Rows whose account has no concept code yet (1001 and 1007; always 0 elsewhere). */
             missing_concepts: number;
             /** Colombian terceros reported by name with no municipality: the export is refused while any. */

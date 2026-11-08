@@ -50,7 +50,10 @@ final class ExogenaTables
                 : \sprintf('Atención: %d filas no tienen concepto DIAN (Configuración › Exógena)', $report->missingConcepts);
         }
 
-        return new TabularReport($format->title(), \sprintf('exogena-%s-%d', $format->value, $report->year), $columns, $rows, null, $subtitle);
+        $totals = [...array_fill(0, \count($columns) - \count($format->columns()), ''), ...array_values(array_map(static fn (Money $m) => $m->toString(), $report->totals()))];
+        $totals[0] = 'Total';
+
+        return new TabularReport($format->title(), \sprintf('exogena-%s-%d', $format->value, $report->year), $columns, $rows, static fn () => $totals, $subtitle);
     }
 
     /** @return list<string> */

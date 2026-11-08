@@ -3,6 +3,7 @@
 namespace App\Reporting\UI\Http\Output;
 
 use App\Reporting\Application\Exogena\ExogenaReport;
+use App\Shared\Domain\Money\Money;
 
 /** An exógena format's working paper for a taxable year (observations PRD §4.7 d). */
 final readonly class ExogenaOutput
@@ -12,6 +13,7 @@ final readonly class ExogenaOutput
      * @param list<ExogenaRowOutput> $rows
      * @param list<ExogenaRowOutput> $minorAmountsRows rows under the threshold, grouped under the pseudo-NIT 222222222,
      *                                                 one per concept
+     * @param array<string, string>  $totals           every value column added up (rows and cuantías menores)
      */
     public function __construct(
         public int $year,
@@ -22,6 +24,7 @@ final readonly class ExogenaOutput
         public array $valueColumns,
         public array $rows,
         public array $minorAmountsRows,
+        public array $totals,
         /** Rows whose account has no concept code yet (1001 and 1007; always 0 elsewhere). */
         public int $missingConcepts,
         /** Colombian terceros reported by name with no municipality: the export is refused while any. */
@@ -38,6 +41,7 @@ final readonly class ExogenaOutput
             $report->format->valueColumns(),
             array_map(ExogenaRowOutput::of(...), $report->rows),
             array_map(ExogenaRowOutput::of(...), $report->minorAmountsRows),
+            array_map(static fn (Money $m) => $m->toString(), $report->totals()),
             $report->missingConcepts,
             $report->missingMunicipality,
         );

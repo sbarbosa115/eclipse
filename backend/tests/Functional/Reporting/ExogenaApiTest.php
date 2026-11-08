@@ -85,6 +85,7 @@ final class ExogenaApiTest extends ApiTestCase
             'concept' => '5003',
             'values' => ['payment' => '1000000.00', 'vat_cost' => '0.00', 'withholding' => '25000.00', 'vat_withholding' => '28500.00'],
         ]], array_map(self::figures(...), $body['rows']), 'Pago, retefuente and ReteIVA by the account the line posted to; 5135 → 5003 by default.');
+        self::assertSame(['payment' => '1000000.00', 'vat_cost' => '0.00', 'withholding' => '25000.00', 'vat_withholding' => '28500.00'], $body['totals']);
     }
 
     public function testEveryOtherFormatReadsItsOwnFigures(): void
@@ -143,6 +144,7 @@ final class ExogenaApiTest extends ApiTestCase
         $minor = $body['minor_amounts_rows'][0];
         self::assertSame(['43', '222222222', 'Cuantías menores', null, '5003', 'CO'], [$minor['document_type_code'], $minor['identification_number'], $minor['business_name'], $minor['tercero_id'], $minor['concept_code'], $minor['country_code']]);
         self::assertSame(['payment' => '1000000.00', 'vat_cost' => '0.00', 'withholding' => '25000.00', 'vat_withholding' => '28500.00'], $minor['values']);
+        self::assertSame($minor['values'], $body['totals'], 'The totals count the cuantías menores too.');
         self::assertSame(0, $body['missing_municipality'], 'A tercero grouped under 222222222 is not reported by name: its municipio is not needed.');
 
         self::assertCount(1, $this->exogena('1001', '&threshold=1000000')['rows'], 'Exactly the threshold is reported by name.');
@@ -194,7 +196,8 @@ final class ExogenaApiTest extends ApiTestCase
         self::assertSame(['Concepto', 'Cuenta', 'Tipo de documento', 'Número de identificación', 'DV', 'Primer apellido y segundo apellido', 'Nombres', 'Razón social', 'Dirección', 'Código departamento', 'Código municipio', 'País', 'Pago o abono en cuenta', 'IVA mayor valor del costo', 'Retención en la fuente practicada', 'Retención de IVA practicada'], $rows[0]);
         self::assertSame(['5003', '513595', '31'], \array_slice($rows[1], 0, 3));
         self::assertSame(['Servicios Andinos S.A.S.', 'Calle 10 # 5-20', '05', '05001', '169', '1000000.00', '0.00', '25000.00', '28500.00'], \array_slice($rows[1], 7), 'The DIAN country code of Colombia is 169.');
-        self::assertCount(2, $rows);
+        self::assertSame(['Total', '', '', '', '', '', '', '', '', '', '', '', '1000000.00', '0.00', '25000.00', '28500.00'], $rows[2], 'The totals row closes the paper.');
+        self::assertCount(3, $rows);
         self::assertStringContainsString('filename=exogena-1001-'.self::year().'.csv', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
 
         $withMinor = $this->csv('/api/v1/reports/taxes/exogena/1001/export?format=csv&year='.self::year().'&threshold=2000000');

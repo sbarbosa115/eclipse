@@ -23,4 +23,17 @@ final readonly class ExogenaReport
         public int $missingMunicipality,
     ) {
     }
+
+    /** @return array<string, Money> every value column added up, the rows by name and the cuantías menores */
+    public function totals(): array
+    {
+        $totals = array_fill_keys($this->format->valueColumns(), Money::zero());
+        foreach ([...$this->rows, ...$this->minorAmountsRows] as $row) {
+            foreach ($row->values as $column => $value) {
+                $totals[$column] = ($totals[$column] ?? Money::zero())->plus($value);
+            }
+        }
+
+        return $totals;
+    }
 }
