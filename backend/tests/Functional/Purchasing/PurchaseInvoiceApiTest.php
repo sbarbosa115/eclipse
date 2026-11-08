@@ -154,6 +154,16 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         self::assertSame('0.00', $draft['withholding_total']);
     }
 
+    public function testTheNingunoRetencionIsNoRetencion(): void
+    {
+        $none = $this->noWithholding();
+
+        $draft = $this->createDraft($this->withRetenciones(self::withholdings($none, $this->taxId('ReteFuente servicios 4 %', 'withholding'), $none), '1150000.00', ['withholding_tax_id' => $none]));
+
+        self::assertSame(['ReteFuente servicios 4 %'], array_column($draft['lines'][0]['withholdings'], 'name'), 'A kind-none tax is skipped: no row, and no "one per kind" refusal for two of them.');
+        self::assertSame('40000.00', $draft['withholding_total']);
+    }
+
     public function testTheSameKindTwiceOnALineIsRefused(): void
     {
         $twice = self::withholdings($this->taxId('ReteFuente servicios 4 %', 'withholding'), $this->taxId('ReteFuente compras 2,5 %', 'withholding'));

@@ -24,6 +24,17 @@ trait WithholdingTaxes
         return $this->reteIca = (string) $tax['id'];
     }
 
+    /** The seeded "Ninguno" retención (kind none): a product's default may be it, and the editor sends it as is. */
+    protected function noWithholding(): string
+    {
+        foreach ($this->getJson('/api/v1/taxes?class=withholding&all=1')['items'] as $tax) {
+            if ('none' === $tax['kind']) {
+                return (string) $tax['id'];
+            }
+        }
+        self::fail('No seeded "Ninguno" retención.');
+    }
+
     /**
      * @return list<array{tax_id: string}>
      */

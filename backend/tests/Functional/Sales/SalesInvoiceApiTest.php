@@ -212,6 +212,33 @@ final class SalesInvoiceApiTest extends ApiTestCase
         self::assertSame(['lines[0].withholdings[0].tax_id'], array_column($body['violations'], 'field'));
     }
 
+    public function testTheNingunoRetencionIsNoRetencion(): void
+    {
+        $client = $this->client();
+        $product = $this->service();
+        $none = $this->noWithholding();
+
+        $invoice = $this->draft($this->payload($client, $product, [
+            'lines' => [$this->line($product, ['withholding_tax_id' => $none, 'withholdings' => self::withholdings($none, $this->taxId('ReteFuente servicios 4 %'), $none)])],
+        ]));
+
+        self::assertSame(['ReteFuente servicios 4 %'], array_column($invoice['lines'][0]['withholdings'], 'name'), 'A kind-none tax is skipped: no row, and no "one per kind" refusal for two of them.');
+        self::assertSame('40000.00', $invoice['withholding_total']);
+    }
+
+    public function testAnotherCompanysRetencionIsNotOneOfOurs(): void
+    {
+        $theirs = $this->reteIca();
+        $this->signOut();
+        $this->startCompany('otra@acme.co', '901000001', 'Otra S.A.S.');
+        $product = $this->service();
+
+        $body = $this->sendJson('POST', '/api/v1/sales-invoices', $this->payload($this->client(), $product, ['lines' => [$this->line($product, ['withholdings' => self::withholdings($theirs)])]]));
+
+        self::assertResponseStatusCodeSame(422, 'Another company\'s retención is refused like an unknown one.');
+        self::assertSame(['lines.0.withholdings.0.tax_id'], array_column($body['violations'], 'field'));
+    }
+
     public function testADraftKeepsTheSnapshotOfARetencionDeactivatedSince(): void
     {
         $client = $this->client();
