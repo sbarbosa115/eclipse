@@ -15,6 +15,7 @@ import {
   Loading,
   PageHeader,
 } from '@/shared/ui';
+import {DocumentTabs} from '@/widgets/journal-entry-view';
 import {
   cashReceiptPdfUrl,
   getCashReceipt,
@@ -148,54 +149,60 @@ export function CashReceiptView() {
               reason: receipt.void_reason ?? '',
             })}
       </Alert>
-      <Card>
-        <dl className="cash-receipt-details">
-          <div>
-            <dt>{t('cashReceipt.form.client')}</dt>
-            <dd>{receipt.tercero_name}</dd>
-          </div>
-          <div>
-            <dt>{t('cashReceipt.form.date')}</dt>
-            <dd>{formatDate(receipt.receipt_date)}</dd>
-          </div>
-          <div>
-            <dt>{t('cashReceipt.form.method')}</dt>
-            <dd>{receipt.method_name}</dd>
-          </div>
-          <div>
-            <dt>{t('cashReceipt.form.amount')}</dt>
-            <dd>
-              <strong>{formatMoney(receipt.amount)}</strong>
-            </dd>
-          </div>
-          {receipt.notes && (
+      <DocumentTabs
+        sourceType="cash_receipt"
+        sourceId={receipt.id}
+        status={receipt.status}
+      >
+        <Card>
+          <dl className="cash-receipt-details">
             <div>
-              <dt>{t('cashReceipt.form.notes')}</dt>
-              <dd>{receipt.notes}</dd>
+              <dt>{t('cashReceipt.form.client')}</dt>
+              <dd>{receipt.tercero_name}</dd>
             </div>
-          )}
-        </dl>
-      </Card>
-      <Card title={t('cashReceipt.view.allocations')}>
-        <DataTable
-          actions={false}
-          columns={[
-            t('cashReceipt.view.invoice'),
-            t('cashReceipt.view.applied'),
-          ]}
-          rows={receipt.allocations}
-          renderRow={(allocation) => (
-            <tr key={allocation.id}>
-              <td>
-                <Link to={`/facturas-venta/${allocation.invoice_id}`}>
-                  {allocation.invoice_number}
-                </Link>
-              </td>
-              <td className="num">{formatMoney(allocation.amount)}</td>
-            </tr>
-          )}
-        />
-      </Card>
+            <div>
+              <dt>{t('cashReceipt.form.date')}</dt>
+              <dd>{formatDate(receipt.receipt_date)}</dd>
+            </div>
+            <div>
+              <dt>{t('cashReceipt.form.method')}</dt>
+              <dd>{receipt.method_name}</dd>
+            </div>
+            <div>
+              <dt>{t('cashReceipt.form.amount')}</dt>
+              <dd>
+                <strong>{formatMoney(receipt.amount)}</strong>
+              </dd>
+            </div>
+            {receipt.notes && (
+              <div>
+                <dt>{t('cashReceipt.form.notes')}</dt>
+                <dd>{receipt.notes}</dd>
+              </div>
+            )}
+          </dl>
+        </Card>
+        <Card title={t('cashReceipt.view.allocations')}>
+          <DataTable
+            actions={false}
+            columns={[
+              t('cashReceipt.view.invoice'),
+              t('cashReceipt.view.applied'),
+            ]}
+            rows={receipt.allocations}
+            renderRow={(allocation) => (
+              <tr key={allocation.id}>
+                <td>
+                  <Link to={`/facturas-venta/${allocation.invoice_id}`}>
+                    {allocation.invoice_number}
+                  </Link>
+                </td>
+                <td className="num">{formatMoney(allocation.amount)}</td>
+              </tr>
+            )}
+          />
+        </Card>
+      </DocumentTabs>
       {voiding && (
         <VoidDocumentModal
           title={t('cashReceipt.void.title', {number: receipt.number})}

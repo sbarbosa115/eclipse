@@ -42,6 +42,7 @@ import {
   type DocumentDraft,
   type EditorErrors,
 } from '@/widgets/document-editor';
+import {DocumentTabs} from '@/widgets/journal-entry-view';
 import {listPaymentMethods, type PaymentMethod} from '../api/options';
 import {draftFromInvoice, requestFromDraft} from '../model/draftMapping';
 import {canWriteSalesInvoices} from '../model/access';
@@ -422,13 +423,19 @@ export function SalesInvoiceEditor() {
             })}
         </Alert>
       )}
-      <DocumentEditor
-        kind="sales_invoice"
-        value={draft}
-        onChange={setDraft}
-        readOnly={!editable}
-        errors={errors}
-      />
+      <DocumentTabs
+        sourceType="sales_invoice"
+        sourceId={invoice?.id}
+        status={invoice?.status}
+      >
+        <DocumentEditor
+          kind="sales_invoice"
+          value={draft}
+          onChange={setDraft}
+          readOnly={!editable}
+          errors={errors}
+        />
+      </DocumentTabs>
       {voiding && invoice && (
         <VoidDocumentModal
           title={t('salesInvoice.void.title', {number: invoice.number ?? ''})}

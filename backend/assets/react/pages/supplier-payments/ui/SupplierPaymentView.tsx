@@ -15,6 +15,7 @@ import {
   Loading,
   PageHeader,
 } from '@/shared/ui';
+import {DocumentTabs} from '@/widgets/journal-entry-view';
 import {
   supplierPaymentPdfUrl,
   getSupplierPayment,
@@ -148,54 +149,60 @@ export function SupplierPaymentView() {
               reason: payment.void_reason ?? '',
             })}
       </Alert>
-      <Card>
-        <dl className="supplier-payment-details">
-          <div>
-            <dt>{t('supplierPayment.form.supplier')}</dt>
-            <dd>{payment.tercero_name}</dd>
-          </div>
-          <div>
-            <dt>{t('supplierPayment.form.date')}</dt>
-            <dd>{formatDate(payment.receipt_date)}</dd>
-          </div>
-          <div>
-            <dt>{t('supplierPayment.form.method')}</dt>
-            <dd>{payment.method_name}</dd>
-          </div>
-          <div>
-            <dt>{t('supplierPayment.form.amount')}</dt>
-            <dd>
-              <strong>{formatMoney(payment.amount)}</strong>
-            </dd>
-          </div>
-          {payment.notes && (
+      <DocumentTabs
+        sourceType="supplier_payment"
+        sourceId={payment.id}
+        status={payment.status}
+      >
+        <Card>
+          <dl className="supplier-payment-details">
             <div>
-              <dt>{t('supplierPayment.form.notes')}</dt>
-              <dd>{payment.notes}</dd>
+              <dt>{t('supplierPayment.form.supplier')}</dt>
+              <dd>{payment.tercero_name}</dd>
             </div>
-          )}
-        </dl>
-      </Card>
-      <Card title={t('supplierPayment.view.allocations')}>
-        <DataTable
-          actions={false}
-          columns={[
-            t('supplierPayment.view.invoice'),
-            t('supplierPayment.view.applied'),
-          ]}
-          rows={payment.allocations}
-          renderRow={(allocation) => (
-            <tr key={allocation.id}>
-              <td>
-                <Link to={`/facturas-compra/${allocation.invoice_id}`}>
-                  {allocation.invoice_number}
-                </Link>
-              </td>
-              <td className="num">{formatMoney(allocation.amount)}</td>
-            </tr>
-          )}
-        />
-      </Card>
+            <div>
+              <dt>{t('supplierPayment.form.date')}</dt>
+              <dd>{formatDate(payment.receipt_date)}</dd>
+            </div>
+            <div>
+              <dt>{t('supplierPayment.form.method')}</dt>
+              <dd>{payment.method_name}</dd>
+            </div>
+            <div>
+              <dt>{t('supplierPayment.form.amount')}</dt>
+              <dd>
+                <strong>{formatMoney(payment.amount)}</strong>
+              </dd>
+            </div>
+            {payment.notes && (
+              <div>
+                <dt>{t('supplierPayment.form.notes')}</dt>
+                <dd>{payment.notes}</dd>
+              </div>
+            )}
+          </dl>
+        </Card>
+        <Card title={t('supplierPayment.view.allocations')}>
+          <DataTable
+            actions={false}
+            columns={[
+              t('supplierPayment.view.invoice'),
+              t('supplierPayment.view.applied'),
+            ]}
+            rows={payment.allocations}
+            renderRow={(allocation) => (
+              <tr key={allocation.id}>
+                <td>
+                  <Link to={`/facturas-compra/${allocation.invoice_id}`}>
+                    {allocation.invoice_number}
+                  </Link>
+                </td>
+                <td className="num">{formatMoney(allocation.amount)}</td>
+              </tr>
+            )}
+          />
+        </Card>
+      </DocumentTabs>
       {voiding && (
         <VoidDocumentModal
           title={t('supplierPayment.void.title', {number: payment.number})}

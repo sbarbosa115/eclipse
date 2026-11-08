@@ -1819,6 +1819,49 @@ inside its card), the draft form has no extra column and the console has no erro
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 6 journal-entry-tab: cases ASI-01 – 06; smoke tests in
 `backend/e2e/journalTab.spec.ts`. -->
 
+Every case runs as the owner of a company with its invoicing resolution (prefix `FE`), a client **Distribuciones Andina
+S.A.S.** and a service with IVA 19 %. The tab is the same widget on four pages: the entries are read-only and come from
+the libro diario, filtered to the document.
+
+**ASI-01 · An emitted factura de venta shows its entry under Contabilización**
+Smoke: `e2e/journalTab.spec.ts`.
+An invoice of $ 1.190.000,00 (595.000 cash, 595.000 crédito), emitted › open it › the tabs **Documento** | **Contabilización**
+› **Contabilización**.
+**Expected:** one card "Asiento N" with the date and the description; columns Cuenta, Nombre, Tercero, Débito, Crédito;
+Dr 11050501 595.000 and Dr 13050501 595.000 (Distribuciones Andina), Cr 413595 1.000.000, Cr 240805 190.000; a Totales
+row with $ 1.190.000,00 in Débito and in Crédito. Nothing can be edited there. Money as `$ 1.190.000,00`, date DD/MM/AAAA.
+
+**ASI-02 · After the void, the tab also shows the reversal**
+Smoke: `e2e/journalTab.spec.ts`.
+The invoice of ASI-01 › **Anular** › reason › **Contabilización**.
+**Expected:** two cards: the original and "Asiento M" with the badge "Anulación del asiento N", the same accounts with
+débito and crédito swapped; totals equal. Voiding from the page while the tab is open shows the reversal at once.
+
+**ASI-03 · A draft has no Contabilización tab**
+Smoke: `e2e/journalTab.spec.ts`.
+A saved draft factura de venta; a draft factura de compra; a new document; a cotización and (when it exists) an orden de compra.
+**Expected:** no tab bar on any of them: the page looks as before.
+
+**ASI-04 · A recibo de caja shows Dr caja, Cr clientes**
+Smoke: `e2e/journalTab.spec.ts`.
+A receipt of 595.000 in Efectivo for the 30-day receivable › its page › **Contabilización**.
+**Expected:** one entry: Dr 11050501 595.000, Cr 13050501 595.000 with the client in the tercero column; after **Anular** the
+reversal appears under it.
+
+**ASI-05 · An emitted factura de compra shows the A.3 entry; after a void, the reversal (OBS-6)**
+By hand.
+A factura de compra by account 513595 (IVA 19 %, ReteFuente) emitted › **Contabilización**; then **Anular**.
+**Expected:** the entry with the expense, IVA descontable, retenciones and the payable to the supplier (tercero column);
+after the void both entries, the second marked as the reversal. The read-only banner and **Duplicar**, **Anular** keep working
+on **Documento**.
+
+**ASI-06 · The roles and another company's document**
+By hand (the API cases are in `JournalEntriesBySourceApiTest`).
+As the billing user, then the accountant, open an emitted document › **Contabilización**; in the address bar, a document id of
+another company is not reachable (the document answers "no encontrado").
+**Expected:** both roles see the tab (it needs only READ_DOCUMENTS; the libro diario menu stays hidden from billing). A
+failed load shows "No pudimos cargar el asiento de este documento." with **Reintentar**.
+
 ## 19. Corregir a factura de compra
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 7 purchase-correct: cases COR-01 – 06; smoke tests in

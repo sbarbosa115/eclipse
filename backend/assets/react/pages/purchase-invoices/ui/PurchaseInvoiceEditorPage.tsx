@@ -41,6 +41,7 @@ import {
   type DocumentDraft,
   type EditorErrors,
 } from '@/widgets/document-editor';
+import {DocumentTabs} from '@/widgets/journal-entry-view';
 import {draftFromInvoice, toRequest, type PurchaseHeader} from '../model/draft';
 import {usePurchaseOptions} from '../model/usePurchaseOptions';
 
@@ -381,68 +382,74 @@ export function PurchaseInvoiceEditorPage() {
               )}`}
         </Alert>
       )}
-      <DocumentEditor
-        kind="purchase_invoice"
-        value={draft}
-        onChange={setDraft}
-        readOnly={readOnly}
-        errors={errors}
-        headerExtra={
-          <>
-            <Field
-              label={t('purchaseInvoice.editor.supplierNumber')}
-              hint={t('purchaseInvoice.editor.supplierNumberHint')}
-              error={errors['supplier_invoice_number']}
-            >
-              <input
-                value={header.supplierInvoiceNumber}
-                maxLength={40}
-                onChange={(e) =>
-                  setHeader((h) => ({
-                    ...h,
-                    supplierInvoiceNumber: e.target.value,
-                  }))
-                }
-              />
-            </Field>
-            <Field
-              label={t('purchaseInvoice.editor.dueDate')}
-              error={errors['due_date']}
-              optional
-            >
-              <DateInput
-                value={header.dueDate}
-                onChange={(iso) => setHeader((h) => ({...h, dueDate: iso}))}
-              />
-            </Field>
-          </>
-        }
-        footerExtra={
-          invoice &&
-          draft.attachments.length > 0 && (
-            <section className="purchase-downloads">
-              <h3 className="admin-field-label">
-                {t('purchaseInvoice.editor.downloads')}
-              </h3>
-              <ul>
-                {draft.attachments.map((file) => (
-                  <li key={file.id}>
-                    <a href={supplierFileUrl(invoice.id, file.id)} download>
-                      {t('purchaseInvoice.actions.download', {
-                        name: file.name,
-                      })}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )
-        }
-        onAttach={writer && isDraft ? onAttach : undefined}
-        onRemoveAttachment={
-          writer && isDraft && invoice ? onRemoveAttachment : undefined
-        }
-      />
+      <DocumentTabs
+        sourceType="purchase_invoice"
+        sourceId={invoice?.id}
+        status={invoice?.status}
+      >
+        <DocumentEditor
+          kind="purchase_invoice"
+          value={draft}
+          onChange={setDraft}
+          readOnly={readOnly}
+          errors={errors}
+          headerExtra={
+            <>
+              <Field
+                label={t('purchaseInvoice.editor.supplierNumber')}
+                hint={t('purchaseInvoice.editor.supplierNumberHint')}
+                error={errors['supplier_invoice_number']}
+              >
+                <input
+                  value={header.supplierInvoiceNumber}
+                  maxLength={40}
+                  onChange={(e) =>
+                    setHeader((h) => ({
+                      ...h,
+                      supplierInvoiceNumber: e.target.value,
+                    }))
+                  }
+                />
+              </Field>
+              <Field
+                label={t('purchaseInvoice.editor.dueDate')}
+                error={errors['due_date']}
+                optional
+              >
+                <DateInput
+                  value={header.dueDate}
+                  onChange={(iso) => setHeader((h) => ({...h, dueDate: iso}))}
+                />
+              </Field>
+            </>
+          }
+          footerExtra={
+            invoice &&
+            draft.attachments.length > 0 && (
+              <section className="purchase-downloads">
+                <h3 className="admin-field-label">
+                  {t('purchaseInvoice.editor.downloads')}
+                </h3>
+                <ul>
+                  {draft.attachments.map((file) => (
+                    <li key={file.id}>
+                      <a href={supplierFileUrl(invoice.id, file.id)} download>
+                        {t('purchaseInvoice.actions.download', {
+                          name: file.name,
+                        })}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          }
+          onAttach={writer && isDraft ? onAttach : undefined}
+          onRemoveAttachment={
+            writer && isDraft && invoice ? onRemoveAttachment : undefined
+          }
+        />
+      </DocumentTabs>
       {dialog === 'void' && invoice && (
         <VoidPurchaseInvoiceModal
           invoice={invoice}
