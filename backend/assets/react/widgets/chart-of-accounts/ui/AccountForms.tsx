@@ -1,19 +1,26 @@
 import {useState} from 'react';
 import {useTranslation} from '@/shared/i18n';
-import {Field, FormModal} from '@/shared/ui';
+import {Alert, Field, FormModal} from '@/shared/ui';
 import {addAccount, updateAccount, type Account} from '../api/chartApi';
 import {errorMessage} from '../lib/errorMessage';
+import {willMoveText, type AccountUse} from '../lib/uses';
 
 const isCostOrExpense = (code: string) =>
   ['5', '6', '7'].includes(code.charAt(0));
 
-/** A sub-account or auxiliar under `parent`: its code is the parent's plus two digits. */
+/**
+ * A sub-account or auxiliar under `parent`: its code is the parent's plus two digits. The first one under an account
+ * that takes movements subdivides it (observations PRD §4.1): the modal warns, says what will move to the new
+ * auxiliar (`uses`: what points at the parent) and offers not to move it.
+ */
 export function AddAccountModal({
   parent,
+  uses,
   onClose,
   onSaved,
 }: {
   parent: Account;
+  uses: AccountUse[];
   onClose: () => void;
   onSaved: (account: Account) => void;
 }) {
@@ -21,8 +28,15 @@ export function AddAccountModal({
   const [code, setCode] = useState(parent.code);
   const [name, setName] = useState('');
   const [purchases, setPurchases] = useState(isCostOrExpense(parent.code));
+  const [move, setMove] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A postable parent has no active auxiliar yet: this one subdivides it.
+  const subdivides = parent.postable;
+  const child =
+    code.trim().length === parent.code.length + 2
+      ? code.trim()
+      : t('ledger.chart.subdivide.theNewAuxiliar');
 
   const submit = () => {
     setBusy(true);
@@ -32,6 +46,7 @@ export function AddAccountModal({
       code: code.trim(),
       name: name.trim(),
       usable_on_purchases: purchases,
+      ...(subdivides ? {move_references: move} : {}),
     })
       .then(onSaved)
       .catch((e: unknown) => {
@@ -77,6 +92,27 @@ export function AddAccountModal({
         />
         {t('ledger.chart.usableOnPurchases')}
       </label>
+      {subdivides && (
+        <div className="span-2 chart-subdivide">
+          <Alert kind="warning">
+            {t('ledger.chart.subdivide.warning', {parent: parent.code})}{' '}
+            {move
+              ? t('ledger.chart.subdivide.willMove', {
+                  child,
+                  uses: willMoveText(t, uses),
+                })
+              : t('ledger.chart.subdivide.stay', {parent: parent.code})}
+          </Alert>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={move}
+              onChange={(e) => setMove(e.target.checked)}
+            />
+            {t('ledger.chart.subdivide.move')}
+          </label>
+        </div>
+      )}
     </FormModal>
   );
 }
