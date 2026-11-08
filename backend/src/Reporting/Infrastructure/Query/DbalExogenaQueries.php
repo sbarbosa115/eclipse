@@ -34,7 +34,7 @@ final class DbalExogenaQueries implements ExogenaQueries
         [$sql, $columns, $byAccount] = match ($format) {
             ExogenaFormat::Payments => [self::payments(), ['payment', 'vat_cost', 'withholding', 'vat_withholding'], true],
             ExogenaFormat::WithholdingsSuffered => [self::withholdingsSuffered(), ['base', 'withholding'], false],
-            ExogenaFormat::VatDeductible => [self::vat('purchase_invoice', "SUM(l.tax_amount) AS deductible_vat, 0 AS returned_vat", "l.charge_kind = 'iva'"), ['deductible_vat', 'returned_vat'], false],
+            ExogenaFormat::VatDeductible => [self::vat('purchase_invoice', 'SUM(l.tax_amount) AS deductible_vat, 0 AS returned_vat', "l.charge_kind = 'iva'"), ['deductible_vat', 'returned_vat'], false],
             ExogenaFormat::VatGenerated => [self::vat(
                 'sales_invoice',
                 "SUM(CASE WHEN l.charge_kind = 'iva' THEN l.tax_amount ELSE 0 END) AS generated_vat,

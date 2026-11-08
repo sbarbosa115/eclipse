@@ -57,7 +57,11 @@ export function ConceptModal({row, others, onClose, onSave}: Props) {
               .violations?.[0]
           : undefined;
       const field = violation?.field.split('.').at(-1) as FieldName | undefined;
-      if (violation && field && ['format', 'account_prefix', 'concept_code'].includes(field)) {
+      if (
+        violation &&
+        field &&
+        ['format', 'account_prefix', 'concept_code'].includes(field)
+      ) {
         setErrors({[field]: violation.message});
       } else {
         setFailure(
@@ -73,7 +77,9 @@ export function ConceptModal({row, others, onClose, onSave}: Props) {
   return (
     <FormModal
       title={
-        row ? t('ledger.exogena.form.editTitle') : t('ledger.exogena.form.newTitle')
+        row
+          ? t('ledger.exogena.form.editTitle')
+          : t('ledger.exogena.form.newTitle')
       }
       onClose={onClose}
       onSubmit={() => void submit()}

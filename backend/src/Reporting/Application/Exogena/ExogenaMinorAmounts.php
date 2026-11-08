@@ -25,7 +25,7 @@ final class ExogenaMinorAmounts
 
         $totals = [];
         foreach ($rows as $row) {
-            $id = $row->tercero?->id ?? '';
+            $id = $row->tercero->id ?? '';
             $totals[$id] = ($totals[$id] ?? Money::zero())->plus($row->measure());
         }
 
@@ -33,7 +33,7 @@ final class ExogenaMinorAmounts
         /** @var array<string, array{?string, array<string, Money>}> $groups */
         $groups = [];
         foreach ($rows as $row) {
-            $total = $totals[$row->tercero?->id ?? ''];
+            $total = $totals[$row->tercero->id ?? ''];
             if (!($total->isNegative() ? $total->negated() : $total)->isLessThan($threshold)) {
                 $reported[] = $row;
                 continue;

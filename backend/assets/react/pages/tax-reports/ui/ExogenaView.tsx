@@ -165,8 +165,7 @@ function columnsOf(
   totals: Record<string, string>,
 ): ReportColumn<ExogenaRow>[] {
   const name = (r: ExogenaRow) =>
-    r.business_name ??
-    [r.last_names, r.first_names].filter(Boolean).join(' ');
+    r.business_name ?? [r.last_names, r.first_names].filter(Boolean).join(' ');
   const identification = (r: ExogenaRow) => {
     if (r.tercero_id === null) return r.identification_number;
     const type = t(`taxReports.exogena.documentTypes.${r.document_type_code}`);
@@ -198,7 +197,10 @@ function columnsOf(
           },
         ]
       : []),
-    {header: t('taxReports.exogena.columns.identification'), cell: identification},
+    {
+      header: t('taxReports.exogena.columns.identification'),
+      cell: identification,
+    },
     {header: t('taxReports.exogena.columns.name'), cell: name},
     {header: t('taxReports.exogena.columns.municipality'), cell: municipality},
     ...valueColumns.map((key) => ({

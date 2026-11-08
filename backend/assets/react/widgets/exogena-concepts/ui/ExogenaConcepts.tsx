@@ -86,7 +86,7 @@ export function ExogenaConcepts() {
     }
   };
 
-  if (!session) return null;
+  if (!session) return <Loading />;
   if (!keeper) {
     return <EmptyState>{t('ledger.exogena.noAccess')}</EmptyState>;
   }
@@ -132,16 +132,10 @@ export function ExogenaConcepts() {
               <td>{row.account_prefix}</td>
               <td>{row.concept_code}</td>
               <Actions>
-                <ActionButton
-                  action="edit"
-                  onClick={() => setEditing(row)}
-                >
+                <ActionButton action="edit" onClick={() => setEditing(row)}>
                   {t('ledger.exogena.edit')}
                 </ActionButton>
-                <ActionButton
-                  action="danger"
-                  onClick={() => setRemoving(row)}
-                >
+                <ActionButton action="danger" onClick={() => setRemoving(row)}>
                   {t('ledger.exogena.remove')}
                 </ActionButton>
               </Actions>
@@ -157,7 +151,10 @@ export function ExogenaConcepts() {
           onSave={async (row) => {
             await save([...others, row]);
             setEditing(null);
-            setNotice({kind: 'success', text: t('ledger.exogena.notice.saved')});
+            setNotice({
+              kind: 'success',
+              text: t('ledger.exogena.notice.saved'),
+            });
           }}
         />
       )}

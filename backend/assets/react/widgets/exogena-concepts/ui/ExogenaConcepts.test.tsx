@@ -74,7 +74,9 @@ describe('Configuración › Exógena', () => {
       within(dialog).getByLabelText('Concepto DIAN'),
       '5002',
     );
-    await userEvent.click(within(dialog).getByRole('button', {name: 'Guardar'}));
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Guardar'}),
+    );
 
     await waitFor(() =>
       expect(screen.getByText('Tabla de conceptos guardada.')).toBeVisible(),
@@ -107,10 +109,14 @@ describe('Configuración › Exógena', () => {
       '5110',
     );
     await userEvent.type(within(dialog).getByLabelText('Concepto DIAN'), '50');
-    await userEvent.click(within(dialog).getByRole('button', {name: 'Guardar'}));
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Guardar'}),
+    );
 
     expect(
-      within(dialog).getByText('Ese prefijo ya está en la tabla del formato 1001.'),
+      within(dialog).getByText(
+        'Ese prefijo ya está en la tabla del formato 1001.',
+      ),
     ).toBeVisible();
     expect(
       within(dialog).getByText('Escribe los cuatro dígitos del concepto.'),
@@ -145,9 +151,7 @@ describe('Configuración › Exógena', () => {
       within(screen.getByRole('dialog')).getByRole('button', {name: 'Quitar'}),
     );
     await waitFor(() =>
-      expect(
-        screen.getByText('Se quitó la fila 1007 · 41.'),
-      ).toBeVisible(),
+      expect(screen.getByText('Se quitó la fila 1007 · 41.')).toBeVisible(),
     );
     const last = api.calls.filter((c) => c.method === 'PUT').at(-1);
     expect(last?.body).toEqual({
@@ -169,7 +173,8 @@ describe('Configuración › Exógena', () => {
           violations: [
             {
               field: 'items[0].account_prefix',
-              message: 'Escribe el comienzo de un código de cuenta (solo dígitos).',
+              message:
+                'Escribe el comienzo de un código de cuenta (solo dígitos).',
             },
           ],
         },
@@ -184,9 +189,17 @@ describe('Configuración › Exógena', () => {
     ).toBeVisible();
     await userEvent.click(screen.getByRole('button', {name: 'Nueva fila'}));
     const dialog = screen.getByRole('dialog');
-    await userEvent.type(within(dialog).getByLabelText('Prefijo de cuenta'), '9');
-    await userEvent.type(within(dialog).getByLabelText('Concepto DIAN'), '5001');
-    await userEvent.click(within(dialog).getByRole('button', {name: 'Guardar'}));
+    await userEvent.type(
+      within(dialog).getByLabelText('Prefijo de cuenta'),
+      '9',
+    );
+    await userEvent.type(
+      within(dialog).getByLabelText('Concepto DIAN'),
+      '5001',
+    );
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Guardar'}),
+    );
 
     expect(
       await within(dialog).findByText(

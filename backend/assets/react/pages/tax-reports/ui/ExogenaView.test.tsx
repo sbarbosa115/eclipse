@@ -93,7 +93,9 @@ describe('Impuestos › Exógena', () => {
       'aria-selected',
       'true',
     );
-    const call = api.calls.find((c) => c.path.startsWith('/reports/taxes/exogena'))!;
+    const call = api.calls.find((c) =>
+      c.path.startsWith('/reports/taxes/exogena'),
+    )!;
     expect(call.url.searchParams.get('year')).toBe(String(LAST_YEAR));
     const line = screen.getByText('Servicios Andinos S.A.S.').closest('tr')!;
     expect(line).toHaveTextContent('5003');
@@ -154,7 +156,9 @@ describe('Impuestos › Exógena', () => {
     await userEvent.tab();
 
     expect(await screen.findByText('Cuantías menores')).toBeVisible();
-    const last = api.calls.filter((c) => c.path === '/reports/taxes/exogena/1008').at(-1)!;
+    const last = api.calls
+      .filter((c) => c.path === '/reports/taxes/exogena/1008')
+      .at(-1)!;
     expect([
       last.url.searchParams.get('year'),
       last.url.searchParams.get('threshold'),
@@ -162,7 +166,9 @@ describe('Impuestos › Exógena', () => {
     expect(
       screen.getByText('Cuantías menores').closest('tr'),
     ).toHaveTextContent('222222222');
-    expect(screen.getByRole('columnheader', {name: 'Saldo al 31/12'})).toBeVisible();
+    expect(
+      screen.getByRole('columnheader', {name: 'Saldo al 31/12'}),
+    ).toBeVisible();
   });
 
   it('withholds the files while a tercero has no municipio, and links to them', async () => {
@@ -172,7 +178,13 @@ describe('Impuestos › Exógena', () => {
         paper({
           format: '1009',
           value_columns: ['balance'],
-          rows: [row({municipality_code: null, department_code: null, values: {balance: '10.00'}})],
+          rows: [
+            row({
+              municipality_code: null,
+              department_code: null,
+              values: {balance: '10.00'},
+            }),
+          ],
           totals: {balance: '10.00'},
           missing_municipality: 2,
         }),
@@ -187,7 +199,9 @@ describe('Impuestos › Exógena', () => {
     expect(
       screen.getByRole('link', {name: 'Ver terceros sin municipio'}),
     ).toHaveAttribute('href', '/terceros?missing_municipality=1');
-    expect(screen.queryByRole('link', {name: /Descargar Formato 1009/})).toBeNull();
+    expect(
+      screen.queryByRole('link', {name: /Descargar Formato 1009/}),
+    ).toBeNull();
     expect(screen.getByText('Sin municipio')).toBeVisible();
   });
 
@@ -200,7 +214,9 @@ describe('Impuestos › Exógena', () => {
     });
 
     expect(
-      await screen.findByText(/1 fila no tiene concepto DIAN: queda en blanco en el formato\./),
+      await screen.findByText(
+        /1 fila no tiene concepto DIAN: queda en blanco en el formato\./,
+      ),
     ).toBeVisible();
     expect(
       screen.getByRole('link', {name: 'Completar la tabla de conceptos'}),
@@ -221,7 +237,9 @@ describe('Impuestos › Exógena', () => {
     });
 
     expect(
-      await screen.findByText(`Ningún tercero para el formato 1005 en ${LAST_YEAR}.`),
+      await screen.findByText(
+        `Ningún tercero para el formato 1005 en ${LAST_YEAR}.`,
+      ),
     ).toBeVisible();
   });
 

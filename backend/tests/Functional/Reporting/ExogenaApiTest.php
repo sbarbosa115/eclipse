@@ -30,9 +30,9 @@ final class ExogenaApiTest extends ApiTestCase
         $this->saleWith($this->clientId, [$this->retefuente()], '1165000.00', self::today());
     }
 
-    private static function year(): string
+    private static function year(): int
     {
-        return substr(self::today(), 0, 4);
+        return (int) substr(self::today(), 0, 4);
     }
 
     /** @return array<string, mixed> */
@@ -76,7 +76,7 @@ final class ExogenaApiTest extends ApiTestCase
 
         $body = $this->exogena('1001');
 
-        self::assertSame([(int) self::year(), '1001', '0.00', ['payment', 'vat_cost', 'withholding', 'vat_withholding'], [], 0, 1], [
+        self::assertSame([self::year(), '1001', '0.00', ['payment', 'vat_cost', 'withholding', 'vat_withholding'], [], 0, 1], [
             $body['year'], $body['format'], $body['threshold'], $body['value_columns'], $body['minor_amounts_rows'], $body['missing_concepts'], $body['missing_municipality'],
         ], 'The supplier has no municipio yet.');
         self::assertSame([[
@@ -221,7 +221,7 @@ final class ExogenaApiTest extends ApiTestCase
     public function testNoYearIsLastYearAndBadFiltersAreRefused(): void
     {
         $body = $this->getJson('/api/v1/reports/taxes/exogena/1001');
-        self::assertSame([(int) self::year() - 1, []], [$body['year'], $body['rows']], 'The return is filed for the year that ended.');
+        self::assertSame([self::year() - 1, []], [$body['year'], $body['rows']], 'The return is filed for the year that ended.');
 
         foreach (['?year=26' => 'invalid_year', '?year=1999' => 'invalid_year', '?year='.(self::year() + 1) => 'invalid_year', '?threshold=-5' => 'invalid_threshold', '?threshold=mil' => 'invalid_threshold', '/export?format=xlsx' => 'invalid_format'] as $query => $error) {
             $this->client->request('GET', '/api/v1/reports/taxes/exogena/1001'.$query);

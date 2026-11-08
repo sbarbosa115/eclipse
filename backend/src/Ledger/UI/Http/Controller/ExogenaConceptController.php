@@ -54,7 +54,7 @@ final class ExogenaConceptController extends AbstractController
     public function replace(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         $input = $this->inputs->map($this->inputs->json($request), ExogenaConceptsInput::class);
-        $rows = array_map(static fn (ExogenaConceptInput $row) => new ExogenaConceptView($row->format, $row->accountPrefix, $row->conceptCode), array_values($input->items));
+        $rows = array_map(static fn (ExogenaConceptInput $row) => new ExogenaConceptView($row->format, $row->accountPrefix, $row->conceptCode), $input->items);
         $this->commands->dispatch(new ReplaceExogenaConcepts($user->companyId(), $user->userId(), $rows));
 
         return $this->items($user);

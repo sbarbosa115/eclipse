@@ -98,8 +98,7 @@ async function purchase(page: Page, supplierName: string): Promise<void> {
     ],
     payments: [
       {
-        payment_method_id: methods.items.find((m) => m.name === 'Crédito')!
-          .id,
+        payment_method_id: methods.items.find((m) => m.name === 'Crédito')!.id,
         amount: '1136500.00',
         due_date: today(),
       },
@@ -178,7 +177,9 @@ test('EXO-03 · a threshold groups the cuantías menores under 222222222', async
   const {page} = await newCompany();
   await purchase(page, 'Servicios Andinos S.A.S.');
   await page.goto(`/reportes/impuestos/exogena?year=${THIS_YEAR}`);
-  await expect(page.getByRole('row', {name: /Servicios Andinos/})).toBeVisible();
+  await expect(
+    page.getByRole('row', {name: /Servicios Andinos/}),
+  ).toBeVisible();
 
   await page.getByLabel('Cuantías menores de').fill('2.000.000');
   await page.getByLabel('Cuantías menores de').press('Enter');

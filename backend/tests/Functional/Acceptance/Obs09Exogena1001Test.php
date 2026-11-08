@@ -8,7 +8,7 @@ use App\Tests\Support\ApiTestCase;
 /**
  * Observations PRD §8, OBS-9: "Exógena 1001 for the year lists every supplier with pagos, retefuente and reteIVA by
  * account and concept, groups rows under the threshold into 222222222, and refuses to export while a listed tercero
- * lacks a municipio."
+ * lacks a municipio.".
  */
 final class Obs09Exogena1001Test extends ApiTestCase
 {
