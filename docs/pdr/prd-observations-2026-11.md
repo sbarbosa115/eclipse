@@ -374,3 +374,39 @@ Item 5 depends on 2 and 3 because the snapshot is written in the resolvers item 
 ## Regression sections to add to `docs/tests/ui-regression.md`
 
 14. Cuentas: picker y auxiliares — `CTA-01 – 09`; 15. Retenciones múltiples — `RET-01 – 12`; 16. Municipios — `CIU-01 – 09`; 17. Código en documentos — `COD-01 – 05`; 18. Contabilización — `ASI-01 – 06`; 19. Corregir factura de compra — `COR-01 – 06`; 20. Reportes de impuestos — `IMP-01 – 12`; 21. Exógena — `EXO-01 – 08`; 22. Órdenes de compra — `OC-01 – 14`. No prefix collides with the existing ones (ACC, CO, LED, TAX, TER, PRD, DOC, SAL, PUR, COT, RC, PAY, REP; strays AC, CUA, FAC, SRV).
+
+## Timeline
+
+Recorded with `timeline.py`, from 2026-11-07 19:18 to 2026-11-08 00:38. Active time leaves out the pauses.
+
+| Step | Started | Active | Wall clock |
+|---|---|---|---|
+| Plan | 2026-11-07 19:18 | 36m | 36m |
+| Branch and stack | 2026-11-07 19:53 | 1m | 1m |
+| Item 0 (contract) | 2026-11-07 19:54 | 28m | 28m |
+| Build test-first | 2026-11-07 20:22 | 1h 18m | 1h 18m |
+| Merging the items | 2026-11-07 20:42 | 14m | 14m |
+| Barrier (waiting for the items) | 2026-11-07 21:54 | 0m | 0m |
+| Gate | 2026-11-07 21:55 | 1m | 1m |
+| Full PHPUnit + Vitest | 2026-11-07 21:56 | 6m | 6m |
+| Security audit | 2026-11-07 22:02 | 2m | 2m |
+| Regression run (smoke, then manual) | 2026-11-07 22:04 | 45m | 45m |
+| Finish (docs, CI) | 2026-11-07 22:49 | 1h 44m | 1h 44m |
+| Definition of done | 2026-11-08 00:33 | 4m | 4m |
+| Pull request | 2026-11-08 00:37 | 1m | 1m |
+| **Total** | | **5h 20m** | **5h 20m** |
+
+The items of the split (from git: branch created → merged into the base branch):
+
+| Item | Started | Merged | Took |
+|---|---|---|---|
+| account-picker | 2026-11-07 20:22 | 2026-11-07 20:48 | 26m |
+| exogena | 2026-11-07 21:28 | 2026-11-07 21:54 | 26m |
+| journal-entry-tab | 2026-11-07 20:56 | 2026-11-07 21:08 | 13m |
+| product-code | 2026-11-07 20:56 | 2026-11-07 21:08 | 12m |
+| purchase-correct | 2026-11-07 20:56 | 2026-11-07 21:12 | 17m |
+| purchase-orders | 2026-11-07 21:28 | 2026-11-07 21:46 | 18m |
+| tax-reports | 2026-11-07 20:56 | 2026-11-07 21:21 | 25m |
+| terceros-city | 2026-11-07 20:22 | 2026-11-07 20:45 | 22m |
+| withholdings-api | 2026-11-07 20:22 | 2026-11-07 20:46 | 24m |
+| withholdings-editor | 2026-11-07 20:22 | 2026-11-07 20:42 | 19m |
