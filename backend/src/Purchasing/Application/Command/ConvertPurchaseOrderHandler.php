@@ -30,7 +30,7 @@ final class ConvertPurchaseOrderHandler implements CommandHandler
      *
      * @throws \App\Purchasing\Domain\Error\PurchaseOrderAlreadyConverted
      * @throws \App\Purchasing\Domain\Error\PurchaseOrderNotOpen
-     * @throws \App\Shared\Domain\Error\InvalidValues the invoice's own violations
+     * @throws \App\Shared\Domain\Error\InvalidValues                     the invoice's own violations
      */
     public function __invoke(ConvertPurchaseOrder $command): Uuid
     {

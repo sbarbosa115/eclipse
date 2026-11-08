@@ -2,8 +2,6 @@
 
 namespace App\Tests\Functional\Purchasing;
 
-use Symfony\Component\Uid\Uuid;
-
 /**
  * What the purchase order tests share, on top of the purchasing fixtures: a supplier with an e-mail, a product,
  * and drafts and emitted orders made through the API.

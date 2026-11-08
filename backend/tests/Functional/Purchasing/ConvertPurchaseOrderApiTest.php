@@ -83,7 +83,7 @@ final class ConvertPurchaseOrderApiTest extends ApiTestCase
         self::assertResponseIsSuccessful();
         $emitted = $this->sendJson('POST', '/api/v1/purchase-invoices/'.$invoice['id'].'/emit', []);
 
-        self::assertResponseIsSuccessful(json_encode($emitted));
+        self::assertResponseIsSuccessful(json_encode($emitted) ?: '');
         self::assertSame([$order['id'], 'emitted'], [$emitted['purchase_order_id'], $emitted['status']]);
         self::assertSame('converted', $this->getJson('/api/v1/purchase-orders/'.$order['id'])['status']);
     }
