@@ -16,12 +16,13 @@ const tax = (
   name: string,
   taxClass: 'charge' | 'withholding',
   rate: string,
+  kind = 'iva',
   calculation = 'percentage',
 ) => ({
   id,
   name,
   tax_class: taxClass,
-  kind: 'iva',
+  kind,
   calculation,
   rate,
   active: true,
@@ -33,7 +34,17 @@ const CHARGE = [
   tax('iva5', 'IVA 5 %', 'charge', '5.0000'),
 ];
 const WITHHOLDING = [
-  tax('rete4', 'ReteFuente servicios 4 %', 'withholding', '4.0000'),
+  tax('ninguno', 'Ninguno', 'withholding', '0.0000', 'none'),
+  tax(
+    'rete4',
+    'ReteFuente servicios 4 %',
+    'withholding',
+    '4.0000',
+    'retefuente',
+  ),
+  tax('rete25', 'ReteFuente 2,5 %', 'withholding', '2.5000', 'retefuente'),
+  tax('reteiva15', 'ReteIVA 15 %', 'withholding', '15.0000', 'reteiva'),
+  tax('ica966', 'ReteICA 0,966 %', 'withholding', '0.9660', 'reteica'),
 ];
 const METHODS = [
   {id: 'cash', name: 'Efectivo', kind: 'cash', active: true, standard: true},
@@ -157,7 +168,7 @@ const PRD_LINE = line({
   unit_price: '1000000',
   discount: '10',
   charge_tax_id: 'iva19',
-  withholding_tax_id: 'rete4',
+  withholdings: ['rete4'],
 });
 
 describe('the document form (§4.6)', () => {
@@ -572,6 +583,182 @@ describe('the document form (§4.6)', () => {
       ).toBe('1190000.5');
       expect(latest()?.payments[0]?.amount).toBe('1000000.25');
       expect(total('Total neto')).toBe('$ 1.190.000,50');
+    });
+  });
+
+  describe('retenciones (observations §4.2)', () => {
+    /** OBS-2: 1 000 000 with IVA 19 %, ReteFuente 2,5 %, ReteICA 0,966 % and ReteIVA 15 %. */
+    const OBS2_LINE = line({
+      product: {id: 'p1', label: 'SRV-01 · Hora de consultoría'},
+      description: 'Consultoría',
+      quantity: '1',
+      unit_price: '1000000',
+      charge_tax_id: 'iva19',
+    });
+
+    it('lists a line’s retenciones in its cell, and says when it has none', async () => {
+      api();
+      renderEditor({
+        value: draft({
+          lines: [
+            line({...PRD_LINE, withholdings: ['rete25', 'reteiva15']}),
+            line({quantity: '1', withholdings: ['ninguno']}),
+          ],
+        }),
+      });
+
+      expect(
+        await screen.findByRole('button', {
+          name: 'Retenciones de la línea 1: ReteFuente 2,5 % · ReteIVA 15 %',
+        }),
+      ).toHaveTextContent('ReteFuente 2,5 % · ReteIVA 15 %');
+      expect(
+        screen.getByRole('button', {
+          name: 'Retenciones de la línea 2: Sin retenciones',
+        }),
+      ).toHaveTextContent('Sin retenciones');
+    });
+
+    it('chooses one retención per kind from the cell and previews OBS-2 as the server computes it', async () => {
+      api();
+      const {latest} = renderEditor({value: draft({lines: [OBS2_LINE]})});
+
+      await userEvent.click(
+        await screen.findByRole('button', {name: /Retenciones de la línea 1/}),
+      );
+      const dialog = screen.getByRole('dialog', {
+        name: 'Impuestos de la línea 1',
+      });
+      await userEvent.selectOptions(
+        await within(dialog).findByLabelText('Retefuente'),
+        'rete25',
+      );
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText('ReteIVA'),
+        'reteiva15',
+      );
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText('ReteICA'),
+        'ica966',
+      );
+      await userEvent.click(
+        within(dialog).getByRole('button', {name: 'Aplicar'}),
+      );
+
+      expect(latest()?.lines[0]?.withholdings).toEqual([
+        'rete25',
+        'reteiva15',
+        'ica966',
+      ]);
+      expect(
+        screen.getByRole('button', {name: /Retenciones de la línea 1/}),
+      ).toHaveTextContent('ReteFuente 2,5 % · ReteIVA 15 % · ReteICA 0,966 %');
+      expect(total('Impuestos')).toBe('$ 190.000,00');
+      expect(total('Retenciones'), '25 000 + 28 500 + 9 660').toBe(
+        '$ 63.160,00',
+      );
+      expect(total('Total neto')).toBe('$ 1.126.840,00');
+    });
+
+    it('shows one row per retención in the totals panel, with its base and value', async () => {
+      api();
+      renderEditor({
+        value: draft({
+          lines: [
+            line({
+              ...OBS2_LINE,
+              withholdings: ['rete25', 'reteiva15', 'ica966'],
+            }),
+          ],
+        }),
+      });
+
+      await waitFor(() => expect(total('Retenciones')).toBe('$ 63.160,00'));
+      const panel = screen.getByRole('region', {name: 'Totales'});
+      const row = (name: string) =>
+        within(panel).getByText(name, {selector: 'dt'}).parentElement;
+      expect(total('ReteFuente 2,5 %')).toBe('$ 25.000,00');
+      expect(row('ReteFuente 2,5 %')).toHaveTextContent('Base $ 1.000.000,00');
+      expect(total('ReteIVA 15 %')).toBe('$ 28.500,00');
+      expect(
+        row('ReteIVA 15 %'),
+        'ReteIVA is withheld on the IVA, so its base is the IVA',
+      ).toHaveTextContent('Base $ 190.000,00');
+      expect(total('ReteICA 0,966 %')).toBe('$ 9.660,00');
+    });
+
+    it('shows no retención rows while the document has none', async () => {
+      api();
+      renderEditor({value: draft({lines: [OBS2_LINE]})});
+
+      await waitFor(() => expect(total('Impuestos')).toBe('$ 190.000,00'));
+      expect(
+        within(screen.getByRole('region', {name: 'Totales'})).queryByText(
+          /^Base /,
+        ),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows the API’s message on a line’s retenciones under its cell', async () => {
+      api();
+      renderEditor({
+        value: draft({lines: [line({...PRD_LINE})]}),
+        errors: {
+          'lines.0.withholdings': 'Una retención por tipo en cada línea.',
+        },
+      });
+
+      expect(
+        await screen.findByRole('button', {name: /Retenciones de la línea 1/}),
+      ).toHaveAccessibleDescription('Una retención por tipo en cada línea.');
+    });
+
+    it('keeps a retención the line has even when it is not in force on the date', async () => {
+      api({
+        'GET /taxes': (_body, url) => {
+          const items =
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING;
+          return [
+            200,
+            {
+              items:
+                url.searchParams.get('on') !== null
+                  ? items.filter((tx) => tx.id !== 'ica966')
+                  : items,
+            },
+          ];
+        },
+      });
+      renderEditor({
+        value: draft({lines: [line({...OBS2_LINE, withholdings: ['ica966']})]}),
+      });
+
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: 'Retenciones de la línea 1: ReteICA 0,966 %',
+        }),
+      );
+      expect(
+        await within(screen.getByRole('dialog')).findByLabelText('ReteICA'),
+        'a draft keeps its own retención',
+      ).toHaveValue('ica966');
+    });
+
+    it('shows the retenciones of a document that cannot be edited as text', async () => {
+      api();
+      renderEditor({
+        readOnly: true,
+        value: draft({
+          lines: [line({...OBS2_LINE, withholdings: ['rete25', 'ica966']})],
+        }),
+      });
+
+      expect(
+        await screen.findByText('ReteFuente 2,5 % · ReteICA 0,966 %'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', {name: /Retenciones de la línea 1/}),
+      ).not.toBeInTheDocument();
     });
   });
 

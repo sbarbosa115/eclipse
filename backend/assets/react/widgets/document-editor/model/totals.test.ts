@@ -1,3 +1,4 @@
+import {Decimal} from '../lib/decimal';
 import {emptyLine} from './draft';
 import {computeTotals, type TaxRateInfo} from './totals';
 import type {DraftLine} from './types';
@@ -9,9 +10,31 @@ const TAXES: TaxRateInfo[] = [
   {id: 'impo500', calculation: 'per_unit', rate: '500.0000'},
   {
     id: 'reteiva15',
+    name: 'ReteIVA 15 %',
     calculation: 'percentage',
     rate: '15.0000',
     kind: 'reteiva',
+  },
+  {
+    id: 'rete25',
+    name: 'ReteFuente 2,5 %',
+    calculation: 'percentage',
+    rate: '2.5000',
+    kind: 'retefuente',
+  },
+  {
+    id: 'ninguno',
+    name: 'Ninguno',
+    calculation: 'percentage',
+    rate: '0',
+    kind: 'none',
+  },
+  {
+    id: 'ica966',
+    name: 'ReteICA 0,966 %',
+    calculation: 'percentage',
+    rate: '0.9660',
+    kind: 'reteica',
   },
 ];
 
@@ -30,7 +53,7 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
           unit_price: '1000000',
           discount: '10',
           charge_tax_id: 'iva19',
-          withholding_tax_id: 'rete4',
+          withholdings: ['rete4'],
         }),
       ],
       TAXES,
@@ -106,7 +129,7 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
           quantity: '1',
           unit_price: '1000000',
           charge_tax_id: 'iva19',
-          withholding_tax_id: 'reteiva15',
+          withholdings: ['reteiva15'],
         }),
       ],
       TAXES,
@@ -150,7 +173,7 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
           quantity: '1',
           unit_price: '100000',
           charge_tax_id: 'iva19',
-          withholding_tax_id: 'rete4',
+          withholdings: ['rete4'],
         }),
       ],
       TAXES,
@@ -159,6 +182,146 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
     expect(totals.lines[0]?.lineTotal).toBe('119000.00');
     expect(totals.lines[0]?.total, 'what the line adds to Total neto').toBe(
       '115000.00',
+    );
+  });
+
+  it('carries several retenciones on a line, each on its own base (OBS-2)', () => {
+    // 1 000 000 with IVA 19 %, ReteFuente 2,5 %, ReteICA 0,966 % (on the base) and ReteIVA 15 % (on the IVA).
+    const totals = computeTotals(
+      [
+        line({
+          quantity: '1',
+          unit_price: '1000000',
+          charge_tax_id: 'iva19',
+          withholdings: ['rete25', 'ica966', 'reteiva15'],
+        }),
+      ],
+      TAXES,
+    );
+
+    expect(totals.withholdings, 'Retenciones = 25 000 + 9 660 + 28 500').toBe(
+      '63160.00',
+    );
+    expect(totals.net, 'Total neto = 1 000 000 + 190 000 − 63 160').toBe(
+      '1126840.00',
+    );
+    expect(
+      totals.lines[0]?.withholdings,
+      'each retención keeps its own amount, in the order the line lists them',
+    ).toEqual(['25000.00', '9660.00', '28500.00']);
+    expect(
+      totals.lines[0]?.withholding,
+      'the line’s retención is the sum of its retenciones',
+    ).toBe('63160.00');
+  });
+
+  it('shares the retención cents across every (line, retención) pair', () => {
+    // Three lines of 333,33 with ReteFuente 2,5 % and ReteICA 0,966 %: exact 3 × (8.33325 + 3.2199678) = 34.6596534.
+    const third = {
+      quantity: '1',
+      unit_price: '333.33',
+      charge_tax_id: 'iva19',
+      withholdings: ['rete25', 'ica966'],
+    };
+    const totals = computeTotals(
+      [line(third), line(third), line(third)],
+      TAXES,
+    );
+
+    expect(totals.withholdings, 'rounded once at document level').toBe('34.66');
+    const shares = totals.lines.flatMap((l) => l.withholdings);
+    for (const amounts of totals.lines) {
+      expect(
+        amounts.withholding,
+        'a line’s retención is the sum of its shares',
+      ).toBe(
+        Decimal.sum(amounts.withholdings.map((v) => Decimal.of(v))).toString(),
+      );
+    }
+    expect(
+      Decimal.sum(shares.map((v) => Decimal.of(v))).toString(),
+      'every share adds up to Retenciones to the cent',
+    ).toBe('34.66');
+    expect(
+      shares,
+      'the 4 cents left over go to the largest remainders: ReteICA’s 0.0099678 thrice, then the first ReteFuente',
+    ).toEqual(['8.34', '3.22', '8.33', '3.22', '8.33', '3.22']);
+  });
+
+  it('gives a line without retenciones no shares', () => {
+    const totals = computeTotals(
+      [line({quantity: '1', unit_price: '1000', charge_tax_id: 'iva19'})],
+      TAXES,
+    );
+
+    expect(totals.lines[0]?.withholdings).toEqual([]);
+    expect(totals.lines[0]?.withholding).toBe('0.00');
+    expect(totals.withholdingsByTax).toEqual([]);
+  });
+
+  it('sums the retenciones by tax with their bases, for the totals panel', () => {
+    const totals = computeTotals(
+      [
+        line({
+          quantity: '1',
+          unit_price: '1000000',
+          charge_tax_id: 'iva19',
+          withholdings: ['rete25', 'reteiva15'],
+        }),
+        line({
+          quantity: '2',
+          unit_price: '100000',
+          charge_tax_id: 'iva19',
+          withholdings: ['rete25'],
+        }),
+      ],
+      TAXES,
+    );
+
+    expect(
+      totals.withholdingsByTax,
+      'in the order each tax first appears; ReteIVA’s base is the IVA',
+    ).toEqual([
+      {
+        tax_id: 'rete25',
+        name: 'ReteFuente 2,5 %',
+        base: '1200000.00',
+        amount: '30000.00',
+      },
+      {
+        tax_id: 'reteiva15',
+        name: 'ReteIVA 15 %',
+        base: '190000.00',
+        amount: '28500.00',
+      },
+    ]);
+  });
+
+  it('leaves out a retención the company no longer offers', () => {
+    const totals = computeTotals(
+      [
+        line({
+          quantity: '1',
+          unit_price: '1000',
+          withholdings: ['gone', 'rete25'],
+        }),
+      ],
+      TAXES,
+    );
+
+    expect(totals.withholdings).toBe('25.00');
+    expect(totals.withholdingsByTax.map((w) => w.tax_id)).toEqual(['rete25']);
+  });
+
+  it('takes the "Ninguno" retención as none, as the server skips it', () => {
+    const totals = computeTotals(
+      [line({quantity: '1', unit_price: '1000', withholdings: ['ninguno']})],
+      TAXES,
+    );
+
+    expect(totals.lines[0]?.withholdings).toEqual([]);
+    expect(totals.withholdingsByTax, 'no "Ninguno" row in the panel').toEqual(
+      [],
     );
   });
 });

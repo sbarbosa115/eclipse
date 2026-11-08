@@ -11,7 +11,7 @@ const line = (over: Partial<DocumentDraft['lines'][number]> = {}) => ({
   unit_price: '1000000',
   discount: '',
   charge_tax_id: 'iva19',
-  withholding_tax_id: null,
+  withholdings: ['rete25', 'reteiva15', 'ica966'],
   ...over,
 });
 
@@ -64,6 +64,10 @@ const invoice = (over: Partial<PurchaseInvoice> = {}): PurchaseInvoice =>
         discount: '0.0000',
         charge_tax_id: null,
         withholding_tax_id: 'rete4',
+        withholdings: [
+          {tax_id: 'rete4', name: 'ReteFuente 4 %', kind: 'retefuente'},
+          {tax_id: 'reteiva15', name: 'ReteIVA 15 %', kind: 'reteiva'},
+        ],
       },
     ],
     payments: [
@@ -118,7 +122,13 @@ describe('the purchase invoice draft', () => {
         unit_price: '1000000',
         discount: '0',
         charge_tax_id: 'iva19',
-        withholding_tax_id: null,
+        withholdings: [
+          {tax_id: 'rete25'},
+          {tax_id: 'reteiva15'},
+          {tax_id: 'ica966'},
+        ],
+        // The deprecated alias, while the API reads only it (observations §6).
+        withholding_tax_id: 'rete25',
       },
     ]);
     expect(lineIndexes).toEqual([1]);
@@ -147,7 +157,7 @@ describe('the purchase invoice draft', () => {
       quantity: '10',
       unit_price: '15000',
       discount: '',
-      withholding_tax_id: 'rete4',
+      withholdings: ['rete4', 'reteiva15'],
     });
     expect(opened.payments[0]).toMatchObject({
       payment_method_id: 'credit',

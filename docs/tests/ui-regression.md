@@ -797,7 +797,7 @@ chooses, Escape closes it, and Enter in a cell never submits anything.
 **DOC-09 · The form on a tablet, in both themes, and read-only**
 At 1366×768, 1024×768 and 768×1024, Tema `Claro` and `Oscuro`, with three lines, two formas de pago and an attachment;
 then **Ver como emitido**.
-**Expected:** at 1366×768 every column of the lines (through Impuesto retención, Valor total and the actions) is visible
+**Expected:** at 1366×768 every column of the lines (through Retenciones, Valor total and the actions) is visible
 without scrolling the table (DOC-10); on a narrower screen the lines table scrolls sideways inside its box; the search
 lists are not cut by it; the totals sit
 to the right on a wide screen and below on a narrow one; the check mark and "Faltan…" read in both themes (icon and
@@ -1583,6 +1583,92 @@ each reads title, figure, detail line and, at its foot, its link (*Ver cartera*)
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 3 withholdings-editor (2 withholdings-api builds the API): cases RET-01 – 12; smoke tests in
 `backend/e2e/withholdings.spec.ts`. -->
+
+A line takes zero or more retenciones, at most one per kind (Retefuente, ReteIVA, ReteICA), chosen in the line's tax
+dialog (the **Retenciones** cell or the sliders button opens it). Every case runs as the owner of a company with a
+**ReteICA 0,966 %** (Configuración › Impuestos › Nuevo: Retención · ReteICA, `0,966`), a service **SRV-01 Consultoría
+mensual** of 1.000.000 + IVA 19 % whose retención is ReteFuente servicios 4 %, a client **Distribuciones Andina
+S.A.S.** and a supplier **Servicios Andinos S.A.S.**, unless it says otherwise. "OBS-2's retenciones" are ReteFuente
+compras 2,5 %, ReteIVA 15 % and ReteICA 0,966 %.
+
+**RET-01 · The line's tax dialog has one select per kind of retención**
+Smoke: `e2e/withholdings.spec.ts`.
+**Nueva factura** › line 1 `SRV-01` › click the **Retenciones** cell of line 1.
+**Expected:** the dialog "Impuestos de la línea 1" shows Impuesto cargo and, under "Retenciones: a lo sumo una de cada
+tipo.", three selects *Retefuente* (ReteFuente servicios 4 % chosen), *ReteIVA* and *ReteICA* (*Ninguna*); each offers
+*Ninguna* and only the taxes of its kind; "Ninguno" is never offered.
+
+**RET-02 · OBS-2: three retenciones on one line, previewed as the server computes them**
+Smoke: `e2e/withholdings.spec.ts`.
+A line `SRV-01` (1.000.000, IVA 19 %) › its Retenciones › OBS-2's retenciones › **Aplicar**.
+**Expected:** Impuestos $ 190.000,00, Retenciones $ 63.160,00, Total neto $ 1.126.840,00; under Retenciones one row per
+tax: ReteFuente compras 2,5 % $ 25.000,00 (Base $ 1.000.000,00), ReteIVA 15 % $ 28.500,00 (Base $ 190.000,00: the
+IVA), ReteICA 0,966 % $ 9.660,00 (Base $ 1.000.000,00).
+
+**RET-03 · The Retenciones cell lists the names chosen, or says there are none**
+Smoke: `e2e/withholdings.spec.ts`.
+Pick `SRV-01`; then in its dialog Retefuente *Ninguna*, ReteIVA 15 %; then ReteIVA *Ninguna*.
+**Expected:** the cell reads "ReteFuente servicios 4 %", then "ReteIVA 15 %", then "Sin retenciones"; with none the
+totals panel has no retención rows and Retenciones is $ 0,00.
+
+**RET-04 · A sales invoice keeps its three retenciones when saved and reopened (OBS-2)**
+Smoke (part): `e2e/withholdings.spec.ts` covers saving and reopening; by hand: emission, the entry and the PDF.
+**Nueva factura** › Distribuciones Andina › `SRV-01` › OBS-2's retenciones › a forma de pago Efectivo › **Guardar** ›
+reload › **Emitir**.
+**Expected:** after the reload the cell reads "ReteFuente compras 2,5 % · ReteIVA 15 % · ReteICA 0,966 %" and the
+totals are those of RET-02, before and after Emitir (the preview equals the server's). Libro diario: Dr 135515 25.000,
+Dr 135517 28.500, Dr 135518 9.660 with the client as tercero. The PDF lists the three retenciones with their bases.
+
+**RET-05 · A purchase invoice keeps its retenciones and posts one line per account (OBS-3)**
+Smoke (part): `e2e/withholdings.spec.ts` covers saving and reopening; by hand: emission and the entry.
+**Nueva factura de compra** › Servicios Andinos › `SRV-01`, Valor unitario `1000000` › OBS-2's retenciones ›
+**Guardar borrador** › reload › Crédito › **Emitir**.
+**Expected:** after the reload the cell lists the three; Total neto $ 1.126.840,00; the entry credits 236540 25.000,
+236701 28.500 and a 2368 account 9.660, each with the supplier as tercero.
+
+**RET-06 · A quotation carries its retenciones into the invoice it becomes**
+A quotation with `SRV-01` and ReteFuente compras 2,5 % + ReteICA 0,966 % › **Guardar** › **Emitir** › open its PDF ›
+**Convertir en factura**.
+**Expected:** the quotation's totals panel and PDF show both retenciones with their bases; the draft invoice opens with
+the same two in the line's cell and the same Retenciones.
+
+**RET-07 · Three lines with odd cents: the retenciones are rounded once**
+Smoke: `e2e/withholdings.spec.ts` (the preview); by hand: the saved invoice.
+Three lines `SRV-01` of `333,33` each with ReteFuente compras 2,5 % and ReteICA 0,966 % (no IVA needed); then save.
+**Expected:** Retenciones $ 34,66 (not 34,65 nor 34,67), ReteFuente compras 2,5 % $ 25,00 and ReteICA 0,966 % $ 9,66;
+the saved invoice shows the same figures.
+
+**RET-08 · "Aplicar al producto" keeps one default retención: the Retefuente one**
+Smoke: `e2e/withholdings.spec.ts`.
+Line 1 `SRV-01` › dialog: ReteIVA 15 %, Retefuente ReteFuente compras 2,5 %, check *Aplicar estos impuestos al producto
+de ahora en adelante* › **Aplicar** › a new line `SRV-01`.
+**Expected:** line 1 keeps both; the new line brings only ReteFuente compras 2,5 % (a product has one default
+retención; without a Retefuente it takes the first chosen).
+
+**RET-09 · A retención no longer in force stays on the draft that has it**
+A draft dated today with ReteICA 0,966 % › Configuración › Impuestos: give ReteICA 0,966 % a *Vigente hasta* of
+yesterday › reopen the draft and its dialog.
+**Expected:** the cell still names ReteICA 0,966 % and the ReteICA select still shows it; a new line's ReteICA select
+no longer offers it; saving keeps it (a draft keeps its own snapshot).
+
+**RET-10 · An emitted document shows its retenciones read-only**
+The invoice of RET-04, emitted.
+**Expected:** the Retenciones cell is text (no button), the totals panel shows the three rows with their bases, and the
+line's tax dialog cannot be opened.
+
+**RET-11 · The API's refusal of a line's retenciones shows under its cell**
+By hand, with the browser's developer tools: on a draft, make the save send two retenciones of the same kind (or one
+not in force), e.g. by replaying the request with an edited body.
+**Expected:** the page shows "Revisa los campos marcados." and under the line's Retenciones cell the API's message
+("Una retención por tipo en cada línea." or the tax's), and the cell is marked invalid; changing the retenciones clears
+it.
+
+**RET-12 · The cell and the totals rows on a tablet, in both themes**
+At 1366×768, 1024×768 and 768×1024, Tema Claro and Oscuro, a draft with three lines, one of them with OBS-2's
+retenciones.
+**Expected:** at 1366×768 the lines table does not scroll (DOC-10) and the cell wraps its names inside the column; the
+retención rows sit indented under Retenciones with their base in small muted text under each name, readable in both
+themes; the console has no errors.
 
 ## 16. Municipalities on terceros and the company
 

@@ -36,7 +36,7 @@ export function emptyLine(): DraftLine {
     unit_price: '',
     discount: '',
     charge_tax_id: null,
-    withholding_tax_id: null,
+    withholdings: [],
   };
 }
 
@@ -195,7 +195,10 @@ export function applyProduct(
         ? line.unit_price
         : trimDecimal(product.unit_price_net_of_tax),
     charge_tax_id: product.charge_tax_id ?? null,
-    withholding_tax_id: product.withholding_tax_id ?? null,
+    // A product has one default retención (§4.2: several per product is out of scope).
+    withholdings: product.withholding_tax_id
+      ? [product.withholding_tax_id]
+      : [],
   };
 }
 
