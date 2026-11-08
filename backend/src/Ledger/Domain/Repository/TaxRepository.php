@@ -17,4 +17,11 @@ interface TaxRepository
 
     /** Whether the company has a tax with this name (ignoring case and the tax `$except`). */
     public function nameTaken(Uuid $companyId, string $name, ?Uuid $except = null): bool;
+
+    /**
+     * The company's taxes whose sales or purchase account is this one.
+     *
+     * @return list<Tax>
+     */
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array;
 }

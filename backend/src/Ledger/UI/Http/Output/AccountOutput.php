@@ -2,6 +2,7 @@
 
 namespace App\Ledger\UI\Http\Output;
 
+use App\Ledger\Application\Command\AccountMoves;
 use App\Ledger\Application\Query\AccountView;
 
 final readonly class AccountOutput
@@ -24,8 +25,8 @@ final readonly class AccountOutput
     ) {
     }
 
-    public static function of(AccountView $v): self
+    public static function of(AccountView $v, ?AccountMoves $moves = null): self
     {
-        return new self($v->id, $v->code, $v->name, $v->nature, $v->level, $v->parentCode, $v->standard, $v->active, $v->postable, $v->usableOnPurchases);
+        return new self($v->id, $v->code, $v->name, $v->nature, $v->level, $v->parentCode, $v->standard, $v->active, $v->postable, $v->usableOnPurchases, null === $moves ? null : AccountMovesOutput::of($moves));
     }
 }

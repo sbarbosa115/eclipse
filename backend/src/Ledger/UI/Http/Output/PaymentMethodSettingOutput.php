@@ -28,6 +28,6 @@ final readonly class PaymentMethodSettingOutput
     {
         $m = $v->method;
 
-        return new self($m->id, $m->name, $m->kind, $m->accountId, $m->accountCode, $m->accountName, $m->active, $m->standard, $v->inUse);
+        return new self($m->id, $m->name, $m->kind, $m->accountId, $m->accountCode, $m->accountName, $m->active, $m->standard, $v->inUse, $v->accountPostable);
     }
 }

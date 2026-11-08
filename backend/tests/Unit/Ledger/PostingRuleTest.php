@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Ledger;
 
+use App\Ledger\Domain\Error\AccountHasAuxiliaries;
 use App\Ledger\Domain\Error\AccountNotAllowedForConcept;
 use App\Ledger\Domain\Error\AccountNotPostable;
 use App\Ledger\Domain\Model\Account;
@@ -97,5 +98,13 @@ final class PostingRuleTest extends TestCase
 
         $this->expectException(AccountNotPostable::class);
         $rule->pointTo($this->account('415595', active: false));
+    }
+
+    public function testARuleNeverPointsToASubcuentaWithAuxiliares(): void
+    {
+        $rule = new PostingRule($this->company, PostingConcept::Revenue, Uuid::v7());
+
+        $this->expectException(AccountHasAuxiliaries::class);
+        $rule->pointTo($this->account('413595'), hasActiveAuxiliaries: true);
     }
 }

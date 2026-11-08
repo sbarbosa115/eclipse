@@ -201,4 +201,23 @@ class Product implements CompanyOwned
     {
         return $this->createdAt;
     }
+
+    /**
+     * The accountant subdivided $from in the chart: the revenue or expense account that was $from becomes its new
+     * auxiliar $to (observations PRD §4.1). Says whether anything moved.
+     */
+    public function moveAccount(Uuid $from, Uuid $to): bool
+    {
+        $moved = false;
+        if ($this->revenueAccountId?->equals($from)) {
+            $this->revenueAccountId = $to;
+            $moved = true;
+        }
+        if ($this->expenseAccountId?->equals($from)) {
+            $this->expenseAccountId = $to;
+            $moved = true;
+        }
+
+        return $moved;
+    }
 }

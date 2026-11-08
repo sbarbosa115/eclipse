@@ -19,7 +19,12 @@ final class DbalBookSettingsQueries implements BookSettingsQueries
     public function postingRules(Uuid $companyId): array
     {
         $rows = $this->db->fetchAllAssociative(
-            'SELECT r.concept, a.id, a.code, a.name FROM posting_rule r JOIN ledger_account a ON a.id = r.account_id WHERE r.company_id = ?',
+            // Postable (PostableAccounts): active, a subcuenta or auxiliar, and no active auxiliar under it.
+            "SELECT r.concept, a.id, a.code, a.name,
+                    a.active = 1 AND a.level IN ('subaccount', 'auxiliary') AND NOT EXISTS (
+                        SELECT 1 FROM ledger_account c WHERE c.company_id = a.company_id AND c.parent_code = a.code AND c.active = 1
+                    ) AS postable
+             FROM posting_rule r JOIN ledger_account a ON a.id = r.account_id WHERE r.company_id = ?",
             [$companyId->toBinary()],
         );
         $byConcept = array_column($rows, null, 'concept');
@@ -55,6 +60,6 @@ final class DbalBookSettingsQueries implements BookSettingsQueries
     /** @param array<string, mixed> $row */
     private static function view(PostingConcept $concept, array $row): PostingRuleView
     {
-        return new PostingRuleView($concept->value, Uuid::fromBinary((string) $row['id'])->toRfc4122(), (string) $row['code'], (string) $row['name'], ConceptAccounts::prefixes($concept));
+        return new PostingRuleView($concept->value, Uuid::fromBinary((string) $row['id'])->toRfc4122(), (string) $row['code'], (string) $row['name'], ConceptAccounts::prefixes($concept), (bool) $row['postable']);
     }
 }

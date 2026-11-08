@@ -35,4 +35,17 @@ final class DoctrineProductRepository implements ProductRepository
     {
         $this->em->remove($product);
     }
+
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array
+    {
+        /** @var list<Product> $found */
+        $found = $this->em->createQueryBuilder()
+            ->select('p')->from(Product::class, 'p')
+            ->where('p.companyId = :company')->setParameter('company', $companyId, 'uuid')
+            ->andWhere('p.revenueAccountId = :account OR p.expenseAccountId = :account')->setParameter('account', $accountId, 'uuid')
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()->getResult();
+
+        return $found;
+    }
 }

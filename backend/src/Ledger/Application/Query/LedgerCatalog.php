@@ -32,9 +32,9 @@ interface LedgerCatalog
     public function accountIdByCode(Uuid $companyId, string $code): ?Uuid;
 
     /**
-     * Postable accounts matching a code prefix or part of the name, for pickers.
-     *
-     * @return list<AccountView>
+     * Postable accounts (active, subcuenta or auxiliar, no active auxiliar under them) for pickers, in code order: each
+     * word of the query must match, a number as a code prefix and anything else as part of the name. At most $limit,
+     * with the count of every match.
      */
-    public function searchAccounts(Uuid $companyId, string $query, bool $usableOnPurchasesOnly = false, int $limit = 20): array;
+    public function searchAccounts(Uuid $companyId, string $query, bool $usableOnPurchasesOnly = false, int $limit = 50): AccountMatches;
 }

@@ -110,3 +110,6 @@
 'Allocate the amount paid to at least one invoice.': 'Aplica el valor pagado al menos a una factura.'
 'Choose an open invoice of this supplier, once.': 'Elige una factura pendiente de este proveedor, una sola vez.'
 'Choose where the money comes from.': 'Elige de dónde sale el dinero.'
+
+# Observations 2026-11, item 1 account-picker: a subdivided account
+'This account has auxiliaries: choose one of them.': 'Esta cuenta tiene auxiliares: elige una de ellas.'

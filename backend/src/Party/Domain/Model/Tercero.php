@@ -426,4 +426,23 @@ class Tercero implements CompanyOwned
     {
         return $this->contacts->getValues();
     }
+
+    /**
+     * The accountant subdivided $from in the chart: the tercero's own receivable or payable account that was $from
+     * becomes its new auxiliar $to (observations PRD §4.1). Says whether anything moved.
+     */
+    public function moveAccount(Uuid $from, Uuid $to): bool
+    {
+        $moved = false;
+        if ($this->receivableAccountId?->equals($from)) {
+            $this->receivableAccountId = $to;
+            $moved = true;
+        }
+        if ($this->payableAccountId?->equals($from)) {
+            $this->payableAccountId = $to;
+            $moved = true;
+        }
+
+        return $moved;
+    }
 }

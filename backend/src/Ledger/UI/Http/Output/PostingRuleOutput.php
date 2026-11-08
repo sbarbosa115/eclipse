@@ -23,6 +23,6 @@ final readonly class PostingRuleOutput
 
     public static function of(PostingRuleView $v): self
     {
-        return new self($v->concept, $v->accountId, $v->accountCode, $v->accountName, $v->allowedPrefixes);
+        return new self($v->concept, $v->accountId, $v->accountCode, $v->accountName, $v->allowedPrefixes, $v->accountPostable);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Ledger\Domain\Model;
 
+use App\Ledger\Domain\Error\AccountHasAuxiliaries;
 use App\Ledger\Domain\Error\AccountNotAllowedForConcept;
 use App\Ledger\Domain\Error\AccountNotPostable;
 use App\Shared\Domain\Accounting\PostingConcept;
@@ -35,15 +36,20 @@ class PostingRule implements CompanyOwned
     }
 
     /**
-     * Points the concept at another account: an active, postable one within the concept's part of the PUC.
+     * Points the concept at another account: an active, postable one within the concept's part of the PUC, without
+     * active auxiliares under it (the repository knows that: Application\PostableAccounts).
      *
      * @throws AccountNotPostable
+     * @throws AccountHasAuxiliaries
      * @throws AccountNotAllowedForConcept
      */
-    public function pointTo(Account $account): void
+    public function pointTo(Account $account, bool $hasActiveAuxiliaries = false): void
     {
         if (!$account->isPostable()) {
             throw new AccountNotPostable($account->code());
+        }
+        if ($hasActiveAuxiliaries) {
+            throw new AccountHasAuxiliaries($account->code());
         }
         if (!ConceptAccounts::allows($this->concept, $account->code())) {
             throw new AccountNotAllowedForConcept();
