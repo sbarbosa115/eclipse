@@ -37,6 +37,19 @@ final class LedgerReportController extends AbstractController
     }
 
     /**
+     * A document's own entries for its Contabilización tab (observations PRD §4.5): ?source_type= (sales_invoice,
+     * purchase_invoice, cash_receipt, supplier_payment) and ?source_id=; its posting and, once voided, the reversal, by
+     * number. READ_DOCUMENTS (the libro diario stays VIEW_BOOKS). 400 invalid_source; another company's document has
+     * no entries here.
+     */
+    #[Route('/entries', methods: ['GET'])]
+    #[ApiResponse(JournalEntryOutput::class, key: 'items', list: true)]
+    public function entries(): JsonResponse
+    {
+        throw ApiException::notImplemented('journal-entry-tab');
+    }
+
+    /**
      * Entries by date and number, each with all its lines: ?from, ?to, ?account (a code: that account and its
      * children), ?tercero_id, ?page, ?per_page ≤ 100 (default 25).
      */

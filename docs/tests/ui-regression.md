@@ -1573,3 +1573,49 @@ errors.
 Smoke: `e2e/reports.spec.ts` (screenshots in `e2e/.results/dashboard-1366.png` and `-768.png`).
 At 1366×768 and 768×1024, **Tablero**. **Expected:** the tiles of each row start at the same height and are as tall;
 each reads title, figure, detail line and, at its foot, its link (*Ver cartera*).
+
+## 14. Accounts: the picker and auxiliares
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 1 account-picker: cases CTA-01 – 09; smoke tests in
+`backend/e2e/accountPicker.spec.ts`. -->
+
+## 15. Several retenciones per line
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 3 withholdings-editor (2 withholdings-api builds the API): cases RET-01 – 12; smoke tests in
+`backend/e2e/withholdings.spec.ts`. -->
+
+## 16. Municipalities on terceros and the company
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 4 terceros-city: cases CIU-01 – 09; smoke tests in
+`backend/e2e/terceroCity.spec.ts`. -->
+
+## 17. The product code on documents
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 5 product-code: cases COD-01 – 05; smoke tests in
+`backend/e2e/productCode.spec.ts`. -->
+
+## 18. The Contabilización tab
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 6 journal-entry-tab: cases ASI-01 – 06; smoke tests in
+`backend/e2e/journalTab.spec.ts`. -->
+
+## 19. Corregir a factura de compra
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 7 purchase-correct: cases COR-01 – 06; smoke tests in
+`backend/e2e/purchaseCorrect.spec.ts`. -->
+
+## 20. Tax reports: retenciones and IVA
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 8 tax-reports: cases IMP-01 – 12; smoke tests in
+`backend/e2e/taxReports.spec.ts`. -->
+
+## 21. Exógena working papers
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 9 exogena: cases EXO-01 – 08; smoke tests in
+`backend/e2e/exogena.spec.ts`. -->
+
+## 22. Órdenes de compra
+
+<!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 10 purchase-orders: cases OC-01 – 14; smoke tests in
+`backend/e2e/purchaseOrder.spec.ts`. -->
+

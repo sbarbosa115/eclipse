@@ -4,6 +4,9 @@ namespace App\Sales\UI\Http\Output;
 
 use App\Sales\Domain\Model\Quotation;
 use App\Sales\Domain\Model\QuotationLine;
+use App\Shared\Application\Document\LineWithholdingView;
+use App\Shared\Application\Document\WithholdingSummaryView;
+use App\Shared\UI\Http\Output\WithholdingSummaryOutput;
 
 /** A cotización, whole: the header, its own fields, the lines, the totals, where it stands and its audit. */
 final readonly class QuotationOutput
@@ -50,6 +53,12 @@ final readonly class QuotationOutput
         public ?string $voidedBy,
         public ?string $voidedAt,
         public ?string $voidReason,
+        /**
+         * The retenciones by tax, for the totals panel (observations PRD §4.2).
+         *
+         * @var list<WithholdingSummaryOutput>
+         */
+        public array $withholdingsByTax = [],
     ) {
     }
 
@@ -89,6 +98,7 @@ final readonly class QuotationOutput
             $q->voidedBy()?->toRfc4122(),
             $q->voidedAt()?->format(\DATE_ATOM),
             $q->voidReason(),
+            array_map(WithholdingSummaryOutput::of(...), WithholdingSummaryView::of(array_map(LineWithholdingView::ofLine(...), $q->lines()))),
         );
     }
 }

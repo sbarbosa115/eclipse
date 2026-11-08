@@ -174,6 +174,18 @@ final class PurchaseInvoiceController extends AbstractController
     }
 
     /**
+     * Corregir (observations PRD §4.6): {reason}. In one transaction voids the emitted invoice as /void does and opens
+     * an editable copy with the same supplier number, lines, formas de pago and files → 201 the new draft. 409
+     * `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.
+     */
+    #[Route('/{id}/correct', methods: ['POST'])]
+    #[ApiResponse(PurchaseInvoiceOutput::class, status: 201)]
+    public function correct(string $id, Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
+    {
+        throw ApiException::notImplemented('purchase-correct');
+    }
+
+    /**
      * A new draft like this invoice, dated today, without the supplier's number → 201.
      */
     #[Route('/{id}/duplicate', methods: ['POST'])]

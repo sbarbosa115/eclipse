@@ -46,6 +46,14 @@ final class TerceroInput
     #[Assert\Length(max: 100)]
     public ?string $city = null;
 
+    /** ISO 3166-1 alpha-2; Colombia when missing (observations PRD §4.3). */
+    #[Assert\Regex(pattern: '/^[A-Z]{2}$/', message: 'Choose the country.')]
+    public ?string $countryCode = null;
+
+    /** DANE DIVIPOLA code (5 digits), required for Colombia. */
+    #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Choose the municipality.')]
+    public ?string $municipalityCode = null;
+
     #[Assert\Length(max: 200)]
     public ?string $address = null;
 

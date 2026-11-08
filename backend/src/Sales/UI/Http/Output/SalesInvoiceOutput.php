@@ -5,6 +5,9 @@ namespace App\Sales\UI\Http\Output;
 use App\Sales\Domain\Model\Receivable;
 use App\Sales\Domain\Model\SalesInvoice;
 use App\Sales\Domain\Model\SalesInvoiceLine;
+use App\Shared\Application\Document\LineWithholdingView;
+use App\Shared\Application\Document\WithholdingSummaryView;
+use App\Shared\UI\Http\Output\WithholdingSummaryOutput;
 
 /** A factura de venta, whole: the header, the numbers, the lines, the formas de pago, the totals, its receivables and its audit. */
 final readonly class SalesInvoiceOutput
@@ -54,6 +57,12 @@ final readonly class SalesInvoiceOutput
         public ?string $voidedBy,
         public ?string $voidedAt,
         public ?string $voidReason,
+        /**
+         * The retenciones by tax, for the totals panel (observations PRD §4.2).
+         *
+         * @var list<WithholdingSummaryOutput>
+         */
+        public array $withholdingsByTax = [],
     ) {
     }
 
@@ -98,6 +107,7 @@ final readonly class SalesInvoiceOutput
             $i->voidedBy()?->toRfc4122(),
             $i->voidedAt()?->format(\DATE_ATOM),
             $i->voidReason(),
+            array_map(WithholdingSummaryOutput::of(...), WithholdingSummaryView::of(array_map(LineWithholdingView::ofLine(...), $i->lines()))),
         );
     }
 }

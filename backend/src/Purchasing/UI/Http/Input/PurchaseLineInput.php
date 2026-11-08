@@ -2,6 +2,7 @@
 
 namespace App\Purchasing\UI\Http\Input;
 
+use App\Shared\UI\Http\Input\LineWithholdingInput;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /** A line: a product or an expense account (§4.10), quantity, unit value, % discount and the two taxes (null: none). */
@@ -31,6 +32,16 @@ final class PurchaseLineInput
     #[Assert\Uuid]
     public ?string $chargeTaxId = null;
 
+    /** Deprecated (observations PRD §6): one retención; means withholdings: [{tax_id}]. */
     #[Assert\Uuid]
     public ?string $withholdingTaxId = null;
+
+    /**
+     * The line's retenciones: none, or one per kind (ReteFuente, ReteIVA, ReteICA). Null: the deprecated
+     * withholding_tax_id decides.
+     *
+     * @var list<LineWithholdingInput>|null
+     */
+    #[Assert\Valid]
+    public ?array $withholdings = null;
 }

@@ -16,6 +16,8 @@ final readonly class PostingRuleOutput
         public string $accountCode,
         public string $accountName,
         public array $allowedPrefixes,
+        /** False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD §4.1). */
+        public bool $accountPostable = true,
     ) {
     }
 

@@ -19,6 +19,8 @@ final readonly class AccountOutput
         public bool $active,
         public bool $postable,
         public bool $usableOnPurchases,
+        /** Set on the answer to adding the first auxiliar under an account in use: what moved to it. */
+        public ?AccountMovesOutput $moved = null,
     ) {
     }
 

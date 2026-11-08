@@ -15,8 +15,10 @@
     "cashReceipts": "Recibos de caja",
     "purchaseInvoices": "Facturas de compra",
     "supplierPayments": "Recibos de pago",
+    "purchaseOrders": "Órdenes de compra",
     "ledger": "Libros contables",
     "reports": "Reportes",
+    "taxReports": "Impuestos",
     "terceros": "Terceros",
     "products": "Productos y servicios",
     "settings": "Configuración"

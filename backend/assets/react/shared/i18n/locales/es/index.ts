@@ -18,6 +18,10 @@ import quotation from './quotation.json';
 import cashReceipt from './cashReceipt.json';
 import supplierPayment from './supplierPayment.json';
 import reports from './reports.json';
+// Observations 2026-11 (docs/pdr/prd-observations-2026-11.md): namespaces of its items.
+import journalEntry from './journalEntry.json';
+import taxReports from './taxReports.json';
+import purchaseOrder from './purchaseOrder.json';
 
 export const es = {
   common, // item 0
@@ -38,4 +42,7 @@ export const es = {
   cashReceipt, // item 11 cash-receipt
   supplierPayment, // item 12 supplier-payment
   reports, // item 13 reports
+  journalEntry, // observations item 6 journal-entry-tab
+  taxReports, // observations items 8 tax-reports and 9 exogena
+  purchaseOrder, // observations item 10 purchase-orders
 };

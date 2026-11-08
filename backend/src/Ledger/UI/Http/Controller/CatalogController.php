@@ -4,6 +4,7 @@ namespace App\Ledger\UI\Http\Controller;
 
 use App\Ledger\Application\Query\LedgerCatalog;
 use App\Ledger\UI\Http\Output\AccountOutput;
+use App\Ledger\UI\Http\Output\AccountSearchOutput;
 use App\Ledger\UI\Http\Output\PaymentMethodOutput;
 use App\Ledger\UI\Http\Output\TaxOutput;
 use App\Shared\UI\Http\ApiException;
@@ -59,12 +60,13 @@ final class CatalogController extends AbstractController
      * purchase lines. At most 20.
      */
     #[Route('/accounts/search', methods: ['GET'])]
-    #[ApiResponse(AccountOutput::class, key: 'items', list: true)]
+    #[ApiResponse(AccountSearchOutput::class)]
     public function searchAccounts(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
     {
         $views = $this->catalog->searchAccounts($user->companyId(), $request->query->getString('q'), $request->query->getBoolean('purchases'));
 
-        return $this->json(['items' => array_map(AccountOutput::of(...), $views)]);
+        // total: how many matched; the "account-picker" item counts beyond the page (observations PRD §4.1).
+        return $this->json(new AccountSearchOutput(array_map(AccountOutput::of(...), $views), \count($views)));
     }
 
     private function day(Request $request, string $name): ?\DateTimeImmutable

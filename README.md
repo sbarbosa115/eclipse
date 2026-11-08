@@ -204,9 +204,28 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 | POST | `/supplier-payments/{id}/void` | `{reason}` → `SupplierPaymentOutput` voided today: each allocation given back, reversing entry, number kept. Owner, billing and accountant | 403; 404; 409 `document_voided`, `period_locked`; 422 on `reason` |
 | POST | `/supplier-payments/{id}/send` | queues the e-mail with the PDF to the supplier's e-mail → 202. Owner, billing and accountant | 403; 404; 409 `document_not_emitted` (voided); 422 `tercero_has_no_email` |
 | GET | `/supplier-payments/{id}/pdf` | the payment's PDF (inline; *ANULADA* when voided). Every role | 404 |
+| GET | `/geo/departments`, `/geo/municipalities` | DANE's DIVIPOLA: `{items: [{code, name}]}` by code; municipalities `?q=` part of the name (accents and case aside, literal) or the start of the code, `?department=`, at most 50: `{items: [{code, name, department_code, department_name}]}`. Every role | 401 |
+| GET | `/ledger/entries` | *(observations item 6 "journal-entry-tab"; 501 until built)* | 501 |
+| GET, PUT | `/ledger/exogena-concepts` | *(observations item 9 "exogena"; 501 until built)* | 501 |
+| POST | `/purchase-invoices/{id}/correct` | *(observations item 7 "purchase-correct"; 501 until built)* | 501 |
+| any | `/purchase-orders`, `/purchase-orders/{id}…` | *(observations item 10 "purchase-orders"; 501 until built)* | 501 |
+| GET | `/reports/taxes/withholdings/{practiced\|suffered}`, `/reports/taxes/vat` (+ `/export`) | *(observations item 8 "tax-reports"; 501 until built)* | 501 |
+| GET | `/reports/taxes/exogena/{format}` (+ `/export`) | *(observations item 9 "exogena"; 501 until built)* | 501 |
 
 ## Data model decisions
 
+- **A line's retenciones are a list** (observations 2026-11, item 0): each document line table has its own
+  `<line table>_withholding` table (`Shared\Domain\Model\LineWithholding`: the tax's snapshot, `base_amount` and
+  `amount`), none or one per kind. `DocumentTotals` shares the cents per (line, retención) pair, so per-account
+  journal lines add up to *Retenciones*. `CommercialLine::withholdingTax()` and the API's `withholding_tax_id` are the
+  deprecated single-retención alias (the first one) until the UI moves to `withholdings`.
+- **DIVIPOLA is reference data, not company data** (observations 2026-11): `geo_municipality` (1 122 municipios, 33
+  departamentos, from datos.gov.co's DIVIPOLA dataset `gdxc-w37w`, in `src/Shared/Infrastructure/Geo/divipola.csv`)
+  has no `company_id` and is read-only after its migration: the one stated exception to *every owned row has
+  `company_id`*. `Shared\Application\Geo\Municipalities` reads it.
+- **A purchase invoice's supplier number is unique among live invoices**: the unique index is on
+  `(company_id, tercero_id, active_number_key)`, the number while the invoice is not voided and NULL once it is, so a
+  corrected invoice's copy can carry the number again.
 - **One permission matrix.** `Shared\UI\Http\Security\Permission::MATRIX` says who may do what (§8: the owner everything; billing and accountant every document; the accountant also the books; users and company settings the owner's). The voter, every controller check and the session (`SessionOutput.permissions`) read it; the UI shows or hides actions with `can(session, 'WRITE_DOCUMENTS')`, never by role name.
 
 - **Ids are UUID v7, stored BINARY(16).** The tenancy filter compares `company_id` to `UNHEX(...)`.

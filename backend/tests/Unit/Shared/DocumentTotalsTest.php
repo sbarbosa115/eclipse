@@ -48,8 +48,8 @@ final class DocumentTotalsTest extends TestCase
 
         $taxes = array_map(static fn ($l) => $l->tax, $totals->lines);
         $subtotals = array_map(static fn ($l) => $l->subtotal, $totals->lines);
-        self::assertSame('0.19', \App\Shared\Domain\Money\Money::sum(...$taxes)->toString(), 'Line taxes are what posting uses: they must add up to the document tax to the cent.');
-        self::assertSame('1.00', \App\Shared\Domain\Money\Money::sum(...$subtotals)->toString(), 'Line subtotals add up to the document subtotal.');
+        self::assertSame('0.19', Money::sum(...$taxes)->toString(), 'Line taxes are what posting uses: they must add up to the document tax to the cent.');
+        self::assertSame('1.00', Money::sum(...$subtotals)->toString(), 'Line subtotals add up to the document subtotal.');
     }
 
     public function testTaxPerUnitMultipliesTheQuantity(): void

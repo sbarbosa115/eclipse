@@ -25,6 +25,11 @@ const ANDINA: Tercero = {
   contacts: [{id: 'c1', name: 'Pedro', email: null, phone: null}],
   active: true,
   created_at: '2026-10-03T10:00:00+00:00',
+  country_code: 'CO',
+  municipality_code: '11001',
+  municipality_name: 'BOGOTÁ, D.C.',
+  department_code: '11',
+  department_name: 'BOGOTÁ, D.C.',
 };
 
 describe('the tercero form', () => {

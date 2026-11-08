@@ -52,6 +52,13 @@ final readonly class TerceroOutput
         /** ISO 8601 date-time when the personal data was erased on request (Ley 1581), else null */
         public ?string $erasedAt,
         public string $createdAt,
+        /** ISO 3166-1 alpha-2 (observations PRD §4.3). */
+        public string $countryCode = 'CO',
+        /** DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again. */
+        public ?string $municipalityCode = null,
+        public ?string $municipalityName = null,
+        public ?string $departmentCode = null,
+        public ?string $departmentName = null,
     ) {
     }
 
@@ -86,6 +93,8 @@ final readonly class TerceroOutput
             $t->isActive(),
             $t->erasedAt()?->format(\DATE_ATOM),
             $t->createdAt()->format(\DATE_ATOM),
+            $t->countryCode(),
+            $t->municipalityCode(),
         );
     }
 }
