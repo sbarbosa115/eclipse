@@ -25,8 +25,20 @@ const CHARGE = [
   tax('iva5', 'IVA 5 %', 'charge', '5.0000'),
 ];
 const WITHHOLDING = [
-  tax('rete4', 'ReteFuente servicios 4 %', 'withholding', '4.0000', 'retefuente'),
-  tax('rete25', 'ReteFuente compras 2,5 %', 'withholding', '2.5000', 'retefuente'),
+  tax(
+    'rete4',
+    'ReteFuente servicios 4 %',
+    'withholding',
+    '4.0000',
+    'retefuente',
+  ),
+  tax(
+    'rete25',
+    'ReteFuente compras 2,5 %',
+    'withholding',
+    '2.5000',
+    'retefuente',
+  ),
   tax('reteiva15', 'ReteIVA 15 %', 'withholding', '15.0000', 'reteiva'),
   tax('ica966', 'ReteICA 0,966 %', 'withholding', '0.9660', 'reteica'),
 ];
@@ -134,7 +146,10 @@ describe('the per-line tax dialog (§4.6)', () => {
       screen.getByLabelText('ReteIVA'),
       'reteiva15',
     );
-    await userEvent.selectOptions(screen.getByLabelText('Retefuente'), 'rete25');
+    await userEvent.selectOptions(
+      screen.getByLabelText('Retefuente'),
+      'rete25',
+    );
     await userEvent.click(
       screen.getByLabelText(
         'Aplicar estos impuestos al producto de ahora en adelante',

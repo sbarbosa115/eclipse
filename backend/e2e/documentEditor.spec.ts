@@ -251,7 +251,10 @@ test('DOC-07 · formas de pago add up to Total neto, with a due date on crédito
   await open(page);
 
   await pickProduct(page, 1, 'SRV');
-  await page.getByLabel('Impuesto retención, línea 1').selectOption('');
+  // The retenciones are changed in the line's tax dialog, opened from their cell (observations §4.2).
+  await page.getByRole('button', {name: /^Retenciones de la línea 1/}).click();
+  await page.getByRole('dialog').getByLabel('Retefuente').selectOption('');
+  await page.getByRole('dialog').getByRole('button', {name: 'Aplicar'}).click();
   await expect(total(page, 'Total neto')).toHaveText('$ 1.190.000,00');
 
   await page.getByRole('button', {name: 'Agregar forma de pago'}).click();
@@ -328,7 +331,7 @@ async function expectEveryColumnVisible(page: Page) {
   expect(scrolls, 'the lines table does not scroll sideways').toBe(false);
   const headers = page.locator('.doc-lines thead th');
   const names = await headers.allTextContents();
-  for (const name of ['Impuesto retención', 'Valor total', 'Acciones']) {
+  for (const name of ['Retenciones', 'Valor total', 'Acciones']) {
     expect(names.map((n) => n.trim())).toContain(name);
   }
   const cells = page.locator(

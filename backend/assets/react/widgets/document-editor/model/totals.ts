@@ -104,7 +104,7 @@ function shares(exact: Decimal[]): Decimal[] {
  *     Total neto   = Subtotal + Impuestos − Retenciones
  *
  * Retenciones are shared per (line, retención) pair, as on the server, so each one's amount (what posts to its own
- * account) adds up to the document's Retenciones. A tax the company no longer offers is left out.
+ * account) adds up to the document's Retenciones. A tax the company no longer offers, and "Ninguno", are left out.
  */
 export function computeTotals(
   lines: ReadonlyArray<DraftLine>,
@@ -129,7 +129,8 @@ export function computeTotals(
     tax.push(lineTax);
     for (const id of line.withholdings) {
       const rate = byId.get(id);
-      if (!rate) continue;
+      // A tax the company no longer offers, or "Ninguno" (a no-tax snapshot the server skips), is no retención.
+      if (!rate || rate.kind === 'none') continue;
       withholding.push(taxOn(rate, base, quantity, lineTax));
       pairs.push({line: i, tax: rate});
     }
@@ -164,7 +165,10 @@ export function computeTotals(
   });
 
   // By tax, as WithholdingSummaryView: the base is the line's subtotal share, or its IVA share for a ReteIVA.
-  const byTax = new Map<string, {name: string; base: Decimal; amount: Decimal}>();
+  const byTax = new Map<
+    string,
+    {name: string; base: Decimal; amount: Decimal}
+  >();
   withholdingShares.forEach((share, k) => {
     const {line, tax: rate} = pairs[k] as {line: number; tax: TaxRateInfo};
     const base =

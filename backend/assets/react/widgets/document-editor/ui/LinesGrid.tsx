@@ -200,8 +200,8 @@ export function LinesGrid({
     const errorId = `${baseId}-${line.key}-withholdings-error`;
     const message = errors[`lines.${index}.withholdings`];
     const names = line.withholdings
-      .map((id) => knownTaxes.find((tax) => tax.id === id)?.name)
-      .filter((name): name is string => Boolean(name))
+      .map((id) => knownTaxes.find((tax) => tax.id === id))
+      .flatMap((tax) => (tax && tax.kind !== 'none' ? [tax.name] : []))
       .join(' · ');
     const text = names || t('documentEditor.lines.noWithholdings');
     return (

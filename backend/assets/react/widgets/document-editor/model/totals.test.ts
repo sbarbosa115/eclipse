@@ -23,6 +23,13 @@ const TAXES: TaxRateInfo[] = [
     kind: 'retefuente',
   },
   {
+    id: 'ninguno',
+    name: 'Ninguno',
+    calculation: 'percentage',
+    rate: '0',
+    kind: 'none',
+  },
+  {
     id: 'ica966',
     name: 'ReteICA 0,966 %',
     calculation: 'percentage',
@@ -221,15 +228,15 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
       TAXES,
     );
 
-    expect(totals.withholdings, 'rounded once at document level').toBe(
-      '34.66',
-    );
+    expect(totals.withholdings, 'rounded once at document level').toBe('34.66');
     const shares = totals.lines.flatMap((l) => l.withholdings);
     for (const amounts of totals.lines) {
       expect(
         amounts.withholding,
         'a line’s retención is the sum of its shares',
-      ).toBe(Decimal.sum(amounts.withholdings.map((v) => Decimal.of(v))).toString());
+      ).toBe(
+        Decimal.sum(amounts.withholdings.map((v) => Decimal.of(v))).toString(),
+      );
     }
     expect(
       Decimal.sum(shares.map((v) => Decimal.of(v))).toString(),
@@ -304,5 +311,17 @@ describe('the totals preview mirrors Shared\\Domain\\Totals\\DocumentTotals', ()
 
     expect(totals.withholdings).toBe('25.00');
     expect(totals.withholdingsByTax.map((w) => w.tax_id)).toEqual(['rete25']);
+  });
+
+  it('takes the "Ninguno" retención as none, as the server skips it', () => {
+    const totals = computeTotals(
+      [line({quantity: '1', unit_price: '1000', withholdings: ['ninguno']})],
+      TAXES,
+    );
+
+    expect(totals.lines[0]?.withholdings).toEqual([]);
+    expect(totals.withholdingsByTax, 'no "Ninguno" row in the panel').toEqual(
+      [],
+    );
   });
 });

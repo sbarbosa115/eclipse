@@ -85,7 +85,8 @@ export function offeredTaxes(
   all: Tax[],
   chosen: string | ReadonlyArray<string> | null,
 ): Tax[] {
-  const ids = chosen === null ? [] : typeof chosen === 'string' ? [chosen] : chosen;
+  const ids =
+    chosen === null ? [] : typeof chosen === 'string' ? [chosen] : chosen;
   const missing = ids.filter((id) => !inForce.some((tax) => tax.id === id));
   if (missing.length === 0) return inForce;
   return [...inForce, ...all.filter((tax) => missing.includes(tax.id))];

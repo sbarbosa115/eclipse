@@ -34,7 +34,14 @@ const CHARGE = [
   tax('iva5', 'IVA 5 %', 'charge', '5.0000'),
 ];
 const WITHHOLDING = [
-  tax('rete4', 'ReteFuente servicios 4 %', 'withholding', '4.0000', 'retefuente'),
+  tax('ninguno', 'Ninguno', 'withholding', '0.0000', 'none'),
+  tax(
+    'rete4',
+    'ReteFuente servicios 4 %',
+    'withholding',
+    '4.0000',
+    'retefuente',
+  ),
   tax('rete25', 'ReteFuente 2,5 %', 'withholding', '2.5000', 'retefuente'),
   tax('reteiva15', 'ReteIVA 15 %', 'withholding', '15.0000', 'reteiva'),
   tax('ica966', 'ReteICA 0,966 %', 'withholding', '0.9660', 'reteica'),
@@ -595,7 +602,7 @@ describe('the document form (§4.6)', () => {
         value: draft({
           lines: [
             line({...PRD_LINE, withholdings: ['rete25', 'reteiva15']}),
-            line({quantity: '1'}),
+            line({quantity: '1', withholdings: ['ninguno']}),
           ],
         }),
       });
@@ -658,7 +665,10 @@ describe('the document form (§4.6)', () => {
       renderEditor({
         value: draft({
           lines: [
-            line({...OBS2_LINE, withholdings: ['rete25', 'reteiva15', 'ica966']}),
+            line({
+              ...OBS2_LINE,
+              withholdings: ['rete25', 'reteiva15', 'ica966'],
+            }),
           ],
         }),
       });
@@ -668,9 +678,7 @@ describe('the document form (§4.6)', () => {
       const row = (name: string) =>
         within(panel).getByText(name, {selector: 'dt'}).parentElement;
       expect(total('ReteFuente 2,5 %')).toBe('$ 25.000,00');
-      expect(row('ReteFuente 2,5 %')).toHaveTextContent(
-        'Base $ 1.000.000,00',
-      );
+      expect(row('ReteFuente 2,5 %')).toHaveTextContent('Base $ 1.000.000,00');
       expect(total('ReteIVA 15 %')).toBe('$ 28.500,00');
       expect(
         row('ReteIVA 15 %'),
@@ -695,7 +703,9 @@ describe('the document form (§4.6)', () => {
       api();
       renderEditor({
         value: draft({lines: [line({...PRD_LINE})]}),
-        errors: {'lines.0.withholdings': 'Una retención por tipo en cada línea.'},
+        errors: {
+          'lines.0.withholdings': 'Una retención por tipo en cada línea.',
+        },
       });
 
       expect(
