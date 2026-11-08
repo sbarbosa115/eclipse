@@ -121,3 +121,8 @@
 'Choose the country.': 'Elige el país.'
 # Observations 2026-11, item 1 account-picker: a subdivided account
 'This account has auxiliaries: choose one of them.': 'Esta cuenta tiene auxiliares: elige una de ellas.'
+# Observations 2026-11, item 9 exogena: the concept table
+'Choose format 1001 or 1007.': 'Elige el formato 1001 o 1007.'
+'Write the start of an account code (digits only).': 'Escribe el comienzo de un código de cuenta (solo dígitos).'
+'Write the DIAN concept code (four digits).': 'Escribe el código del concepto DIAN (cuatro dígitos).'
+'This prefix is already in the list of this format.': 'Ese prefijo ya está en la lista de este formato.'

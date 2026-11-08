@@ -81,7 +81,6 @@ final class ContractTest extends ApiTestCase
         yield 'purchase orders' => ['GET', '/api/v1/purchase-orders', 'purchase-orders'];
         yield 'convert an order' => ['POST', "/api/v1/purchase-orders/$id/convert", 'purchase-orders'];
         yield 'exógena 1001' => ['GET', '/api/v1/reports/taxes/exogena/1001', 'exogena'];
-        yield 'exógena concepts' => ['GET', '/api/v1/ledger/exogena-concepts', 'exogena'];
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('unbuiltRoutes')]

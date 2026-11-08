@@ -57,4 +57,10 @@ class ExogenaConcept implements CompanyOwned
     {
         return $this->conceptCode;
     }
+
+    /** The accountant points the prefix at another DIAN concept. */
+    public function reportUnder(string $conceptCode): void
+    {
+        $this->conceptCode = $conceptCode;
+    }
 }
