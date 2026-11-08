@@ -12,12 +12,6 @@
   text-decoration: none;
 }
 
-.admin .report-num {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
 .admin .report-total td {
   font-weight: 600;
   border-top: 2px solid var(--color-border);

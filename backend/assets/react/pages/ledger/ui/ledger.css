@@ -1,11 +1,5 @@
-.admin .ledger-num {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
 .admin .ledger-entry-head td {
-  border-top: 2px solid var(--color-border, #d0d5dd);
+  border-top: 2px solid var(--color-border);
   font-weight: 600;
 }
 

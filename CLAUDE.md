@@ -28,6 +28,7 @@ every save: check `docker compose logs node`.
 - **Spanish (Colombia) only, through `t()`**: copy lives in `shared/i18n/locales/es/<namespace>.json`, money as
   `$ 1.190.000,00`, dates `DD/MM/YYYY`. Code identifiers in English.
 - **Screens are built only from `@/shared/ui`** (the kit): tables with an Actions column last, `FilterBar`,
-  `Field`, `FormModal`, `EmptyState`. Check every screen at laptop and tablet widths, light and dark.
+  `Field`, `FormModal`, `EmptyState`. Check every screen at laptop and tablet widths, light and dark. `DESIGN.md`
+  has the tokens, the action and status colours, and the page anatomy.
 - **Prettier formats YAML too**: write Symfony tags in block form (`!tagged_iterator` on its own line, keys below).
 - **Babel parses `.ts` as TSX:** write `function f<T>()`, never a generic arrow `<T>() =>`.

@@ -215,12 +215,8 @@ export function PurchaseInvoiceList({canWrite}: {canWrite: boolean}) {
                   <td>{invoice.supplier_invoice_number}</td>
                   <td>{formatDate(invoice.issue_date)}</td>
                   <td>{formatDate(invoice.due_date)}</td>
-                  <td className="purchase-list-num">
-                    {formatMoney(invoice.net_total)}
-                  </td>
-                  <td className="purchase-list-num">
-                    {formatMoney(invoice.balance)}
-                  </td>
+                  <td className="num">{formatMoney(invoice.net_total)}</td>
+                  <td className="num">{formatMoney(invoice.balance)}</td>
                   <Actions>
                     <Link
                       to={`${BASE}/${invoice.id}`}

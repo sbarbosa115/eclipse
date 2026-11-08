@@ -2,9 +2,3 @@
 .admin .purchase-list-date input {
   width: 9.5rem;
 }
-
-.admin .purchase-list-num {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
