@@ -2005,6 +2005,72 @@ keeps its contrast; the console has no errors.
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 9 exogena: cases EXO-01 – 08; smoke tests in
 `backend/e2e/exogena.spec.ts`. -->
 
+**EXO-01 · Exógena opens on format 1001 of the year that ended, empty for a new company**
+Smoke: `e2e/exogena.spec.ts`.
+As the owner of a brand-new company: Reportes › Impuestos › tab **Exógena**.
+**Expected:** `/reportes/impuestos/exogena`; the sub-tabs *1001 · Pagos*, *1003 · Retenciones*, *1005 · IVA
+descontable*, *1006 · IVA generado*, *1007 · Ingresos*, *1008 · Por cobrar* and *1009 · Por pagar*, 1001 selected;
+*Año gravable* is last year; "Ningún tercero para el formato 1001 en <año>." and the CSV / PDF buttons; the console has
+no errors.
+
+**EXO-02 · A purchase of the year is in 1001 by account and concept, in 1005 and in 1009**
+Smoke: `e2e/exogena.spec.ts`.
+Emit a factura de compra this year of $ 1.000.000 + IVA 19 % on 513595 with ReteFuente compras 2,5 % and ReteIVA 15 %,
+on crédito, from a supplier in Medellín › Exógena › *Año gravable* this year.
+**Expected:** 1001: Concepto 5003, Cuenta 513595, "NIT 830045678", municipio 05001, Pago o abono $ 1.000.000,00, IVA
+mayor valor del costo $ 0,00, Retención en la fuente $ 25.000,00, ReteIVA $ 28.500,00, and a Total row. 1005: IVA
+descontable $ 190.000,00. 1009: Saldo al 31/12 $ 1.136.500,00 (what the cartera de proveedores shows today).
+
+**EXO-03 · A threshold groups the cuantías menores under 222222222**
+Smoke: `e2e/exogena.spec.ts`.
+On EXO-02's company, 1001: *Cuantías menores de* › 2.000.000 › Enter.
+**Expected:** the address carries `threshold=2000000`; the supplier's row is gone and a row "Cuantías menores" with
+222222222 and concept 5003 holds its $ 1.000.000,00; the Total row is unchanged; emptying the field brings the supplier
+back.
+
+**EXO-04 · A tercero without municipio withholds the files and links to the list**
+On a company with a supplier created before the municipio rule (a migrated stage-1 tercero; on a fresh database clear
+it with `UPDATE tercero SET municipality_code = NULL WHERE …`) and a purchase from it this year: Exógena › 1001.
+**Expected:** a warning "1 terceros de este formato no tienen municipio: complétalos para descargar el formato." with
+**Ver terceros sin municipio**, no CSV / PDF buttons, and "Sin municipio" in its row (worded, not only coloured); the
+link opens `/terceros?missing_municipality=1` listing it; after saving its municipio, back on Exógena the buttons are
+there and the CSV downloads. The same supplier grouped under a threshold above its total does not block the files.
+(Through the API, `GET /reports/taxes/exogena/1001/export` answers 422 `exogena_terceros_incomplete`.)
+
+**EXO-05 · Configuración › Exógena: the default concepts, added, changed and removed**
+Smoke: `e2e/exogena.spec.ts`.
+As the owner of a new company: Configuración › tab **Exógena**.
+**Expected:** the rows 1001 · Pagos 1435 → 5007, 5110 → 5001, 5120 → 5004, 5135 → 5003, 5195 → 5016, 6205 → 5007 and
+1007 · Ingresos 41 → 4001, 42 → 4002. **Nueva fila** 1001 · 5115 · 5002 › Guardar: "Tabla de conceptos guardada." and
+the row in its place; **Editar** changes its concept; **Quitar** asks first and then "Se quitó la fila 1001 · 5115.".
+Adding 5110 again in 1001 says "Ese prefijo ya está en la tabla del formato 1001." and a concept of two digits "Escribe
+los cuatro dígitos del concepto."; each saved change is in the audit log as `exogena_concepts.changed`.
+
+**EXO-06 · Rows without a concept are blank and say where to fix them**
+On EXO-02's company: Configuración › Exógena › **Quitar** 1001 · 5135 › Reportes › Impuestos › Exógena › 1001 this year.
+**Expected:** the row's Concepto is blank; "1 fila no tiene concepto DIAN: queda en blanco en el formato." with
+**Completar la tabla de conceptos**, which opens Configuración › Exógena; the CSV still downloads, with the warning in
+the PDF's subtitle. A *Facturación* user opening Configuración › Exógena reads "La tabla de conceptos de la exógena es
+del administrador y del contador." and no buttons.
+
+**EXO-07 · The files read as working papers, and 1008 / 1009 match the cartera at 31/12**
+On a company with sales and purchases of last year, some still owed at 31/12 and some paid in January: download the CSV
+and the PDF of 1001, 1007 and 1008 for last year; open Reportes › Cartera de clientes as of 31/12 of last year.
+**Expected:** `exogena-<formato>-<año>.csv` opens in Excel (es-CO) with the accents right, the columns Concepto, Cuenta
+(1001 and 1007 only), Tipo de documento (31 for a NIT, 13 for a cédula), Número de identificación, DV, apellidos,
+nombres, razón social, dirección, códigos de departamento y municipio, País (169 for Colombia), then the format's
+values, the cuantías menores rows and a Total row; the PDF has the company frame, "Formato 1008 · Cuentas por cobrar al
+31 de diciembre", "Año gravable <año>" and money as $ 1.234.567,89. 1008's totals per client equal the cartera as of
+31/12 (invoices paid in January still count; voided ones do not); 1007 shows gross income with its discounts under
+*Devoluciones y descuentos*.
+
+**EXO-08 · Laptop and tablet, light and dark**
+Exógena with data on every sub-tab, and Configuración › Exógena with its dialogs, at 1366×768 and 768×1024, Tema Claro
+and Oscuro.
+**Expected:** the seven format pills scroll or wrap without pushing the page wider; *Año gravable* and *Cuantías menores
+de* sit in the filter bar and wrap on a tablet; the wide 1001 table scrolls inside itself with money right-aligned; the
+"Sin municipio" badge and the warnings keep their contrast in dark mode; the console has no errors.
+
 ## 22. Órdenes de compra
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 10 purchase-orders: cases OC-01 – 14; smoke tests in
