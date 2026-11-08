@@ -238,6 +238,7 @@ test('RET-04 · a sales invoice keeps its three retenciones when saved and reope
     business_name: 'Distribuciones Andina S.A.S.',
     email: 'compras@andina.co',
     roles: ['cliente'],
+    municipality_code: '11001',
   });
 
   await page.goto('/facturas-venta/nueva');
@@ -272,6 +273,7 @@ test('RET-05 · a purchase invoice keeps its retenciones when saved and reopened
     business_name: 'Servicios Andinos S.A.S.',
     email: 'facturas@andinos.co',
     roles: ['proveedor'],
+    municipality_code: '11001',
   });
 
   await page.goto('/facturas-compra/nueva');

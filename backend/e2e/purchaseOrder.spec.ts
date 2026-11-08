@@ -470,5 +470,8 @@ test('OC-11 · what the invoice refuses is listed and nothing is converted', asy
     total: number;
   };
   expect(invoices.total).toBe(0);
-  expect(errors).toEqual([]);
+  // The refused conversion is the one 422 the browser logs.
+  expect(errors).toEqual([
+    'Failed to load resource: the server responded with a status of 422 (Unprocessable Content)',
+  ]);
 });
