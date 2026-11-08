@@ -1579,6 +1579,60 @@ each reads title, figure, detail line and, at its foot, its link (*Ver cartera*)
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 1 account-picker: cases CTA-01 – 09; smoke tests in
 `backend/e2e/accountPicker.spec.ts`. -->
 
+**CTA-01 · The picker finds an auxiliar by its parent's code**
+Smoke: `e2e/accountPicker.spec.ts`.
+Sign up a company › Plan de cuentas › add `41359501 Ventas gravados` and `41359502 Productos gravados celulares` under
+`413595`. **Productos › Nuevo producto o servicio** › *Cuenta de ingreso*, type `4135`. **Expected:** the list offers
+both auxiliares (after the 37 other subcuentas of 4135) and no longer offers `413595`.
+
+**CTA-02 · The picker matches every word of the name**
+Smoke: `e2e/accountPicker.spec.ts`.
+After CTA-01's accounts, in the same box: `gravados` › the two auxiliares; `gravados celulares` › only `41359502`;
+typing `41359502` fills the box with `41359502 · Productos gravados celulares`.
+
+**CTA-03 · The picker says how many more matched than it lists**
+Smoke: `e2e/accountPicker.spec.ts`.
+*Cuenta de ingreso*, type `4`. **Expected:** under the box "Mostrando 50 de N: escribe más para encontrar la cuenta.";
+type `4135` › the line goes away (every match is listed).
+
+**CTA-04 · Subdividing an account in use warns and moves its rule**
+Smoke: `e2e/accountPicker.spec.ts`.
+New company › Plan de cuentas › search `413595` › **Agregar subcuenta bajo 413595**. **Expected:** a warning "413595
+deja de recibir movimientos: van a sus auxiliares." and, once the code is `41359501`, "Lo que la usa pasará a
+41359501: regla Ingresos por ventas y los productos y terceros que la usen."; *Mover a la nueva auxiliar* is ticked.
+Nombre `Ventas gravadas` › **Guardar** › "Cuenta 41359501 creada. Pasaron a 41359501: regla Ingresos por ventas.";
+**Reglas contables** › *Ingresos por ventas* shows `41359501`.
+
+**CTA-05 · A second auxiliar under the same account moves nothing**
+Smoke: `e2e/accountPicker.spec.ts`.
+After CTA-04, add `41359502` under `413595`. **Expected:** no warning and no checkbox; "Cuenta 41359502 creada." with
+nothing about moves; the rule stays on `41359501`.
+
+**CTA-06 · Without moving, the account shows it has no default auxiliar**
+Smoke: `e2e/accountPicker.spec.ts`.
+New company › add `41359501` under `413595` with *Mover a la nueva auxiliar* unticked (the warning then reads "Sin
+mover, 413595 queda marcada «Sin auxiliar por defecto»…"). **Expected:** the `413595` row shows the badge *Sin auxiliar
+por defecto*; Reglas contables still names `413595`. Change the rule to `41359501` (LED-04's way) › the badge goes away.
+
+**CTA-07 · Products, terceros, taxes and payment methods move too, and the log says so**
+New company. Create a product with *Cuenta de ingreso* `413595`, and a tercero with its own *Cuenta por cobrar*
+`13051001`. Add `41359501` under `413595`, `1305100101` under `13051001` and `24080501` under `240805`. **Expected:**
+the messages say "… 1 producto", "… 1 tercero" and "regla IVA generado, 4 impuestos"; the product's and the tercero's
+forms now show the new accounts; Impuestos shows *IVA 19 %* posting its sales side to `24080501` (purchase side still
+`240810`). **Configuración › Registro de cambios** (or `audit_log`): `posting_rule.changed`, `product.updated`,
+`tercero.updated`, `tax.updated` with from/to and reason `account_subdivided`.
+
+**CTA-08 · After subdividing, documents post to the auxiliar and never to its parent**
+After CTA-04 (with the company's resolution). Emit a factura de venta of a service › **Libro diario**: the revenue line
+is on `41359501`, not `413595`. As the accountant, try *Reglas contables › Cambiar* on *Ingresos por ventas*: the search
+for `413595` no longer offers it. A document whose product still names a subdivided account (subdivided without moving)
+is refused with "Esa cuenta tiene auxiliares: los movimientos van a una de ellas." (or the document's own error).
+
+**CTA-09 · The subdivide warning reads well everywhere**
+At laptop and tablet widths, light and dark: the *Agregar subcuenta* modal under an account in use (warning, checkbox,
+both texts), the *Sin auxiliar por defecto* badge next to *Propia*/*Inactiva*, and the picker's "Mostrando…" line under
+*Cuenta de ingreso* and under a purchase line's account. No raw `ledger.` key; the modal closes with Esc.
+
 ## 15. Several retenciones per line
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 3 withholdings-editor (2 withholdings-api builds the API): cases RET-01 – 12; smoke tests in
