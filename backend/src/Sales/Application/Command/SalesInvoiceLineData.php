@@ -23,6 +23,8 @@ final readonly class SalesInvoiceLineData
         public ?Uuid $chargeTaxId,
         public ?Uuid $withholdingTaxId,
         public ?array $withholdingTaxIds = null,
+        /** Set only by a copy that passes on the source line's snapshot; otherwise the product's current code is written. */
+        public ?string $productCode = null,
     ) {
     }
 }

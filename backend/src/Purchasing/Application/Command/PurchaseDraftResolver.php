@@ -139,12 +139,14 @@ final class PurchaseDraftResolver
     private function line(Uuid $companyId, string $at, PurchaseLineContents $line, array $kept, \DateTimeImmutable $issueDate): ?PurchaseLineDraft
     {
         $ok = true;
+        $productCode = null;
         if ((null === $line->productId) === (null === $line->accountId)) {
             $this->violate("$at.account_id", 'Choose a product or an expense account, not both.');
             $ok = false;
         } elseif (null !== $line->productId) {
             try {
                 $product = $this->products->get($companyId, $line->productId);
+                $productCode = $product->code;
                 if (!$product->active && !isset($kept['product:'.$line->productId->toRfc4122()])) {
                     $this->violate("$at.product_id", 'This product is inactive.');
                     $ok = false;
@@ -172,7 +174,7 @@ final class PurchaseDraftResolver
             return null;
         }
 
-        return new PurchaseLineDraft($line->productId, $line->accountId, trim($line->description), Quantity::of($line->quantity), UnitPrice::of($line->unitPrice), Rate::of('' === $line->discount ? '0' : $line->discount), $charge, $withholdings);
+        return new PurchaseLineDraft($line->productId, $line->accountId, trim($line->description), Quantity::of($line->quantity), UnitPrice::of($line->unitPrice), Rate::of('' === $line->discount ? '0' : $line->discount), $charge, $withholdings, $productCode);
     }
 
     /**

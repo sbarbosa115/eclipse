@@ -17,6 +17,7 @@
     "columns": {
       "item": "Producto/Servicio",
       "itemPurchase": "Producto/Servicio o cuenta",
+      "code": "Código",
       "description": "Descripción",
       "quantity": "Cantidad",
       "unitPrice": "Valor unitario",

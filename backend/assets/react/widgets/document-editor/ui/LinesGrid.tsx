@@ -161,6 +161,14 @@ export function LinesGrid({
     t('documentEditor.lines.columns.withholdingTax'),
     t('documentEditor.lines.columns.total'),
   ];
+  // A saved document also shows the code its lines were written with (a snapshot), before the description.
+  const headers = readOnly
+    ? [
+        columns[0] ?? '',
+        t('documentEditor.lines.columns.code'),
+        ...columns.slice(1),
+      ]
+    : columns;
   const label = (column: string, index: number) =>
     t('documentEditor.lines.cellLabel', {column, n: index + 1});
 
@@ -328,12 +336,17 @@ export function LinesGrid({
   return (
     <div ref={grid} className="doc-lines" onKeyDown={onKeyDown}>
       <DataTable
-        columns={columns}
+        columns={headers}
         rows={lines}
         actions={!readOnly}
         renderRow={(line, index) => (
           <tr key={line.key} data-line={line.key}>
             {itemCell(index, line)}
+            {readOnly && (
+              <td data-col="code" className="nowrap">
+                {line.product?.code ?? ''}
+              </td>
+            )}
             {textCell(index, 'description', line, columns[1] ?? '')}
             {textCell(index, 'quantity', line, columns[2] ?? '')}
             {textCell(index, 'unit_price', line, columns[3] ?? '')}

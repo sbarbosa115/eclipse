@@ -1785,6 +1785,35 @@ themes; the warning keeps its contrast; the console has no errors.
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 5 product-code: cases COD-01 – 05; smoke tests in
 `backend/e2e/productCode.spec.ts`. -->
 
+**COD-01 · A saved quotation shows the code its lines were written with**
+Create a product SRV-01 › Cotizaciones › **Nueva cotización** with it, **Emitir**; then edit the product: code NUEVO-9,
+another name. Reopen the quotation. Smoke: `e2e/productCode.spec.ts`.
+**Expected:** the read-only lines have a *Código* column between *Producto/Servicio* and *Descripción* saying SRV-01 (not
+NUEVO-9); while the quotation was a draft being edited there is no such column.
+
+**COD-02 · The quotation PDF prints the Código column**
+On the quotation of COD-01 › **Descargar PDF**. Smoke (part): `e2e/productCode.spec.ts` checks the download; the column
+by hand.
+**Expected:** the lines table reads # · *Código* · *Descripción* · …, with SRV-01 in the first line; the columns fit the
+page and nothing overlaps.
+
+**COD-03 · Converting carries the code to the invoice; renaming the product afterwards changes neither**
+Convertir a factura on the quotation of COD-01 (the product already says NUEVO-9). Smoke: `e2e/productCode.spec.ts`.
+**Expected:** the draft invoice shows SRV-01 in *Código* in its saved view; after emitting it, its PDF prints SRV-01;
+Duplicar on the quotation or the invoice keeps SRV-01 in the copy.
+
+**COD-04 · The PDFs of an invoice and a purchase invoice print the code, and a line by account has none**
+Emit a sales invoice with a product, and a purchase invoice with one line by product and one by expense account; download
+both PDFs.
+**Expected:** both have *Código* before *Descripción*; the sales line and the purchase product line show their code, the
+line by account shows an empty cell (its account is still in *Producto / cuenta*).
+
+**COD-05 · The screens on a laptop and a tablet, in both themes**
+At 1366×768 and 768×1024, Tema Claro and Oscuro: a saved quotation, sales invoice and purchase invoice with the *Código*
+column.
+**Expected:** the grid keeps its columns readable (the code does not wrap mid-word, nothing is cut off, the table scrolls
+inside its card), the draft form has no extra column and the console has no errors.
+
 ## 18. The Contabilización tab
 
 <!-- Observations 2026-11 (docs/pdr/prd-observations-2026-11.md), item 6 journal-entry-tab: cases ASI-01 – 06; smoke tests in

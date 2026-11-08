@@ -49,6 +49,7 @@ final class ConvertQuotationHandler implements CommandHandler
                 $l->chargeTax()->taxId(), null,
                 // Every retención (observations PRD §4.2): the snapshots of a copy are never "no tax".
                 array_values(array_filter(array_map(static fn (TaxSnapshot $t) => $t->taxId(), $l->withholdingTaxes()))),
+                $l->productCode(),
             ), $quotation->lines()),
             [],
         ), $quotation->id()));
