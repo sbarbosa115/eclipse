@@ -53,7 +53,12 @@ final class ProductCodeSnapshotTest extends ApiTestCase
 
         $saved = $this->sendJson('PUT', '/api/v1/sales-invoices/'.$copy['id'], $this->payload($client, $product));
         self::assertResponseIsSuccessful();
-        self::assertSame('NUEVO-02', $saved['lines'][0]['product_code'], 'A draft saved again reads the product anew.');
+        self::assertSame('CONS-01', $saved['lines'][0]['product_code'], 'A draft saved again keeps the code its line already has for that product (COD-03).');
+
+        $other = $this->service('OTRO-01');
+        $changed = $this->sendJson('PUT', '/api/v1/sales-invoices/'.$copy['id'], $this->payload($client, $other));
+        self::assertResponseIsSuccessful();
+        self::assertSame('OTRO-01', $changed['lines'][0]['product_code'], 'Another product on the line brings its own code.');
     }
 
     public function testTheQuotationPdfPrintsTheCodeColumnAndConvertingCarriesTheSnapshot(): void
@@ -75,6 +80,9 @@ final class ProductCodeSnapshotTest extends ApiTestCase
         self::assertResponseIsSuccessful();
         $invoice = $this->getJson('/api/v1/sales-invoices/'.$converted['converted_invoice_id']);
         self::assertSame('COT-01', $invoice['lines'][0]['product_code'], 'Converting carries the quotation line\'s code, not the product\'s today.');
+        $saved = $this->sendJson('PUT', '/api/v1/sales-invoices/'.$invoice['id'], $this->payload($client, $product));
+        self::assertResponseIsSuccessful(json_encode($saved) ?: '');
+        self::assertSame('COT-01', $saved['lines'][0]['product_code'], 'The converted draft keeps it when it is saved (COD-03).');
 
         $copy = $this->sendJson('POST', '/api/v1/quotations/'.$quotation['id'].'/duplicate', []);
         self::assertResponseStatusCodeSame(201);

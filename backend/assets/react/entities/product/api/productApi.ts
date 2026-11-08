@@ -121,12 +121,17 @@ export function renameCategory(
   return apiPut<ProductCategory>(`/product-categories/${id}`, {name});
 }
 
-/** The company's active taxes of a class; with `on` (YYYY-MM-DD) only those in force that day. */
+/**
+ * The company's active taxes of a class; with `on` (YYYY-MM-DD) only those in force that day; with `all` the
+ * inactive ones too (what a saved document's lines may still name).
+ */
 export async function listTaxes(
   taxClass: 'charge' | 'withholding',
   on?: string,
+  all = false,
 ): Promise<Tax[]> {
   const query = new URLSearchParams({class: taxClass});
   if (on) query.set('on', on);
+  if (all) query.set('all', '1');
   return (await apiGet<{items: Tax[]}>(`/taxes?${query}`)).items;
 }

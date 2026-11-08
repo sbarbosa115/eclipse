@@ -115,8 +115,8 @@ final class PurchaseDraftResolver
     }
 
     /**
-     * @param list<PurchaseLineContents>      $lines
-     * @param array<string, true|TaxSnapshot> $kept
+     * @param list<PurchaseLineContents>             $lines
+     * @param array<string, true|string|TaxSnapshot> $kept
      *
      * @return list<PurchaseLineDraft>
      */
@@ -134,7 +134,7 @@ final class PurchaseDraftResolver
     }
 
     /**
-     * @param array<string, true|TaxSnapshot> $kept
+     * @param array<string, true|string|TaxSnapshot> $kept
      */
     private function line(Uuid $companyId, string $at, PurchaseLineContents $line, array $kept, \DateTimeImmutable $issueDate): ?PurchaseLineDraft
     {
@@ -146,8 +146,9 @@ final class PurchaseDraftResolver
         } elseif (null !== $line->productId) {
             try {
                 $product = $this->products->get($companyId, $line->productId);
-                $productCode = $product->code;
-                if (!$product->active && !isset($kept['product:'.$line->productId->toRfc4122()])) {
+                $keptCode = $kept['product:'.$line->productId->toRfc4122()] ?? null;
+                $productCode = $line->productCode ?? (\is_string($keptCode) ? $keptCode : $product->code);
+                if (!$product->active && null === $keptCode) {
                     $this->violate("$at.product_id", 'This product is inactive.');
                     $ok = false;
                 }
@@ -181,7 +182,7 @@ final class PurchaseDraftResolver
      * The line's retenciones (observations PRD §4.2): each one as a tax of its own, at most one per kind. Null when one
      * of them was refused (the violation is recorded).
      *
-     * @param array<string, true|TaxSnapshot> $kept
+     * @param array<string, true|string|TaxSnapshot> $kept
      *
      * @return list<TaxSnapshot>|null
      */
@@ -209,7 +210,7 @@ final class PurchaseDraftResolver
      * A tax newly chosen must be active and in force on the invoice's date (F5); one the draft already had is kept, with
      * its snapshot once it was deactivated.
      *
-     * @param array<string, true|TaxSnapshot> $kept
+     * @param array<string, true|string|TaxSnapshot> $kept
      */
     private function tax(Uuid $companyId, string $field, ?Uuid $taxId, string $class, array $kept, \DateTimeImmutable $issueDate): ?TaxSnapshot
     {
@@ -245,7 +246,7 @@ final class PurchaseDraftResolver
     }
 
     /**
-     * @param array<string, true|TaxSnapshot> $kept
+     * @param array<string, true|string|TaxSnapshot> $kept
      */
     private function payment(Uuid $companyId, string $at, PurchasePaymentContents $payment, PurchaseInvoiceContents $contents, array $kept): ?PurchasePaymentDraft
     {
@@ -298,14 +299,15 @@ final class PurchaseDraftResolver
      * @param list<CommercialLine>         $lines
      * @param list<PurchaseInvoicePayment> $payments
      *
-     * @return array<string, true|TaxSnapshot>
+     * @return array<string, true|string|TaxSnapshot>
      */
     private static function keptReferences(array $lines, array $payments): array
     {
         $kept = [];
         foreach ($lines as $line) {
             if (null !== $line->productId()) {
-                $kept['product:'.$line->productId()->toRfc4122()] = true;
+                // The code the line already has for that product, kept when the draft is saved again (COD-03).
+                $kept['product:'.$line->productId()->toRfc4122()] ??= $line->productCode() ?? true;
             }
             foreach ([$line->chargeTax(), ...$line->withholdingTaxes()] as $tax) {
                 if (null !== $tax->taxId()) {

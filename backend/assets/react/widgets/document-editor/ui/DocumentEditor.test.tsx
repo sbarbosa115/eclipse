@@ -766,6 +766,99 @@ describe('the document form (§4.6)', () => {
     });
   });
 
+  describe('a saved document (TAX-12)', () => {
+    it('keeps showing a tax and a payment method deactivated since it was emitted', async () => {
+      // IVA 19 % and Efectivo were deactivated after FE-1: only ?all=1 still lists them.
+      function inactive(id: string) {
+        return function <T extends {id: string; active: boolean}>(item: T): T {
+          return item.id === id ? {...item, active: false} : item;
+        };
+      }
+      api({
+        'GET /taxes': (_body, url) => {
+          const all = url.searchParams.get('all') === '1';
+          const items = (
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING
+          ).map(inactive('iva19'));
+          return [200, {items: all ? items : items.filter((tx) => tx.active)}];
+        },
+        'GET /payment-methods': (_body, url) => {
+          const items = METHODS.map(inactive('cash'));
+          return [
+            200,
+            {
+              items:
+                url.searchParams.get('all') === '1'
+                  ? items
+                  : items.filter((m) => m.active),
+            },
+          ];
+        },
+      });
+      renderEditor({
+        readOnly: true,
+        value: draft({
+          lines: [
+            line({
+              description: 'Consultoría',
+              quantity: '1',
+              unit_price: '1000000',
+              charge_tax_id: 'iva19',
+            }),
+          ],
+          payments: [
+            {
+              key: 'p1',
+              payment_method_id: 'cash',
+              amount: '1190000',
+              term: 'today',
+              due_date: null,
+            },
+          ],
+        }),
+      });
+
+      await waitFor(() => expect(total('Impuestos')).toBe('$ 190.000,00'));
+      expect(total('Total neto')).toBe('$ 1.190.000,00');
+      expect(
+        screen.getByLabelText('Impuesto cargo, línea 1'),
+      ).toHaveDisplayValue('IVA 19 %');
+      expect(screen.getByLabelText('Método de pago 1')).toHaveDisplayValue(
+        'Efectivo',
+      );
+    });
+
+    it('does not offer a deactivated tax or payment method to a new line', async () => {
+      api({
+        'GET /taxes': (_body, url) => {
+          const items = (
+            url.searchParams.get('class') === 'charge' ? CHARGE : WITHHOLDING
+          ).map((tx) => (tx.id === 'iva5' ? {...tx, active: false} : tx));
+          return [
+            200,
+            {
+              items:
+                url.searchParams.get('all') === '1'
+                  ? items
+                  : items.filter((tx) => tx.active),
+            },
+          ];
+        },
+      });
+      renderEditor({value: draft({lines: [line({quantity: '1'})]})});
+
+      const select = screen.getByLabelText('Impuesto cargo, línea 1');
+      await waitFor(() =>
+        expect(
+          within(select).getByRole('option', {name: 'IVA 19 %'}),
+        ).toBeInTheDocument(),
+      );
+      expect(
+        within(select).queryByRole('option', {name: 'IVA 5 %'}),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe('taxes in force (F5)', () => {
     /** IVA 5 % is in force only from 2027: the server leaves it out of ?on= before then. */
     function datedApi() {

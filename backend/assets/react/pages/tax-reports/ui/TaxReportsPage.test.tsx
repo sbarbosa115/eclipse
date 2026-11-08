@@ -141,6 +141,19 @@ describe('TaxReportsPage', () => {
     );
   });
 
+  it('sends an unknown address to the first report once, without looping', async () => {
+    renderAt('/reportes/impuestos/exogena/1008', 'accountant', {
+      'GET /reports/taxes/withholdings/practiced': [200, report()],
+    });
+
+    expect(
+      await screen.findByRole('region', {name: 'Retefuente · noviembre 2026'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('tab', {name: 'Retenciones practicadas'}),
+    ).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('says when the books differ, the voided invoices left out, and the totals of a longer period', async () => {
     renderAt(
       '/reportes/impuestos/retenciones-sufridas?from=2026-10&to=2026-11',

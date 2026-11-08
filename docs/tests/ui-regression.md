@@ -1777,7 +1777,8 @@ company with another *País* asks for *Ciudad* instead. The city on the PDFs is 
 **CIU-09 · The screens on a laptop and a tablet, in both themes**
 At 1366×768 and 768×1024, Tema Claro and Oscuro: the tercero form (País and Municipio next to Dirección), the quick-create
 modal, the company profile, the terceros list with the warning.
-**Expected:** País and Municipio share a row on a laptop and stack on a tablet; the municipio list is readable in both
+**Expected:** País and Municipio share a row on a laptop and a tablet (form grids drop to one column only at ≤ 600px,
+DESIGN.md); neither is cut off; the municipio list is readable in both
 themes; the warning keeps its contrast; the console has no errors.
 
 ## 17. The product code on documents

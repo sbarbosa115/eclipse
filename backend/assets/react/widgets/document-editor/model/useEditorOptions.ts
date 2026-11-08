@@ -6,11 +6,15 @@ import type {DocumentKind} from './types';
 
 export interface EditorOptions {
   status: 'loading' | 'ready' | 'failed';
-  /** Every active tax: what the preview and the lines' current taxes are read from. */
+  /**
+   * Every tax, inactive ones too: what the preview and the lines' current taxes are read from, so a saved document
+   * keeps showing a tax deactivated since.
+   */
   chargeTaxes: Tax[];
   withholdingTaxes: Tax[];
   /** What may be newly chosen: the active taxes in force on the document's date (F5). */
   inForce: {charge: Tax[]; withholding: Tax[]};
+  /** Every payment method, inactive ones too (a saved row may name one); a select offers the active ones. */
   methods: PaymentMethod[];
 }
 
@@ -40,9 +44,9 @@ export function useEditorOptions(
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      listTaxes('charge'),
-      listTaxes('withholding'),
-      withPayments ? listPaymentMethods() : Promise.resolve([]),
+      listTaxes('charge', undefined, true),
+      listTaxes('withholding', undefined, true),
+      withPayments ? listPaymentMethods(true) : Promise.resolve([]),
     ])
       .then(([chargeTaxes, withholdingTaxes, methods]) => {
         if (cancelled) return;
@@ -76,7 +80,10 @@ export function useEditorOptions(
     ...options,
     inForce: dated
       ? {charge: dated.charge, withholding: dated.withholding}
-      : {charge: options.chargeTaxes, withholding: options.withholdingTaxes},
+      : {
+          charge: options.chargeTaxes.filter((tax) => tax.active),
+          withholding: options.withholdingTaxes.filter((tax) => tax.active),
+        },
   };
 }
 

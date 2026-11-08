@@ -101,7 +101,7 @@ final class QuotationPdf
                 'terms' => self::paragraphs($quotation->terms()),
                 'notes' => self::paragraphs($quotation->notes()),
                 'void_reason' => $quotation->voidReason(),
-                'voided_at' => Printed::date($quotation->voidedAt()),
+                'voided_at' => Printed::moment($quotation->voidedAt()),
             ],
             'client' => [
                 'name' => $client->displayName,

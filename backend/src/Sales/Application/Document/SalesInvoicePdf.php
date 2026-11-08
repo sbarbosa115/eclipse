@@ -91,7 +91,7 @@ final class SalesInvoicePdf
                 'due_date' => Printed::date(self::lastDueDate($invoice)),
                 'notes' => $invoice->notes(),
                 'void_reason' => $invoice->voidReason(),
-                'voided_at' => Printed::date($invoice->voidedAt()),
+                'voided_at' => Printed::moment($invoice->voidedAt()),
             ],
             'client' => [
                 'name' => $client->displayName,

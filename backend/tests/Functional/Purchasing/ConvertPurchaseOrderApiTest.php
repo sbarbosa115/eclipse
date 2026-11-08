@@ -88,6 +88,28 @@ final class ConvertPurchaseOrderApiTest extends ApiTestCase
         self::assertSame('converted', $this->getJson('/api/v1/purchase-orders/'.$order['id'])['status']);
     }
 
+    public function testTheOrdersProductCodeTravelsEvenWhenTheProductWasRecodedAndSurvivesASave(): void
+    {
+        // OC-12: the order was written with RES-01; the product is RES-99 by the time it converts.
+        $product = $this->product('RES-01');
+        $order = $this->emittedOrder(null, ['lines' => [$this->orderLine(['product_id' => $product, 'account_id' => null, 'description' => 'Resmas'])]]);
+        $this->sendJson('PUT', "/api/v1/products/$product", ['type' => 'producto', 'code' => 'RES-99', 'name' => 'Resma oficio', 'sale_price' => '20000', 'price_includes_tax' => false]);
+        self::assertResponseIsSuccessful('The product is recoded.');
+
+        $converted = $this->sendJson('POST', '/api/v1/purchase-orders/'.$order['id'].'/convert', []);
+        self::assertResponseIsSuccessful();
+        $invoice = $this->getJson('/api/v1/purchase-invoices/'.$converted['converted_invoice_id']);
+        self::assertSame('RES-01', $invoice['lines'][0]['product_code'], 'The order line\'s code, not the product\'s today.');
+
+        $saved = $this->sendJson('PUT', '/api/v1/purchase-invoices/'.$invoice['id'], [
+            'tercero_id' => $invoice['tercero_id'], 'supplier_invoice_number' => 'FP-200', 'issue_date' => $invoice['issue_date'], 'due_date' => null, 'notes' => null,
+            'lines' => array_map(static fn (array $l) => array_intersect_key($l, array_flip(['product_id', 'account_id', 'description', 'quantity', 'unit_price', 'discount', 'charge_tax_id'])) + ['withholdings' => []], $invoice['lines']),
+            'payments' => [],
+        ]);
+        self::assertResponseIsSuccessful(json_encode($saved) ?: '');
+        self::assertSame('RES-01', $saved['lines'][0]['product_code'], 'A draft saved again keeps the code its line has for that product (COD-03).');
+    }
+
     public function testAnOrderConvertsOnce(): void
     {
         $order = $this->richOrder();

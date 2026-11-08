@@ -27,6 +27,8 @@ final readonly class PurchaseLineContents
         /** Deprecated: one retención. */
         public ?Uuid $withholdingTaxId,
         public ?array $withholdingTaxIds = null,
+        /** A copy (an order converted) passes on its line's code snapshot; null takes the product's code. */
+        public ?string $productCode = null,
     ) {
     }
 }

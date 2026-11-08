@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        @page { margin: 18mm 15mm; }
+        @page { {% block page_size %}{% endblock %}margin: 18mm 15mm; }
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 9pt; color: #1f2933; }
         .header { width: 100%; border-bottom: 1px solid #cbd2d9; padding-bottom: 8px; margin-bottom: 12px; }
         .header td { vertical-align: top; }
@@ -22,6 +22,7 @@
         table.lines td { border-bottom: 1px solid #e4e7eb; padding: 4px; }
         .num { text-align: right; white-space: nowrap; }
         .muted { color: #616e7c; }
+        {% block page_style %}{% endblock %}
         .voided { position: fixed; top: 40%; left: 10%; font-size: 72pt; color: rgba(200, 30, 30, 0.25); transform: rotate(-30deg); }
     </style>
 </head>

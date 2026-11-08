@@ -61,7 +61,8 @@
     "drillDown": "Ver asientos de {{code}}",
     "balanced": "Débitos y créditos cuadran.",
     "unbalanced": "Débitos y créditos no cuadran: revisa los asientos.",
-    "empty": "No hay movimientos en este periodo."
+    "empty": "No hay movimientos en este periodo.",
+    "noMovement": "No hay movimientos en este periodo: se muestran los saldos anteriores."
   },
   "incomeStatement": {
     "intro": "Ingresos, costos y gastos del periodo, tomados del balance de prueba.",

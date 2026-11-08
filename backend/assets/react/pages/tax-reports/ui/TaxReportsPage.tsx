@@ -75,11 +75,21 @@ export function TaxReportsPage() {
           />
           <TabPanel id="tax-reports" value={current}>
             <Routes>
-              <Route index element={<Navigate to={FIRST} replace />} />
+              <Route
+                index
+                element={
+                  <Navigate to={`/reportes/impuestos/${FIRST}`} replace />
+                }
+              />
               {VIEWS.map((v) => (
                 <Route key={v.path} path={v.path} element={v.element} />
               ))}
-              <Route path="*" element={<Navigate to={FIRST} replace />} />
+              <Route
+                path="*"
+                element={
+                  <Navigate to={`/reportes/impuestos/${FIRST}`} replace />
+                }
+              />
             </Routes>
           </TabPanel>
         </>

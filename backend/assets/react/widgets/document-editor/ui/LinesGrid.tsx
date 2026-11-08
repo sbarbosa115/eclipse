@@ -334,7 +334,11 @@ export function LinesGrid({
   };
 
   return (
-    <div ref={grid} className="doc-lines" onKeyDown={onKeyDown}>
+    <div
+      ref={grid}
+      className={readOnly ? 'doc-lines doc-lines--coded' : 'doc-lines'}
+      onKeyDown={onKeyDown}
+    >
       <DataTable
         columns={headers}
         rows={lines}

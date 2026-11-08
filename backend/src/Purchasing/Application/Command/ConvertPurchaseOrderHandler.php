@@ -48,6 +48,8 @@ final class ConvertPurchaseOrderHandler implements CommandHandler
                 $l->chargeTax()->taxId(), null,
                 // Every retención: the snapshots of a copy are never "no tax".
                 array_values(array_filter(array_map(static fn (TaxSnapshot $t) => $t->taxId(), $l->withholdingTaxes()))),
+                // The code the order was written with, not the product's code today (OC-12).
+                $l->productCode(),
             ), $order->lines()),
             [],
         ), $order->id()));

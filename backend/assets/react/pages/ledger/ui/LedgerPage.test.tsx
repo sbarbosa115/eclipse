@@ -151,6 +151,38 @@ describe('Libros contables', () => {
     expect(screen.getByText('CLIENTES NACIONALES')).toBeInTheDocument();
   });
 
+  it('says a period with no movement has none, while it still lists the saldos anteriores', async () => {
+    fakeApi({
+      'GET /me': me('accountant'),
+      'GET /ledger/trial-balance': [
+        200,
+        {
+          ...TRIAL_BALANCE,
+          rows: [
+            row('1305', 'CLIENTES', 'account', [
+              '595000.00',
+              '0.00',
+              '0.00',
+              '595000.00',
+            ]),
+          ],
+          total_debit: '0.00',
+          total_credit: '0.00',
+          balanced: true,
+        },
+      ],
+    });
+    renderAt('/contabilidad/balance-prueba?from=2026-12-01&to=2026-12-31');
+
+    expect(
+      await screen.findByText(
+        'No hay movimientos en este periodo: se muestran los saldos anteriores.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Débitos y créditos cuadran.')).toBeNull();
+    expect(screen.getByText('CLIENTES')).toBeInTheDocument();
+  });
+
   it('drills down from the balance de prueba to the entries of an account', async () => {
     const api = fakeApi({
       'GET /me': me('accountant'),

@@ -148,7 +148,7 @@ final class SalesInvoiceContent
                 }
             }
             if (null !== $line->productId()) {
-                $keptProducts[$line->productId()->toRfc4122()] = true;
+                $keptProducts[$line->productId()->toRfc4122()] ??= $line->productCode();
             }
         }
 
@@ -161,9 +161,10 @@ final class SalesInvoiceContent
             } else {
                 try {
                     $product = $this->products->get($companyId, $line->productId);
-                    // The code is copied with the line; a copy (convert) passes on the source line's own snapshot.
-                    $productCode = $line->productCode ?? $product->code;
-                    if (!$product->active && !isset($keptProducts[$product->id])) {
+                    // The code is copied with the line: a copy (convert) passes on the source line's own snapshot, and a
+                    // draft saved again keeps the code its line already had for that product (COD-03).
+                    $productCode = $line->productCode ?? $keptProducts[$product->id] ?? $product->code;
+                    if (!$product->active && !\array_key_exists($product->id, $keptProducts)) {
                         $this->violate("$at.product_id", 'This product is inactive.');
                     }
                 } catch (NotFound) {
