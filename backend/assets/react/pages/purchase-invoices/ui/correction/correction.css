@@ -1,0 +1,7 @@
+/* Corregir on a purchase invoice (observations item 7 purchase-correct): the banner's text and its button. */
+.admin .purchase-correction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}

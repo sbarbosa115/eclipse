@@ -43,6 +43,7 @@ import {
 } from '@/widgets/document-editor';
 import {draftFromInvoice, toRequest, type PurchaseHeader} from '../model/draft';
 import {usePurchaseOptions} from '../model/usePurchaseOptions';
+import {PurchaseCorrection} from './correction/PurchaseCorrection';
 
 const BASE = '/facturas-compra';
 
@@ -381,6 +382,7 @@ export function PurchaseInvoiceEditorPage() {
               )}`}
         </Alert>
       )}
+      {invoice && <PurchaseCorrection invoice={invoice} canWrite={writer} />}
       <DocumentEditor
         kind="purchase_invoice"
         value={draft}
