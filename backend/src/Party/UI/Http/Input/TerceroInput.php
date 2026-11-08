@@ -50,7 +50,7 @@ final class TerceroInput
     #[Assert\Regex(pattern: '/^[A-Z]{2}$/', message: 'Choose the country.')]
     public ?string $countryCode = null;
 
-    /** DANE DIVIPOLA code (5 digits), required for Colombia. */
+    /** DANE DIVIPOLA code (5 digits), required for Colombia; the city then is its name. */
     #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Choose the municipality.')]
     public ?string $municipalityCode = null;
 
@@ -137,6 +137,8 @@ final class TerceroInput
             $this->businessName,
             self::blank($this->tradeName),
             self::blank($this->city),
+            $this->countryCode,
+            $this->municipalityCode,
             self::blank($this->address),
             array_map(static fn (PhoneInput $p) => ['indicative' => $p->indicative, 'number' => $p->number, 'extension' => $p->extension], $this->phones),
             self::blank($this->billingContactName),

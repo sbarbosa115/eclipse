@@ -248,7 +248,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The company's razón social, NIT, address, régimen, responsabilidades fiscales, default taxes and logo. */
+        /** The company's razón social, NIT, address, país and municipio, régimen, responsabilidades fiscales, default taxes and logo. */
         get: operations["get_app_company_ui_http_company_show"];
         /**
          * Changes the profile (owner). The check digit is computed for a NIT when empty. The default taxes must be active
@@ -817,7 +817,8 @@ export interface paths {
         };
         /**
          * Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|
-         *     empleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page ≤ 100.
+         *     empleado|otro, ?active=1 (only active) or 0 (only inactive), ?missing_municipality=1 (Colombian terceros
+         *     still without a municipality), ?page, ?per_page ≤ 100.
          */
         get: operations["get_app_party_ui_http_tercero_list"];
         put?: never;
@@ -843,7 +844,8 @@ export interface paths {
         put?: never;
         /**
          * Quick-create from inside a document (§4.2): {person_type, identification_type, identification_number,
-         *     check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…]} → 201.
+         *     check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…], country_code?
+         *     (default CO), municipality_code (required for CO), city (required abroad)} → 201.
          */
         post: operations["post_app_party_ui_http_tercero_quickcreate"];
         delete?: never;

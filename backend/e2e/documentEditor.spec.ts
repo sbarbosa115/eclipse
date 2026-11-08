@@ -1,5 +1,6 @@
 import type {Page} from '@playwright/test';
 import {consoleErrors, expect, test} from './support/test';
+import {pickMunicipality} from './support/municipality';
 
 // Cases DOC-01 – 08 of docs/tests/ui-regression.md (item 7 "document-editor"). No document page mounts the editor
 // yet (items 8–10 will), so these run on its development page, /dev/editor-documento.
@@ -51,6 +52,7 @@ async function seedService(page: Page) {
 
 async function seedClient(page: Page) {
   await api(page, 'POST', '/terceros', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: '800197268',
@@ -159,6 +161,7 @@ test('DOC-03 · a missing tercero is created from the search with the document�
   ).toBeChecked();
   await modal.getByLabel('Número de identificación').fill('900123456');
   await modal.getByLabel('Razón social').fill('Nuevo Cliente S.A.S.');
+  await pickMunicipality(modal);
   await modal.getByLabel('Correo electrónico').fill('nuevo@cliente.co');
   await modal.getByRole('button', {name: 'Crear tercero'}).click();
 

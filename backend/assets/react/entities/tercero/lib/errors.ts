@@ -30,8 +30,14 @@ export function terceroErrorMessage(error: unknown, t: Translate): string {
 export function describeErrors(errors: FormErrors, t: Translate): FormErrors {
   const described: FormErrors = {};
   for (const [field, key] of Object.entries(errors)) {
-    const text = t(`terceros.validation.${key}`);
-    described[field] = text === `terceros.validation.${key}` ? key : text;
+    const validation = t(`terceros.validation.${key}`);
+    const geo = t(`terceros.geo.validation.${key}`);
+    described[field] =
+      validation !== `terceros.validation.${key}`
+        ? validation
+        : geo !== `terceros.geo.validation.${key}`
+          ? geo
+          : key;
   }
   return described;
 }

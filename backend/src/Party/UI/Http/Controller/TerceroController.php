@@ -22,6 +22,8 @@ use App\Party\UI\Http\Output\TerceroExportOutput;
 use App\Party\UI\Http\Output\TerceroOutput;
 use App\Party\UI\Http\Output\TerceroSummaryOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Geo\Municipalities;
+use App\Shared\Application\Geo\MunicipalityView;
 use App\Shared\Domain\Clock;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\UI\Http\ApiResponse;
@@ -50,12 +52,26 @@ final class TerceroController extends AbstractController
         private readonly TerceroQueries $queries,
         private readonly LedgerCatalog $ledger,
         private readonly Clock $clock,
+        private readonly Municipalities $municipalities,
     ) {
+    }
+
+    /** @var array<string, MunicipalityView|null> */
+    private array $municipalityCache = [];
+
+    private function municipality(?string $code): ?MunicipalityView
+    {
+        if (null === $code) {
+            return null;
+        }
+
+        return $this->municipalityCache[$code] ??= $this->municipalities->find($code);
     }
 
     /**
      * Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|
-     * empleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page ≤ 100.
+     * empleado|otro, ?active=1 (only active) or 0 (only inactive), ?missing_municipality=1 (Colombian terceros
+     * still without a municipality), ?page, ?per_page ≤ 100.
      */
     #[Route('', methods: ['GET'])]
     #[ApiResponse(TerceroSummaryOutput::class, page: true)]
@@ -69,9 +85,10 @@ final class TerceroController extends AbstractController
             $active,
             max(1, $request->query->getInt('page', 1)),
             $request->query->getInt('per_page', 25),
+            $request->query->getBoolean('missing_municipality'),
         );
 
-        return $this->json(['items' => array_map(TerceroSummaryOutput::of(...), $page->items), 'total' => $page->total, 'page' => $page->page, 'per_page' => $page->perPage]);
+        return $this->json(['items' => array_map(fn (Tercero $t) => TerceroSummaryOutput::of($t, $this->municipality($t->municipalityCode())), $page->items), 'total' => $page->total, 'page' => $page->page, 'per_page' => $page->perPage]);
     }
 
     /**
@@ -91,7 +108,8 @@ final class TerceroController extends AbstractController
 
     /**
      * Quick-create from inside a document (§4.2): {person_type, identification_type, identification_number,
-     * check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…]} → 201.
+     * check_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|…], country_code?
+     * (default CO), municipality_code (required for CO), city (required abroad)} → 201.
      */
     #[Route('/quick', methods: ['POST'])]
     #[ApiResponse(TerceroSummaryOutput::class, status: 201)]
@@ -101,7 +119,7 @@ final class TerceroController extends AbstractController
         $input = $this->inputs->map($this->inputs->json($request), TerceroQuickInput::class);
         $id = $this->dispatch(new CreateTercero($user->companyId(), $input->toProfile()));
 
-        return $this->json(TerceroSummaryOutput::of($this->queries->get($user->companyId(), $id)), 201);
+        return $this->json($this->summary($this->queries->get($user->companyId(), $id)), 201);
     }
 
     /**
@@ -234,9 +252,14 @@ final class TerceroController extends AbstractController
         return $this->json($this->output($user, $this->queries->get($user->companyId(), $id)), $status);
     }
 
+    private function summary(Tercero $t): TerceroSummaryOutput
+    {
+        return TerceroSummaryOutput::of($t, $this->municipality($t->municipalityCode()));
+    }
+
     private function output(SignedInUser $user, Tercero $t): TerceroOutput
     {
-        return TerceroOutput::of($t, $this->account($user, $t->receivableAccountId()), $this->account($user, $t->payableAccountId()));
+        return TerceroOutput::of($t, $this->account($user, $t->receivableAccountId()), $this->account($user, $t->payableAccountId()), $this->municipality($t->municipalityCode()));
     }
 
     private function account(SignedInUser $user, ?Uuid $id): ?AccountView

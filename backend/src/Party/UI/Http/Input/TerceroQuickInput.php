@@ -43,6 +43,18 @@ final class TerceroQuickInput
     #[Assert\All([new Assert\Choice(choices: TerceroProfile::ROLES)])]
     public array $roles = [];
 
+    /** ISO 3166-1 alpha-2; Colombia when missing (observations PRD §4.3). */
+    #[Assert\Regex(pattern: '/^[A-Z]{2}$/', message: 'Choose the country.')]
+    public ?string $countryCode = null;
+
+    /** DANE DIVIPOLA code (5 digits), required for Colombia. */
+    #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Choose the municipality.')]
+    public ?string $municipalityCode = null;
+
+    /** Required when the country is not Colombia. */
+    #[Assert\Length(max: 100)]
+    public ?string $city = null;
+
     /** @throws \App\Shared\Domain\Error\InvalidValue */
     public function toProfile(): TerceroProfile
     {
@@ -56,7 +68,9 @@ final class TerceroQuickInput
             $this->lastNames,
             $this->businessName,
             null,
-            null,
+            self::blank($this->city),
+            $this->countryCode,
+            $this->municipalityCode,
             null,
             [],
             null,
@@ -72,15 +86,10 @@ final class TerceroQuickInput
         );
     }
 
-    /** ISO 3166-1 alpha-2; Colombia when missing (observations PRD §4.3). */
-    #[Assert\Regex(pattern: '/^[A-Z]{2}$/', message: 'Choose the country.')]
-    public ?string $countryCode = null;
+    private static function blank(?string $value): ?string
+    {
+        $value = null === $value ? null : trim($value);
 
-    /** DANE DIVIPOLA code (5 digits), required for Colombia. */
-    #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Choose the municipality.')]
-    public ?string $municipalityCode = null;
-
-    /** Required when the country is not Colombia. */
-    #[Assert\Length(max: 100)]
-    public ?string $city = null;
+        return '' === $value ? null : $value;
+    }
 }

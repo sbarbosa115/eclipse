@@ -5,6 +5,7 @@ namespace App\Party\UI\Http\Output;
 use App\Ledger\Application\Query\AccountView;
 use App\Party\Domain\Model\Contact;
 use App\Party\Domain\Model\Tercero;
+use App\Shared\Application\Geo\MunicipalityView;
 use App\Shared\Domain\Fiscal\FiscalResponsibility;
 
 /**
@@ -62,7 +63,7 @@ final readonly class TerceroOutput
     ) {
     }
 
-    public static function of(Tercero $t, ?AccountView $receivable = null, ?AccountView $payable = null): self
+    public static function of(Tercero $t, ?AccountView $receivable = null, ?AccountView $payable = null, ?MunicipalityView $municipality = null): self
     {
         return new self(
             $t->id()->toRfc4122(),
@@ -95,6 +96,9 @@ final readonly class TerceroOutput
             $t->createdAt()->format(\DATE_ATOM),
             $t->countryCode(),
             $t->municipalityCode(),
+            $municipality?->name,
+            $municipality?->departmentCode,
+            $municipality?->departmentName,
         );
     }
 }

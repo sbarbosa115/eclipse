@@ -157,5 +157,19 @@
     "editTitle": "Numeración: {{kind}}",
     "saved": "Guardamos la numeración.",
     "minimum": "El próximo número no puede ser menor que {{number}}, el actual."
+  },
+  "geo": {
+    "country": "País",
+    "municipality": "Municipio",
+    "city": "Ciudad",
+    "placeholder": "Departamento, municipio o código",
+    "minChars": "Escribe al menos {{count}} caracteres.",
+    "searching": "Buscando…",
+    "none": "Ningún municipio coincide.",
+    "failed": "No pudimos buscar municipios. Inténtalo de nuevo.",
+    "errors": {
+      "municipality": "Elige el municipio.",
+      "city": "Escribe la ciudad."
+    }
   }
 }

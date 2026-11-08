@@ -8,6 +8,7 @@ use App\Company\Domain\Repository\CompanyRepository;
 use App\Ledger\Application\Query\LedgerCatalog;
 use App\Shared\Application\Audit\AuditTrail;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Application\Geo\Municipalities;
 use App\Shared\Domain\Error\NotFound;
 use App\Shared\Domain\Fiscal\FiscalResponsibility;
 use App\Shared\Domain\Fiscal\IdentificationType;
@@ -21,6 +22,7 @@ final class UpdateCompanyProfileHandler implements CommandHandler
         private readonly LedgerCatalog $ledger,
         private readonly AuditTrail $audit,
         private readonly Companies $views,
+        private readonly Municipalities $municipalities,
     ) {
     }
 
@@ -45,6 +47,19 @@ final class UpdateCompanyProfileHandler implements CommandHandler
             $violations[] = ['field' => 'identification_number', 'message' => 'A company with this identification is already registered.'];
         }
 
+        $country = strtoupper(trim($command->countryCode ?? '')) ?: 'CO';
+        $city = $command->city;
+        if ('CO' === $country) {
+            $municipality = null === $command->municipalityCode || '' === $command->municipalityCode ? null : $this->municipalities->find($command->municipalityCode);
+            if (null === $municipality) {
+                $violations[] = ['field' => 'municipality_code', 'message' => 'Choose the municipality.'];
+            } else {
+                $city = $municipality->name;
+            }
+        } elseif (null === $city || '' === trim($city)) {
+            $violations[] = ['field' => 'city', 'message' => 'Write the city.'];
+        }
+
         $charge = $this->defaultTax($command->companyId, $command->defaultChargeTaxId, 'charge', 'default_charge_tax_id', 'Choose an active charge tax (IVA, impoconsumo).', $violations);
         $withholding = $this->defaultTax($command->companyId, $command->defaultWithholdingTaxId, 'withholding', 'default_withholding_tax_id', 'Choose an active withholding tax (retención).', $violations);
         if ([] !== $violations) {
@@ -60,7 +75,9 @@ final class UpdateCompanyProfileHandler implements CommandHandler
             $number,
             $command->checkDigit,
             $command->address,
-            $command->city,
+            $city,
+            $country,
+            $command->municipalityCode,
             $command->phone,
             $command->email,
             VatRegime::from($command->vatRegime),

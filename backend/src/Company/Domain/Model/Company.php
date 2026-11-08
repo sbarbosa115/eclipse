@@ -111,6 +111,8 @@ class Company
         ?string $checkDigit,
         ?string $address,
         ?string $city,
+        string $countryCode,
+        ?string $municipalityCode,
         ?string $phone,
         ?string $email,
         VatRegime $vatRegime,
@@ -127,6 +129,8 @@ class Company
         $this->personType = IdentificationType::Nit === $identificationType ? PersonType::Company : PersonType::Person;
         $this->address = self::blank($address);
         $this->city = self::blank($city);
+        $this->countryCode = $countryCode;
+        $this->municipalityCode = 'CO' === $countryCode ? $municipalityCode : null;
         $this->phone = self::blank($phone);
         $this->email = self::blank($email);
         $this->vatRegime = $vatRegime;

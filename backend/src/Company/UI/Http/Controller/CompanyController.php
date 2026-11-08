@@ -12,6 +12,7 @@ use App\Company\Domain\Error\LogoTooLarge;
 use App\Company\UI\Http\Input\CompanyInput;
 use App\Company\UI\Http\Output\CompanyOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Geo\Municipalities;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
 use App\Shared\UI\Http\Security\SignedInUser;
@@ -41,17 +42,25 @@ final class CompanyController extends AbstractController
         private readonly CommandBus $commands,
         private readonly Companies $companies,
         private readonly LogoReader $logos,
+        private readonly Municipalities $municipalities,
     ) {
     }
 
+    private function profile(SignedInUser $user): CompanyOutput
+    {
+        $view = $this->companies->view($user->companyId());
+
+        return CompanyOutput::of($view, null === $view->municipalityCode ? null : $this->municipalities->find($view->municipalityCode));
+    }
+
     /**
-     * The company's razón social, NIT, address, régimen, responsabilidades fiscales, default taxes and logo.
+     * The company's razón social, NIT, address, país and municipio, régimen, responsabilidades fiscales, default taxes and logo.
      */
     #[Route('', methods: ['GET'])]
     #[ApiResponse(CompanyOutput::class)]
     public function show(#[CurrentUser] SignedInUser $user): JsonResponse
     {
-        return $this->json(CompanyOutput::of($this->companies->view($user->companyId())));
+        return $this->json($this->profile($user));
     }
 
     /**
@@ -65,12 +74,12 @@ final class CompanyController extends AbstractController
         $this->requireOwner($user);
         $input = $this->inputs->map($this->inputs->json($request), CompanyInput::class);
         $this->commands->dispatch(new UpdateCompanyProfile(
-            $user->companyId(), $user->userId(), $input->legalName, $input->tradeName, $input->identificationType, $input->identificationNumber, $input->checkDigit, $input->address, $input->city, $input->phone, $input->email, $input->vatRegime,
+            $user->companyId(), $user->userId(), $input->legalName, $input->tradeName, $input->identificationType, $input->identificationNumber, $input->checkDigit, $input->address, $input->city, $input->countryCode, $input->municipalityCode, $input->phone, $input->email, $input->vatRegime,
             [] === $input->fiscalResponsibilities ? ['R-99-PN'] : $input->fiscalResponsibilities,
             $input->defaultChargeTaxId, $input->defaultWithholdingTaxId,
         ));
 
-        return $this->json(CompanyOutput::of($this->companies->view($user->companyId())));
+        return $this->json($this->profile($user));
     }
 
     /**
@@ -98,7 +107,7 @@ final class CompanyController extends AbstractController
         $type = $this->contentTypeOf($file->getPathname());
         $this->commands->dispatch(new ReplaceLogo($user->companyId(), $user->userId(), $file->getPathname(), $file->getClientOriginalName(), $type));
 
-        return $this->json(CompanyOutput::of($this->companies->view($user->companyId())));
+        return $this->json($this->profile($user));
     }
 
     /**
