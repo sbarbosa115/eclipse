@@ -4,6 +4,7 @@ namespace App\Tests\Functional\Purchasing;
 
 use App\Purchasing\Application\Query\PurchaseInvoicePdf;
 use App\Purchasing\Domain\Model\PurchaseInvoice;
+use App\Tests\Functional\Observations\WithholdingTaxes;
 use App\Tests\Support\ApiTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
@@ -16,6 +17,7 @@ use Twig\Environment;
 final class PurchaseInvoiceApiTest extends ApiTestCase
 {
     use PurchasingFixtures;
+    use WithholdingTaxes;
 
     protected function setUp(): void
     {
@@ -95,6 +97,124 @@ final class PurchaseInvoiceApiTest extends ApiTestCase
         self::assertResponseIsSuccessful('A draft that already had the tax keeps it.');
         $this->sendJson('POST', "/api/v1/purchase-invoices/{$kept['id']}/emit", []);
         self::assertResponseIsSuccessful('And it is emitted.');
+    }
+
+    /**
+     * The fixture's line (513595, 1.000.000 + IVA 19 %) with the retenciones given, on credit for what it nets.
+     *
+     * @param list<array{tax_id: string}>|null $withholdings
+     * @param array<string, mixed>             $line         fields of the line to change
+     *
+     * @return array<string, mixed>
+     */
+    private function withRetenciones(?array $withholdings, string $net, array $line = []): array
+    {
+        $lines = $this->payload()['lines'];
+        $lines[0] = $line + ['withholdings' => $withholdings] + $lines[0];
+
+        return ['lines' => $lines, 'payments' => [['payment_method_id' => $this->methodId('Crédito'), 'amount' => $net, 'due_date' => self::today(29)]]];
+    }
+
+    /** @return list<array{tax_id: string}> Retefuente 2,5 %, ReteICA 0,966 % and ReteIVA 15 % (OBS-3) */
+    private function threeRetenciones(): array
+    {
+        return self::withholdings($this->taxId('ReteFuente compras 2,5 %', 'withholding'), $this->reteIca(), $this->taxId('ReteIVA 15 %', 'withholding'));
+    }
+
+    public function testALineCarriesOneRetencionPerKindEachWithItsBaseAndShare(): void
+    {
+        $draft = $this->createDraft($this->withRetenciones($this->threeRetenciones(), '1126840.00'));
+
+        self::assertSame(['63160.00', '1126840.00'], [$draft['withholding_total'], $draft['net_total']], 'Observations PRD §4.2 / OBS-3: 25.000 + 9.660 + 28.500.');
+        $line = $draft['lines'][0];
+        self::assertSame([
+            ['ReteFuente compras 2,5 %', 'retefuente', '2.5000', '1000000.00', '25000.00'],
+            ['ReteICA 0,966 %', 'reteica', '0.9660', '1000000.00', '9660.00'],
+            ['ReteIVA 15 %', 'reteiva', '15.0000', '190000.00', '28500.00'],
+        ], array_map(static fn (array $w) => [$w['name'], $w['kind'], $w['rate'], $w['base_amount'], $w['amount']], $line['withholdings']), 'Each retención is snapshotted with its base (the subtotal, or the IVA for ReteIVA) and its share.');
+        self::assertSame($this->account('236540')->toRfc4122(), $line['withholdings'][0]['account_id'], 'The snapshot keeps the tax\'s purchase account.');
+        self::assertSame('ReteFuente compras 2,5 %', $line['withholding_tax_name'], 'The deprecated single field reads the first retención.');
+        self::assertSame(['25000.00', '9660.00', '28500.00'], array_column($draft['withholdings_by_tax'], 'amount'));
+
+        $model = $this->em()->find(PurchaseInvoice::class, Uuid::fromString($draft['id']));
+        \assert($model instanceof PurchaseInvoice);
+        $html = static::getContainer()->get(Environment::class)->render(PurchaseInvoicePdf::TEMPLATE, static::getContainer()->get(PurchaseInvoicePdf::class)->context($model->companyId(), $model->id()));
+        self::assertStringContainsString('ReteFuente compras 2,5 % · ReteICA 0,966 % · ReteIVA 15 %', $html, 'The line names its retenciones.');
+        foreach (['ReteFuente compras 2,5 % (base $ 1.000.000,00)</td><td class="num">$ 25.000,00', 'ReteICA 0,966 % (base $ 1.000.000,00)</td><td class="num">$ 9.660,00', 'ReteIVA 15 % (base $ 190.000,00)</td><td class="num">$ 28.500,00'] as $row) {
+            self::assertStringContainsString($row, $html, 'The PDF lists every retención with its own base under Retenciones.');
+        }
+    }
+
+    public function testWithholdingsDecideOverTheDeprecatedSingleField(): void
+    {
+        $draft = $this->createDraft($this->withRetenciones([], '1190000.00'));
+
+        self::assertSame([], $draft['lines'][0]['withholdings'], 'An empty list is "no retención", whatever withholding_tax_id says.');
+        self::assertNull($draft['lines'][0]['withholding_tax_id']);
+        self::assertSame('0.00', $draft['withholding_total']);
+    }
+
+    public function testTheNingunoRetencionIsNoRetencion(): void
+    {
+        $none = $this->noWithholding();
+
+        $draft = $this->createDraft($this->withRetenciones(self::withholdings($none, $this->taxId('ReteFuente servicios 4 %', 'withholding'), $none), '1150000.00', ['withholding_tax_id' => $none]));
+
+        self::assertSame(['ReteFuente servicios 4 %'], array_column($draft['lines'][0]['withholdings'], 'name'), 'A kind-none tax is skipped: no row, and no "one per kind" refusal for two of them.');
+        self::assertSame('40000.00', $draft['withholding_total']);
+    }
+
+    public function testTheSameKindTwiceOnALineIsRefused(): void
+    {
+        $twice = self::withholdings($this->taxId('ReteFuente servicios 4 %', 'withholding'), $this->taxId('ReteFuente compras 2,5 %', 'withholding'));
+
+        $body = $this->sendJson('POST', '/api/v1/purchase-invoices', $this->payload($this->withRetenciones($twice, '1125000.00')));
+
+        self::assertResponseStatusCodeSame(422, 'Observations PRD Q-G: one retención per kind on each line.');
+        self::assertSame(['lines[0].withholdings'], self::violationFields($body));
+        self::assertSame('Una retención por tipo en cada línea.', $body['violations'][0]['message']);
+    }
+
+    public function testEachRetencionMustBeAnActiveWithholdingTaxInForce(): void
+    {
+        $reteIva = $this->taxId('ReteIVA 15 %', 'withholding');
+        $this->taxInForceFrom($reteIva, '2099-01-01');
+        $chosen = self::withholdings($this->taxId('ReteFuente servicios 4 %', 'withholding'), $this->taxId('IVA 19 %'), $reteIva);
+
+        $body = $this->sendJson('POST', '/api/v1/purchase-invoices', $this->payload($this->withRetenciones($chosen, '1150000.00')));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['lines[0].withholdings[1].tax_id', 'lines[0].withholdings[2].tax_id'], self::violationFields($body), 'An IVA is no retención; a retención not in force on the date is not newly chosen.');
+    }
+
+    public function testADraftKeepsTheSnapshotOfARetencionDeactivatedSince(): void
+    {
+        $reteIva = $this->taxId('ReteIVA 15 %', 'withholding');
+        $payload = $this->withRetenciones(self::withholdings($this->taxId('ReteFuente servicios 4 %', 'withholding'), $reteIva), '1121500.00');
+        $kept = $this->createDraft($payload);
+        $this->sendJson('POST', "/api/v1/taxes/$reteIva/deactivate", []);
+        self::assertResponseIsSuccessful();
+
+        $this->sendJson('POST', '/api/v1/purchase-invoices', $this->payload($payload + ['supplier_invoice_number' => 'FAC-882']));
+        self::assertResponseStatusCodeSame(422, 'A deactivated retención is not newly chosen.');
+
+        $rewritten = $this->sendJson('PUT', "/api/v1/purchase-invoices/{$kept['id']}", $this->payload($payload));
+        self::assertResponseIsSuccessful('The draft that had it keeps it: '.json_encode($rewritten));
+        self::assertSame($kept['lines'][0]['withholdings'][1]['name'], $rewritten['lines'][0]['withholdings'][1]['name']);
+        $emitted = $this->sendJson('POST', "/api/v1/purchase-invoices/{$kept['id']}/emit", []);
+        self::assertResponseIsSuccessful('And it is emitted with its snapshot.');
+        self::assertSame(['40000.00', '28500.00'], array_column($emitted['lines'][0]['withholdings'], 'amount'));
+    }
+
+    public function testDuplicatingCopiesEveryRetencion(): void
+    {
+        $source = $this->createDraft($this->withRetenciones($this->threeRetenciones(), '1126840.00'));
+
+        $copy = $this->sendJson('POST', "/api/v1/purchase-invoices/{$source['id']}/duplicate", []);
+
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame($source['lines'][0]['withholdings'], $copy['lines'][0]['withholdings'], 'Every retención, with its snapshot, base and share.');
+        self::assertSame($source['withholdings_by_tax'], $copy['withholdings_by_tax']);
     }
 
     public function testADraftMayWaitForTheSupplierNumber(): void

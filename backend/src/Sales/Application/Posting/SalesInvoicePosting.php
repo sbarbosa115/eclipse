@@ -17,7 +17,8 @@ use Symfony\Component\Uid\Uuid;
  *     Dr payment-method account (per contado line)     Cr revenue: the product's account, else the rule "ingreso" (gross)
  *     Dr 1305 Clientes, tercero (per crédito line)     Cr each impuesto cargo: its account, else IVA → iva_generado,
  *     Dr 4175 descuento_ventas (discounts)                                     impoconsumo → impoconsumo
- *     Dr each retención suffered: its account, else retefuente/reteiva/reteica → 135515/135517/135518 (§9 Q4)
+ *     Dr each retención suffered: its account, else retefuente/reteiva/reteica → 135515/135517/135518 (§9 Q4), each
+ *        retención of each line on its own (a line holds one per kind), grouped by account
  *
  * Built from the lines' shares of the totals (DocumentTotals) and grouped by account, so it balances by construction:
  * Σ débitos = Total neto + Retenciones + Descuentos = Σ créditos = Total bruto + Impuestos.
@@ -71,7 +72,10 @@ final class SalesInvoicePosting
             $credits->add(null !== $productId && isset($revenueAccounts[$productId]) ? $revenueAccounts[$productId] : PostingConcept::Revenue, $line->grossAmount());
         }
         foreach ($invoice->lines() as $line) {
-            $debits->add(self::taxTarget($line->withholdingTax()), $line->withholdingAmount(), $client);
+            // One movement per retención account (observations PRD §5): each retención's share of Retenciones.
+            foreach ($line->withholdings() as $withholding) {
+                $debits->add(self::taxTarget($withholding->tax()), $withholding->amount(), $client);
+            }
         }
         foreach ($invoice->lines() as $line) {
             $credits->add(self::taxTarget($line->chargeTax()), $line->taxAmount());

@@ -31,7 +31,7 @@ final class QuotationLifecycleTest extends TestCase
 
     private static function line(string $quantity = '1', string $price = '1000000', ?TaxSnapshot $tax = null): InvoiceLineDraft
     {
-        return new InvoiceLineDraft(Uuid::v7(), 'Consultoría', Quantity::of($quantity), UnitPrice::of($price), Rate::of('0'), $tax ?? new TaxSnapshot(Uuid::v7(), 'IVA 19 %', 'iva', TaxCalculation::Percentage, '19.0000', null), TaxSnapshot::none());
+        return new InvoiceLineDraft(Uuid::v7(), 'Consultoría', Quantity::of($quantity), UnitPrice::of($price), Rate::of('0'), $tax ?? new TaxSnapshot(Uuid::v7(), 'IVA 19 %', 'iva', TaxCalculation::Percentage, '19.0000', null), []);
     }
 
     private static function emitted(string $today = '2026-10-03'): Quotation

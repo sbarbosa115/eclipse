@@ -51,9 +51,12 @@ trait BuildsInvoices
         return new TaxSnapshot(Uuid::v7(), "$kind $rate %", $kind, TaxCalculation::Percentage, $rate, $account);
     }
 
-    private static function line(string $quantity, string $price, string $discount = '0', ?TaxSnapshot $charge = null, ?TaxSnapshot $withholding = null, ?Uuid $product = null): InvoiceLineDraft
+    /**
+     * @param TaxSnapshot|list<TaxSnapshot>|null $withholding one retención, or several (one per kind)
+     */
+    private static function line(string $quantity, string $price, string $discount = '0', ?TaxSnapshot $charge = null, TaxSnapshot|array|null $withholding = null, ?Uuid $product = null): InvoiceLineDraft
     {
-        return new InvoiceLineDraft($product ?? Uuid::v7(), 'Servicio de consultoría', Quantity::of($quantity), UnitPrice::of($price), Rate::of($discount), $charge ?? TaxSnapshot::none(), $withholding ?? TaxSnapshot::none());
+        return new InvoiceLineDraft($product ?? Uuid::v7(), 'Servicio de consultoría', Quantity::of($quantity), UnitPrice::of($price), Rate::of($discount), $charge ?? TaxSnapshot::none(), $withholding instanceof TaxSnapshot ? [$withholding] : $withholding ?? []);
     }
 
     private static function cash(string $amount, ?Uuid $account = null): InvoicePaymentDraft

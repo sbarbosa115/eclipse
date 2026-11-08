@@ -10,10 +10,13 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * What a draft's line says, already checked against the catalogs: a product or an expense account (never both), and
- * the copies of its two taxes (§4.10).
+ * the copies of its taxes (§4.10): the impuesto cargo and the retenciones (none, or one per kind, in order).
  */
 final readonly class PurchaseLineDraft
 {
+    /**
+     * @param list<TaxSnapshot> $withholdings
+     */
     public function __construct(
         public ?Uuid $productId,
         public ?Uuid $accountId,
@@ -22,7 +25,7 @@ final readonly class PurchaseLineDraft
         public UnitPrice $unitPrice,
         public Rate $discount,
         public TaxSnapshot $chargeTax,
-        public TaxSnapshot $withholdingTax,
+        public array $withholdings = [],
     ) {
     }
 }

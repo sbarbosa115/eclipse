@@ -1,7 +1,8 @@
 {#
     The internal record of a factura de compra / gasto (Purchasing). Context: company, logo_data_uri, title, number,
-    invoice (Purchasing\Application\Query\PurchaseInvoiceView), supplier (identification, address) and lines (printed as
-    on the sales invoice: quantity without trailing zeros, Valor total = subtotal + impuesto).
+    invoice (Purchasing\Application\Query\PurchaseInvoiceView), supplier (identification, address), lines (printed as
+    on the sales invoice: quantity without trailing zeros, Valor total = subtotal + impuesto) and withholdings (the
+    retenciones by tax, Shared\Application\Document\WithholdingSummaryView: name, base, amount).
 #}
 {% extends 'pdf/document.html.twig' %}
 
@@ -38,7 +39,7 @@
                 <th class="num">Valor unitario</th>
                 <th class="num">% Desc.</th>
                 <th>Impuesto</th>
-                <th>Retención</th>
+                <th>Retenciones</th>
                 <th class="num">Valor total</th>
             </tr>
         </thead>
@@ -75,6 +76,7 @@
                     <tr><td>Subtotal</td><td class="num">{{ f.money(invoice.subtotal) }}</td></tr>
                     <tr><td>Impuestos</td><td class="num">{{ f.money(invoice.taxTotal) }}</td></tr>
                     <tr><td>Retenciones</td><td class="num">{{ f.money(invoice.withholdingTotal) }}</td></tr>
+                    {% for tax in withholdings %}<tr class="muted"><td>{{ tax.name }} (base {{ f.money(tax.base) }})</td><td class="num">{{ f.money(tax.amount) }}</td></tr>{% endfor %}
                     <tr><td><strong>Total neto</strong></td><td class="num"><strong>{{ f.money(invoice.netTotal) }}</strong></td></tr>
                 </table>
             </td>

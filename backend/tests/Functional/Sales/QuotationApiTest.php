@@ -6,6 +6,7 @@ use App\Access\Domain\Model\Role;
 use App\Ledger\Domain\Model\JournalEntry;
 use App\Sales\Application\Document\QuotationPdf;
 use App\Sales\Domain\Model\Quotation;
+use App\Tests\Functional\Observations\WithholdingTaxes;
 use App\Tests\Support\ApiTestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -16,6 +17,7 @@ use Symfony\Component\Uid\Uuid;
 final class QuotationApiTest extends ApiTestCase
 {
     use QuotationFixtures;
+    use WithholdingTaxes;
 
     protected function setUp(): void
     {
@@ -282,6 +284,34 @@ final class QuotationApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertSame(['draft', null, self::today(), self::today('+15 days'), 'Hola', 'Contado', '2380000.00'], [$copy['status'], $copy['number'], $copy['issue_date'], $copy['expiry_date'], $copy['header'], $copy['terms'], $copy['net_total']], 'The offer keeps its 15 days.');
         self::assertNotSame($draft['id'], $copy['id']);
+    }
+
+    public function testALineCarriesSeveralRetencionesOnePerKindAndDuplicateCopiesThem(): void
+    {
+        $client = $this->client();
+        $product = $this->service();
+        $retenciones = self::withholdings($this->taxId('ReteFuente compras 2,5 %'), $this->reteIca(), $this->taxId('ReteIVA 15 %'));
+
+        $draft = $this->quotationDraft($this->quotationPayload($client, $product, ['lines' => [$this->line($product, ['withholdings' => $retenciones])]]));
+
+        self::assertSame(['63160.00', '1126840.00'], [$draft['withholding_total'], $draft['net_total']], 'Observations PRD §4.2 on a cotización.');
+        self::assertSame(['ReteFuente compras 2,5 %', 'ReteICA 0,966 %', 'ReteIVA 15 %'], array_column($draft['withholdings_by_tax'], 'name'));
+
+        $copy = $this->sendJson('POST', '/api/v1/quotations/'.$draft['id'].'/duplicate', []);
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame($draft['lines'][0]['withholdings'], $copy['lines'][0]['withholdings'], 'Duplicate copies every retención.');
+
+        $this->em()->clear();
+        $html = static::getContainer()->get('twig')->render(QuotationPdf::TEMPLATE, static::getContainer()->get(QuotationPdf::class)->context($this->em()->getRepository(Quotation::class)->find(Uuid::fromString($draft['id'])) ?? self::fail('No quotation.')));
+        foreach (['ReteFuente compras 2,5 % <span class="muted">(base $ 1.000.000,00)</span></td><td class="num">-$ 25.000,00', 'ReteICA 0,966 % <span class="muted">(base $ 1.000.000,00)</span></td><td class="num">-$ 9.660,00', 'ReteIVA 15 % <span class="muted">(base $ 190.000,00)</span></td><td class="num">-$ 28.500,00'] as $row) {
+            self::assertStringContainsString($row, $html, 'The PDF lists every retención with its own base (the IVA for ReteIVA).');
+        }
+
+        $body = $this->sendJson('POST', '/api/v1/quotations', $this->quotationPayload($client, $product, [
+            'lines' => [$this->line($product, ['withholdings' => self::withholdings($this->taxId('ReteIVA 15 %'), $this->taxId('ReteIVA 15 %'))])],
+        ]));
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['lines.0.withholdings'], array_column($body['violations'], 'field'), 'One retención per kind.');
     }
 
     public function testTheListSearchesFiltersAndPages(): void

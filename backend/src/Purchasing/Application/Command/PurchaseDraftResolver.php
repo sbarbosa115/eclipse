@@ -7,11 +7,14 @@ use App\Ledger\Application\Query\LedgerCatalog;
 use App\Party\Application\Query\TerceroDirectory;
 use App\Purchasing\Domain\Error\DuplicateSupplierInvoiceNumber;
 use App\Purchasing\Domain\Model\PurchaseInvoice;
+use App\Purchasing\Domain\Model\PurchaseInvoicePayment;
 use App\Purchasing\Domain\Model\PurchaseLineDraft;
 use App\Purchasing\Domain\Model\PurchasePaymentDraft;
 use App\Purchasing\Domain\Repository\PurchaseInvoiceRepository;
+use App\Shared\Application\Document\WithholdingChoice;
 use App\Shared\Domain\Error\InvalidValues;
 use App\Shared\Domain\Error\NotFound;
+use App\Shared\Domain\Model\CommercialLine;
 use App\Shared\Domain\Model\PaymentKind;
 use App\Shared\Domain\Model\TaxSnapshot;
 use App\Shared\Domain\Money\Money;
@@ -48,7 +51,7 @@ final class PurchaseDraftResolver
     public function resolve(Uuid $companyId, PurchaseInvoiceContents $contents, ?PurchaseInvoice $current = null): ResolvedDraft
     {
         $this->violations = [];
-        $kept = self::keptReferences($current);
+        $kept = self::keptReferences($current?->lines() ?? [], $current?->payments() ?? []);
 
         $terceroName = '';
         try {
@@ -65,10 +68,7 @@ final class PurchaseDraftResolver
             $this->violate('due_date', 'The due date cannot be before the invoice date.');
         }
 
-        $lines = [];
-        foreach ($contents->lines as $i => $line) {
-            $lines[] = $this->line($companyId, "lines[$i]", $line, $kept, $contents->issueDate);
-        }
+        $lines = $this->lines($companyId, $contents->lines, $kept, $contents->issueDate);
         $payments = [];
         foreach ($contents->payments as $i => $payment) {
             $payments[] = $this->payment($companyId, "payments[$i]", $payment, $contents, $kept);
@@ -91,13 +91,50 @@ final class PurchaseDraftResolver
             $contents->issueDate,
             $contents->dueDate,
             '' === $notes ? null : $notes,
-            array_values(array_filter($lines)),
+            $lines,
             array_values(array_filter($payments)),
         );
     }
 
     /**
-     * @param array<string, true> $kept
+     * Resolves the lines of a purchase document (a factura de compra's or an orden de compra's) on their own: what the
+     * document already has keeps its inactive products and taxes (their snapshots), a new choice must be active and in
+     * force on the date. Every problem is reported at once, by field (`lines[0].withholdings`…).
+     *
+     * @param list<PurchaseLineContents> $lines
+     * @param list<CommercialLine>       $current the document's lines as they are now
+     *
+     * @return array{list<PurchaseLineDraft>, list<array{field: string, message: string}>} the drafts and the violations
+     */
+    public function resolveLines(Uuid $companyId, array $lines, array $current, \DateTimeImmutable $issueDate): array
+    {
+        $this->violations = [];
+        $drafts = $this->lines($companyId, $lines, self::keptReferences($current, []), $issueDate);
+
+        return [$drafts, $this->violations];
+    }
+
+    /**
+     * @param list<PurchaseLineContents>      $lines
+     * @param array<string, true|TaxSnapshot> $kept
+     *
+     * @return list<PurchaseLineDraft>
+     */
+    private function lines(Uuid $companyId, array $lines, array $kept, \DateTimeImmutable $issueDate): array
+    {
+        $drafts = [];
+        foreach ($lines as $i => $line) {
+            $draft = $this->line($companyId, "lines[$i]", $line, $kept, $issueDate);
+            if (null !== $draft) {
+                $drafts[] = $draft;
+            }
+        }
+
+        return $drafts;
+    }
+
+    /**
+     * @param array<string, true|TaxSnapshot> $kept
      */
     private function line(Uuid $companyId, string $at, PurchaseLineContents $line, array $kept, \DateTimeImmutable $issueDate): ?PurchaseLineDraft
     {
@@ -130,18 +167,47 @@ final class PurchaseDraftResolver
         }
 
         $charge = $this->tax($companyId, "$at.charge_tax_id", $line->chargeTaxId, 'charge', $kept, $issueDate);
-        $withholding = $this->tax($companyId, "$at.withholding_tax_id", $line->withholdingTaxId, 'withholding', $kept, $issueDate);
-        if (!$ok || null === $charge || null === $withholding) {
+        $withholdings = $this->withholdings($companyId, $at, $line, $kept, $issueDate);
+        if (!$ok || null === $charge || null === $withholdings) {
             return null;
         }
 
-        return new PurchaseLineDraft($line->productId, $line->accountId, trim($line->description), Quantity::of($line->quantity), UnitPrice::of($line->unitPrice), Rate::of('' === $line->discount ? '0' : $line->discount), $charge, $withholding);
+        return new PurchaseLineDraft($line->productId, $line->accountId, trim($line->description), Quantity::of($line->quantity), UnitPrice::of($line->unitPrice), Rate::of('' === $line->discount ? '0' : $line->discount), $charge, $withholdings);
     }
 
     /**
-     * A tax newly chosen must be active and in force on the invoice's date (F5); one the draft already had is kept.
+     * The line's retenciones (observations PRD §4.2): each one as a tax of its own, at most one per kind. Null when one
+     * of them was refused (the violation is recorded).
      *
-     * @param array<string, true> $kept
+     * @param array<string, true|TaxSnapshot> $kept
+     *
+     * @return list<TaxSnapshot>|null
+     */
+    private function withholdings(Uuid $companyId, string $at, PurchaseLineContents $line, array $kept, \DateTimeImmutable $issueDate): ?array
+    {
+        $withholdings = [];
+        $ok = true;
+        foreach (WithholdingChoice::fields($line->withholdingTaxIds, $line->withholdingTaxId, $at, brackets: true) as [$taxId, $field]) {
+            $tax = $this->tax($companyId, $field, $taxId, 'withholding', $kept, $issueDate);
+            if (null === $tax) {
+                $ok = false;
+            } elseif (!$tax->isNone()) {
+                $withholdings[] = $tax;
+            }
+        }
+        if (WithholdingChoice::repeatsAKind($withholdings)) {
+            $this->violate("$at.withholdings", WithholdingChoice::ONE_PER_KIND);
+            $ok = false;
+        }
+
+        return $ok ? $withholdings : null;
+    }
+
+    /**
+     * A tax newly chosen must be active and in force on the invoice's date (F5); one the draft already had is kept, with
+     * its snapshot once it was deactivated.
+     *
+     * @param array<string, true|TaxSnapshot> $kept
      */
     private function tax(Uuid $companyId, string $field, ?Uuid $taxId, string $class, array $kept, \DateTimeImmutable $issueDate): ?TaxSnapshot
     {
@@ -168,12 +234,16 @@ final class PurchaseDraftResolver
         if ('none' === $tax->kind) {
             return TaxSnapshot::none();
         }
+        $snapshot = $kept['tax:'.$tax->id] ?? null;
+        if (!$tax->active && $snapshot instanceof TaxSnapshot) {
+            return $snapshot;
+        }
 
         return new TaxSnapshot($taxId, $tax->name, $tax->kind, TaxCalculation::from($tax->calculation), $tax->rate, null === $tax->purchaseAccountId ? null : Uuid::fromString($tax->purchaseAccountId));
     }
 
     /**
-     * @param array<string, true> $kept
+     * @param array<string, true|TaxSnapshot> $kept
      */
     private function payment(Uuid $companyId, string $at, PurchasePaymentContents $payment, PurchaseInvoiceContents $contents, array $kept): ?PurchasePaymentDraft
     {
@@ -221,24 +291,27 @@ final class PurchaseDraftResolver
     }
 
     /**
-     * What the draft already uses, which stays allowed after it was deactivated.
+     * What the draft already uses, which stays allowed after it was deactivated (each tax with its snapshot).
      *
-     * @return array<string, true>
+     * @param list<CommercialLine>         $lines
+     * @param list<PurchaseInvoicePayment> $payments
+     *
+     * @return array<string, true|TaxSnapshot>
      */
-    private static function keptReferences(?PurchaseInvoice $current): array
+    private static function keptReferences(array $lines, array $payments): array
     {
         $kept = [];
-        foreach ($current?->lines() ?? [] as $line) {
+        foreach ($lines as $line) {
             if (null !== $line->productId()) {
                 $kept['product:'.$line->productId()->toRfc4122()] = true;
             }
-            foreach ([$line->chargeTax()->taxId(), $line->withholdingTax()->taxId()] as $taxId) {
-                if (null !== $taxId) {
-                    $kept['tax:'.$taxId->toRfc4122()] = true;
+            foreach ([$line->chargeTax(), ...$line->withholdingTaxes()] as $tax) {
+                if (null !== $tax->taxId()) {
+                    $kept['tax:'.$tax->taxId()->toRfc4122()] = $tax;
                 }
             }
         }
-        foreach ($current?->payments() ?? [] as $payment) {
+        foreach ($payments as $payment) {
             $kept['method:'.$payment->paymentMethodId()->toRfc4122()] = true;
         }
 
