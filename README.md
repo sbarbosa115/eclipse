@@ -465,6 +465,7 @@ All under `/api/v1`, JSON in `snake_case`. Money and rates are decimal strings (
 
 ## Known gaps
 
+- **`symfony/validator` 8.1.8 has an advisory** (GHSA-4qpf-57w4-m3wc, the `Ip` constraint's public/private modes): Mustang uses no `Ip` constraint, so nothing is reachable; update Symfony to ≥ 8.1.11 in its own change (audit `docs/security/audits/2026-11-07-observations-2026-11.md`).
 - **An account subdivided with `move_references: false`** must be fixed by hand: the chart shows it with *Sin auxiliar por defecto* while a posting rule, tax or payment method names it (products and terceros that still name it are not flagged: their forms refuse it on the next save, and documents that would post to it are refused with `account_has_auxiliaries`). The warning before subdividing counts the products and terceros only in the answer, not beforehand.
 - **Órdenes de compra** have no partial receipt, no stock and no "received" state (stage 3, which gives them their
   expected-receipt role): an order is emitted, then converted once into a draft factura de compra or voided. A
