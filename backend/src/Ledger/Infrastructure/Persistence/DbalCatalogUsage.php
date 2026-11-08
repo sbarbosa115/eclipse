@@ -14,9 +14,15 @@ final class DbalCatalogUsage implements CatalogUsage
 {
     /** table => the columns that hold a tax id (a line's copy of it, a product's default) */
     private const TAX_COLUMNS = [
-        'quotation_line' => ['charge_tax_id', 'withholding_tax_id'],
-        'sales_invoice_line' => ['charge_tax_id', 'withholding_tax_id'],
-        'purchase_invoice_line' => ['charge_tax_id', 'withholding_tax_id'],
+        'quotation_line' => ['charge_tax_id'],
+        'sales_invoice_line' => ['charge_tax_id'],
+        'purchase_invoice_line' => ['charge_tax_id'],
+        'purchase_order_line' => ['charge_tax_id'],
+        // A line's retenciones live in a table of their own (observations PRD §7.1).
+        'quotation_line_withholding' => ['tax_id'],
+        'sales_invoice_line_withholding' => ['tax_id'],
+        'purchase_invoice_line_withholding' => ['tax_id'],
+        'purchase_order_line_withholding' => ['tax_id'],
         'product' => ['charge_tax_id', 'withholding_tax_id'],
     ];
 

@@ -13,15 +13,15 @@ final class NumberingApiTest extends CatalogTestCase
         return array_column($this->getJson('/api/v1/company/numbering')['items'], null, 'kind');
     }
 
-    public function testTheOwnerSeesTheFiveDocumentSeriesStartingAtOne(): void
+    public function testTheOwnerSeesTheSixDocumentSeriesStartingAtOne(): void
     {
         $this->signUpOwner();
 
         $series = $this->series();
 
-        self::assertSame(['quotation', 'cash_receipt', 'purchase_invoice', 'supplier_payment', 'sales_invoice_internal'], array_keys($series), 'The journal\'s own series is not offered.');
-        self::assertSame(['C', 'RC', 'FC', 'RP', 'FVI'], array_column($series, 'prefix'));
-        self::assertSame([1, 1, 1, 1, 1], array_column($series, 'next_number'));
+        self::assertSame(['quotation', 'cash_receipt', 'purchase_invoice', 'supplier_payment', 'purchase_order', 'sales_invoice_internal'], array_keys($series), 'The journal\'s own series is not offered; órdenes de compra have theirs (OC).');
+        self::assertSame(['C', 'RC', 'FC', 'RP', 'OC', 'FVI'], array_column($series, 'prefix'));
+        self::assertSame([1, 1, 1, 1, 1, 1], array_column($series, 'next_number'));
     }
 
     public function testTheOwnerMovesAPrefixAndTheNextNumberForward(): void
@@ -78,7 +78,7 @@ final class NumberingApiTest extends CatalogTestCase
 
         foreach ([Role::Accountant, Role::Billing] as $role) {
             $this->signInAs($role, $companyId);
-            self::assertCount(5, $this->getJson('/api/v1/company/numbering')['items'], "$role->value reads.");
+            self::assertCount(6, $this->getJson('/api/v1/company/numbering')['items'], "$role->value reads.");
             $this->sendJson('PUT', '/api/v1/company/numbering/quotation', ['prefix' => 'X', 'next_number' => 5]);
             self::assertResponseStatusCodeSame(403, "$role->value cannot edit.");
         }

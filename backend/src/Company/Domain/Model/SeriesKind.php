@@ -12,6 +12,7 @@ enum SeriesKind: string
     case CashReceipt = 'cash_receipt';
     case PurchaseInvoice = 'purchase_invoice';
     case SupplierPayment = 'supplier_payment';
+    case PurchaseOrder = 'purchase_order';
     case SalesInvoiceInternal = 'sales_invoice_internal';
     case JournalEntry = 'journal_entry';
 
@@ -22,6 +23,7 @@ enum SeriesKind: string
             self::CashReceipt => 'RC',
             self::PurchaseInvoice => 'FC',
             self::SupplierPayment => 'RP',
+            self::PurchaseOrder => 'OC',
             self::SalesInvoiceInternal => 'FVI',
             self::JournalEntry => 'CD',
         };

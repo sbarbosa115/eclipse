@@ -24,6 +24,16 @@ final class DoctrineAccountRepository implements AccountRepository
         return $this->em->getRepository(Account::class)->findOneBy(['companyId' => $companyId, 'code' => $code]);
     }
 
+    public function hasActiveChildren(Uuid $companyId, string $code): bool
+    {
+        // ledger_account_parent (company_id, parent_code) answers it.
+        return (int) $this->em->createQueryBuilder()
+            ->select('COUNT(a.id)')->from(Account::class, 'a')
+            ->where('a.companyId = :company')->andWhere('a.parentCode = :code')->andWhere('a.active = true')
+            ->setParameter('company', $companyId, 'uuid')->setParameter('code', $code)
+            ->getQuery()->getSingleScalarResult() > 0;
+    }
+
     public function add(Account $account): void
     {
         $this->em->persist($account);

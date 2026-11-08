@@ -13,12 +13,13 @@ use Brick\Math\RoundingMode;
  *     Descuentos   = Σ cantidad × valor unitario × % descuento
  *     Subtotal     = Total bruto − Descuentos
  *     Impuestos    = Σ impuesto cargo de cada línea, sobre la base con descuento
- *     Retenciones  = Σ impuesto retención de cada línea (ReteIVA sobre el IVA de la línea)
+ *     Retenciones  = Σ retenciones de cada línea (ReteIVA sobre el IVA de la línea)
  *     Total neto   = Subtotal + Impuestos − Retenciones
  *
  * Every line is computed exactly and each sum is rounded once, at document level. Each line then gets its share of
  * the rounded totals by the largest-remainder method, so the line amounts (what a journal entry posts per account)
- * always add up to the document's to the cent.
+ * always add up to the document's to the cent. Retenciones are shared per (line, retención) pair, so each retención of
+ * each line (what posts to its own account) adds up to the document's Retenciones too.
  */
 final readonly class DocumentTotals
 {
@@ -41,8 +42,8 @@ final readonly class DocumentTotals
      */
     public static function of(array $lines): self
     {
-        $gross = $discount = $tax = $withholding = [];
-        foreach ($lines as $line) {
+        $gross = $discount = $tax = $withholding = $owner = [];
+        foreach ($lines as $i => $line) {
             $quantity = $line->quantity->toBigDecimal();
             $lineGross = $quantity->multipliedBy($line->unitPrice->toBigDecimal());
             $lineDiscount = $lineGross->multipliedBy($line->discount->fraction());
@@ -51,24 +52,33 @@ final readonly class DocumentTotals
             $discount[] = $lineDiscount;
             $lineTax = $line->charge->on($base, $quantity);
             $tax[] = $lineTax;
-            $withholding[] = $line->withholding->on($base, $quantity, $lineTax);
+            foreach ($line->withholdings as $rate) {
+                $withholding[] = $rate->on($base, $quantity, $lineTax);
+                $owner[] = $i;
+            }
         }
 
         $grossShares = self::shares($gross);
         $discountShares = self::shares($discount);
         $taxShares = self::shares($tax);
         $withholdingShares = self::shares($withholding);
+        $perLine = array_fill_keys(array_keys($lines), []);
+        foreach ($withholdingShares as $k => $share) {
+            $perLine[$owner[$k]][] = $share;
+        }
 
         $amounts = [];
         foreach (array_keys($lines) as $i) {
             $subtotal = $grossShares[$i]->minus($discountShares[$i]);
+            $lineWithholding = Money::sum(...$perLine[$i]);
             $amounts[] = new LineAmounts(
                 $grossShares[$i],
                 $discountShares[$i],
                 $subtotal,
                 $taxShares[$i],
-                $withholdingShares[$i],
-                $subtotal->plus($taxShares[$i])->minus($withholdingShares[$i]),
+                $lineWithholding,
+                $subtotal->plus($taxShares[$i])->minus($lineWithholding),
+                $perLine[$i],
             );
         }
 

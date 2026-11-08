@@ -33,7 +33,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'purchase_invoice')]
 #[ORM\Index(name: 'purchase_invoice_list', columns: ['company_id', 'status', 'issue_date'])]
-#[ORM\UniqueConstraint(name: 'purchase_invoice_supplier_number', columns: ['company_id', 'tercero_id', 'supplier_invoice_number'])]
+#[ORM\UniqueConstraint(name: 'purchase_invoice_active_number', columns: ['company_id', 'tercero_id', 'active_number_key'])]
 class PurchaseInvoice implements CompanyOwned
 {
     use DocumentAuditColumns;
@@ -73,6 +73,26 @@ class PurchaseInvoice implements CompanyOwned
     #[ORM\Column(type: 'uuid', nullable: true)]
     private ?Uuid $reversalEntryId = null;
 
+    /**
+     * The supplier's number while the invoice is not voided, null once it is: the unique key that keeps a supplier's
+     * number once per supplier among live invoices, so a corrected invoice's copy can carry it again (observations PRD
+     * §4.6). MariaDB allows repeated NULLs in a unique index.
+     */
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $activeNumberKey = null;
+
+    /** The voided invoice this draft corrects (Corregir, observations PRD §4.6). */
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $correctedFromId = null;
+
+    /** The draft that corrects this voided invoice. */
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $correctedById = null;
+
+    /** The orden de compra it was converted from (observations PRD §4.8). */
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $purchaseOrderId = null;
+
     /** @var Collection<int, PurchaseInvoiceLine> */
     #[ORM\OneToMany(targetEntity: PurchaseInvoiceLine::class, mappedBy: 'document', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
@@ -103,6 +123,7 @@ class PurchaseInvoice implements CompanyOwned
         $this->lines = new ArrayCollection();
         $this->payments = new ArrayCollection();
         $this->paidAmount = Money::zero();
+        $this->activeNumberKey = $supplierInvoiceNumber;
         $this->zeroTotals();
         $this->recordCreation($createdBy, $createdAt);
     }
@@ -208,13 +229,14 @@ class PurchaseInvoice implements CompanyOwned
         $this->terceroId = $terceroId;
         $this->terceroName = $terceroName;
         $this->supplierInvoiceNumber = $supplierInvoiceNumber;
+        $this->activeNumberKey = $supplierInvoiceNumber;
         $this->issueDate = $issueDate;
         $this->dueDate = $dueDate;
         $this->notes = $notes;
 
         $this->lines->clear();
         foreach ($lines as $position => $l) {
-            $this->lines->add(new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, $l->withholdingTax));
+            $this->lines->add(new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, [$l->withholdingTax]));
         }
         $this->payments->clear();
         foreach ($payments as $position => $p) {
@@ -298,6 +320,7 @@ class PurchaseInvoice implements CompanyOwned
     {
         $this->assertVoidable();
         $this->status = InvoiceStatus::Voided;
+        $this->activeNumberKey = null;
         $this->reversalEntryId = $reversalEntryId;
         $this->recordVoid($by, $at, $reason);
     }
@@ -351,6 +374,21 @@ class PurchaseInvoice implements CompanyOwned
         );
 
         return $copy;
+    }
+
+    public function correctedFromId(): ?Uuid
+    {
+        return $this->correctedFromId;
+    }
+
+    public function correctedById(): ?Uuid
+    {
+        return $this->correctedById;
+    }
+
+    public function purchaseOrderId(): ?Uuid
+    {
+        return $this->purchaseOrderId;
     }
 
     public function isDraft(): bool

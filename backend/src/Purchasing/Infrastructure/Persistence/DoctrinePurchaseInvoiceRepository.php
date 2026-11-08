@@ -38,11 +38,11 @@ final class DoctrinePurchaseInvoiceRepository implements PurchaseInvoiceReposito
 
     public function supplierNumberTaken(Uuid $companyId, Uuid $terceroId, string $number, ?Uuid $exceptId = null): bool
     {
-        // The column's collation ignores letter case, like the unique index it backs.
+        // The live-number key (null on a voided invoice) is what the unique index holds; its collation ignores case.
         $qb = $this->em->createQueryBuilder()
             ->select('COUNT(i.id)')
             ->from(PurchaseInvoice::class, 'i')
-            ->where('i.companyId = :company AND i.terceroId = :tercero AND i.supplierInvoiceNumber = :number')
+            ->where('i.companyId = :company AND i.terceroId = :tercero AND i.activeNumberKey = :number')
             ->setParameter('company', $companyId, 'uuid')
             ->setParameter('tercero', $terceroId, 'uuid')
             ->setParameter('number', $number);

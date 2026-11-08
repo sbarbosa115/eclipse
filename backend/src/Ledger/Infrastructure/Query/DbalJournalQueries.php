@@ -24,6 +24,11 @@ final class DbalJournalQueries implements JournalQueries
     {
     }
 
+    public function bySource(Uuid $companyId, string $sourceType, Uuid $sourceId): array
+    {
+        throw new \LogicException('Not implemented: the "journal-entry-tab" item builds it.');
+    }
+
     public function page(Uuid $companyId, JournalFilter $filter, int $page, int $perPage): Page
     {
         $filtered = function () use ($companyId, $filter): QueryBuilder {

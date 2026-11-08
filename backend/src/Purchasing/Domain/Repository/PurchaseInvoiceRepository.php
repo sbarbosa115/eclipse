@@ -16,7 +16,7 @@ interface PurchaseInvoiceRepository
      */
     public function lock(Uuid $companyId, Uuid $id): PurchaseInvoice;
 
-    /** Is this supplier's invoice number already recorded on another of the company's invoices (letter case aside)? */
+    /** Is this supplier's invoice number already on another of the company's invoices that is not voided (letter case aside)? */
     public function supplierNumberTaken(Uuid $companyId, Uuid $terceroId, string $number, ?Uuid $exceptId = null): bool;
 
     public function add(PurchaseInvoice $invoice): void;

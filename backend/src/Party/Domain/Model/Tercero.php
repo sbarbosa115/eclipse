@@ -24,6 +24,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'tercero')]
 #[ORM\UniqueConstraint(name: 'tercero_identification', columns: ['company_id', 'identification_type', 'identification_number', 'branch_code'])]
 #[ORM\Index(name: 'tercero_company_name', columns: ['company_id', 'display_name'])]
+#[ORM\Index(name: 'tercero_municipality', columns: ['company_id', 'municipality_code'])]
 class Tercero implements CompanyOwned
 {
     #[ORM\Id]
@@ -48,6 +49,14 @@ class Tercero implements CompanyOwned
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $city = null;
+
+    /** ISO 3166-1 alpha-2; Colombia unless the tercero is abroad (observations PRD §4.3). */
+    #[ORM\Column(length: 2, options: ['fixed' => true, 'default' => 'CO'])]
+    private string $countryCode = 'CO';
+
+    /** DANE DIVIPOLA municipality (5 digits), required for a Colombian tercero on its next save. */
+    #[ORM\Column(length: 5, nullable: true, options: ['fixed' => true])]
+    private ?string $municipalityCode = null;
 
     #[ORM\Column(length: 200, nullable: true)]
     private ?string $address = null;
@@ -303,6 +312,16 @@ class Tercero implements CompanyOwned
     public function tradeName(): ?string
     {
         return $this->tradeName;
+    }
+
+    public function countryCode(): string
+    {
+        return $this->countryCode;
+    }
+
+    public function municipalityCode(): ?string
+    {
+        return $this->municipalityCode;
     }
 
     public function city(): ?string
