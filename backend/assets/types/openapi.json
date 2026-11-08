@@ -855,6 +855,7 @@
         },
         "/api/v1/ledger/exogena-concepts": {
             "get": {
+                "summary": "The company's table, by format then prefix.",
                 "operationId": "get_app_ledger_ui_http_exogenaconcept_list",
                 "responses": {
                     "200": {
@@ -881,7 +882,7 @@
                 }
             },
             "put": {
-                "summary": "{items: [{format, account_prefix, concept_code}]} replaces the table. 422 by field.",
+                "summary": "{items: [{format, account_prefix, concept_code}]} replaces the whole table (at most 500 rows; an empty list is\nallowed). 422 by field (`items[N].format`, `.account_prefix`, `.concept_code`), and on a prefix twice in one format.",
                 "operationId": "put_app_ledger_ui_http_exogenaconcept_replace",
                 "responses": {
                     "200": {
@@ -3602,6 +3603,75 @@
                 }
             }
         },
+        "/api/v1/reports/taxes/exogena/{format}": {
+            "get": {
+                "summary": "The format's rows, its cuant\u00edas menores and what keeps it from being filed (missing concepts, municipios).",
+                "operationId": "get_app_reporting_ui_http_exogena_exogena",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "1001|1003|1005|1006|1007|1008|1009",
+                            "enum": [
+                                "1001",
+                                "1003",
+                                "1005",
+                                "1006",
+                                "1007",
+                                "1008",
+                                "1009"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExogenaOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/taxes/exogena/{format}/export": {
+            "get": {
+                "summary": "The working paper as a file (?format=csv|pdf, ?check=1 to ask first), with the same filters. 422\n`exogena_terceros_incomplete` while a Colombian tercero reported by name has no municipio (the terceros list\nfilters them with ?missing_municipality=1); 422 `export_too_large` above the cap.",
+                "operationId": "get_app_reporting_ui_http_exogena_export",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "1001|1003|1005|1006|1007|1008|1009",
+                            "enum": [
+                                "1001",
+                                "1003",
+                                "1005",
+                                "1006",
+                                "1007",
+                                "1008",
+                                "1009"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/reports/cartera/{side}/export": {
             "get": {
                 "summary": "Cartera by tercero (default) or, with ?detail=1, document by document. ?as_of=, ?q= as the screen.",
@@ -3736,75 +3806,6 @@
         "/api/v1/reports/taxes/vat/export": {
             "get": {
                 "operationId": "get_app_reporting_ui_http_taxreport_exportvat",
-                "responses": {
-                    "default": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/reports/taxes/exogena/{format}": {
-            "get": {
-                "summary": "?year= (default last year), ?threshold= pesos (default 0: everyone).",
-                "operationId": "get_app_reporting_ui_http_taxreport_exogena",
-                "parameters": [
-                    {
-                        "name": "format",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "pattern": "1001|1003|1005|1006|1007|1008|1009",
-                            "enum": [
-                                "1001",
-                                "1003",
-                                "1005",
-                                "1006",
-                                "1007",
-                                "1008",
-                                "1009"
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ExogenaOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/reports/taxes/exogena/{format}/export": {
-            "get": {
-                "summary": "422 exogena_terceros_incomplete while a tercero of the format has no municipality.",
-                "operationId": "get_app_reporting_ui_http_taxreport_exportexogena",
-                "parameters": [
-                    {
-                        "name": "format",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "pattern": "1001|1003|1005|1006|1007|1008|1009",
-                            "enum": [
-                                "1001",
-                                "1003",
-                                "1005",
-                                "1006",
-                                "1007",
-                                "1008",
-                                "1009"
-                            ]
-                        }
-                    }
-                ],
                 "responses": {
                     "default": {
                         "description": ""
@@ -7278,6 +7279,129 @@
                 },
                 "type": "object"
             },
+            "ExogenaRowOutput": {
+                "required": [
+                    "document_type_code",
+                    "identification_number",
+                    "country_code",
+                    "values"
+                ],
+                "properties": {
+                    "tercero_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "document_type_code": {
+                        "title": "DIAN document type code (31 NIT, 13 c\u00e9dula, 43 cuant\u00edas menores\u2026)",
+                        "type": "string"
+                    },
+                    "identification_number": {
+                        "type": "string"
+                    },
+                    "check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_names": {
+                        "title": "A person's apellidos (null for a company).",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "first_names": {
+                        "title": "A person's nombres (null for a company).",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_name": {
+                        "title": "A company's raz\u00f3n social.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "department_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "municipality_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country_code": {
+                        "title": "ISO 3166-1 alpha-2",
+                        "type": "string"
+                    },
+                    "concept_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "values": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ExogenaOutput": {
+                "required": [
+                    "year",
+                    "format",
+                    "threshold",
+                    "value_columns",
+                    "rows",
+                    "minor_amounts_rows",
+                    "missing_concepts",
+                    "missing_municipality"
+                ],
+                "properties": {
+                    "year": {
+                        "type": "integer"
+                    },
+                    "format": {
+                        "title": "1001, 1003, 1005, 1006, 1007, 1008, 1009",
+                        "type": "string"
+                    },
+                    "threshold": {
+                        "title": "The cuant\u00edas menores threshold in pesos (0.00: everyone by name).",
+                        "type": "string"
+                    },
+                    "value_columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ExogenaRowOutput"
+                        }
+                    },
+                    "minor_amounts_rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ExogenaRowOutput"
+                        }
+                    },
+                    "missing_concepts": {
+                        "title": "Rows whose account has no concept code yet (1001 and 1007; always 0 elsewhere).",
+                        "type": "integer"
+                    },
+                    "missing_municipality": {
+                        "title": "Colombian terceros reported by name with no municipality: the export is refused while any.",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "WithholdingReportRowOutput": {
                 "required": [
                     "tercero_id",
@@ -7547,126 +7671,6 @@
                     },
                     "voided_count": {
                         "title": "Voided invoices (sales and purchases) issued in the period, left out.",
-                        "type": "integer"
-                    }
-                },
-                "type": "object"
-            },
-            "ExogenaRowOutput": {
-                "required": [
-                    "document_type_code",
-                    "identification_number",
-                    "country_code",
-                    "values"
-                ],
-                "properties": {
-                    "tercero_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "document_type_code": {
-                        "title": "DIAN document type code (31 NIT, 13 c\u00e9dula\u2026)",
-                        "type": "string"
-                    },
-                    "identification_number": {
-                        "type": "string"
-                    },
-                    "check_digit": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "last_names": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "first_names": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "business_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "address": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "department_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "municipality_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "country_code": {
-                        "type": "string"
-                    },
-                    "concept_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "account_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "values": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "ExogenaOutput": {
-                "required": [
-                    "year",
-                    "format",
-                    "threshold",
-                    "value_columns",
-                    "rows",
-                    "missing_concepts",
-                    "missing_municipality"
-                ],
-                "properties": {
-                    "year": {
-                        "type": "integer"
-                    },
-                    "format": {
-                        "title": "1001, 1003, 1005, 1006, 1007, 1008, 1009",
-                        "type": "string"
-                    },
-                    "threshold": {
-                        "type": "string"
-                    },
-                    "value_columns": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "rows": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ExogenaRowOutput"
-                        }
-                    },
-                    "minor_amounts_row": {
-                        "title": "Rows under the threshold, grouped under the pseudo-NIT 222222222.",
-                        "nullable": true,
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/ExogenaRowOutput"
-                            }
-                        ]
-                    },
-                    "missing_concepts": {
-                        "title": "Rows whose account has no concept code yet.",
-                        "type": "integer"
-                    },
-                    "missing_municipality": {
-                        "title": "Terceros in the format with no municipality: the export is refused while any.",
                         "type": "integer"
                     }
                 },

@@ -9,7 +9,6 @@ use App\Reporting\Application\Tax\MonthRange;
 use App\Reporting\Application\Tax\TaxReports;
 use App\Reporting\Application\Tax\WithholdingKind;
 use App\Reporting\Application\Tax\WithholdingSide;
-use App\Reporting\UI\Http\Output\ExogenaOutput;
 use App\Reporting\UI\Http\Output\VatReportOutput;
 use App\Reporting\UI\Http\Output\WithholdingReportOutput;
 use App\Reporting\UI\Http\ReportFiles;
@@ -29,7 +28,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Reportes › Impuestos (observations PRD §4.7): retenciones practicadas and sufridas, IVA, and the exógena working
  * papers, each with a CSV/PDF export (?format=csv|pdf and the screen's filters, ?check=1 to ask first). Built from
- * the documents; the books' figure comes from Ledger. VIEW_BOOKS. The exógena routes are the "exogena" item's.
+ * the documents; the books' figure comes from Ledger. VIEW_BOOKS. The exógena working papers are ExogenaController's.
  *
  * Periods are whole months: ?from=YYYY-MM&to=YYYY-MM (both included; one alone is a single month; none is this month
  * in Colombia), at most 12 months. 400 `invalid_date` for a month that is not YYYY-MM, `invalid_period` for an end
@@ -96,21 +95,6 @@ final class TaxReportController extends AbstractController
         }
 
         return $this->files->respond($request, $user->companyId(), $table, $format);
-    }
-
-    /** ?year= (default last year), ?threshold= pesos (default 0: everyone). */
-    #[Route('/exogena/{format}', methods: ['GET'], requirements: ['format' => '1001|1003|1005|1006|1007|1008|1009'])]
-    #[ApiResponse(ExogenaOutput::class)]
-    public function exogena(string $format): JsonResponse
-    {
-        throw ApiException::notImplemented('exogena');
-    }
-
-    /** 422 exogena_terceros_incomplete while a tercero of the format has no municipality. */
-    #[Route('/exogena/{format}/export', methods: ['GET'], requirements: ['format' => '1001|1003|1005|1006|1007|1008|1009'])]
-    public function exportExogena(string $format): Response
-    {
-        throw ApiException::notImplemented('exogena');
     }
 
     private function range(Request $request): MonthRange
