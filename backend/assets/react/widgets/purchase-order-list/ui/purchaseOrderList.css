@@ -2,8 +2,3 @@
 .admin .purchase-order-date input {
   width: 9.5rem;
 }
-
-.admin .purchase-order-list td.num {
-  text-align: right;
-  white-space: nowrap;
-}

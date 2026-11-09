@@ -15,6 +15,20 @@ describe('the status tones of documents', () => {
     expect(toneFor(status)).toBe(tone);
   });
 
+  it.each([
+    ['prospect', 'warning'],
+    ['owner', 'info'],
+    ['cancelled', 'neutral'],
+    ['own_account', 'info'],
+    ['inactive', 'neutral'],
+    ['invalid', 'warning'],
+  ])(
+    '%s reads as %s on users, catalogs and the chart of accounts',
+    (status, tone) => {
+      expect(toneFor(status)).toBe(tone);
+    },
+  );
+
   it('shows a status it does not know as neutral', () => {
     expect(toneFor('nonsense')).toBe('neutral');
   });

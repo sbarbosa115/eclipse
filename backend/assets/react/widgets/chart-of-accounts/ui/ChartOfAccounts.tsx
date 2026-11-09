@@ -176,10 +176,10 @@ export function ChartOfAccounts() {
                 <td className="chart-name">
                   {account.name}
                   {!account.standard && (
-                    <Badge value="info">{t('ledger.chart.own')}</Badge>
+                    <Badge value="own_account">{t('ledger.chart.own')}</Badge>
                   )}
                   {!account.active && (
-                    <Badge value="neutral">{t('ledger.chart.inactive')}</Badge>
+                    <Badge value="inactive">{t('ledger.chart.inactive')}</Badge>
                   )}
                   {leftWithoutDefault(account, used) && (
                     <Badge value="invalid">

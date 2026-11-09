@@ -248,39 +248,16 @@ export function Alert({
  * which reads as "no status".
  */
 const TONES: Record<string, string> = {
-  active: 'success',
+  // People and catalog entries: an invited user waits to accept; a deactivated user or an inactive tercero, product,
+  // tax or payment method is out of use; the owner badge marks you.
   prospect: 'warning',
   owner: 'info',
-  super_admin: 'accent',
-  // Appointments: a request waits for the owner, a confirmed one is booked, the others are over.
-  requested: 'warning',
-  confirmed: 'success',
-  declined: 'neutral',
   cancelled: 'neutral',
-  // Orders: one waits for its owner, then it is in the owner's hands, on its way, handed over, and over.
-  order_received: 'warning',
-  order_confirmed: 'info',
-  order_preparing: 'info',
-  order_in_transit: 'accent',
-  order_ready_for_pickup: 'accent',
-  order_delivered: 'success',
-  order_completed: 'neutral',
-  order_cancelled: 'neutral',
-  // Contact messages: one waits for an answer, then the business answered, then there is nothing more to do.
-  message_new: 'warning',
-  message_contacted: 'info',
-  message_closed: 'neutral',
-  // The assistant's files: one is being read, then the assistant answers from it, or it could not be read.
-  knowledge_reading: 'info',
-  knowledge_ready: 'success',
-  knowledge_failed: 'warning',
-  // An import's records: new ones go in, replaced ones change, the others stay as they are.
-  new: 'success',
-  created: 'success',
-  replace: 'info',
-  replaced: 'info',
-  exists: 'neutral',
-  skipped: 'neutral',
+  // Chart of accounts: an account the company added itself, and one no longer in use.
+  own_account: 'info',
+  inactive: 'neutral',
+  // Something missing that needs attention (a tercero with no municipio on the exógena, an account left without a
+  // default after a subdivision).
   invalid: 'warning',
   // Documents (facturas, cotizaciones, recibos): a draft is not in the books yet, an emitted one waits for its money or
   // its answer, partly paid is on its way, paid or accepted is done; rejected, expired and voided are over.

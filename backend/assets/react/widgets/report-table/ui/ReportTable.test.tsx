@@ -48,7 +48,7 @@ describe('ReportTable', () => {
     expect(rows).toHaveLength(4);
     const total = within(rows[3]!);
     expect(total.getByText('Total')).toBeInTheDocument();
-    expect(total.getByText('$ 350,00')).toHaveClass('report-num');
+    expect(total.getByText('$ 350,00')).toHaveClass('num');
     expect(
       screen.getByRole('link', {name: 'Descargar Cartera en CSV'}),
     ).toHaveAttribute('href', '/api/v1/x?format=csv');

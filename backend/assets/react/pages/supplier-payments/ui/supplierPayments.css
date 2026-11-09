@@ -3,12 +3,6 @@
   width: 9.5rem;
 }
 
-.admin .supplier-payment-list td.num,
-.admin .supplier-payment-view td.num {
-  text-align: right;
-  white-space: nowrap;
-}
-
 /* The client search and its list of matches, under the box. */
 .admin .supplier-payment-client {
   position: relative;

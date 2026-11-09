@@ -8,6 +8,6 @@
 }
 
 .admin .journal-entry-total td {
-  border-top: 2px solid var(--color-border, #d0d5dd);
+  border-top: 2px solid var(--color-border);
   font-weight: 600;
 }

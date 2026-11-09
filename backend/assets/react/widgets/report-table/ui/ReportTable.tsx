@@ -42,8 +42,7 @@ export function ReportTable<T>({
 }) {
   const {t} = useTranslation();
   const hasTotals = columns.some((c) => c.total !== undefined);
-  const cellClass = (c: ReportColumn<T>) =>
-    c.numeric ? 'report-num' : undefined;
+  const cellClass = (c: ReportColumn<T>) => (c.numeric ? 'num' : undefined);
 
   return (
     <div className="report-table">

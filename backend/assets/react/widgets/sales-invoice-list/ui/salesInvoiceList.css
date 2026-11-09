@@ -2,8 +2,3 @@
 .admin .sales-invoice-date input {
   width: 9.5rem;
 }
-
-.admin .sales-invoice-list td.num {
-  text-align: right;
-  white-space: nowrap;
-}

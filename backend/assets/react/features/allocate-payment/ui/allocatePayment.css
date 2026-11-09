@@ -1,9 +1,4 @@
 /* Item 11 (cash-receipt): the allocation table, shared by recibos de caja and (item 12) recibos de pago. */
-.admin .allocate-payment td.num {
-  text-align: right;
-  white-space: nowrap;
-}
-
 .admin .allocate-payment-input input {
   width: 9rem;
   text-align: right;

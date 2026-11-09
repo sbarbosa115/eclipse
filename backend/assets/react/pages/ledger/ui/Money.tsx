@@ -9,7 +9,7 @@ export function MoneyCell({
   blankZero?: boolean;
 }) {
   return (
-    <td className="ledger-num">
+    <td className="num">
       {blankZero && Number(amount) === 0 ? '' : formatMoney(amount)}
     </td>
   );

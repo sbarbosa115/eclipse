@@ -3,18 +3,6 @@
   width: 9.5rem;
 }
 
-.admin .purchase-list-num {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Corregir (observations item 7): a voided invoice's link to the one that replaces it, under its number. */
-.admin .purchase-list-corrected {
-  display: block;
-  font-size: 0.8125rem;
-}
-
 /* Corregir (observations item 7): a voided invoice's link to the one that replaces it, under its number. */
 .admin .purchase-list-corrected {
   display: block;

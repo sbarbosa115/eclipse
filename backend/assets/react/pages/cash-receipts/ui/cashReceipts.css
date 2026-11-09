@@ -3,12 +3,6 @@
   width: 9.5rem;
 }
 
-.admin .cash-receipt-list td.num,
-.admin .cash-receipt-view td.num {
-  text-align: right;
-  white-space: nowrap;
-}
-
 .admin .cash-receipt-form .field-wide {
   grid-column: 1 / -1;
 }
