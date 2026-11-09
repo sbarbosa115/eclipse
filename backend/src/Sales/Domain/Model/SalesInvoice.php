@@ -89,12 +89,12 @@ class SalesInvoice implements CompanyOwned
 
     /** @var Collection<int, SalesInvoiceLine> */
     #[ORM\OneToMany(targetEntity: SalesInvoiceLine::class, mappedBy: 'document', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $lines;
 
     /** @var Collection<int, SalesInvoicePayment> */
     #[ORM\OneToMany(targetEntity: SalesInvoicePayment::class, mappedBy: 'invoice', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $payments;
 
     public function __construct(

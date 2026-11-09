@@ -45,11 +45,6 @@ final class ProvisionLedger implements CompanyProvisioner
         $this->writer->write($companyId, array_values($chart), $rules);
     }
 
-    public static function getPriority(): int
-    {
-        return 100;
-    }
-
     /** The PUC's levels: clase 1 digit, grupo 2, cuenta 4, subcuenta 6. */
     private static function parentCode(string $code): ?string
     {

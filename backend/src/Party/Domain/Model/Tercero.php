@@ -118,7 +118,7 @@ class Tercero implements CompanyOwned
 
     /** @var Collection<int, Contact> */
     #[ORM\OneToMany(targetEntity: Contact::class, mappedBy: 'tercero', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['name' => 'ASC'])]
+    #[ORM\OrderBy(['name' => \SortDirection::Ascending])]
     private Collection $contacts;
 
     public function __construct(

@@ -22,7 +22,7 @@ class PurchaseInvoiceLine extends CommercialLine
 {
     /** @var Collection<int, PurchaseInvoiceLineWithholding> */
     #[ORM\OneToMany(targetEntity: PurchaseInvoiceLineWithholding::class, mappedBy: 'line', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $withholdings;
 
     /**

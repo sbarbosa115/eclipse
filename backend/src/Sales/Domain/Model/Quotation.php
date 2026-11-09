@@ -68,7 +68,7 @@ class Quotation implements CompanyOwned
 
     /** @var Collection<int, QuotationLine> */
     #[ORM\OneToMany(targetEntity: QuotationLine::class, mappedBy: 'document', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $lines;
 
     public function __construct(
