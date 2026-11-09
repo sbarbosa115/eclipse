@@ -1,5 +1,6 @@
 import type {Page} from '@playwright/test';
 import {consoleErrors, expect, test} from './support/test';
+import {pickMunicipality} from './support/municipality';
 
 // Cases DOC-01 – 08 of docs/tests/ui-regression.md (item 7 "document-editor"). No document page mounts the editor
 // yet (items 8–10 will), so these run on its development page, /dev/editor-documento.
@@ -51,6 +52,7 @@ async function seedService(page: Page) {
 
 async function seedClient(page: Page) {
   await api(page, 'POST', '/terceros', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: '800197268',
@@ -159,6 +161,7 @@ test('DOC-03 · a missing tercero is created from the search with the document�
   ).toBeChecked();
   await modal.getByLabel('Número de identificación').fill('900123456');
   await modal.getByLabel('Razón social').fill('Nuevo Cliente S.A.S.');
+  await pickMunicipality(modal);
   await modal.getByLabel('Correo electrónico').fill('nuevo@cliente.co');
   await modal.getByRole('button', {name: 'Crear tercero'}).click();
 
@@ -251,7 +254,10 @@ test('DOC-07 · formas de pago add up to Total neto, with a due date on crédito
   await open(page);
 
   await pickProduct(page, 1, 'SRV');
-  await page.getByLabel('Impuesto retención, línea 1').selectOption('');
+  // The retenciones are changed in the line's tax dialog, opened from their cell (observations §4.2).
+  await page.getByRole('button', {name: /^Retenciones de la línea 1/}).click();
+  await page.getByRole('dialog').getByLabel('Retefuente').selectOption('');
+  await page.getByRole('dialog').getByRole('button', {name: 'Aplicar'}).click();
   await expect(total(page, 'Total neto')).toHaveText('$ 1.190.000,00');
 
   await page.getByRole('button', {name: 'Agregar forma de pago'}).click();
@@ -328,7 +334,7 @@ async function expectEveryColumnVisible(page: Page) {
   expect(scrolls, 'the lines table does not scroll sideways').toBe(false);
   const headers = page.locator('.doc-lines thead th');
   const names = await headers.allTextContents();
-  for (const name of ['Impuesto retención', 'Valor total', 'Acciones']) {
+  for (const name of ['Retenciones', 'Valor total', 'Acciones']) {
     expect(names.map((n) => n.trim())).toContain(name);
   }
   const cells = page.locator(

@@ -28,3 +28,9 @@
 .admin .chart-name .badge {
   margin-left: 8px;
 }
+
+/* The warning before subdividing an account in use, with its checkbox under it. */
+.admin .chart-subdivide {
+  display: grid;
+  gap: 8px;
+}

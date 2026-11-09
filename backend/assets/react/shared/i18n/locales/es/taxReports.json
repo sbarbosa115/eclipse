@@ -1,0 +1,210 @@
+{
+  "title": "Impuestos",
+  "subtitle": "Los papeles de trabajo de las declaraciones, sacados de las facturas y comparados con los libros.",
+  "noAccess": "Los reportes de impuestos son del administrador y del contador.",
+  "tabs": {
+    "label": "Reportes de impuestos",
+    "practiced": "Retenciones practicadas",
+    "suffered": "Retenciones sufridas",
+    "vat": "IVA",
+    "exogena": "Exógena"
+  },
+  "months": {
+    "1": "enero",
+    "2": "febrero",
+    "3": "marzo",
+    "4": "abril",
+    "5": "mayo",
+    "6": "junio",
+    "7": "julio",
+    "8": "agosto",
+    "9": "septiembre",
+    "10": "octubre",
+    "11": "noviembre",
+    "12": "diciembre"
+  },
+  "period": {
+    "from": "Desde",
+    "to": "Hasta",
+    "month": "{{month}} {{year}}",
+    "backwards": "El mes «Hasta» es anterior al mes «Desde»: elige un periodo en orden.",
+    "tooLong": "Un reporte cubre como máximo {{max}} meses: acorta el periodo."
+  },
+  "rate": {
+    "percentage": "{{value}} %",
+    "perUnit": "{{value}} por unidad"
+  },
+  "kinds": {
+    "label": "Tipo",
+    "all": "Todas",
+    "retefuente": "Retefuente",
+    "reteiva": "ReteIVA",
+    "reteica": "ReteICA"
+  },
+  "voided": {
+    "one": "1 factura anulada en el periodo no se incluye.",
+    "other": "{{count}} facturas anuladas en el periodo no se incluyen."
+  },
+  "books": {
+    "ledger": "Según libros ({{accounts}}): {{amount}}",
+    "matches": "Cuadra con los libros.",
+    "differs": "Diferencia con los libros: {{amount}}."
+  },
+  "withholdings": {
+    "practiced": {
+      "intro": "Lo que la empresa retuvo a sus proveedores en las facturas de compra, por mes y tipo: la base de la declaración de retención en la fuente.",
+      "empty": "No hay retenciones practicadas en el periodo.",
+      "tercero": "Proveedor",
+      "accounts": {
+        "retefuente": "2365",
+        "reteiva": "2367",
+        "reteica": "2368"
+      }
+    },
+    "suffered": {
+      "intro": "Lo que los clientes le retuvieron a la empresa en las facturas de venta, por mes y tipo.",
+      "empty": "No hay retenciones sufridas en el periodo.",
+      "tercero": "Cliente",
+      "accounts": {
+        "retefuente": "135515",
+        "reteiva": "135517",
+        "reteica": "135518"
+      }
+    },
+    "group": "{{kind}} · {{month}}",
+    "tax": "Impuesto",
+    "rate": "Tarifa",
+    "base": "Base",
+    "amount": "Retención",
+    "documents": "Facturas",
+    "total": "Total",
+    "periodTotals": "Totales del periodo",
+    "kind": "Tipo",
+    "ledger": "Según libros",
+    "difference": "Diferencia",
+    "groupEmpty": "Ninguna factura del mes tiene esta retención; solo se movieron los libros.",
+    "openDocuments": "Ver facturas",
+    "openDocumentsOf": "Ver facturas de {{name}}"
+  },
+  "vat": {
+    "intro": "El IVA generado en las ventas y el descontable en las compras, por tarifa: para un bimestre o un cuatrimestre elige el periodo completo.",
+    "generated": "IVA generado (ventas)",
+    "deductible": "IVA descontable (compras)",
+    "emptyGenerated": "No hay ventas con IVA en el periodo.",
+    "emptyDeductible": "No hay compras con IVA en el periodo.",
+    "rate": "Tarifa",
+    "base": "Base",
+    "tax": "IVA",
+    "total": "Total",
+    "generatedAccounts": "240805",
+    "deductibleAccounts": "240810",
+    "summary": "Saldo de la declaración",
+    "concept": "Concepto",
+    "value": "Valor",
+    "generatedTotal": "IVA generado",
+    "deductibleTotal": "IVA descontable",
+    "reteivaSuffered": "ReteIVA que le practicaron (sufrida)",
+    "toPay": "Saldo a pagar",
+    "inFavor": "Saldo a favor",
+    "others": "Otros valores del periodo",
+    "reteivaPracticed": "ReteIVA practicada (se declara en la retención en la fuente)",
+    "impoconsumo": "Impoconsumo generado (tiene su propia declaración)"
+  },
+  "identification": {
+    "nit": "NIT",
+    "cc": "C.C.",
+    "ce": "C.E.",
+    "pasaporte": "Pasaporte",
+    "ti": "T.I.",
+    "rc": "R.C.",
+    "te": "T.E.",
+    "die": "DIE",
+    "pep": "PEP",
+    "ppt": "PPT"
+  },
+  "exogena": {
+    "intro": "Los papeles de trabajo de la información exógena del año gravable, por tercero, sacados de las facturas emitidas y de la cartera al 31 de diciembre. No es el archivo XML de la DIAN: con ellos se diligencia el prevalidador.",
+    "formatsLabel": "Formatos de exógena",
+    "formats": {
+      "1001": {
+        "tab": "1001 · Pagos",
+        "title": "Formato 1001 · Pagos o abonos en cuenta y retenciones practicadas, por cuenta y concepto"
+      },
+      "1003": {
+        "tab": "1003 · Retenciones",
+        "title": "Formato 1003 · Retenciones en la fuente que le practicaron a la empresa"
+      },
+      "1005": {
+        "tab": "1005 · IVA descontable",
+        "title": "Formato 1005 · IVA descontable, por proveedor"
+      },
+      "1006": {
+        "tab": "1006 · IVA generado",
+        "title": "Formato 1006 · IVA generado e impuesto al consumo, por cliente"
+      },
+      "1007": {
+        "tab": "1007 · Ingresos",
+        "title": "Formato 1007 · Ingresos recibidos, por cuenta y concepto"
+      },
+      "1008": {
+        "tab": "1008 · Por cobrar",
+        "title": "Formato 1008 · Cuentas por cobrar al 31 de diciembre"
+      },
+      "1009": {
+        "tab": "1009 · Por pagar",
+        "title": "Formato 1009 · Cuentas por pagar al 31 de diciembre"
+      }
+    },
+    "year": "Año gravable",
+    "threshold": "Cuantías menores de",
+    "thresholdPlaceholder": "$ 0 (todos)",
+    "thresholdInvalid": "Escribe un valor en pesos.",
+    "fileName": "Formato {{format}}",
+    "empty": "Ningún tercero para el formato {{format}} en {{year}}.",
+    "total": "Total",
+    "noMunicipality": "Sin municipio",
+    "missingMunicipality": "{{count}} terceros de este formato no tienen municipio: complétalos para descargar el formato.",
+    "missingMunicipalityLink": "Ver terceros sin municipio",
+    "missingConcepts": {
+      "one": "1 fila no tiene concepto DIAN: queda en blanco en el formato.",
+      "other": "{{count}} filas no tienen concepto DIAN: quedan en blanco en el formato."
+    },
+    "missingConceptsLink": "Completar la tabla de conceptos",
+    "columns": {
+      "concept": "Concepto",
+      "account": "Cuenta",
+      "identification": "Identificación",
+      "name": "Nombre o razón social",
+      "municipality": "Municipio"
+    },
+    "values": {
+      "payment": "Pago o abono",
+      "vat_cost": "IVA mayor valor del costo",
+      "withholding": "Retención en la fuente",
+      "vat_withholding": "ReteIVA",
+      "base": "Base",
+      "deductible_vat": "IVA descontable",
+      "returned_vat": "IVA por devoluciones",
+      "generated_vat": "IVA generado",
+      "consumption_tax": "Impoconsumo",
+      "gross_income": "Ingresos brutos",
+      "returns": "Devoluciones y descuentos",
+      "balance": "Saldo al 31/12"
+    },
+    "documentTypes": {
+      "11": "R.C.",
+      "12": "T.I.",
+      "13": "C.C.",
+      "21": "T.E.",
+      "22": "C.E.",
+      "31": "NIT",
+      "41": "Pasaporte",
+      "42": "DIE",
+      "43": "Sin identificación",
+      "47": "PEP",
+      "48": "PPT",
+      "50": "NIT extranjero",
+      "91": "NUIP"
+    }
+  }
+}

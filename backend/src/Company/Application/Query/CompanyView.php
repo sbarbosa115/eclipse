@@ -30,6 +30,8 @@ final readonly class CompanyView
         public int $resolutionWarningDays = 30,
         /** ATOM date-time of the owner's confirmation of the DIAN permission to invoice manually, or null. */
         public ?string $manualInvoicingConfirmedAt = null,
+        public string $countryCode = 'CO',
+        public ?string $municipalityCode = null,
     ) {
     }
 }

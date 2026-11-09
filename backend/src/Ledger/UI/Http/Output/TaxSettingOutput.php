@@ -30,6 +30,8 @@ final readonly class TaxSettingOutput
         public bool $standard,
         /** A document, a product or the company uses it: it can only be deactivated. */
         public bool $inUse,
+        /** False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD §4.1). */
+        public bool $accountPostable = true,
     ) {
     }
 
@@ -37,6 +39,6 @@ final readonly class TaxSettingOutput
     {
         $t = $v->tax;
 
-        return new self($t->id, $t->name, $t->taxClass, $t->kind, $t->calculation, $t->rate, $t->salesAccountId, $v->salesAccount?->code, $v->salesAccount?->name, $t->purchaseAccountId, $v->purchaseAccount?->code, $v->purchaseAccount?->name, $t->validFrom, $t->validTo, $t->active, $t->standard, $v->inUse);
+        return new self($t->id, $t->name, $t->taxClass, $t->kind, $t->calculation, $t->rate, $t->salesAccountId, $v->salesAccount?->code, $v->salesAccount?->name, $t->purchaseAccountId, $v->purchaseAccount?->code, $v->purchaseAccount?->name, $t->validFrom, $t->validTo, $t->active, $t->standard, $v->inUse, ($v->salesAccount->postable ?? true) && ($v->purchaseAccount->postable ?? true));
     }
 }

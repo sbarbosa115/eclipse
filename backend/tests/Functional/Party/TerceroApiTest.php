@@ -35,7 +35,7 @@ final class TerceroApiTest extends ApiTestCase
             'identification_number' => self::NIT,
             'business_name' => 'Distribuciones Andina S.A.S.',
             'trade_name' => 'Andina',
-            'city' => 'Bogotá',
+            'municipality_code' => '11001',
             'address' => 'Calle 1 # 2-3',
             'phones' => [['indicative' => '57', 'number' => '6011234567', 'extension' => '12']],
             'billing_contact_name' => 'Laura Gómez',
@@ -61,6 +61,11 @@ final class TerceroApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(201, 'The full form creates a tercero: '.json_encode($body));
 
         return $body;
+    }
+
+    private function em(): EntityManagerInterface
+    {
+        return static::getContainer()->get(EntityManagerInterface::class);
     }
 
     /** @param array<mixed> $session */
@@ -136,6 +141,96 @@ final class TerceroApiTest extends ApiTestCase
 
         $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['email' => 'not-an-email']));
         self::assertSame('email', $body['violations'][0]['field']);
+    }
+
+    public function testAColombianTerceroNeedsAMunicipalityThatExistsAndItsNameBecomesTheCity(): void
+    {
+        $this->signUp();
+
+        $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['municipality_code' => null]));
+        self::assertResponseStatusCodeSame(422, 'OBS-4: Colombia without a municipality is refused.');
+        self::assertSame(['municipality_code', 'Elige el municipio.'], [$body['violations'][0]['field'], $body['violations'][0]['message']]);
+
+        $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['municipality_code' => '99999']));
+        self::assertResponseStatusCodeSame(422, 'A code that is not in DIVIPOLA is refused.');
+        self::assertSame('municipality_code', $body['violations'][0]['field']);
+
+        $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['municipality_code' => '123']));
+        self::assertSame('municipality_code', $body['violations'][0]['field'], 'Not five digits.');
+
+        $t = $this->create(['municipality_code' => '05001', 'city' => 'Cualquiera']);
+        self::assertSame(['CO', '05001', 'MEDELLÍN', '05', 'ANTIOQUIA', 'MEDELLÍN'], [$t['country_code'], $t['municipality_code'], $t['municipality_name'], $t['department_code'], $t['department_name'], $t['city']], 'The city is the municipality name on save; country defaults to CO.');
+
+        $list = $this->getJson('/api/v1/terceros');
+        self::assertSame(['MEDELLÍN', 'ANTIOQUIA', '05001'], [$list['items'][0]['municipality_name'], $list['items'][0]['department_name'], $list['items'][0]['municipality_code']], 'The summary carries the names too.');
+
+        $t = $this->sendJson('PUT', '/api/v1/terceros/'.$t['id'], $this->payload(['municipality_code' => '11001']));
+        self::assertSame(['11001', 'BOGOTÁ, D.C.'], [$t['municipality_code'], $t['city']], 'Updating re-fills the city.');
+        $this->sendJson('PUT', '/api/v1/terceros/'.$t['id'], $this->payload(['municipality_code' => null]));
+        self::assertResponseStatusCodeSame(422, 'Update has the same rule.');
+    }
+
+    public function testATerceroAbroadNeedsACityAndHasNoMunicipality(): void
+    {
+        $this->signUp();
+
+        $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['country_code' => 'US', 'municipality_code' => null]));
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['city', 'Escribe la ciudad.'], [$body['violations'][0]['field'], $body['violations'][0]['message']]);
+
+        $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['country_code' => 'usa']));
+        self::assertSame('country_code', $body['violations'][0]['field']);
+
+        $t = $this->create(['country_code' => 'US', 'municipality_code' => '11001', 'city' => 'Miami']);
+        self::assertSame(['US', null, 'Miami', null], [$t['country_code'], $t['municipality_code'], $t['city'], $t['municipality_name']], 'A foreign tercero keeps its typed city and drops any municipality.');
+
+        $quick = $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '890903938', 'business_name' => 'Foreign Inc', 'email' => 'f@f.com', 'roles' => ['proveedor'], 'country_code' => 'US']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('city', $quick['violations'][0]['field'], 'Quick-create follows the same rules.');
+    }
+
+    public function testQuickCreateNeedsTheMunicipalityToo(): void
+    {
+        $this->signUp();
+        $body = $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '890903938', 'business_name' => 'X', 'email' => 'x@x.co', 'roles' => ['cliente']]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('municipality_code', $body['violations'][0]['field']);
+
+        $ok = $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '890903938', 'business_name' => 'X', 'email' => 'x@x.co', 'roles' => ['cliente'], 'municipality_code' => '05001']);
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame(['MEDELLÍN', 'ANTIOQUIA'], [$ok['municipality_name'], $ok['department_name']]);
+    }
+
+    public function testTercerosWithoutMunicipalityAreListedByTheFilter(): void
+    {
+        $this->signUp();
+        $this->create();
+        $this->create(['identification_number' => '890903938', 'country_code' => 'US', 'municipality_code' => null, 'city' => 'Miami']);
+        $old = $this->create(['identification_number' => '860002964']);
+        // A tercero created before this release: no municipality (the migration left it null).
+        $this->em()->getConnection()->update('tercero', ['municipality_code' => null], ['id' => Uuid::fromString($old['id'])->toBinary()]);
+        $this->em()->clear();
+
+        $missing = $this->getJson('/api/v1/terceros?missing_municipality=1');
+        self::assertSame([$old['id']], array_column($missing['items'], 'id'), 'Only the Colombian terceros without a municipality; the foreign one is complete.');
+        self::assertSame(1, $missing['total']);
+        self::assertNull($missing['items'][0]['municipality_code']);
+        self::assertSame(3, $this->getJson('/api/v1/terceros')['total']);
+
+        $this->sendJson('PUT', '/api/v1/terceros/'.$old['id'], $this->payload(['identification_number' => '860002964', 'municipality_code' => '05001']));
+        self::assertSame(0, $this->getJson('/api/v1/terceros?missing_municipality=1')['total'], 'Saving it with a municipality takes it off the list.');
+    }
+
+    public function testTheMissingMunicipalityFilterOnlyCountsTheSignedInCompany(): void
+    {
+        $this->signUp('ana@a.co');
+        $mine = $this->create();
+        $this->em()->getConnection()->update('tercero', ['municipality_code' => null], ['id' => Uuid::fromString($mine['id'])->toBinary()]);
+        $this->signOut();
+        $this->signUp('beto@b.co', '800197268', 'B S.A.S.');
+
+        self::assertSame(0, $this->getJson('/api/v1/terceros?missing_municipality=1')['total'], 'Another company\'s terceros are not mine to list.');
     }
 
     public function testTheSameIdentificationTwiceIsRefusedOnTheField(): void
@@ -217,16 +312,16 @@ final class TerceroApiTest extends ApiTestCase
         $company = $this->companyId($this->signUp());
         $this->signOut();
         $other = $this->companyId($this->signUp('beto@b.co', '890903938', 'B'));
-        $receivable = $this->chartAccount($company, '130505', 'Nacionales', AccountNature::Debit, '1305');
-        $payable = $this->chartAccount($company, '220505', 'Proveedores nacionales', AccountNature::Credit, '2205');
+        $receivable = $this->chartAccount($company, '13050501', 'Nacionales', AccountNature::Debit, '130505');
+        $payable = $this->chartAccount($company, '22050501', 'Proveedores nacionales', AccountNature::Credit, '220505');
         $group = $this->chartAccount($company, '1305', 'Clientes', AccountNature::Debit, '13');
-        $foreign = $this->chartAccount($other, '130505', 'Nacionales de B', AccountNature::Debit, '1305');
+        $foreign = $this->chartAccount($other, '13050501', 'Nacionales de B', AccountNature::Debit, '130505');
         $this->signOut();
         $this->signIn('ana@acme.co');
 
         $ok = $this->create(['receivable_account_id' => $receivable->id()->toRfc4122(), 'payable_account_id' => $payable->id()->toRfc4122()]);
-        self::assertSame('130505', $ok['receivable_account']['code']);
-        self::assertSame('220505', $ok['payable_account']['code']);
+        self::assertSame('13050501', $ok['receivable_account']['code'], 'An auxiliar: 130505 has one, so it takes no movements (observations §4.1).');
+        self::assertSame('22050501', $ok['payable_account']['code']);
 
         foreach ([[$group, 'receivable_account_id'], [$foreign, 'receivable_account_id'], [$payable, 'receivable_account_id'], [$receivable, 'payable_account_id']] as [$account, $field]) {
             $body = $this->sendJson('POST', '/api/v1/terceros', $this->payload(['identification_number' => '890903938', $field => $account->id()->toRfc4122()]));
@@ -243,6 +338,7 @@ final class TerceroApiTest extends ApiTestCase
             'identification_type' => 'nit',
             'identification_number' => self::NIT,
             'business_name' => 'Cliente Rápido S.A.S.',
+            'municipality_code' => '05001',
             'email' => 'rapido@cliente.co',
             'roles' => ['cliente'],
         ]);
@@ -253,10 +349,10 @@ final class TerceroApiTest extends ApiTestCase
         self::assertSame(['cliente'], $body['roles']);
         self::assertTrue($body['active']);
 
-        $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '890903938', 'business_name' => 'X', 'roles' => ['cliente']]);
+        $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '890903938', 'business_name' => 'X', 'municipality_code' => '05001', 'roles' => ['cliente']]);
         self::assertResponseStatusCodeSame(422, 'The e-mail is required to quick-create.');
 
-        $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => self::NIT, 'business_name' => 'X', 'email' => 'x@x.co', 'roles' => ['cliente']]);
+        $this->sendJson('POST', '/api/v1/terceros/quick', ['person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => self::NIT, 'business_name' => 'X', 'municipality_code' => '05001', 'email' => 'x@x.co', 'roles' => ['cliente']]);
         self::assertResponseStatusCodeSame(422);
     }
 
@@ -370,6 +466,7 @@ final class TerceroApiTest extends ApiTestCase
         self::assertStringContainsString('attachment', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
         self::assertSame('facturas@andina.co', $body['tercero']['email']);
         self::assertSame('Pedro Ruiz', $body['tercero']['contacts'][0]['name']);
+        self::assertSame(['CO', '11001', 'BOGOTÁ, D.C.'], [$body['tercero']['country_code'], $body['tercero']['municipality_code'], $body['tercero']['municipality_name']], 'Ley 1581: the export carries the place too.');
         self::assertNotEmpty($body['exported_at']);
 
         $log = static::getContainer()->get(EntityManagerInterface::class)->getRepository(AuditLog::class)->findOneBy(['action' => 'tercero.personal_data_exported']);

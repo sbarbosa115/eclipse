@@ -16,4 +16,11 @@ interface ProductRepository
     public function add(Product $product): void;
 
     public function remove(Product $product): void;
+
+    /**
+     * The company's products whose revenue or expense account is this one (observations PRD §4.1: they move when it is subdivided).
+     *
+     * @return list<Product>
+     */
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array;
 }

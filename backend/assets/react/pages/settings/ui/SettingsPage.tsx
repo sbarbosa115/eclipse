@@ -3,6 +3,7 @@ import {useTranslation} from '@/shared/i18n';
 import {PageHeader, TabPanel, Tabs} from '@/shared/ui';
 import {ChartOfAccounts} from '@/widgets/chart-of-accounts';
 import {CompanySettings} from '@/widgets/company-settings';
+import {ExogenaConcepts} from '@/widgets/exogena-concepts';
 import {PaymentMethodSettings} from '@/widgets/payment-method-settings';
 import {PostingRules} from '@/widgets/posting-rules';
 import {ResolutionSettings} from '@/widgets/resolution-settings';
@@ -17,6 +18,7 @@ const TABS = [
   'paymentMethods',
   'chart',
   'postingRules',
+  'exogena',
 ] as const;
 type Tab = (typeof TABS)[number];
 
@@ -28,6 +30,7 @@ const PANELS: Record<Tab, () => React.JSX.Element> = {
   paymentMethods: PaymentMethodSettings,
   chart: ChartOfAccounts,
   postingRules: PostingRules,
+  exogena: ExogenaConcepts,
 };
 
 /**

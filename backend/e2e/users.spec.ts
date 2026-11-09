@@ -329,6 +329,10 @@ test('ACC-15 · a forgotten password is reset by e-mail', async ({
 
   await page.goto('/ingresar');
   await page.getByRole('link', {name: '¿Olvidaste tu contraseña?'}).click();
+  // The sign-in page has a field with the same label: wait for the reset page before typing.
+  await expect(
+    page.getByRole('heading', {name: '¿Olvidaste tu contraseña?'}),
+  ).toBeVisible();
   await page.getByLabel('Correo electrónico').fill(email);
   await page.getByRole('button', {name: 'Enviar enlace'}).click();
   await expect(

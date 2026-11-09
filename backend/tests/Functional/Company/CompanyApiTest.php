@@ -29,6 +29,8 @@ final class CompanyApiTest extends CatalogTestCase
             'check_digit' => null,
             'address' => 'Calle 1 # 2-3',
             'city' => 'Bogotá',
+            'country_code' => 'CO',
+            'municipality_code' => '11001',
             'phone' => '6011234567',
             'email' => 'contacto@acme.co',
             'vat_regime' => 'responsable',
@@ -72,7 +74,7 @@ final class CompanyApiTest extends CatalogTestCase
         $saved = $this->sendJson('PUT', '/api/v1/company', $this->profile(['default_charge_tax_id' => $charge, 'default_withholding_tax_id' => $withholding]));
 
         self::assertResponseIsSuccessful();
-        self::assertSame(['Acme Ltda.', 'Acme', '900123456', 'Calle 1 # 2-3', 'Bogotá', '6011234567', 'contacto@acme.co', $charge, $withholding, ['O-13', 'O-15']], [$saved['legal_name'], $saved['trade_name'], $saved['identification_number'], $saved['address'], $saved['city'], $saved['phone'], $saved['email'], $saved['default_charge_tax_id'], $saved['default_withholding_tax_id'], $saved['fiscal_responsibilities']], 'Dots in the NIT are dropped; everything else is stored as typed.');
+        self::assertSame(['Acme Ltda.', 'Acme', '900123456', 'Calle 1 # 2-3', 'BOGOTÁ, D.C.', '6011234567', 'contacto@acme.co', $charge, $withholding, ['O-13', 'O-15']], [$saved['legal_name'], $saved['trade_name'], $saved['identification_number'], $saved['address'], $saved['city'], $saved['phone'], $saved['email'], $saved['default_charge_tax_id'], $saved['default_withholding_tax_id'], $saved['fiscal_responsibilities']], 'Dots in the NIT are dropped; everything else is stored as typed.');
         self::assertSame($saved, $this->getJson('/api/v1/company'), 'What PUT answers is what GET reads back.');
         self::assertSame('Acme Ltda.', $this->getJson('/api/v1/me')['company_name'], 'The session header follows the razón social.');
         $rows = $this->audit($companyId, 'company.updated');
@@ -101,6 +103,36 @@ final class CompanyApiTest extends CatalogTestCase
         $saved = $this->sendJson('PUT', '/api/v1/company', $this->profile(['identification_type' => 'cc', 'identification_number' => '1020304050', 'check_digit' => '7']));
 
         self::assertSame(['cc', '1020304050', null], [$saved['identification_type'], $saved['identification_number'], $saved['check_digit']]);
+    }
+
+    public function testAColombianCompanyNeedsAMunicipalityAndItsNameBecomesTheCity(): void
+    {
+        $this->signUpOwner();
+        $before = $this->getJson('/api/v1/company');
+        self::assertSame(['CO', null], [$before['country_code'], $before['municipality_code']], 'A company signed up before this release has none yet.');
+
+        $body = $this->sendJson('PUT', '/api/v1/company', $this->profile(['municipality_code' => null]));
+        self::assertResponseStatusCodeSame(422, 'Required on the next save.');
+        self::assertSame(['municipality_code', 'Elige el municipio.'], [$body['violations'][0]['field'], $body['violations'][0]['message']]);
+
+        $this->sendJson('PUT', '/api/v1/company', $this->profile(['municipality_code' => '99999']));
+        self::assertResponseStatusCodeSame(422, 'It must exist in DIVIPOLA.');
+
+        $saved = $this->sendJson('PUT', '/api/v1/company', $this->profile(['municipality_code' => '05001', 'city' => 'x']));
+        self::assertSame(['CO', '05001', 'MEDELLÍN', 'MEDELLÍN', '05', 'ANTIOQUIA'], [$saved['country_code'], $saved['municipality_code'], $saved['city'], $saved['municipality_name'], $saved['department_code'], $saved['department_name']]);
+        self::assertSame($saved, $this->getJson('/api/v1/company'), 'GET answers the same names.');
+    }
+
+    public function testACompanyAbroadNeedsACityAndNoMunicipality(): void
+    {
+        $this->signUpOwner();
+
+        $body = $this->sendJson('PUT', '/api/v1/company', $this->profile(['country_code' => 'EC', 'municipality_code' => null, 'city' => null]));
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['city', 'Escribe la ciudad.'], [$body['violations'][0]['field'], $body['violations'][0]['message']]);
+
+        $saved = $this->sendJson('PUT', '/api/v1/company', $this->profile(['country_code' => 'EC', 'municipality_code' => '11001', 'city' => 'Quito']));
+        self::assertSame(['EC', null, 'Quito', null], [$saved['country_code'], $saved['municipality_code'], $saved['city'], $saved['municipality_name']]);
     }
 
     public function testTheNitCannotBeAnotherCompanysAndThatIsNotLeaked(): void

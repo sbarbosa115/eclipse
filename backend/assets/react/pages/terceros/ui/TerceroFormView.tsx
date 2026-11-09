@@ -9,6 +9,7 @@ import {
   type Tercero,
   type TerceroForm,
 } from '@/entities/tercero';
+import {PlaceFields, placeLabels} from '@/entities/municipality';
 import {useTranslation} from '@/shared/i18n';
 import {
   ActionButton,
@@ -117,9 +118,12 @@ export function TerceroFormView({
             <Field label={t('terceros.form.fields.tradeName')} optional>
               <input {...text('trade_name')} maxLength={200} />
             </Field>
-            <Field label={t('terceros.form.fields.city')} optional>
-              <input {...text('city')} maxLength={100} />
-            </Field>
+            <PlaceFields
+              value={form}
+              errors={errors}
+              onChange={onChange}
+              labels={placeLabels(t, 'terceros.geo')}
+            />
             <Field label={t('terceros.form.fields.address')} optional>
               <input {...text('address')} maxLength={200} />
             </Field>

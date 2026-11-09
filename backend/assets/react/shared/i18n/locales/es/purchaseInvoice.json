@@ -50,7 +50,7 @@
     "supplierNumberHint": "El número que trae la factura del proveedor; necesario para emitir.",
     "dueDate": "Fecha de vencimiento",
     "statusLine": "Estado: {{status}}",
-    "readOnly": "Esta factura ya fue emitida: no se puede modificar. Para corregirla, anúlala y registra una nueva.",
+    "readOnly": "Esta factura ya fue emitida: no se puede modificar.",
     "voidedBecause": "Anulada: {{reason}}",
     "paid": "Pagado {{paid}} de {{total}}; saldo {{balance}}.",
     "downloads": "Archivos del proveedor",
@@ -71,6 +71,23 @@
     "reason": "Motivo de la anulación",
     "confirm": "Anular factura",
     "reasonRequired": "Escribe por qué se anula la factura."
+  },
+  "correct": {
+    "banner": "Una factura emitida no se edita. Corregir la anula y abre una copia editable.",
+    "action": "Corregir",
+    "paidFirst": "Para corregir esta factura, anula primero los recibos de pago que la pagan.",
+    "title": "Corregir la factura {{number}}",
+    "body": "La factura se anula con un comprobante de reversión de hoy y se abre un borrador igual, con el mismo número del proveedor, las mismas líneas, formas de pago y archivos. Corrige el borrador y emítelo de nuevo.",
+    "reason": "Qué se corrige",
+    "confirm": "Anular y corregir",
+    "reasonRequired": "Escribe qué se corrige.",
+    "done": "Factura {{number}} anulada. Corrige este borrador y emítelo.",
+    "correctedBy": "Esta factura se anuló para corregirla.",
+    "openReplacement": "Ver la factura que la reemplaza",
+    "corrects": "Esta factura corrige una factura anulada.",
+    "openOriginal": "Ver la factura original",
+    "listHint": "Corregida",
+    "listHintTitle": "Ver la factura que la reemplaza"
   },
   "delete": {
     "title": "Eliminar el borrador",
@@ -94,6 +111,7 @@
     "attachment_not_found": "No encontramos este archivo.",
     "forbidden": "Tu rol no puede modificar facturas de compra.",
     "validation_failed": "Revisa los campos marcados.",
-    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+    "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "account_has_auxiliaries": "Una de las cuentas de este documento tiene auxiliares: los movimientos van a una de ellas. Revisa las reglas de contabilización o la cuenta elegida."
   }
 }

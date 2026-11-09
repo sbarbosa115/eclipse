@@ -36,7 +36,7 @@ export function emptyLine(): DraftLine {
     unit_price: '',
     discount: '',
     charge_tax_id: null,
-    withholding_tax_id: null,
+    withholdings: [],
   };
 }
 
@@ -174,6 +174,16 @@ export interface ProductForLine {
   withholding_tax_id?: string | null;
 }
 
+/** Purchases buy by product or by expense account and keep the price typed: the invoice and the order. */
+export function isPurchase(kind: DocumentKind): boolean {
+  return kind === 'purchase_invoice' || kind === 'purchase_order';
+}
+
+/** Only the two invoices carry formas de pago. */
+export function hasPayments(kind: DocumentKind): boolean {
+  return kind === 'sales_invoice' || kind === 'purchase_invoice';
+}
+
 /**
  * Fills a line from the product chosen: its name, its taxes and, on a sale or a quotation, its price net of IVA
  * (§4.3: with an IVA-included price the line total is the list price). A purchase keeps the price typed: the
@@ -190,12 +200,14 @@ export function applyProduct(
     account: null,
     description: product.name,
     quantity: line.quantity.trim() === '' ? '1' : line.quantity,
-    unit_price:
-      kind === 'purchase_invoice'
-        ? line.unit_price
-        : trimDecimal(product.unit_price_net_of_tax),
+    unit_price: isPurchase(kind)
+      ? line.unit_price
+      : trimDecimal(product.unit_price_net_of_tax),
     charge_tax_id: product.charge_tax_id ?? null,
-    withholding_tax_id: product.withholding_tax_id ?? null,
+    // A product has one default retención (§4.2: several per product is out of scope).
+    withholdings: product.withholding_tax_id
+      ? [product.withholding_tax_id]
+      : [],
   };
 }
 
@@ -338,7 +350,7 @@ export function validateDraft(
       if (!line.account.id) errors[`${at}.account`] = message('account');
     } else if (!line.product) {
       errors[`${at}.product`] = message(
-        kind === 'purchase_invoice' ? 'productOrAccount' : 'product',
+        isPurchase(kind) ? 'productOrAccount' : 'product',
       );
     }
     const quantity = decimalWithin(line.quantity, FOUR_DECIMALS);
@@ -363,7 +375,7 @@ export function validateDraft(
     }
   }
 
-  if (kind === 'quotation') return errors;
+  if (!hasPayments(kind)) return errors;
 
   draft.payments.forEach((payment, index) => {
     const at = `payments.${index}`;

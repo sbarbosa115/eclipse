@@ -39,6 +39,12 @@ final class Numbering
         return $this->take($companyId, SeriesKind::SupplierPayment);
     }
 
+    /** Órdenes de compra (series OC, observations PRD §4.8). */
+    public function purchaseOrder(Uuid $companyId): DocumentNumber
+    {
+        return $this->take($companyId, SeriesKind::PurchaseOrder);
+    }
+
     /** The internal consecutive every sales invoice also carries (§4.8). */
     public function salesInvoiceInternal(Uuid $companyId): DocumentNumber
     {

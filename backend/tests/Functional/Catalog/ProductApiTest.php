@@ -447,7 +447,6 @@ final class ProductApiTest extends ApiTestCase
             'company_id' => $this->company->toBinary(), 'position' => 1, 'product_id' => Uuid::fromString($productId)->toBinary(), 'description' => 'Línea',
             'quantity' => 1, 'unit_price' => 1, 'discount' => 0,
             'charge_name' => 'Sin IVA', 'charge_kind' => 'none', 'charge_calculation' => 'percentage', 'charge_value' => 0,
-            'withholding_name' => 'Sin retención', 'withholding_kind' => 'none', 'withholding_calculation' => 'percentage', 'withholding_value' => 0,
             'document_id' => Uuid::v7()->toBinary(),
         ]);
         $db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');

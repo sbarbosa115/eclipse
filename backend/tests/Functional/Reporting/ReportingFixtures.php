@@ -40,6 +40,7 @@ trait ReportingFixtures
             'identification_type' => 'nit',
             'identification_number' => $nit,
             'business_name' => $name,
+            'municipality_code' => '11001',
             'email' => 'facturas@cliente.co',
             'roles' => ['cliente'],
         ]);

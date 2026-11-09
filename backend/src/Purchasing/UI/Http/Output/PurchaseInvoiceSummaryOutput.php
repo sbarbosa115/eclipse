@@ -22,11 +22,13 @@ final readonly class PurchaseInvoiceSummaryOutput
         public string $paidAmount,
         /** What is still owed: total neto − paid; 0 on a voided invoice. */
         public string $balance,
+        /** The invoice that corrects this voided one (Corregir, observations PRD §4.6): the list's "Corregida" hint links to it. */
+        public ?string $correctedById = null,
     ) {
     }
 
     public static function of(PurchaseInvoiceSummary $s): self
     {
-        return new self($s->id, $s->status, $s->number, $s->terceroId, $s->terceroName, $s->supplierInvoiceNumber, $s->issueDate, $s->dueDate, $s->netTotal, $s->paidAmount, $s->balance);
+        return new self($s->id, $s->status, $s->number, $s->terceroId, $s->terceroName, $s->supplierInvoiceNumber, $s->issueDate, $s->dueDate, $s->netTotal, $s->paidAmount, $s->balance, $s->correctedById);
     }
 }

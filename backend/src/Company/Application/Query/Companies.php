@@ -39,6 +39,8 @@ final class Companies
             $c->resolutionWarningNumbers(),
             $c->resolutionWarningDays(),
             $c->manualInvoicingConfirmedAt()?->format(\DATE_ATOM),
+            $c->countryCode(),
+            $c->municipalityCode(),
         );
     }
 }

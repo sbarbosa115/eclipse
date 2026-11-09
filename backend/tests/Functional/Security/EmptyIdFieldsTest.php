@@ -39,7 +39,7 @@ final class EmptyIdFieldsTest extends ApiTestCase
         $company = $this->getJson('/api/v1/company');
         unset($company['id'], $company['logo_id']);
 
-        $saved = $this->sendJson('PUT', '/api/v1/company', ['default_charge_tax_id' => '', 'default_withholding_tax_id' => ''] + $company);
+        $saved = $this->sendJson('PUT', '/api/v1/company', ['default_charge_tax_id' => '', 'default_withholding_tax_id' => '', 'municipality_code' => '11001'] + $company);
 
         self::assertResponseIsSuccessful();
         self::assertNull($saved['default_charge_tax_id']);
@@ -50,7 +50,7 @@ final class EmptyIdFieldsTest extends ApiTestCase
         $this->signUp();
         $tercero = [
             'person_type' => 'empresa', 'identification_type' => 'nit', 'identification_number' => '800197268',
-            'business_name' => 'Andina S.A.S.', 'roles' => ['cliente'],
+            'business_name' => 'Andina S.A.S.', 'municipality_code' => '11001', 'roles' => ['cliente'],
             'receivable_account_id' => '', 'payable_account_id' => '',
             'contacts' => [['id' => '', 'name' => 'Pedro Ruiz']],
         ];

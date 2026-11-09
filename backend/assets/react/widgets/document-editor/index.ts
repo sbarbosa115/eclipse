@@ -9,6 +9,8 @@ export {
   emptyDraft,
   emptyLine,
   hasErrors,
+  hasPayments,
+  isPurchase,
   isBlankLine,
   moveLine,
   paymentBalance,
@@ -29,6 +31,7 @@ export {
   type LineAmounts,
   type TaxRateInfo,
   type TotalsPreview,
+  type WithholdingByTax,
 } from './model/totals';
 export type {
   Attachment,
@@ -46,6 +49,7 @@ export {
   draftLineFrom,
   editorErrorsFrom,
   linesToSend,
+  withholdingsInput,
   type SavedLine,
 } from './lib/mapping';
 export {DocumentEditorDemo} from './ui/DocumentEditorDemo';

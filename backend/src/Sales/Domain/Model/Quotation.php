@@ -214,7 +214,9 @@ class Quotation implements CompanyOwned
         $this->assertDraft();
         $this->lines->clear();
         foreach ($lines as $i => $line) {
-            $this->lines->add(new QuotationLine($this, $this->companyId, $i + 1, $line->productId, trim($line->description), $line->quantity, $line->unitPrice, $line->discount, $line->chargeTax, $line->withholdingTax));
+            $added = new QuotationLine($this, $this->companyId, $i + 1, $line->productId, trim($line->description), $line->quantity, $line->unitPrice, $line->discount, $line->chargeTax, $line->withholdings);
+            $added->useProductCode($line->productCode);
+            $this->lines->add($added);
         }
         $this->recomputeTotals($this->lines);
     }

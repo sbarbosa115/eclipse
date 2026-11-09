@@ -140,6 +140,7 @@ describe('Plan de cuentas', () => {
       code: '11100502',
       name: 'Bancolombia ahorros',
       usable_on_purchases: false,
+      move_references: true,
     });
   });
 
@@ -229,5 +230,196 @@ describe('Plan de cuentas', () => {
     expect(
       screen.getByRole('button', {name: 'Reintentar'}),
     ).toBeInTheDocument();
+  });
+
+  describe('subdividing an account in use', () => {
+    const rule = {
+      concept: 'ingreso',
+      account_id: 'id-413595',
+      account_code: '413595',
+      account_name: 'VENTA DE OTROS PRODUCTOS',
+      allowed_prefixes: ['41'],
+      account_postable: true,
+    };
+    const uses = {
+      'GET /posting-rules': [200, {items: [rule]}] as [number, unknown],
+      'GET /settings/taxes': [
+        200,
+        {
+          items: [
+            {
+              id: 't1',
+              name: 'IVA 19 %',
+              sales_account_id: 'id-240805',
+              purchase_account_id: 'id-240810',
+            },
+          ],
+        },
+      ] as [number, unknown],
+      'GET /settings/payment-methods': [200, {items: []}] as [number, unknown],
+    };
+
+    const openAdd = async (code: string) => {
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: `Agregar subcuenta bajo ${code}`,
+        }),
+      );
+      return screen.getByRole('dialog');
+    };
+
+    it('warns that the account stops taking movements and says what moves to the new auxiliar', async () => {
+      const api = fakeApi({
+        'GET /me': me('accountant'),
+        'GET /accounts': [
+          200,
+          page([account('413595', 'VENTA DE OTROS PRODUCTOS')]),
+        ],
+        ...uses,
+        'POST /accounts': (body) => [
+          201,
+          {
+            ...account('41359501', (body as {name: string}).name),
+            moved: {
+              posting_rules: ['ingreso'],
+              taxes: 0,
+              payment_methods: 0,
+              products: 2,
+              terceros: 0,
+            },
+          },
+        ],
+      });
+      renderChart();
+
+      const dialog = await openAdd('413595');
+
+      expect(
+        await within(dialog).findByText(
+          '413595 deja de recibir movimientos: van a sus auxiliares.',
+          {exact: false},
+        ),
+      ).toBeInTheDocument();
+      await userEvent.type(within(dialog).getByLabelText('Código'), '01');
+      expect(
+        within(dialog).getByText(
+          'Lo que la usa pasará a 41359501: regla Ingresos por ventas y los productos y terceros que la usen.',
+          {exact: false},
+        ),
+      ).toBeInTheDocument();
+      expect(
+        within(dialog).getByLabelText('Mover a la nueva auxiliar'),
+      ).toBeChecked();
+      await userEvent.type(
+        within(dialog).getByLabelText('Nombre'),
+        'Ventas gravadas',
+      );
+      await userEvent.click(
+        within(dialog).getByRole('button', {name: 'Guardar'}),
+      );
+
+      expect(
+        await screen.findByText(
+          'Cuenta 41359501 creada. Pasaron a 41359501: regla Ingresos por ventas y 2 productos.',
+        ),
+      ).toBeInTheDocument();
+      expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+        move_references: true,
+      });
+    });
+
+    it('leaves the references where they are when told not to move them', async () => {
+      const api = fakeApi({
+        'GET /me': me('owner'),
+        'GET /accounts': [
+          200,
+          page([account('413595', 'VENTA DE OTROS PRODUCTOS')]),
+        ],
+        ...uses,
+        'POST /accounts': [201, account('41359501', 'Ventas gravadas')],
+      });
+      renderChart();
+
+      const dialog = await openAdd('413595');
+      await userEvent.click(
+        within(dialog).getByLabelText('Mover a la nueva auxiliar'),
+      );
+      expect(
+        within(dialog).getByText(
+          'Sin mover, 413595 queda marcada «Sin auxiliar por defecto» hasta que cambies a mano lo que la usa.',
+          {exact: false},
+        ),
+      ).toBeInTheDocument();
+      await userEvent.type(within(dialog).getByLabelText('Código'), '01');
+      await userEvent.type(
+        within(dialog).getByLabelText('Nombre'),
+        'Ventas gravadas',
+      );
+      await userEvent.click(
+        within(dialog).getByRole('button', {name: 'Guardar'}),
+      );
+
+      expect(
+        await screen.findByText('Cuenta 41359501 creada.'),
+      ).toBeInTheDocument();
+      expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+        move_references: false,
+      });
+    });
+
+    it('does not warn under an account that already has auxiliares', async () => {
+      const api = fakeApi({
+        'GET /me': me('accountant'),
+        'GET /accounts': [
+          200,
+          page([account('110505', 'CAJA GENERAL', {postable: false})]),
+        ],
+        ...uses,
+        'POST /accounts': [201, account('11050502', 'Caja 2')],
+      });
+      renderChart();
+
+      const dialog = await openAdd('110505');
+
+      expect(within(dialog).queryByText(/deja de recibir/)).toBeNull();
+      expect(
+        within(dialog).queryByLabelText('Mover a la nueva auxiliar'),
+      ).toBeNull();
+      await userEvent.type(within(dialog).getByLabelText('Código'), '02');
+      await userEvent.type(within(dialog).getByLabelText('Nombre'), 'Caja 2');
+      await userEvent.click(
+        within(dialog).getByRole('button', {name: 'Guardar'}),
+      );
+      await screen.findByText('Cuenta 11050502 creada.');
+      expect(
+        api.calls.find((c) => c.method === 'POST')?.body,
+      ).not.toHaveProperty('move_references');
+    });
+
+    it('marks a subdivided account that a rule still points at', async () => {
+      fakeApi({
+        'GET /me': me('billing'),
+        'GET /accounts': [
+          200,
+          page([
+            account('413595', 'VENTA DE OTROS PRODUCTOS', {postable: false}),
+            account('41359501', 'Ventas gravadas'),
+            account('110505', 'CAJA GENERAL', {postable: false}),
+          ]),
+        ],
+        ...uses,
+        'GET /posting-rules': [
+          200,
+          {items: [{...rule, account_postable: false}]},
+        ],
+      });
+      renderChart();
+
+      const row = (await screen.findByText('413595')).closest('tr');
+      expect(
+        within(row as HTMLElement).getByText('Sin auxiliar por defecto'),
+      ).toBeInTheDocument();
+      expect(screen.getAllByText('Sin auxiliar por defecto')).toHaveLength(1);
+    });
   });
 });

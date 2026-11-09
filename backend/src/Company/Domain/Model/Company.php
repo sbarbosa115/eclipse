@@ -34,6 +34,14 @@ class Company
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $city = null;
 
+    /** ISO 3166-1 alpha-2; Colombia unless the tercero is abroad (observations PRD §4.3). */
+    #[ORM\Column(length: 2, options: ['fixed' => true, 'default' => 'CO'])]
+    private string $countryCode = 'CO';
+
+    /** DANE DIVIPOLA municipality (5 digits), required for a Colombian company on its next save. */
+    #[ORM\Column(length: 5, nullable: true, options: ['fixed' => true])]
+    private ?string $municipalityCode = null;
+
     #[ORM\Column(length: 40, nullable: true)]
     private ?string $phone = null;
 
@@ -103,6 +111,8 @@ class Company
         ?string $checkDigit,
         ?string $address,
         ?string $city,
+        string $countryCode,
+        ?string $municipalityCode,
         ?string $phone,
         ?string $email,
         VatRegime $vatRegime,
@@ -119,6 +129,8 @@ class Company
         $this->personType = IdentificationType::Nit === $identificationType ? PersonType::Company : PersonType::Person;
         $this->address = self::blank($address);
         $this->city = self::blank($city);
+        $this->countryCode = $countryCode;
+        $this->municipalityCode = 'CO' === $countryCode ? $municipalityCode : null;
         $this->phone = self::blank($phone);
         $this->email = self::blank($email);
         $this->vatRegime = $vatRegime;
@@ -197,6 +209,16 @@ class Company
     public function address(): ?string
     {
         return $this->address;
+    }
+
+    public function countryCode(): string
+    {
+        return $this->countryCode;
+    }
+
+    public function municipalityCode(): ?string
+    {
+        return $this->municipalityCode;
     }
 
     public function city(): ?string

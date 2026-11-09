@@ -256,6 +256,9 @@ const TONES: Record<string, string> = {
   // Chart of accounts: an account the company added itself, and one no longer in use.
   own_account: 'info',
   inactive: 'neutral',
+  // Something missing that needs attention (a tercero with no municipio on the exógena, an account left without a
+  // default after a subdivision).
+  invalid: 'warning',
   // Documents (facturas, cotizaciones, recibos): a draft is not in the books yet, an emitted one waits for its money or
   // its answer, partly paid is on its way, paid or accepted is done; rejected, expired and voided are over.
   draft: 'warning',
@@ -263,6 +266,8 @@ const TONES: Record<string, string> = {
   partially_paid: 'accent',
   paid: 'success',
   accepted: 'success',
+  // An orden de compra's answer is the invoice it became.
+  converted: 'success',
   rejected: 'neutral',
   expired: 'neutral',
   voided: 'neutral',

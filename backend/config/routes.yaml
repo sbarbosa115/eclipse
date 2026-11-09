@@ -47,6 +47,13 @@ reporting_controllers:
     namespace: App\Reporting\UI\Http\Controller
   type: attribute
 
+# Reference data every context reads (DIVIPOLA).
+shared_controllers:
+  resource:
+    path: ../src/Shared/UI/Http/Controller/
+    namespace: App\Shared\UI\Http\Controller
+  type: attribute
+
 # The React app: every path that is not an API route or a file gets the SPA shell. Its route has priority -100, so it
 # never shadows a route.
 spa_controllers:

@@ -1,0 +1,4 @@
+/* Item 10 (purchase-orders): the órdenes de compra list. */
+.admin .purchase-order-date input {
+  width: 9.5rem;
+}

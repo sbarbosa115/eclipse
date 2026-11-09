@@ -41,6 +41,16 @@ final class FilesystemSupplierFiles implements SupplierFiles
         return $attachment->id();
     }
 
+    public function copyAll(Uuid $companyId, Uuid $fromInvoiceId, Uuid $toInvoiceId, Uuid $userId): void
+    {
+        foreach ($this->attachments($companyId, $fromInvoiceId) as $attachment) {
+            $source = $this->pathOf($attachment);
+            if (is_file($source)) {
+                $this->store($companyId, $toInvoiceId, $userId, $attachment->fileName(), $attachment->contentType(), $source);
+            }
+        }
+    }
+
     public function remove(Uuid $companyId, Uuid $invoiceId, Uuid $attachmentId): void
     {
         $this->forget($this->attachment($companyId, $invoiceId, $attachmentId));

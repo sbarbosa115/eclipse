@@ -5,6 +5,20 @@
 #}
 {% extends 'pdf/document.html.twig' %}
 
+{# A wide report (exógena, retenciones) turns the page and shrinks its type so every column fits (IMP-11, EXO-07). #}
+{% set wide = columns|length > 6 %}
+{% set very_wide = columns|length > 10 %}
+
+{% block page_size %}{% if wide %}size: letter landscape; {% endif %}{% endblock %}
+
+{% block page_style %}
+    {% if wide %}
+        table.lines { table-layout: auto; }
+        table.lines th, table.lines td { font-size: {{ very_wide ? '6pt' : '7.5pt' }}; padding: 3px 2px; }
+        table.lines th.num { white-space: normal; }
+    {% endif %}
+{% endblock %}
+
 {% block body %}
     {% for line in subtitle %}<div class="muted">{{ line }}</div>{% endfor %}
     <table class="lines">

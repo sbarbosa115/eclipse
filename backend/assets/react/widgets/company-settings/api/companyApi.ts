@@ -12,6 +12,8 @@ export interface CompanyPayload {
   check_digit: string | null;
   address: string | null;
   city: string | null;
+  country_code: string;
+  municipality_code: string | null;
   phone: string | null;
   email: string | null;
   vat_regime: string;

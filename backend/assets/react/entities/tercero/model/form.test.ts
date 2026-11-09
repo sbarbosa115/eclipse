@@ -25,6 +25,11 @@ const ANDINA: Tercero = {
   contacts: [{id: 'c1', name: 'Pedro', email: null, phone: null}],
   active: true,
   created_at: '2026-10-03T10:00:00+00:00',
+  country_code: 'CO',
+  municipality_code: '11001',
+  municipality_name: 'BOGOTÁ, D.C.',
+  department_code: '11',
+  department_name: 'BOGOTÁ, D.C.',
 };
 
 describe('the tercero form', () => {
@@ -83,6 +88,40 @@ describe('the tercero form', () => {
       identification_number: 'required',
       business_name: 'required',
       roles: 'roles',
+      municipality_code: 'municipality',
+    });
+  });
+
+  it('asks for the municipality of a Colombian tercero and the city of a foreign one', () => {
+    const colombian = {...emptyForm('cliente'), business_name: 'X'};
+    expect(validateForm(colombian)['municipality_code']).toBe('municipality');
+    expect(
+      validateForm({...colombian, municipality_code: '05001'})[
+        'municipality_code'
+      ],
+    ).toBeUndefined();
+
+    const abroad = {...colombian, country_code: 'US'};
+    expect(validateForm(abroad)['city']).toBe('city');
+    expect(validateForm(abroad)['municipality_code']).toBeUndefined();
+    expect(validateForm({...abroad, city: 'Miami'})['city']).toBeUndefined();
+  });
+
+  it('sends the municipality for Colombia and the city abroad, never both', () => {
+    const base = {
+      ...emptyForm('cliente'),
+      city: 'Vieja',
+      municipality_code: '05001',
+    };
+    expect(toPayload(base)).toMatchObject({
+      country_code: 'CO',
+      municipality_code: '05001',
+      city: null,
+    });
+    expect(toPayload({...base, country_code: 'US'})).toMatchObject({
+      country_code: 'US',
+      municipality_code: null,
+      city: 'Vieja',
     });
   });
 
@@ -96,6 +135,7 @@ describe('the tercero form', () => {
   it('checks e-mails, the DV and the contacts', () => {
     const form = {
       ...emptyForm('cliente'),
+      municipality_code: '05001',
       identification_number: '1',
       business_name: 'X',
       email: 'no',
@@ -118,6 +158,7 @@ describe('the tercero form', () => {
       ...emptyQuickForm('cliente'),
       identification_number: '800197268',
       business_name: 'X',
+      municipality_code: '05001',
     };
 
     expect(validateForm(quick)).toEqual({});

@@ -52,6 +52,7 @@ async function accountId(page: Page, code: string): Promise<string> {
 /** A supplier, Servicios Andinos S.A.S. */
 async function seedSupplier(page: Page): Promise<string> {
   const tercero = (await api(page, 'POST', '/terceros', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: '800197268',
@@ -179,9 +180,13 @@ test('PUR-02 · a service bought on credit is saved as a draft from the form', a
   await page
     .getByLabel('Impuesto cargo, línea 1')
     .selectOption({label: 'IVA 19 %'});
+  // The retenciones are chosen in the line's tax dialog, opened from their cell (observations §4.2).
+  await page.getByRole('button', {name: /^Retenciones de la línea 1/}).click();
   await page
-    .getByLabel('Impuesto retención, línea 1')
+    .getByRole('dialog')
+    .getByLabel('Retefuente')
     .selectOption({label: 'ReteFuente servicios 4 %'});
+  await page.getByRole('dialog').getByRole('button', {name: 'Aplicar'}).click();
   await page.getByRole('button', {name: 'Agregar forma de pago'}).click();
   await page.getByLabel('Método de pago 1').selectOption({label: 'Crédito'});
   await expect(page.getByLabel('Valor de la forma de pago 1')).toHaveValue(

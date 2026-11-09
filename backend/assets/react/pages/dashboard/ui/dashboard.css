@@ -58,6 +58,7 @@
   gap: 12px;
 }
 
-.admin .dashboard-sub > span:last-child {
+/* An amount next to its label stays on one line; a lone hint (Caja y bancos) wraps inside its tile (REP-19). */
+.admin .dashboard-sub > span:last-child:not(:first-child) {
   white-space: nowrap;
 }

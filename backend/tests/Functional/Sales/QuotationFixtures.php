@@ -69,6 +69,7 @@ trait QuotationFixtures
             'identification_number' => $number,
             'first_names' => $name,
             'last_names' => 'Pérez',
+            'municipality_code' => '11001',
             'email' => 'elena@acme.co',
             'roles' => ['empleado'],
         ]);

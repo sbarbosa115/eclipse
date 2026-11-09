@@ -2,6 +2,7 @@
 
 namespace App\Sales\Application\Document;
 
+use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Money\Money;
 
 /** How amounts, rates and dates are printed in Colombia: $ 1.190.000,00, 19 %, 03/10/2026. */
@@ -29,5 +30,11 @@ final class Printed
     public static function date(?\DateTimeImmutable $date): string
     {
         return null === $date ? '' : $date->format('d/m/Y');
+    }
+
+    /** The Colombian day a moment fell on (emitted, voided): 01:30 UTC on the 8th prints 07/11. */
+    public static function moment(?\DateTimeImmutable $moment): string
+    {
+        return null === $moment ? '' : $moment->setTimezone(new \DateTimeZone(Calendar::TIMEZONE))->format('d/m/Y');
     }
 }

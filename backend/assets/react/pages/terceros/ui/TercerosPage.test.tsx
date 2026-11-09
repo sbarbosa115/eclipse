@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {SessionProvider} from '@/entities/session';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {GEO, pickMedellin} from '@/shared/test/municipalities';
 import {TercerosPage} from './TercerosPage';
 
 const session = (role: string) => ({
@@ -27,6 +28,11 @@ const summary = (over: Record<string, unknown> = {}) => ({
   check_digit: '4',
   email: 'facturas@andina.co',
   city: 'Bogotá',
+  country_code: 'CO',
+  municipality_code: '11001',
+  municipality_name: 'BOGOTÁ, D.C.',
+  department_code: '11',
+  department_name: 'BOGOTÁ, D.C.',
   roles: ['cliente', 'proveedor'],
   active: true,
   branch_code: '0',
@@ -119,6 +125,69 @@ describe('the terceros list', () => {
     expect(
       screen.getByRole('columnheader', {name: 'Acciones'}),
     ).toBeInTheDocument();
+  });
+
+  it('warns how many terceros have no municipality and lists only those on "Ver"', async () => {
+    const api = fakeApi({
+      'GET /me': [200, session('owner')],
+      'GET /terceros': (_body, url) =>
+        url.searchParams.get('missing_municipality') === '1'
+          ? [
+              200,
+              page(
+                [
+                  summary({
+                    id: 't3',
+                    display_name: 'Sin Lugar Ltda.',
+                    city: null,
+                    municipality_code: null,
+                    municipality_name: null,
+                    department_code: null,
+                    department_name: null,
+                  }),
+                ],
+                2,
+              ),
+            ]
+          : [200, page([summary()])],
+    });
+    renderAt('/');
+
+    expect(
+      await screen.findByText('2 terceros sin municipio'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', {name: 'Ver'}));
+
+    expect(await screen.findByText('Sin Lugar Ltda.')).toBeInTheDocument();
+    expect(screen.getByText('Sin municipio')).toBeInTheDocument();
+    expect(
+      api.calls.some(
+        (c) =>
+          c.path === '/terceros' &&
+          c.url.searchParams.get('missing_municipality') === '1' &&
+          c.url.searchParams.get('per_page') === '25',
+      ),
+    ).toBe(true);
+    await userEvent.click(screen.getByRole('button', {name: 'Ver todos'}));
+    expect(
+      await screen.findByText('Distribuciones Andina S.A.S.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows no warning when every tercero has its municipality', async () => {
+    fakeApi({
+      'GET /me': [200, session('owner')],
+      'GET /terceros': (_body, url) => [
+        200,
+        url.searchParams.get('missing_municipality') === '1'
+          ? page([])
+          : page([summary()]),
+      ],
+    });
+    renderAt('/');
+
+    await screen.findByText('Distribuciones Andina S.A.S.');
+    expect(screen.queryByText(/sin municipio/)).not.toBeInTheDocument();
   });
 
   it('searches, filters by role and by status through the query string', async () => {
@@ -281,6 +350,7 @@ describe('the tercero form page', () => {
     const api = fakeApi({
       'GET /me': [200, session('owner')],
       'GET /accounts/search': ACCOUNTS,
+      'GET /geo/municipalities': GEO,
       'GET /terceros': [200, page([])],
       'POST /terceros': [201, full()],
     });
@@ -296,6 +366,7 @@ describe('the tercero form page', () => {
       'Distribuciones Andina S.A.S.',
     );
     await userEvent.click(screen.getByRole('checkbox', {name: 'Cliente'}));
+    await pickMedellin();
     await userEvent.click(
       screen.getByRole('button', {name: 'Agregar teléfono'}),
     );
@@ -327,6 +398,9 @@ describe('the tercero form page', () => {
       business_name: 'Distribuciones Andina S.A.S.',
       email: 'facturas@andina.co',
       roles: ['cliente'],
+      country_code: 'CO',
+      municipality_code: '05001',
+      city: null,
       fiscal_responsibilities: ['R-99-PN', 'O-15'],
       phones: [{indicative: '57', number: '6011234567', extension: null}],
       contacts: [{id: null, name: 'Pedro Ruiz', email: null, phone: null}],
@@ -348,6 +422,7 @@ describe('the tercero form page', () => {
     );
 
     expect(screen.getAllByText('Este campo es obligatorio.')).toHaveLength(2);
+    expect(screen.getByText('Elige el municipio.')).toBeInTheDocument();
     expect(screen.getByText('Elige al menos un rol.')).toBeInTheDocument();
     expect(api.calls.filter((c) => c.method === 'POST')).toHaveLength(0);
   });
@@ -356,6 +431,7 @@ describe('the tercero form page', () => {
     fakeApi({
       'GET /me': [200, session('owner')],
       'GET /accounts/search': ACCOUNTS,
+      'GET /geo/municipalities': GEO,
       'POST /terceros': [
         422,
         {
@@ -377,6 +453,7 @@ describe('the tercero form page', () => {
     );
     await userEvent.type(screen.getByLabelText('Razón social'), 'X');
     await userEvent.click(screen.getByRole('checkbox', {name: 'Cliente'}));
+    await pickMedellin();
     await userEvent.click(screen.getByRole('button', {name: 'Crear tercero'}));
 
     expect(
@@ -389,25 +466,52 @@ describe('the tercero form page', () => {
       'GET /me': [200, session('owner')],
       'GET /accounts/search': ACCOUNTS,
       'GET /terceros/t1': [200, full()],
-      'PUT /terceros/t1': [200, full({city: 'Cali'})],
+      'PUT /terceros/t1': [200, full({trade_name: 'Andina'})],
     });
     renderAt('/t1');
 
-    const city = await screen.findByLabelText(/Ciudad/);
+    const trade = await screen.findByLabelText(/Nombre comercial/);
     expect(screen.getByDisplayValue('Pedro Ruiz')).toBeInTheDocument();
-    await userEvent.clear(city);
-    await userEvent.type(city, 'Cali');
+    expect(screen.getByLabelText('Municipio')).toHaveValue(
+      'Bogotá, D.C. › Bogotá, D.C. (11001)',
+    );
+    await userEvent.type(trade, 'Andina');
     await userEvent.click(
       screen.getByRole('button', {name: 'Guardar tercero'}),
     );
 
     expect(await screen.findByText('Cambios guardados.')).toBeInTheDocument();
     const body = api.calls.find((c) => c.method === 'PUT')?.body as {
-      city: string;
+      trade_name: string;
+      municipality_code: string;
       contacts: {id: string}[];
     };
-    expect(body.city).toBe('Cali');
+    expect(body.trade_name).toBe('Andina');
+    expect(body.municipality_code).toBe('11001');
     expect(body.contacts[0]?.id).toBe('c1');
+  });
+
+  it('opens a tercero abroad with its country and city, and no municipality', async () => {
+    fakeApi({
+      'GET /me': [200, session('owner')],
+      'GET /accounts/search': ACCOUNTS,
+      'GET /terceros/t1': [
+        200,
+        full({
+          country_code: 'US',
+          city: 'Miami',
+          municipality_code: null,
+          municipality_name: null,
+          department_code: null,
+          department_name: null,
+        }),
+      ],
+    });
+    renderAt('/t1');
+
+    expect(await screen.findByLabelText('Ciudad')).toHaveValue('Miami');
+    expect(screen.getByLabelText('País')).toHaveValue('US');
+    expect(screen.queryByLabelText('Municipio')).not.toBeInTheDocument();
   });
 
   it('lets someone who may only read read a tercero but not change it', async () => {

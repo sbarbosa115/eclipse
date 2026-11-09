@@ -165,5 +165,26 @@
     "tercero_not_found": "El tercero ya no existe.",
     "forbidden": "Tu rol no permite esta acción.",
     "unexpected": "Algo salió mal. Inténtalo de nuevo."
+  },
+  "geo": {
+    "country": "País",
+    "municipality": "Municipio",
+    "city": "Ciudad",
+    "placeholder": "Departamento, municipio o código",
+    "minChars": "Escribe al menos {{count}} caracteres.",
+    "searching": "Buscando…",
+    "none": "Ningún municipio coincide.",
+    "failed": "No pudimos buscar municipios. Inténtalo de nuevo.",
+    "bannerOne": "1 tercero sin municipio",
+    "banner": "{{count}} terceros sin municipio",
+    "bannerView": "Ver",
+    "bannerAll": "Ver todos",
+    "list": {
+      "missing": "Sin municipio"
+    },
+    "validation": {
+      "municipality": "Elige el municipio.",
+      "city": "Escribe la ciudad."
+    }
   }
 }

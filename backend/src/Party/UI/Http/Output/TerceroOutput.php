@@ -5,6 +5,7 @@ namespace App\Party\UI\Http\Output;
 use App\Ledger\Application\Query\AccountView;
 use App\Party\Domain\Model\Contact;
 use App\Party\Domain\Model\Tercero;
+use App\Shared\Application\Geo\MunicipalityView;
 use App\Shared\Domain\Fiscal\FiscalResponsibility;
 
 /**
@@ -52,10 +53,17 @@ final readonly class TerceroOutput
         /** ISO 8601 date-time when the personal data was erased on request (Ley 1581), else null */
         public ?string $erasedAt,
         public string $createdAt,
+        /** ISO 3166-1 alpha-2 (observations PRD §4.3). */
+        public string $countryCode = 'CO',
+        /** DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again. */
+        public ?string $municipalityCode = null,
+        public ?string $municipalityName = null,
+        public ?string $departmentCode = null,
+        public ?string $departmentName = null,
     ) {
     }
 
-    public static function of(Tercero $t, ?AccountView $receivable = null, ?AccountView $payable = null): self
+    public static function of(Tercero $t, ?AccountView $receivable = null, ?AccountView $payable = null, ?MunicipalityView $municipality = null): self
     {
         return new self(
             $t->id()->toRfc4122(),
@@ -86,6 +94,11 @@ final readonly class TerceroOutput
             $t->isActive(),
             $t->erasedAt()?->format(\DATE_ATOM),
             $t->createdAt()->format(\DATE_ATOM),
+            $t->countryCode(),
+            $t->municipalityCode(),
+            $municipality?->name,
+            $municipality?->departmentCode,
+            $municipality?->departmentName,
         );
     }
 }

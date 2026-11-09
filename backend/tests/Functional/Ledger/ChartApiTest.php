@@ -37,7 +37,7 @@ final class ChartApiTest extends ApiTestCase
         self::assertSame(['1', '11', '1105', '110505', '11050501', '110510', '110515', '1110', '111005', '11100501'], array_column($page['items'], 'code'), 'In code order, each account before its children.');
         self::assertSame([1, 10], [$page['page'], $page['per_page']]);
         self::assertGreaterThan(2500, $page['total']);
-        self::assertSame(['id', 'code', 'name', 'nature', 'level', 'parent_code', 'standard', 'active', 'postable', 'usable_on_purchases'], array_keys($page['items'][0]));
+        self::assertSame(['id', 'code', 'name', 'nature', 'level', 'parent_code', 'standard', 'active', 'postable', 'usable_on_purchases', 'moved'], array_keys($page['items'][0]), 'moved is set only on the answer to subdividing (observations §4.1).');
 
         self::assertSame(['1105', '110505', '11050501', '110510', '110515'], array_column($this->getJson('/api/v1/accounts?q=1105')['items'], 'code'), 'A number is a code prefix.');
         $byName = array_column($this->getJson('/api/v1/accounts?q=iva%20gen')['items'], 'code');

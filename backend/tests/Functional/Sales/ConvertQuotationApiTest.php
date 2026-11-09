@@ -3,6 +3,7 @@
 namespace App\Tests\Functional\Sales;
 
 use App\Ledger\Domain\Model\JournalEntry;
+use App\Tests\Functional\Observations\WithholdingTaxes;
 use App\Tests\Support\ApiTestCase;
 
 /**
@@ -13,6 +14,7 @@ use App\Tests\Support\ApiTestCase;
 final class ConvertQuotationApiTest extends ApiTestCase
 {
     use QuotationFixtures;
+    use WithholdingTaxes;
 
     protected function setUp(): void
     {
@@ -71,6 +73,26 @@ final class ConvertQuotationApiTest extends ApiTestCase
         self::assertSame(1, $this->getJson('/api/v1/sales-invoices')['total']);
         $this->em()->clear();
         self::assertSame([], $this->em()->getRepository(JournalEntry::class)->findBy(['companyId' => $this->company]), 'Still nothing in the books: the draft invoice posts nothing.');
+    }
+
+    public function testConvertingCopiesEveryRetencion(): void
+    {
+        $client = $this->client();
+        $product = $this->service();
+        $draft = $this->quotationDraft($this->quotationPayload($client, $product, [
+            'lines' => [$this->line($product, ['withholdings' => self::withholdings($this->taxId('ReteFuente compras 2,5 %'), $this->reteIca(), $this->taxId('ReteIVA 15 %'))])],
+        ]));
+        $quotation = $this->sendJson('POST', '/api/v1/quotations/'.$draft['id'].'/emit', []);
+        self::assertResponseIsSuccessful();
+
+        $converted = $this->sendJson('POST', '/api/v1/quotations/'.$quotation['id'].'/convert', []);
+        self::assertResponseIsSuccessful();
+        $invoice = $this->getJson('/api/v1/sales-invoices/'.$converted['converted_invoice_id']);
+
+        $pick = static fn (array $doc) => array_map(static fn (array $w) => [$w['tax_id'], $w['name'], $w['base_amount'], $w['amount']], $doc['lines'][0]['withholdings']);
+        self::assertCount(3, $pick($invoice), 'Observations PRD §4.2: convert copies every retención, not only the first.');
+        self::assertSame($pick($quotation), $pick($invoice));
+        self::assertSame(['63160.00', $quotation['withholdings_by_tax']], [$invoice['withholding_total'], $invoice['withholdings_by_tax']]);
     }
 
     public function testTheDraftInvoiceIsEmittedLikeAnyOther(): void

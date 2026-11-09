@@ -1,7 +1,11 @@
 import type {AccountChoice} from '@/features/pick-account';
 
-/** The three documents that share the form (§4.6). A quotation has no formas de pago. */
-export type DocumentKind = 'quotation' | 'sales_invoice' | 'purchase_invoice';
+/**
+ * The documents that share the form (§4.6). A quotation and a purchase order have no formas de pago; a purchase order
+ * (observations PRD §4.8) has a purchase invoice's lines (product or expense account).
+ */
+export type DocumentKind =
+  'quotation' | 'sales_invoice' | 'purchase_invoice' | 'purchase_order';
 
 /** A tercero as the header holds it: its id and the name to show. */
 export interface PartyRef {
@@ -13,6 +17,8 @@ export interface PartyRef {
 export interface ProductRef {
   id: string;
   label: string;
+  /** The code the line was written with (a snapshot); read-only forms show it in its own column. */
+  code?: string | null;
 }
 
 /**
@@ -30,7 +36,8 @@ export interface DraftLine {
   /** % Descuento, 0 to 100; empty is none. */
   discount: string;
   charge_tax_id: string | null;
-  withholding_tax_id: string | null;
+  /** Retenciones of the line: tax ids, at most one per kind (Retefuente, ReteIVA, ReteICA), in order (§4.2). */
+  withholdings: string[];
 }
 
 /** Hoy, a 15, 30 o 60 días, or a date typed by hand (§4.5). */

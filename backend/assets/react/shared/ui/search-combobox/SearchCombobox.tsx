@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import {useTranslation} from '@/shared/i18n';
+import {placePopup} from './placePopup';
 
 export interface ComboOption<T> {
   id: string;
@@ -145,11 +146,7 @@ export function SearchCombobox<T>({
     const place = () => {
       const box = input.current?.getBoundingClientRect();
       if (!box) return;
-      setPosition({
-        top: box.bottom + 4,
-        left: box.left,
-        minWidth: Math.max(box.width, 260),
-      });
+      setPosition(placePopup(box, window.innerHeight));
     };
     place();
     window.addEventListener('scroll', place, true);

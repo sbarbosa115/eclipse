@@ -13,12 +13,14 @@ use App\Ledger\UI\Http\Security\BooksAccess;
 use App\Shared\Domain\Clock;
 use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
+use App\Shared\UI\Http\Security\Permission;
 use App\Shared\UI\Http\Security\SignedInUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -29,11 +31,34 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/api/v1/ledger')]
 final class LedgerReportController extends AbstractController
 {
+    /** The documents that post (Sales, Purchasing); a quotation or an order never does. */
+    private const SOURCE_TYPES = ['sales_invoice', 'purchase_invoice', 'cash_receipt', 'supplier_payment'];
+
     public function __construct(
         private readonly JournalQueries $journal,
         private readonly LedgerReports $reports,
         private readonly Clock $clock,
     ) {
+    }
+
+    /**
+     * A document's own entries for its Contabilización tab (observations PRD §4.5): ?source_type= (sales_invoice,
+     * purchase_invoice, cash_receipt, supplier_payment) and ?source_id=; its posting and, once voided, the reversal, by
+     * number. READ_DOCUMENTS (the libro diario stays VIEW_BOOKS). 400 invalid_source; another company's document has
+     * no entries here.
+     */
+    #[Route('/entries', methods: ['GET'])]
+    #[ApiResponse(JournalEntryOutput::class, key: 'items', list: true)]
+    #[IsGranted(Permission::READ_DOCUMENTS)]
+    public function entries(Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
+    {
+        $type = $request->query->getString('source_type');
+        $id = $request->query->getString('source_id');
+        if (!\in_array($type, self::SOURCE_TYPES, true) || !Uuid::isValid($id)) {
+            throw ApiException::badRequest('invalid_source', 'source_type must be one of '.implode(', ', self::SOURCE_TYPES).' and source_id a document id.');
+        }
+
+        return $this->json(['items' => array_map(JournalEntryOutput::of(...), $this->journal->bySource($user->companyId(), $type, Uuid::fromString($id)))]);
     }
 
     /**

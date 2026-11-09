@@ -3,6 +3,7 @@
 namespace App\Purchasing\UI\Http\Controller;
 
 use App\Purchasing\Application\Command\AttachSupplierFile;
+use App\Purchasing\Application\Command\CorrectPurchaseInvoice;
 use App\Purchasing\Application\Command\CreatePurchaseInvoice;
 use App\Purchasing\Application\Command\DeletePurchaseInvoice;
 use App\Purchasing\Application\Command\DuplicatePurchaseInvoice;
@@ -16,6 +17,7 @@ use App\Purchasing\Application\Query\PurchaseInvoicePdf;
 use App\Purchasing\Application\Query\PurchaseInvoiceQueries;
 use App\Purchasing\Domain\Error\SupplierFileTooLarge;
 use App\Purchasing\Domain\Error\SupplierFileUnsupported;
+use App\Purchasing\UI\Http\Input\CorrectPurchaseInvoiceInput;
 use App\Purchasing\UI\Http\Input\PurchaseInvoiceInput;
 use App\Purchasing\UI\Http\Input\VoidPurchaseInvoiceInput;
 use App\Purchasing\UI\Http\Output\PurchaseInvoiceAttachmentOutput;
@@ -97,9 +99,11 @@ final class PurchaseInvoiceController extends AbstractController
 
     /**
      * Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,
-     * description, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,
-     * amount, due_date? (crédito; the invoice's when missing)}]} → 201. 422 `validation_failed` by field
-     * (`lines[0].account_id`…), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).
+     * description, quantity, unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind; the
+     * deprecated withholding_tax_id when missing)}], payments: [{payment_method_id, amount, due_date? (crédito; the
+     * invoice's when missing)}]} → 201. 422 `validation_failed` by field (`lines[0].account_id`,
+     * `lines[0].withholdings` for two of a kind, `lines[0].withholdings[1].tax_id`…), `duplicate_supplier_invoice_number`
+     * (violation on `supplier_invoice_number`).
      */
     #[Route('', methods: ['POST'])]
     #[ApiResponse(PurchaseInvoiceOutput::class, status: 201)]
@@ -171,6 +175,25 @@ final class PurchaseInvoiceController extends AbstractController
         $this->commands->dispatch(new VoidPurchaseInvoice($user->companyId(), $invoiceId, $user->userId(), $input->reason));
 
         return $this->present($user, $invoiceId);
+    }
+
+    /**
+     * Corregir (observations PRD §4.6): {reason}. In one transaction voids the emitted invoice as /void does and opens
+     * an editable copy with the same supplier number, dates, notes, lines, formas de pago and files → 201 the new draft
+     * (`corrected_from_id`; the voided one gets `corrected_by_id` and the reason "Corregida: <reason>"). 409
+     * `document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.
+     */
+    #[Route('/{id}/correct', methods: ['POST'])]
+    #[ApiResponse(PurchaseInvoiceOutput::class, status: 201)]
+    public function correct(string $id, Request $request, #[CurrentUser] SignedInUser $user): JsonResponse
+    {
+        $this->access->mayWrite($user);
+        $invoiceId = $this->access->invoiceId($id);
+        $input = $this->inputs->map($this->inputs->json($request), CorrectPurchaseInvoiceInput::class);
+        $draft = $this->commands->dispatch(new CorrectPurchaseInvoice($user->companyId(), $invoiceId, $user->userId(), $input->reason));
+        \assert($draft instanceof Uuid);
+
+        return $this->present($user, $draft, 201);
     }
 
     /**

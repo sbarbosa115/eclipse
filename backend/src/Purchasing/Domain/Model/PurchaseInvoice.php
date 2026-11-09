@@ -33,7 +33,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'purchase_invoice')]
 #[ORM\Index(name: 'purchase_invoice_list', columns: ['company_id', 'status', 'issue_date'])]
-#[ORM\UniqueConstraint(name: 'purchase_invoice_supplier_number', columns: ['company_id', 'tercero_id', 'supplier_invoice_number'])]
+#[ORM\UniqueConstraint(name: 'purchase_invoice_active_number', columns: ['company_id', 'tercero_id', 'active_number_key'])]
 class PurchaseInvoice implements CompanyOwned
 {
     use DocumentAuditColumns;
@@ -73,6 +73,26 @@ class PurchaseInvoice implements CompanyOwned
     #[ORM\Column(type: 'uuid', nullable: true)]
     private ?Uuid $reversalEntryId = null;
 
+    /**
+     * The supplier's number while the invoice is not voided, null once it is: the unique key that keeps a supplier's
+     * number once per supplier among live invoices, so a corrected invoice's copy can carry it again (observations PRD
+     * §4.6). MariaDB allows repeated NULLs in a unique index.
+     */
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $activeNumberKey = null;
+
+    /** The voided invoice this draft corrects (Corregir, observations PRD §4.6). */
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $correctedFromId = null;
+
+    /** The draft that corrects this voided invoice. */
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $correctedById = null;
+
+    /** The orden de compra it was converted from (observations PRD §4.8). */
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $purchaseOrderId = null;
+
     /** @var Collection<int, PurchaseInvoiceLine> */
     #[ORM\OneToMany(targetEntity: PurchaseInvoiceLine::class, mappedBy: 'document', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
@@ -103,6 +123,7 @@ class PurchaseInvoice implements CompanyOwned
         $this->lines = new ArrayCollection();
         $this->payments = new ArrayCollection();
         $this->paidAmount = Money::zero();
+        $this->activeNumberKey = $supplierInvoiceNumber;
         $this->zeroTotals();
         $this->recordCreation($createdBy, $createdAt);
     }
@@ -208,13 +229,16 @@ class PurchaseInvoice implements CompanyOwned
         $this->terceroId = $terceroId;
         $this->terceroName = $terceroName;
         $this->supplierInvoiceNumber = $supplierInvoiceNumber;
+        $this->activeNumberKey = $supplierInvoiceNumber;
         $this->issueDate = $issueDate;
         $this->dueDate = $dueDate;
         $this->notes = $notes;
 
         $this->lines->clear();
         foreach ($lines as $position => $l) {
-            $this->lines->add(new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, $l->withholdingTax));
+            $added = new PurchaseInvoiceLine($this, $this->companyId, $position, $l->productId, $l->accountId, $l->description, $l->quantity, $l->unitPrice, $l->discount, $l->chargeTax, $l->withholdings);
+            $added->useProductCode($l->productCode);
+            $this->lines->add($added);
         }
         $this->payments->clear();
         foreach ($payments as $position => $p) {
@@ -298,6 +322,7 @@ class PurchaseInvoice implements CompanyOwned
     {
         $this->assertVoidable();
         $this->status = InvoiceStatus::Voided;
+        $this->activeNumberKey = null;
         $this->reversalEntryId = $reversalEntryId;
         $this->recordVoid($by, $at, $reason);
     }
@@ -338,16 +363,75 @@ class PurchaseInvoice implements CompanyOwned
         $issue = new \DateTimeImmutable($today->format('Y-m-d'));
         $shift = fn (?\DateTimeImmutable $due) => null === $due ? null : $issue->modify(\sprintf('%+d days', (int) $this->issueDate->diff($due)->format('%r%a')));
 
-        $copy = new self($this->companyId, $this->terceroId, $this->terceroName, null, $issue, $by, $at);
+        return $this->copy(null, $issue, $shift, $by, $at);
+    }
+
+    /**
+     * Corregir (observations PRD §4.6): the editable copy of this invoice, just voided for it. Unlike a duplicate it is
+     * the same supplier's invoice: the supplier's number, the dates, notes, lines (every retención) and formas de pago
+     * as they were recorded. The copy holds the supplier's number again, which the void released (activeNumberKey),
+     * and the two point at each other.
+     *
+     * @throws \LogicException when it is not voided, or already corrected: the handler voids it first, under a lock
+     */
+    public function correction(Uuid $by, \DateTimeImmutable $at): self
+    {
+        if (InvoiceStatus::Voided !== $this->status || null !== $this->correctedById) {
+            throw new \LogicException('Only a voided invoice not corrected yet opens a correction.');
+        }
+        $copy = $this->copy($this->supplierInvoiceNumber, $this->issueDate, static fn (?\DateTimeImmutable $due) => $due, $by, $at);
+        $copy->correctedFromId = $this->id;
+        $this->correctedById = $copy->id;
+
+        return $copy;
+    }
+
+    /** The draft that corrected this voided invoice was deleted: there is no replacement to point at any more. */
+    public function correctionDiscarded(Uuid $draftId): void
+    {
+        if (null !== $this->correctedById && $this->correctedById->equals($draftId)) {
+            $this->correctedById = null;
+        }
+    }
+
+    public function correctedFromId(): ?Uuid
+    {
+        return $this->correctedFromId;
+    }
+
+    public function correctedById(): ?Uuid
+    {
+        return $this->correctedById;
+    }
+
+    public function purchaseOrderId(): ?Uuid
+    {
+        return $this->purchaseOrderId;
+    }
+
+    /** This draft was made by converting an orden de compra (observations PRD §4.8). */
+    public function convertedFromOrder(Uuid $orderId): void
+    {
+        $this->purchaseOrderId = $orderId;
+    }
+
+    /**
+     * A new draft of the same supplier with these lines, taxes and formas de pago, its due dates moved by $due.
+     *
+     * @param \Closure(?\DateTimeImmutable): ?\DateTimeImmutable $due
+     */
+    private function copy(?string $supplierInvoiceNumber, \DateTimeImmutable $issueDate, \Closure $due, Uuid $by, \DateTimeImmutable $at): self
+    {
+        $copy = new self($this->companyId, $this->terceroId, $this->terceroName, $supplierInvoiceNumber, $issueDate, $by, $at);
         $copy->revise(
             $this->terceroId,
             $this->terceroName,
-            null,
-            $issue,
-            $shift($this->dueDate),
+            $supplierInvoiceNumber,
+            $issueDate,
+            $due($this->dueDate),
             $this->notes,
-            array_map(static fn (PurchaseInvoiceLine $l) => new PurchaseLineDraft($l->productId(), $l->accountId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTax()), $this->lines()),
-            array_map(static fn (PurchaseInvoicePayment $p) => new PurchasePaymentDraft($p->paymentMethodId(), $p->methodName(), $p->kind(), $p->accountId(), $p->amount(), $shift($p->dueDate())), $this->payments()),
+            array_map(static fn (PurchaseInvoiceLine $l) => new PurchaseLineDraft($l->productId(), $l->accountId(), $l->description(), $l->quantity(), $l->unitPrice(), $l->discount(), $l->chargeTax(), $l->withholdingTaxes(), $l->productCode()), $this->lines()),
+            array_map(static fn (PurchaseInvoicePayment $p) => new PurchasePaymentDraft($p->paymentMethodId(), $p->methodName(), $p->kind(), $p->accountId(), $p->amount(), $due($p->dueDate())), $this->payments()),
         );
 
         return $copy;

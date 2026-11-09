@@ -19,6 +19,8 @@ final readonly class PaymentMethodSettingOutput
         public bool $standard,
         /** A document uses it: it can only be deactivated. */
         public bool $inUse,
+        /** False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD §4.1). */
+        public bool $accountPostable = true,
     ) {
     }
 
@@ -26,6 +28,6 @@ final readonly class PaymentMethodSettingOutput
     {
         $m = $v->method;
 
-        return new self($m->id, $m->name, $m->kind, $m->accountId, $m->accountCode, $m->accountName, $m->active, $m->standard, $v->inUse);
+        return new self($m->id, $m->name, $m->kind, $m->accountId, $m->accountCode, $m->accountName, $m->active, $m->standard, $v->inUse, $v->accountPostable);
     }
 }

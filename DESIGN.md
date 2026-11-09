@@ -135,11 +135,12 @@ status and shows grey).
 | `draft` | warning | a document not in the books yet |
 | `emitted` | info | waiting for its money or its answer |
 | `partially_paid` | accent | on its way |
-| `paid`, `accepted` | success | done |
+| `paid`, `accepted`, `converted` | success | done (an orden de compra is converted into its invoice) |
 | `rejected`, `expired`, `voided` | neutral | over |
 | `prospect` | warning | an invited user who has not accepted yet |
 | `owner` | info | the owner badge on the users list |
 | `own_account` | info | an account the company added to the PUC |
+| `invalid` | warning | something missing that needs attention (no municipio on the exógena, an account left without a default) |
 | `cancelled`, `inactive` | neutral | a deactivated user; an inactive tercero, product, tax, payment method or account |
 
 A new status goes in `TONES` (and `tones.test.ts`), never as a class on a page.

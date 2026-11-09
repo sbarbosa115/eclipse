@@ -250,4 +250,23 @@ class Tax implements CompanyOwned
     {
         return $this->standard;
     }
+
+    /**
+     * The accountant subdivided $from: whichever side posted to it posts to its new auxiliar $to (observations PRD
+     * §4.1). Says whether anything moved.
+     */
+    public function moveAccount(Uuid $from, Uuid $to): bool
+    {
+        $moved = false;
+        if ($this->salesAccountId?->equals($from)) {
+            $this->salesAccountId = $to;
+            $moved = true;
+        }
+        if ($this->purchaseAccountId?->equals($from)) {
+            $this->purchaseAccountId = $to;
+            $moved = true;
+        }
+
+        return $moved;
+    }
 }

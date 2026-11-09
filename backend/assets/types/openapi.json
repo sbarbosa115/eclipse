@@ -280,7 +280,7 @@
         },
         "/api/v1/company": {
             "get": {
-                "summary": "The company's raz\u00f3n social, NIT, address, r\u00e9gimen, responsabilidades fiscales, default taxes and logo.",
+                "summary": "The company's raz\u00f3n social, NIT, address, pa\u00eds and municipio, r\u00e9gimen, responsabilidades fiscales, default taxes and logo.",
                 "operationId": "get_app_company_ui_http_company_show",
                 "responses": {
                     "200": {
@@ -692,7 +692,8 @@
         },
         "/api/v1/accounts/search": {
             "get": {
-                "summary": "Postable accounts for a picker: ?q= matches a code prefix or part of the name; ?purchases=1 only those usable on\npurchase lines. At most 20.",
+                "summary": "Postable accounts for a picker, in code order.",
+                "description": "?q= words that must all match (a number as a code prefix, anything else as part of the name); ?purchases=1 only\nthose usable on purchase lines; ?limit= 1\u2026200 (default 50). A subcuenta with active auxiliares is not offered.\n`total` counts every match.",
                 "operationId": "get_app_ledger_ui_http_catalog_searchaccounts",
                 "responses": {
                     "200": {
@@ -700,18 +701,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "required": [
-                                        "items"
-                                    ],
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/AccountOutput"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/AccountSearchOutput"
                                 }
                             }
                         }
@@ -819,7 +809,7 @@
             },
             "post": {
                 "summary": "Adds a sub-account or auxiliar: {parent_code, code (the parent's plus two digits), name, usable_on_purchases?}.",
-                "description": "409 account_code_taken; 422 account_code_invalid, parent_account_not_found; 403 for the billing user.",
+                "description": "The first one under an account that took movements subdivides it: what pointed at the parent (posting rules,\ntaxes, payment methods, products, terceros) moves to the new account and `moved` says what; with\nmove_references false (default true) nothing moves and `moved` is null. 409 account_code_taken; 422\naccount_code_invalid, parent_account_not_found; 403 for the billing user.",
                 "operationId": "post_app_ledger_ui_http_chart_add",
                 "responses": {
                     "201": {
@@ -856,6 +846,91 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/AccountOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/exogena-concepts": {
+            "get": {
+                "summary": "The company's table, by format then prefix.",
+                "operationId": "get_app_ledger_ui_http_exogenaconcept_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ExogenaConceptOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "{items: [{format, account_prefix, concept_code}]} replaces the whole table (at most 500 rows; an empty list is\nallowed). 422 by field (`items[N].format`, `.account_prefix`, `.concept_code`), and on a prefix twice in one format.",
+                "operationId": "put_app_ledger_ui_http_exogenaconcept_replace",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ExogenaConceptOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ledger/entries": {
+            "get": {
+                "summary": "A document's own entries for its Contabilizaci\u00f3n tab (observations PRD \u00a74.5): ?source_type= (sales_invoice,\npurchase_invoice, cash_receipt, supplier_payment) and ?source_id=; its posting and, once voided, the reversal, by\nnumber. READ_DOCUMENTS (the libro diario stays VIEW_BOOKS). 400 invalid_source; another company's document has\nno entries here.",
+                "operationId": "get_app_ledger_ui_http_ledgerreport_entries",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/JournalEntryOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1164,7 +1239,7 @@
         },
         "/api/v1/terceros": {
             "get": {
-                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1 (only active) or 0 (only inactive), ?page, ?per_page \u2264 100.",
+                "summary": "Search: ?q= (part of the name or identification, at least 3 characters on documents), ?role=cliente|proveedor|\nempleado|otro, ?active=1 (only active) or 0 (only inactive), ?missing_municipality=1 (Colombian terceros\nstill without a municipality), ?page, ?per_page \u2264 100.",
                 "operationId": "get_app_party_ui_http_tercero_list",
                 "responses": {
                     "200": {
@@ -1222,7 +1297,7 @@
         },
         "/api/v1/terceros/quick": {
             "post": {
-                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|\u2026]} \u2192 201.",
+                "summary": "Quick-create from inside a document (\u00a74.2): {person_type, identification_type, identification_number,\ncheck_digit?, first_names?, last_names?, business_name?, email, roles: [cliente|proveedor|\u2026], country_code?\n(default CO), municipality_code (required for CO), city (required abroad)} \u2192 201.",
                 "operationId": "post_app_party_ui_http_tercero_quickcreate",
                 "responses": {
                     "201": {
@@ -2018,8 +2093,7 @@
                 }
             },
             "post": {
-                "summary": "A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,\nnotes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholding_tax_id}]} \u2192 201.",
-                "description": "422 `validation_failed` by field path (`lines.0.product_id`, `expiry_date`\u2026).",
+                "summary": "A new draft: {tercero_id, contact_id?, responsible_id?, issue_date, expiry_date? (default: 30 days), header?, terms?,\nnotes?, lines: [{product_id, description, quantity, unit_price, discount, charge_tax_id, withholdings: [{tax_id}]\n(one per kind; the deprecated withholding_tax_id when missing)}]} \u2192 201. 422 `validation_failed` by field path\n(`lines.0.product_id`, `lines.0.withholdings` for two of a kind, `lines.0.withholdings.1.tax_id`, `expiry_date`\u2026).",
                 "operationId": "post_app_sales_ui_http_quotation_create",
                 "responses": {
                     "201": {
@@ -2368,7 +2442,7 @@
                 }
             },
             "post": {
-                "summary": "A new draft: {tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity,\nunit_price, discount, charge_tax_id, withholding_tax_id}], payments: [{payment_method_id, amount, due_date?}]}\n\u2192 201. The formas de pago need not add up yet. 422 `validation_failed` by field path (`lines.0.product_id`\u2026).",
+                "summary": "A new draft: {tercero_id, contact_id?, seller_id?, issue_date, notes?, lines: [{product_id, description, quantity,\nunit_price, discount, charge_tax_id, withholdings: [{tax_id}] (one per kind; the deprecated withholding_tax_id when\nmissing)}], payments: [{payment_method_id, amount, due_date?}]} \u2192 201. The formas de pago need not add up yet. 422\n`validation_failed` by field path (`lines.0.product_id`, `lines.0.withholdings` for two of a kind,\n`lines.0.withholdings.1.tax_id`\u2026).",
                 "operationId": "post_app_sales_ui_http_salesinvoice_create",
                 "responses": {
                     "201": {
@@ -2633,7 +2707,7 @@
                 }
             },
             "post": {
-                "summary": "Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,\ndescription, quantity, unit_price, discount?, charge_tax_id?, withholding_tax_id?}], payments: [{payment_method_id,\namount, due_date? (cr\u00e9dito; the invoice's when missing)}]} \u2192 201. 422 `validation_failed` by field\n(`lines[0].account_id`\u2026), `duplicate_supplier_invoice_number` (violation on `supplier_invoice_number`).",
+                "summary": "Saves a draft: {tercero_id, supplier_invoice_number?, issue_date, due_date?, notes?, lines: [{product_id | account_id,\ndescription, quantity, unit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind; the\ndeprecated withholding_tax_id when missing)}], payments: [{payment_method_id, amount, due_date? (cr\u00e9dito; the\ninvoice's when missing)}]} \u2192 201. 422 `validation_failed` by field (`lines[0].account_id`,\n`lines[0].withholdings` for two of a kind, `lines[0].withholdings[1].tax_id`\u2026), `duplicate_supplier_invoice_number`\n(violation on `supplier_invoice_number`).",
                 "operationId": "post_app_purchasing_ui_http_purchaseinvoice_create",
                 "responses": {
                     "201": {
@@ -2780,6 +2854,34 @@
                 }
             }
         },
+        "/api/v1/purchase-invoices/{id}/correct": {
+            "post": {
+                "summary": "Corregir (observations PRD \u00a74.6): {reason}. In one transaction voids the emitted invoice as /void does and opens\nan editable copy with the same supplier number, dates, notes, lines, formas de pago and files \u2192 201 the new draft\n(`corrected_from_id`; the voided one gets `corrected_by_id` and the reason \"Corregida: <reason>\"). 409\n`document_has_allocations`, `document_not_emitted`, `document_voided`, `period_locked`; 422 on `reason`.",
+                "operationId": "post_app_purchasing_ui_http_purchaseinvoice_correct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseInvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/purchase-invoices/{id}/duplicate": {
             "post": {
                 "summary": "A new draft like this invoice, dated today, without the supplier's number \u2192 201.",
@@ -2899,6 +3001,318 @@
                     },
                     {
                         "name": "attachmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders": {
+            "get": {
+                "summary": "Newest first: ?q= part of the number or the supplier's name (literal), ?status=draft|emitted|converted|voided,\n?from=, ?to= (issue date), ?tercero_id=, ?page, ?per_page \u2264 100. 400 invalid_date.",
+                "operationId": "get_app_purchasing_ui_http_purchaseorder_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PurchaseOrderSummaryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "A draft {tercero_id, issue_date, expected_date?, notes?, lines: [{product_id | account_id, description, quantity,\nunit_price, discount?, charge_tax_id?, withholdings?: [{tax_id}] (one per kind)}]} \u2192 201. 422 `validation_failed`\nby field path (`tercero_id`, `expected_date`, `lines[0].product_id`, `lines[0].withholdings`\u2026).",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}": {
+            "get": {
+                "summary": "One order, whole.",
+                "operationId": "get_app_purchasing_ui_http_purchaseorder_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Rewrites the draft with the same body as create. 409 document_not_draft.",
+                "operationId": "put_app_purchasing_ui_http_purchaseorder_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes a draft \u2192 204. 409 document_not_draft.",
+                "operationId": "delete_app_purchasing_ui_http_purchaseorder_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/emit": {
+            "post": {
+                "summary": "The next OC number, frozen; posts nothing. 409 document_not_draft; 422 validation_failed, supplier_inactive.",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_emit",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/emit-and-send": {
+            "post": {
+                "summary": "Emits and queues the PDF to the supplier's e-mail. 422 tercero_has_no_email.",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_emitandsend",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/send": {
+            "post": {
+                "summary": "Queues the PDF to the supplier \u2192 202. 409 purchase_order_not_open; 422 tercero_has_no_email.",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_send",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/void": {
+            "post": {
+                "summary": "{reason} \u2192 voided, number kept, nothing to reverse. 409 purchase_order_not_open.",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_void",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/duplicate": {
+            "post": {
+                "summary": "A new draft dated today with the same supplier and lines \u2192 201.",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_duplicate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/convert": {
+            "post": {
+                "summary": "Once, from emitted: a draft purchase invoice with the same supplier and lines, dated today, no supplier number\nand no formas de pago \u2192 the order, now converted, with converted_invoice_id (the invoice's purchase_order_id is\nthis order). 409 purchase_order_already_converted, purchase_order_not_open; 422 validation_failed (the invoice's\nown violations, by field path): nothing is converted then.",
+                "operationId": "post_app_purchasing_ui_http_purchaseorder_convert",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseOrderOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase-orders/{id}/pdf": {
+            "get": {
+                "summary": "The order's PDF (ANULADA when voided, BORRADOR on a draft).",
+                "operationId": "get_app_purchasing_ui_http_purchaseorder_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -3190,6 +3604,75 @@
                 }
             }
         },
+        "/api/v1/reports/taxes/exogena/{format}": {
+            "get": {
+                "summary": "The format's rows, its cuant\u00edas menores and what keeps it from being filed (missing concepts, municipios).",
+                "operationId": "get_app_reporting_ui_http_exogena_exogena",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "1001|1003|1005|1006|1007|1008|1009",
+                            "enum": [
+                                "1001",
+                                "1003",
+                                "1005",
+                                "1006",
+                                "1007",
+                                "1008",
+                                "1009"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExogenaOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/taxes/exogena/{format}/export": {
+            "get": {
+                "summary": "The working paper as a file (?format=csv|pdf, ?check=1 to ask first), with the same filters. 422\n`exogena_terceros_incomplete` while a Colombian tercero reported by name has no municipio (the terceros list\nfilters them with ?missing_municipality=1); 422 `export_too_large` above the cap.",
+                "operationId": "get_app_reporting_ui_http_exogena_export",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "1001|1003|1005|1006|1007|1008|1009",
+                            "enum": [
+                                "1001",
+                                "1003",
+                                "1005",
+                                "1006",
+                                "1007",
+                                "1008",
+                                "1009"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/reports/cartera/{side}/export": {
             "get": {
                 "summary": "Cartera by tercero (default) or, with ?detail=1, document by document. ?as_of=, ?q= as the screen.",
@@ -3240,6 +3723,150 @@
                 "responses": {
                     "default": {
                         "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/taxes/withholdings/{side}": {
+            "get": {
+                "summary": "Retenciones practicadas (facturas de compra) or sufridas (facturas de venta), by month then kind, per tercero and\ntax, with each total's *Seg\u00fan libros*. ?kind=retefuente|reteiva|reteica (default all; 400 `invalid_kind`).",
+                "operationId": "get_app_reporting_ui_http_taxreport_withholdings",
+                "parameters": [
+                    {
+                        "name": "side",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "practiced|suffered",
+                            "enum": [
+                                "practiced",
+                                "suffered"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WithholdingReportOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/taxes/withholdings/{side}/export": {
+            "get": {
+                "summary": "The same report as a file, with its subtotals, books' figures and differences in line.",
+                "operationId": "get_app_reporting_ui_http_taxreport_exportwithholdings",
+                "parameters": [
+                    {
+                        "name": "side",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "practiced|suffered",
+                            "enum": [
+                                "practiced",
+                                "suffered"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/taxes/vat": {
+            "get": {
+                "summary": "IVA generado and descontable by rate, ReteIVA practicada and sufrida, impoconsumo and the saldo; a bimester or\ncuatrimestre is a range.",
+                "operationId": "get_app_reporting_ui_http_taxreport_vat",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VatReportOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/taxes/vat/export": {
+            "get": {
+                "operationId": "get_app_reporting_ui_http_taxreport_exportvat",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/geo/departments": {
+            "get": {
+                "operationId": "get_app_shared_ui_http_geo_departments",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DepartmentOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/geo/municipalities": {
+            "get": {
+                "summary": "?q= part of the name or the start of the code (literal); ?department= a 2-digit code; at most 50.",
+                "operationId": "get_app_shared_ui_http_geo_municipalities",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MunicipalityOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3433,6 +4060,32 @@
                     "default_withholding_tax_id": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "country_code": {
+                        "title": "ISO 3166-1 alpha-2 (observations PRD \u00a74.3).",
+                        "type": "string",
+                        "default": "CO"
+                    },
+                    "municipality_code": {
+                        "title": "DANE DIVIPOLA code (5 digits); null until a Colombian company is saved again.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "municipality_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "department_code": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "department_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                     }
                 },
                 "type": "object"
@@ -3593,6 +4246,11 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "account_postable": {
+                        "title": "False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD \u00a74.1).",
+                        "type": "boolean",
+                        "default": true
                     }
                 },
                 "type": "object"
@@ -3706,6 +4364,36 @@
                 },
                 "type": "object"
             },
+            "AccountMovesOutput": {
+                "required": [
+                    "posting_rules",
+                    "taxes",
+                    "payment_methods",
+                    "products",
+                    "terceros"
+                ],
+                "properties": {
+                    "posting_rules": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "taxes": {
+                        "type": "integer"
+                    },
+                    "payment_methods": {
+                        "type": "integer"
+                    },
+                    "products": {
+                        "type": "integer"
+                    },
+                    "terceros": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "AccountOutput": {
                 "required": [
                     "id",
@@ -3751,6 +4439,34 @@
                     },
                     "usable_on_purchases": {
                         "type": "boolean"
+                    },
+                    "moved": {
+                        "title": "Set on the answer to adding the first auxiliar under an account in use: what moved to it.",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AccountMovesOutput"
+                            }
+                        ],
+                        "default": null
+                    }
+                },
+                "type": "object"
+            },
+            "AccountSearchOutput": {
+                "required": [
+                    "items",
+                    "total"
+                ],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AccountOutput"
+                        }
+                    },
+                    "total": {
+                        "type": "integer"
                     }
                 },
                 "type": "object"
@@ -3831,6 +4547,11 @@
                     "in_use": {
                         "title": "A document, a product or the company uses it: it can only be deactivated.",
                         "type": "boolean"
+                    },
+                    "account_postable": {
+                        "title": "False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD \u00a74.1).",
+                        "type": "boolean",
+                        "default": true
                     }
                 },
                 "type": "object"
@@ -3876,6 +4597,31 @@
                     "in_use": {
                         "title": "A document uses it: it can only be deactivated.",
                         "type": "boolean"
+                    },
+                    "account_postable": {
+                        "title": "False when its account got auxiliares and nothing moved: it no longer receives movements (observations PRD \u00a74.1).",
+                        "type": "boolean",
+                        "default": true
+                    }
+                },
+                "type": "object"
+            },
+            "ExogenaConceptOutput": {
+                "required": [
+                    "format",
+                    "account_prefix",
+                    "concept_code"
+                ],
+                "properties": {
+                    "format": {
+                        "title": "1001 or 1007",
+                        "type": "string"
+                    },
+                    "account_prefix": {
+                        "type": "string"
+                    },
+                    "concept_code": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -4245,6 +4991,32 @@
                     "trade_name": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "country_code": {
+                        "title": "ISO 3166-1 alpha-2 (observations PRD \u00a74.3).",
+                        "type": "string",
+                        "default": "CO"
+                    },
+                    "municipality_code": {
+                        "title": "DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "municipality_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "department_code": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "department_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                     }
                 },
                 "type": "object"
@@ -4449,6 +5221,32 @@
                     },
                     "created_at": {
                         "type": "string"
+                    },
+                    "country_code": {
+                        "title": "ISO 3166-1 alpha-2 (observations PRD \u00a74.3).",
+                        "type": "string",
+                        "default": "CO"
+                    },
+                    "municipality_code": {
+                        "title": "DANE DIVIPOLA code (5 digits); null until a Colombian tercero is saved again.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "municipality_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "department_code": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "department_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                     }
                 },
                 "type": "object"
@@ -4844,6 +5642,47 @@
                 },
                 "type": "object"
             },
+            "LineWithholdingOutput": {
+                "required": [
+                    "name",
+                    "kind",
+                    "calculation",
+                    "rate",
+                    "base_amount",
+                    "amount"
+                ],
+                "properties": {
+                    "tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "retefuente, reteiva, reteica",
+                        "type": "string"
+                    },
+                    "calculation": {
+                        "title": "percentage or per_unit",
+                        "type": "string"
+                    },
+                    "rate": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "base_amount": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "SalesInvoiceLineOutput": {
                 "required": [
                     "id",
@@ -4908,6 +5747,7 @@
                         "type": "string"
                     },
                     "withholding_tax_id": {
+                        "title": "Deprecated: the line's first retenci\u00f3n (withholdings[0]); \"Ninguno\" and null when it has none.",
                         "type": "string",
                         "nullable": true
                     },
@@ -4933,6 +5773,51 @@
                         "type": "string"
                     },
                     "total_amount": {
+                        "type": "string"
+                    },
+                    "product_code": {
+                        "title": "The product's c\u00f3digo when the line was written (observations PRD \u00a74.4).",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "withholdings": {
+                        "title": "The line's retenciones (none, or one per kind), each with its base and its share.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LineWithholdingOutput"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            },
+            "WithholdingSummaryOutput": {
+                "required": [
+                    "name",
+                    "kind",
+                    "rate",
+                    "base",
+                    "amount"
+                ],
+                "properties": {
+                    "tax_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "rate": {
+                        "type": "string"
+                    },
+                    "base": {
+                        "type": "string"
+                    },
+                    "amount": {
                         "type": "string"
                     }
                 },
@@ -5072,6 +5957,14 @@
                     "void_reason": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "withholdings_by_tax": {
+                        "title": "The retenciones by tax, for the totals panel (observations PRD \u00a74.2).",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingSummaryOutput"
+                        },
+                        "default": []
                     }
                 },
                 "type": "object"
@@ -5355,6 +6248,14 @@
                     "void_reason": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "withholdings_by_tax": {
+                        "title": "The retenciones by tax, for the totals panel (observations PRD \u00a74.2).",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingSummaryOutput"
+                        },
+                        "default": []
                     }
                 },
                 "type": "object"
@@ -5409,6 +6310,12 @@
                     "balance": {
                         "title": "What is still owed: total neto \u2212 paid; 0 on a voided invoice.",
                         "type": "string"
+                    },
+                    "corrected_by_id": {
+                        "title": "The invoice that corrects this voided one (Corregir, observations PRD \u00a74.6): the list's \"Corregida\" hint links to it.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                     }
                 },
                 "type": "object"
@@ -5512,6 +6419,20 @@
                     },
                     "total_amount": {
                         "type": "string"
+                    },
+                    "product_code": {
+                        "title": "The product's c\u00f3digo when the line was written; null on a line by account.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "withholdings": {
+                        "title": "The line's retenciones (none, or one per kind), each with its base and its share.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LineWithholdingOutput"
+                        },
+                        "default": []
                     }
                 },
                 "type": "object"
@@ -5713,6 +6634,176 @@
                         "nullable": true
                     },
                     "reversal_entry_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "emitted_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "voided_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "void_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "corrected_from_id": {
+                        "title": "The voided invoice this draft corrects (Corregir, observations PRD \u00a74.6).",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "corrected_by_id": {
+                        "title": "The draft that corrects this voided invoice.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "purchase_order_id": {
+                        "title": "The orden de compra it was converted from.",
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                    },
+                    "withholdings_by_tax": {
+                        "title": "The retenciones by tax, for the totals panel (observations PRD \u00a74.2).",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingSummaryOutput"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseOrderSummaryOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "tercero_id",
+                    "tercero_name",
+                    "issue_date",
+                    "net_total"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "draft, emitted, converted, voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "title": "OC-3; null on a draft.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "expected_date": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "net_total": {
+                        "type": "string"
+                    },
+                    "converted_invoice_id": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PurchaseOrderOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "tercero_id",
+                    "tercero_name",
+                    "issue_date",
+                    "gross_total",
+                    "discount_total",
+                    "subtotal",
+                    "tax_total",
+                    "withholding_total",
+                    "net_total",
+                    "lines",
+                    "withholdings_by_tax",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "title": "draft, emitted, converted, voided",
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "issue_date": {
+                        "type": "string"
+                    },
+                    "expected_date": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "gross_total": {
+                        "type": "string"
+                    },
+                    "discount_total": {
+                        "type": "string"
+                    },
+                    "subtotal": {
+                        "type": "string"
+                    },
+                    "tax_total": {
+                        "type": "string"
+                    },
+                    "withholding_total": {
+                        "type": "string"
+                    },
+                    "net_total": {
+                        "type": "string"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurchaseInvoiceLineOutput"
+                        }
+                    },
+                    "withholdings_by_tax": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingSummaryOutput"
+                        }
+                    },
+                    "converted_invoice_id": {
+                        "title": "The draft purchase invoice it became; set once.",
                         "type": "string",
                         "nullable": true
                     },
@@ -6185,6 +7276,448 @@
                         "title": "Cajas y bancos (1105 + 1110); null for a person who may not see the books.",
                         "type": "string",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ExogenaRowOutput": {
+                "required": [
+                    "document_type_code",
+                    "identification_number",
+                    "country_code",
+                    "values"
+                ],
+                "properties": {
+                    "tercero_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "document_type_code": {
+                        "title": "DIAN document type code (31 NIT, 13 c\u00e9dula, 43 cuant\u00edas menores\u2026)",
+                        "type": "string"
+                    },
+                    "identification_number": {
+                        "type": "string"
+                    },
+                    "check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_names": {
+                        "title": "A person's apellidos (null for a company).",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "first_names": {
+                        "title": "A person's nombres (null for a company).",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_name": {
+                        "title": "A company's raz\u00f3n social.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "department_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "municipality_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country_code": {
+                        "title": "ISO 3166-1 alpha-2",
+                        "type": "string"
+                    },
+                    "concept_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "account_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "values": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ExogenaOutput": {
+                "required": [
+                    "year",
+                    "format",
+                    "threshold",
+                    "value_columns",
+                    "rows",
+                    "minor_amounts_rows",
+                    "totals",
+                    "missing_concepts",
+                    "missing_municipality"
+                ],
+                "properties": {
+                    "year": {
+                        "type": "integer"
+                    },
+                    "format": {
+                        "title": "1001, 1003, 1005, 1006, 1007, 1008, 1009",
+                        "type": "string"
+                    },
+                    "threshold": {
+                        "title": "The cuant\u00edas menores threshold in pesos (0.00: everyone by name).",
+                        "type": "string"
+                    },
+                    "value_columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ExogenaRowOutput"
+                        }
+                    },
+                    "minor_amounts_rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ExogenaRowOutput"
+                        }
+                    },
+                    "totals": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "missing_concepts": {
+                        "title": "Rows whose account has no concept code yet (1001 and 1007; always 0 elsewhere).",
+                        "type": "integer"
+                    },
+                    "missing_municipality": {
+                        "title": "Colombian terceros reported by name with no municipality: the export is refused while any.",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "WithholdingReportRowOutput": {
+                "required": [
+                    "tercero_id",
+                    "identification_type",
+                    "identification_number",
+                    "tercero_name",
+                    "tax_name",
+                    "calculation",
+                    "rate",
+                    "base",
+                    "amount",
+                    "documents"
+                ],
+                "properties": {
+                    "tercero_id": {
+                        "type": "string"
+                    },
+                    "identification_type": {
+                        "title": "nit, cc, ce, pasaporte, ti\u2026",
+                        "type": "string"
+                    },
+                    "identification_number": {
+                        "type": "string"
+                    },
+                    "check_digit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tercero_name": {
+                        "type": "string"
+                    },
+                    "tax_id": {
+                        "title": "null when the tax was deleted after the document copied it",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tax_name": {
+                        "type": "string"
+                    },
+                    "calculation": {
+                        "title": "percentage or per_unit",
+                        "type": "string"
+                    },
+                    "rate": {
+                        "type": "string"
+                    },
+                    "base": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "documents": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "WithholdingReportGroupOutput": {
+                "required": [
+                    "month",
+                    "kind",
+                    "rows",
+                    "total_base",
+                    "total_amount",
+                    "ledger_amount",
+                    "difference"
+                ],
+                "properties": {
+                    "month": {
+                        "title": "YYYY-MM",
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "retefuente, reteiva, reteica",
+                        "type": "string"
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingReportRowOutput"
+                        }
+                    },
+                    "total_base": {
+                        "type": "string"
+                    },
+                    "total_amount": {
+                        "type": "string"
+                    },
+                    "ledger_amount": {
+                        "title": "Seg\u00fan libros: what the kind's accounts (2365/2367/2368 practicadas, 135515/17/18 sufridas) moved in the month.",
+                        "type": "string"
+                    },
+                    "difference": {
+                        "title": "ledger_amount \u2212 total_amount: zero when the books and the documents agree.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "WithholdingKindTotalOutput": {
+                "required": [
+                    "kind",
+                    "total_base",
+                    "total_amount",
+                    "ledger_amount",
+                    "difference"
+                ],
+                "properties": {
+                    "kind": {
+                        "title": "retefuente, reteiva, reteica",
+                        "type": "string"
+                    },
+                    "total_base": {
+                        "type": "string"
+                    },
+                    "total_amount": {
+                        "type": "string"
+                    },
+                    "ledger_amount": {
+                        "type": "string"
+                    },
+                    "difference": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "WithholdingReportOutput": {
+                "required": [
+                    "from",
+                    "to",
+                    "side",
+                    "groups",
+                    "totals",
+                    "voided_count"
+                ],
+                "properties": {
+                    "from": {
+                        "title": "YYYY-MM",
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "side": {
+                        "title": "practiced or suffered",
+                        "type": "string"
+                    },
+                    "kind": {
+                        "title": "The ?kind= filter, null for every kind.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingReportGroupOutput"
+                        }
+                    },
+                    "totals": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WithholdingKindTotalOutput"
+                        }
+                    },
+                    "voided_count": {
+                        "title": "Voided invoices issued in the period with retenciones, left out (\"3 facturas anuladas en el periodo no se incluyen\").",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "VatRateRowOutput": {
+                "required": [
+                    "rate",
+                    "base",
+                    "tax"
+                ],
+                "properties": {
+                    "rate": {
+                        "title": "\"19.0000\"",
+                        "type": "string"
+                    },
+                    "base": {
+                        "type": "string"
+                    },
+                    "tax": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "VatReportOutput": {
+                "required": [
+                    "from",
+                    "to",
+                    "generated",
+                    "deductible",
+                    "generated_total",
+                    "deductible_total",
+                    "reteiva_practiced",
+                    "reteiva_suffered",
+                    "impoconsumo",
+                    "net",
+                    "ledger_generated",
+                    "ledger_deductible",
+                    "generated_difference",
+                    "deductible_difference",
+                    "voided_count"
+                ],
+                "properties": {
+                    "from": {
+                        "title": "YYYY-MM",
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "generated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VatRateRowOutput"
+                        }
+                    },
+                    "deductible": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VatRateRowOutput"
+                        }
+                    },
+                    "generated_total": {
+                        "type": "string"
+                    },
+                    "deductible_total": {
+                        "type": "string"
+                    },
+                    "reteiva_practiced": {
+                        "title": "What the company withheld of its suppliers' IVA (declared on the retenciones return).",
+                        "type": "string"
+                    },
+                    "reteiva_suffered": {
+                        "title": "What clients withheld of the company's IVA: discounted from the saldo.",
+                        "type": "string"
+                    },
+                    "impoconsumo": {
+                        "title": "Impoconsumo of the sales (its own return).",
+                        "type": "string"
+                    },
+                    "net": {
+                        "title": "generado \u2212 descontable \u2212 reteiva sufrida: positive a pagar, negative a favor.",
+                        "type": "string"
+                    },
+                    "ledger_generated": {
+                        "title": "Seg\u00fan libros: what 240805 (generado) and 240810 (descontable) moved in the period.",
+                        "type": "string"
+                    },
+                    "ledger_deductible": {
+                        "type": "string"
+                    },
+                    "generated_difference": {
+                        "title": "ledger \u2212 report, each: zero when the books and the documents agree.",
+                        "type": "string"
+                    },
+                    "deductible_difference": {
+                        "type": "string"
+                    },
+                    "voided_count": {
+                        "title": "Voided invoices (sales and purchases) issued in the period, left out.",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "DepartmentOutput": {
+                "required": [
+                    "code",
+                    "name"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "MunicipalityOutput": {
+                "required": [
+                    "code",
+                    "name",
+                    "department_code",
+                    "department_name"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "department_code": {
+                        "type": "string"
+                    },
+                    "department_name": {
+                        "type": "string"
                     }
                 },
                 "type": "object"

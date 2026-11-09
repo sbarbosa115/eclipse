@@ -17,4 +17,11 @@ interface PaymentMethodRepository
 
     /** Whether the company has a method with this name (ignoring case and the method `$except`). */
     public function nameTaken(Uuid $companyId, string $name, ?Uuid $except = null): bool;
+
+    /**
+     * The company's payment methods whose money lands in this account.
+     *
+     * @return list<PaymentMethod>
+     */
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array;
 }

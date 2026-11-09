@@ -1,0 +1,14 @@
+/* Reportes › Impuestos › Exógena (observations 2026-11, item 9 exogena). */
+
+.admin .exogena-format-title {
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+/* The threshold sits in the filter bar like a select; money is right-aligned as everywhere. */
+.admin .exogena-threshold input {
+  width: 12rem;
+  max-width: 100%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -41,4 +41,17 @@ final class DoctrineTaxRepository implements TaxRepository
 
         return (int) $qb->getQuery()->getSingleScalarResult() > 0;
     }
+
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array
+    {
+        /** @var list<Tax> $found */
+        $found = $this->em->createQueryBuilder()
+            ->select('t')->from(Tax::class, 't')
+            ->where('t.companyId = :company')->setParameter('company', $companyId, 'uuid')
+            ->andWhere('t.salesAccountId = :account OR t.purchaseAccountId = :account')->setParameter('account', $accountId, 'uuid')
+            ->orderBy('t.id', 'ASC')
+            ->getQuery()->getResult();
+
+        return $found;
+    }
 }

@@ -56,7 +56,7 @@
     <table class="lines">
         <thead>
             <tr>
-                <th>#</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Valor unitario</th>
+                <th>#</th><th>Código</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Valor unitario</th>
                 <th class="num">% Desc.</th><th>Impuesto</th><th class="num">Valor total</th>
             </tr>
         </thead>
@@ -64,6 +64,7 @@
             {% for line in lines %}
                 <tr>
                     <td>{{ line.position }}</td>
+                    <td>{{ line.product_code }}</td>
                     <td>{{ line.description }}</td>
                     <td class="num">{{ line.quantity }}</td>
                     <td class="num">{{ line.unit_price }}</td>

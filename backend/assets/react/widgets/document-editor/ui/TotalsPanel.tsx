@@ -3,7 +3,10 @@ import {useTranslation} from '@/shared/i18n';
 import {formatMoney} from '@/shared/lib';
 import type {TotalsPreview} from '../model/totals';
 
-/** Total bruto down to Total neto (§4.6), as a preview of what the server computes. */
+/**
+ * Total bruto down to Total neto (§4.6), as a preview of what the server computes, with one row per retención under
+ * Retenciones: its name, its base and its value (observations §4.2).
+ */
 export function TotalsPanel({totals}: {totals: TotalsPreview}) {
   const {t} = useTranslation();
   const titleId = useId();
@@ -24,6 +27,17 @@ export function TotalsPanel({totals}: {totals: TotalsPreview}) {
           <div key={key}>
             <dt>{t(`documentEditor.totals.${key}`)}</dt>
             <dd className="doc-amount">{formatMoney(amount)}</dd>
+          </div>
+        ))}
+        {totals.withholdingsByTax.map((w) => (
+          <div key={w.tax_id} className="doc-totals-withholding">
+            <dt>{w.name}</dt>
+            <dd className="doc-amount">{formatMoney(w.amount)}</dd>
+            <dd className="doc-totals-base small muted">
+              {t('documentEditor.totals.withholdingBase', {
+                amount: formatMoney(w.base),
+              })}
+            </dd>
           </div>
         ))}
         <div className="doc-totals-net">

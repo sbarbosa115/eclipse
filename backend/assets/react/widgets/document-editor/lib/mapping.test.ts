@@ -2,7 +2,12 @@ import {ApiError} from '@/shared/api';
 import {emptyLine} from '../model/draft';
 import type {DocumentDraft} from '../model/types';
 import {trimDecimal} from './decimal';
-import {draftLineFrom, editorErrorsFrom, linesToSend} from './mapping';
+import {
+  draftLineFrom,
+  editorErrorsFrom,
+  linesToSend,
+  withholdingsInput,
+} from './mapping';
 
 describe('between the document form and the API', () => {
   it('writes a decimal as a person does', () => {
@@ -18,24 +23,29 @@ describe('between the document form and the API', () => {
         id: 'l1',
         product_id: 'p1',
         product_label: 'SRV-01 · Consultoría',
+        product_code: 'SRV-01',
         account_id: null,
         description: 'Consultoría',
         quantity: '2.0000',
         unit_price: '1000000.0000',
         discount: '0.0000',
         charge_tax_id: 'iva19',
-        withholding_tax_id: null,
+        withholding_tax_id: 'rete25',
+        withholdings: [
+          {tax_id: 'rete25', name: 'ReteFuente 2,5 %'},
+          {tax_id: 'reteiva15', name: 'ReteIVA 15 %'},
+        ],
       }),
     ).toEqual({
       key: 'line-l1',
-      product: {id: 'p1', label: 'SRV-01 · Consultoría'},
+      product: {id: 'p1', label: 'SRV-01 · Consultoría', code: 'SRV-01'},
       account: null,
       description: 'Consultoría',
       quantity: '2',
       unit_price: '1000000',
       discount: '',
       charge_tax_id: 'iva19',
-      withholding_tax_id: null,
+      withholdings: ['rete25', 'reteiva15'],
     });
     expect(
       draftLineFrom({
@@ -52,6 +62,38 @@ describe('between the document form and the API', () => {
       product: null,
       account: {id: 'a1', text: '513595 · Otros'},
       discount: '10',
+      withholdings: [],
+    });
+    expect(
+      draftLineFrom({
+        description: 'Antes',
+        quantity: '1',
+        unit_price: '1',
+        discount: '0',
+        withholding_tax_id: 'rete4',
+      }).withholdings,
+      'a line answered without the list still reads its one retención',
+    ).toEqual(['rete4']);
+    expect(
+      draftLineFrom({
+        description: 'Snapshot',
+        quantity: '1',
+        unit_price: '1',
+        discount: '0',
+        withholdings: [{tax_id: null, name: 'Borrada'}],
+      }).withholdings,
+      'a retención whose tax no longer exists has no id to send back',
+    ).toEqual([]);
+  });
+
+  it('sends every retención, and the first one as the deprecated alias while the API reads it', () => {
+    expect(withholdingsInput({withholdings: ['rete25', 'reteiva15']})).toEqual({
+      withholdings: [{tax_id: 'rete25'}, {tax_id: 'reteiva15'}],
+      withholding_tax_id: 'rete25',
+    });
+    expect(withholdingsInput({withholdings: []})).toEqual({
+      withholdings: [],
+      withholding_tax_id: null,
     });
   });
 
@@ -73,10 +115,14 @@ describe('between the document form and the API', () => {
         {field: 'lines[1].account_id', message: 'Cuenta.'},
         {field: 'payments[1].due_date', message: 'Vencimiento.'},
         {field: 'supplier_invoice_number', message: 'Repetido.'},
+        {field: 'lines.0.withholdings.1.tax_id', message: 'No vigente.'},
+        {field: 'lines[1].withholdings', message: 'Una por tipo.'},
       ],
     });
 
     expect(editorErrorsFrom(error, [2, 4])).toEqual({
+      'lines.2.withholdings': 'No vigente.',
+      'lines.4.withholdings': 'Una por tipo.',
       'tercero': 'Elige el cliente.',
       'lines.2.quantity': 'Cantidad.',
       'lines.4.product': 'Producto.',

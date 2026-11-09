@@ -39,4 +39,17 @@ final class DoctrineTerceroRepository implements TerceroRepository
     {
         $this->em->remove($tercero);
     }
+
+    public function usingAccount(Uuid $companyId, Uuid $accountId): array
+    {
+        /** @var list<Tercero> $found */
+        $found = $this->em->createQueryBuilder()
+            ->select('t')->from(Tercero::class, 't')
+            ->where('t.companyId = :company')->setParameter('company', $companyId, 'uuid')
+            ->andWhere('t.receivableAccountId = :account OR t.payableAccountId = :account')->setParameter('account', $accountId, 'uuid')
+            ->orderBy('t.id', 'ASC')
+            ->getQuery()->getResult();
+
+        return $found;
+    }
 }

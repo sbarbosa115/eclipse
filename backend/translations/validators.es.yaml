@@ -38,6 +38,9 @@
 'Choose an active charge tax (IVA, impoconsumo).': 'Elige un impuesto cargo activo (IVA, impoconsumo).'
 "This tax is not in force on the document's date.": 'Este impuesto no está vigente en la fecha del documento.'
 'Choose an active withholding tax (retención).': 'Elige un impuesto de retención activo.'
+# Observations 2026-11, item 2 (withholdings-api): several retenciones per line
+'One retención per kind on each line.': 'Una retención por tipo en cada línea.'
+'Choose the retención.': 'Elige la retención.'
 'Choose a postable account of the chart.': 'Elige una cuenta del plan de cuentas que reciba movimientos.'
 'The price is lower than the tax per unit it includes.': 'El precio es menor que el impuesto por unidad que incluye.'
 'Write the price in pesos, with at most four decimals.': 'Escribe el precio en pesos, con máximo cuatro decimales.'
@@ -76,6 +79,7 @@
 'The discount is between 0 and 100, with at most four decimals.': 'El descuento va de 0 a 100, con máximo cuatro decimales.'
 'Write the amount in pesos, with at most two decimals.': 'Escribe el valor en pesos, con máximo dos decimales.'
 'Write why the invoice is voided.': 'Escribe por qué se anula la factura.'
+'Write why the invoice is corrected.': 'Escribe por qué se corrige la factura.'
 
 # Sales invoice (item 8)
 'Add at least one line.': 'Agrega al menos una línea.'
@@ -110,3 +114,15 @@
 'Allocate the amount paid to at least one invoice.': 'Aplica el valor pagado al menos a una factura.'
 'Choose an open invoice of this supplier, once.': 'Elige una factura pendiente de este proveedor, una sola vez.'
 'Choose where the money comes from.': 'Elige de dónde sale el dinero.'
+
+# Party and Company: país and municipio (observations 2026-11, item 4)
+'Choose the municipality.': 'Elige el municipio.'
+'Write the city.': 'Escribe la ciudad.'
+'Choose the country.': 'Elige el país.'
+# Observations 2026-11, item 1 account-picker: a subdivided account
+'This account has auxiliaries: choose one of them.': 'Esta cuenta tiene auxiliares: elige una de ellas.'
+# Observations 2026-11, item 9 exogena: the concept table
+'Choose format 1001 or 1007.': 'Elige el formato 1001 o 1007.'
+'Write the start of an account code (digits only).': 'Escribe el comienzo de un código de cuenta (solo dígitos).'
+'Write the DIAN concept code (four digits).': 'Escribe el código del concepto DIAN (cuatro dígitos).'
+'This prefix is already in the list of this format.': 'Ese prefijo ya está en la lista de este formato.'

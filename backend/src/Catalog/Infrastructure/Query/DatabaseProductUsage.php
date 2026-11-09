@@ -12,7 +12,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class DatabaseProductUsage implements ProductUsage
 {
-    private const LINE_TABLES = ['quotation_line', 'sales_invoice_line', 'purchase_invoice_line'];
+    private const LINE_TABLES = ['quotation_line', 'sales_invoice_line', 'purchase_invoice_line', 'purchase_order_line'];
 
     public function __construct(private readonly Connection $db)
     {

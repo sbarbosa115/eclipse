@@ -59,6 +59,7 @@ async function resolution(page: Page, over: Json = {}) {
 
 async function client(page: Page, name: string, nit: string): Promise<string> {
   const tercero = await api(page, 'POST', '/terceros/quick', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: nit,
@@ -137,6 +138,7 @@ async function purchase(
   issued = -1,
 ): Promise<string> {
   const supplier = await api(page, 'POST', '/terceros/quick', {
+    municipality_code: '11001',
     person_type: 'empresa',
     identification_type: 'nit',
     identification_number: nit,

@@ -17,12 +17,13 @@
     "columns": {
       "item": "Producto/Servicio",
       "itemPurchase": "Producto/Servicio o cuenta",
+      "code": "Código",
       "description": "Descripción",
       "quantity": "Cantidad",
       "unitPrice": "Valor unitario",
       "discount": "% Descuento",
       "chargeTax": "Impuesto cargo",
-      "withholdingTax": "Impuesto retención",
+      "withholdingTax": "Retenciones",
       "total": "Valor total"
     },
     "cellLabel": "{{column}}, línea {{n}}",
@@ -32,6 +33,8 @@
     "productPlaceholder": "Código o nombre",
     "accountPlaceholder": "Código o nombre de la cuenta",
     "noTax": "Sin impuesto",
+    "noWithholdings": "Sin retenciones",
+    "withholdingsOf": "Retenciones de la línea {{n}}: {{names}}",
     "add": "Agregar línea",
     "taxes": "Impuestos de la línea {{n}}",
     "up": "Subir línea {{n}}",
@@ -46,6 +49,7 @@
     "subtotal": "Subtotal",
     "taxes": "Impuestos",
     "withholdings": "Retenciones",
+    "withholdingBase": "Base {{amount}}",
     "net": "Total neto",
     "preview": "Vista previa: los valores definitivos los calcula el sistema al guardar."
   },
@@ -87,7 +91,13 @@
     "title": "Impuestos de la línea {{n}}",
     "subtotal": "Subtotal de la línea",
     "charge": "Impuesto cargo",
-    "withholding": "Impuesto retención",
+    "withholdingsHint": "Retenciones: a lo sumo una de cada tipo.",
+    "kinds": {
+      "retefuente": "Retefuente",
+      "reteiva": "ReteIVA",
+      "reteica": "ReteICA"
+    },
+    "noWithholding": "Ninguna",
     "applyToProduct": "Aplicar estos impuestos al producto de ahora en adelante",
     "applyToProductHint": "Las próximas líneas con este producto los traerán por defecto.",
     "apply": "Aplicar",

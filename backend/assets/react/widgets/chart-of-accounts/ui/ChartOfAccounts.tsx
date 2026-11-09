@@ -15,13 +15,32 @@ import {
   Pager,
   TabIntro,
 } from '@/shared/ui';
-import {fetchChart, type Account, type AccountPage} from '../api/chartApi';
+import {
+  fetchChart,
+  fetchUses,
+  type Account,
+  type AccountPage,
+} from '../api/chartApi';
+import {movedText, type AccountUse} from '../lib/uses';
 import {AddAccountModal, EditAccountModal} from './AccountForms';
 import './chart.css';
 
 const CLASSES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 type Open = {kind: 'add'; parent: Account} | {kind: 'edit'; account: Account};
+
+/**
+ * Subdivided without moving what pointed at it (move_references false): active, of a level that posts, but no longer
+ * postable, and a rule, tax or payment method still names it.
+ */
+function leftWithoutDefault(account: Account, used: Set<string>): boolean {
+  return (
+    account.active &&
+    !account.postable &&
+    (account.level === 'subaccount' || account.level === 'auxiliary') &&
+    used.has(account.id)
+  );
+}
 
 /**
  * Configuración › Plan de cuentas (§4.13): the PUC with the company's own accounts, searched by code or name. The
@@ -39,6 +58,22 @@ export function ChartOfAccounts() {
   const [attempt, setAttempt] = useState(0);
   const [open, setOpen] = useState<Open | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [uses, setUses] = useState<AccountUse[]>([]);
+  const [usesAttempt, setUsesAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchUses()
+      .then((answer) => {
+        if (!cancelled) setUses(answer);
+      })
+      // Only the warning and the badge need them: the chart works without.
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [usesAttempt]);
+  const used = new Set(uses.map((u) => u.accountId));
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +181,11 @@ export function ChartOfAccounts() {
                   {!account.active && (
                     <Badge value="inactive">{t('ledger.chart.inactive')}</Badge>
                   )}
+                  {leftWithoutDefault(account, used) && (
+                    <Badge value="invalid">
+                      {t('ledger.chart.subdivide.badge')}
+                    </Badge>
+                  )}
                 </td>
                 <td>{t(`ledger.natures.${account.nature}`)}</td>
                 <td>{t(`ledger.levels.${account.level}`)}</td>
@@ -174,11 +214,25 @@ export function ChartOfAccounts() {
       {open?.kind === 'add' && (
         <AddAccountModal
           parent={open.parent}
+          uses={uses.filter((u) => u.accountId === open.parent.id)}
           onClose={() => setOpen(null)}
           onSaved={(account) => {
             setOpen(null);
-            setNotice(t('ledger.chart.created', {code: account.code}));
+            const moved = account.moved ? movedText(t, account.moved) : null;
+            setNotice(
+              [
+                t('ledger.chart.created', {code: account.code}),
+                moved &&
+                  t('ledger.chart.subdivide.moved', {
+                    code: account.code,
+                    what: moved,
+                  }),
+              ]
+                .filter(Boolean)
+                .join(' '),
+            );
             setAttempt((n) => n + 1);
+            setUsesAttempt((n) => n + 1);
           }}
         />
       )}

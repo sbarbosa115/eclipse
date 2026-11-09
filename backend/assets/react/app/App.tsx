@@ -41,6 +41,14 @@ const LedgerPage = lazy(() =>
 const ReportsPage = lazy(() =>
   import('@/pages/reports').then((m) => ({default: m.ReportsPage})),
 );
+const PurchaseOrdersPage = lazy(() =>
+  import('@/pages/purchase-orders').then((m) => ({
+    default: m.PurchaseOrdersPage,
+  })),
+);
+const TaxReportsPage = lazy(() =>
+  import('@/pages/tax-reports').then((m) => ({default: m.TaxReportsPage})),
+);
 const TercerosPage = lazy(() =>
   import('@/pages/terceros').then((m) => ({default: m.TercerosPage})),
 );
@@ -96,6 +104,14 @@ export function App() {
                   element={<SupplierPaymentsPage />}
                 />
                 <Route path="contabilidad/*" element={<LedgerPage />} />
+                <Route
+                  path="ordenes-compra/*"
+                  element={<PurchaseOrdersPage />}
+                />
+                <Route
+                  path="reportes/impuestos/*"
+                  element={<TaxReportsPage />}
+                />
                 <Route path="reportes/*" element={<ReportsPage />} />
                 <Route path="terceros/*" element={<TercerosPage />} />
                 <Route path="productos/*" element={<ProductsPage />} />

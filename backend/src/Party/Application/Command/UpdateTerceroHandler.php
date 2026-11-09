@@ -11,6 +11,7 @@ final class UpdateTerceroHandler implements CommandHandler
     public function __construct(
         private readonly TerceroRepository $terceros,
         private readonly TerceroAccounts $accounts,
+        private readonly TerceroPlace $place,
     ) {
     }
 
@@ -24,6 +25,6 @@ final class UpdateTerceroHandler implements CommandHandler
         }
         $this->accounts->check($command->companyId, $p);
 
-        $tercero->revise($p);
+        $tercero->revise($p, $this->place->municipalityName($p));
     }
 }

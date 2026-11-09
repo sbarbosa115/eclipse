@@ -9,6 +9,8 @@ use App\Sales\Domain\Model\Quotation;
 use App\Sales\Domain\Model\QuotationLine;
 use App\Sales\Domain\Model\QuotationStatus;
 use App\Sales\Domain\Repository\QuotationRepository;
+use App\Shared\Application\Document\LineWithholdingView;
+use App\Shared\Application\Document\WithholdingSummaryView;
 use App\Shared\Application\Port\PdfRenderer;
 use App\Shared\Domain\Calendar;
 use App\Shared\Domain\Error\NotFound;
@@ -99,7 +101,7 @@ final class QuotationPdf
                 'terms' => self::paragraphs($quotation->terms()),
                 'notes' => self::paragraphs($quotation->notes()),
                 'void_reason' => $quotation->voidReason(),
-                'voided_at' => Printed::date($quotation->voidedAt()),
+                'voided_at' => Printed::moment($quotation->voidedAt()),
             ],
             'client' => [
                 'name' => $client->displayName,
@@ -110,6 +112,7 @@ final class QuotationPdf
             ],
             'lines' => array_map(static fn (QuotationLine $l) => [
                 'position' => $l->position(),
+                'product_code' => $l->productCode() ?? '',
                 'description' => $l->description(),
                 'quantity' => Printed::decimal($l->quantity()->toString()),
                 'unit_price' => Printed::money(Money::rounded($l->unitPrice()->toBigDecimal())),
@@ -117,8 +120,8 @@ final class QuotationPdf
                 'charge_tax' => $l->chargeTax()->isNone() ? '' : $l->chargeTax()->name(),
                 'total' => Printed::money($l->subtotalAmount()->plus($l->taxAmount())),
             ], $quotation->lines()),
-            'taxes' => self::taxes($quotation, true),
-            'withholdings' => self::taxes($quotation, false),
+            'taxes' => self::taxes($quotation),
+            'withholdings' => self::withholdings($quotation),
             'totals' => [
                 'gross' => Printed::money($quotation->grossTotal()),
                 'discounts' => Printed::money($quotation->discountTotal()),
@@ -168,16 +171,16 @@ final class QuotationPdf
     }
 
     /**
-     * Each impuesto cargo (or retención) with its base and amount, summed by tax.
+     * Each impuesto cargo with its base and amount, summed by tax.
      *
      * @return list<array{name: string, base: string, amount: string}>
      */
-    private static function taxes(Quotation $quotation, bool $charges): array
+    private static function taxes(Quotation $quotation): array
     {
         $byName = [];
         foreach ($quotation->lines() as $line) {
-            $tax = $charges ? $line->chargeTax() : $line->withholdingTax();
-            $amount = $charges ? $line->taxAmount() : $line->withholdingAmount();
+            $tax = $line->chargeTax();
+            $amount = $line->taxAmount();
             if ($tax->isNone()) {
                 continue;
             }
@@ -188,6 +191,21 @@ final class QuotationPdf
         }
 
         return array_values(array_map(static fn (array $t) => ['name' => $t[0], 'base' => Printed::money($t[1]), 'amount' => Printed::money($t[2])], $byName));
+    }
+
+    /**
+     * Each retención with its base (the lines' subtotals, or their IVA for a ReteIVA) and amount, summed by tax
+     * (observations PRD §4.2): the rows add up to Retenciones.
+     *
+     * @return list<array{name: string, base: string, amount: string}>
+     */
+    private static function withholdings(Quotation $quotation): array
+    {
+        return array_map(static fn (WithholdingSummaryView $w) => [
+            'name' => $w->name,
+            'base' => Printed::money(Money::of($w->base)),
+            'amount' => Printed::money(Money::of($w->amount)),
+        ], WithholdingSummaryView::of(array_map(LineWithholdingView::ofLine(...), $quotation->lines())));
     }
 
     private static function taxKey(TaxSnapshot $tax): string

@@ -5,6 +5,7 @@ namespace App\Purchasing\Infrastructure\Persistence;
 use App\Purchasing\Domain\Error\PurchaseInvoiceNotFound;
 use App\Purchasing\Domain\Model\PurchaseInvoice;
 use App\Purchasing\Domain\Repository\PurchaseInvoiceRepository;
+use App\Shared\Domain\Model\InvoiceStatus;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query;
@@ -38,11 +39,11 @@ final class DoctrinePurchaseInvoiceRepository implements PurchaseInvoiceReposito
 
     public function supplierNumberTaken(Uuid $companyId, Uuid $terceroId, string $number, ?Uuid $exceptId = null): bool
     {
-        // The column's collation ignores letter case, like the unique index it backs.
+        // The live-number key (null on a voided invoice) is what the unique index holds; its collation ignores case.
         $qb = $this->em->createQueryBuilder()
             ->select('COUNT(i.id)')
             ->from(PurchaseInvoice::class, 'i')
-            ->where('i.companyId = :company AND i.terceroId = :tercero AND i.supplierInvoiceNumber = :number')
+            ->where('i.companyId = :company AND i.terceroId = :tercero AND i.activeNumberKey = :number')
             ->setParameter('company', $companyId, 'uuid')
             ->setParameter('tercero', $terceroId, 'uuid')
             ->setParameter('number', $number);
@@ -51,6 +52,19 @@ final class DoctrinePurchaseInvoiceRepository implements PurchaseInvoiceReposito
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult() > 0;
+    }
+
+    public function releaseSupplierNumber(PurchaseInvoice $voided): void
+    {
+        if (InvoiceStatus::Voided !== $voided->status()) {
+            throw new \LogicException('Only a voided invoice releases its supplier\'s number.');
+        }
+        // The entity already holds null; its own UPDATE comes after the copy's INSERT, too late for the unique key.
+        $this->em->getConnection()->update(
+            'purchase_invoice',
+            ['active_number_key' => null],
+            ['company_id' => $voided->companyId()->toBinary(), 'id' => $voided->id()->toBinary()],
+        );
     }
 
     public function add(PurchaseInvoice $invoice): void
