@@ -23,9 +23,4 @@ final class ProvisionNumberingSeries implements CompanyProvisioner
             $this->series->add(new NumberingSeries($companyId, $kind, $kind->defaultPrefix()));
         }
     }
-
-    public static function getPriority(): int
-    {
-        return 200;
-    }
 }

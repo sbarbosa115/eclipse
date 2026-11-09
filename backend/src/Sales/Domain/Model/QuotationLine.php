@@ -19,7 +19,7 @@ class QuotationLine extends CommercialLine
 {
     /** @var Collection<int, QuotationLineWithholding> */
     #[ORM\OneToMany(targetEntity: QuotationLineWithholding::class, mappedBy: 'line', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $withholdings;
 
     /**

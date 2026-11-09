@@ -64,9 +64,4 @@ final class CatalogProvisioner implements CompanyProvisioner
         $method('Transferencia', PaymentKind::Cash, '11100501');
         $method('Crédito', PaymentKind::Credit, null);
     }
-
-    public static function getPriority(): int
-    {
-        return 50;
-    }
 }

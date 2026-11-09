@@ -16,9 +16,6 @@ services:
     # Handled after the command that published them has committed (App\Shared\Application\Event\EventBus).
     App\Shared\Application\Event\EventHandler:
       tags: [{name: messenger.message_handler, bus: command.bus}]
-    # What a new company needs from each context, run inside the sign-up transaction (highest priority first).
-    App\Shared\Application\Company\CompanyProvisioner:
-      tags: [app.company_provisioner]
 
   App\:
     resource: '../src/'
@@ -32,11 +29,22 @@ services:
       # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
       - '../src/Shared/UI/Http/OpenApi/'
 
+  # What a new company needs from each context, run inside the sign-up transaction, highest priority first: the
+  # numbering series, the chart, the taxes and payment methods that point at its accounts, then the exógena concepts.
+  # A new CompanyProvisioner gets its tag here (CompanyProvisionerOrderTest fails until it does).
+  App\Company\Application\ProvisionNumberingSeries:
+    tags: [{name: app.company_provisioner, priority: 200}]
+  App\Ledger\Application\Seed\ProvisionLedger:
+    tags: [{name: app.company_provisioner, priority: 100}]
+  App\Ledger\Application\Provisioning\CatalogProvisioner:
+    tags: [{name: app.company_provisioner, priority: 50}]
+  App\Ledger\Application\Exogena\ProvisionExogenaConcepts:
+    tags: [{name: app.company_provisioner, priority: 40}]
+
   App\Company\Application\CompanyRegistration:
     arguments:
       $provisioners: !tagged_iterator
         tag: app.company_provisioner
-        default_priority_method: getPriority
 
   App\Company\Application\Numbering\SalesInvoiceNumbering: '@App\Company\Application\Numbering\ResolutionSalesInvoiceNumbering'
 

@@ -20,9 +20,4 @@ final class ProvisionExogenaConcepts implements CompanyProvisioner
             $this->concepts->add(new ExogenaConcept($companyId, $format, $prefix, $concept));
         }
     }
-
-    public static function getPriority(): int
-    {
-        return 40;
-    }
 }

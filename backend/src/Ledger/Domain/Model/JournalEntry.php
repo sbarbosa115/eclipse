@@ -29,7 +29,7 @@ class JournalEntry implements CompanyOwned
 
     /** @var Collection<int, JournalLine> */
     #[ORM\OneToMany(targetEntity: JournalLine::class, mappedBy: 'entry', cascade: ['persist'], orphanRemoval: false)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $lines;
 
     public function __construct(

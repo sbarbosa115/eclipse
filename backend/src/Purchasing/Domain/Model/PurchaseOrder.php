@@ -59,7 +59,7 @@ class PurchaseOrder implements CompanyOwned
 
     /** @var Collection<int, PurchaseOrderLine> */
     #[ORM\OneToMany(targetEntity: PurchaseOrderLine::class, mappedBy: 'document', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $lines;
 
     public function __construct(
